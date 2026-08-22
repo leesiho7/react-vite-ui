@@ -21,16 +21,17 @@ import { RealtimeChart } from '../components/RealtimeChart'
 import { Orderbook } from '../components/Orderbook'
 
 const defaultAssets = [
-  { symbol: 'BTC', name: 'Bitcoin', price: '$67,842.10', change: '+2.84%', signal: 'BUY', tone: 'positive' },
-  { symbol: 'ETH', name: 'Ethereum', price: '$3,482.66', change: '+1.17%', signal: 'HOLD', tone: 'neutral' },
-  { symbol: 'SOL', name: 'Solana', price: '$184.28', change: '-0.42%', signal: 'WATCH', tone: 'negative' },
+  { symbol: 'BTC', name: 'Bitcoin', price: '$67,842.10', change: '+2.84%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/bitcoin/default.svg' },
+  { symbol: 'ETH', name: 'Ethereum', price: '$3,482.66', change: '+1.17%', signal: 'HOLD', tone: 'neutral', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/ethereum/default.svg' },
+  { symbol: 'SOL', name: 'Solana', price: '$184.28', change: '-0.42%', signal: 'WATCH', tone: 'negative', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/solana/default.svg' },
+  { symbol: 'NVDA', name: 'NVIDIA', price: '$142.61', change: '+3.18%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/nvidia/default.svg' },
 ]
 
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 const newsItems = [
-  { source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: 'Bitcoin holds above $67K as institutional flows accelerate', impact: '8.6', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC' },
-  { source: 'REUTERS TECH', tag: 'NVDA', title: 'NVIDIA signals sustained demand across next-gen AI infrastructure', impact: '9.1', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV' },
-  { source: 'FINANCIAL TIMES', tag: 'ETH', title: 'Ethereum staking activity reaches a new quarterly high', impact: '6.8', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH' }
+  { source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: '比特币站稳 67,000 美元上方，机构资金流入加速', impact: '8.6', sentiment: '看涨', tone: 'positive', thumb: 'BTC' },
+  { source: 'REUTERS TECH', tag: 'NVDA', title: '英伟达显示下一代人工智能基础设施需求持续强劲', impact: '9.1', sentiment: '看涨', tone: 'positive', thumb: 'NV' },
+  { source: 'FINANCIAL TIMES', tag: 'ETH', title: '以太坊质押活动创季度新高', impact: '6.8', sentiment: '中性', tone: 'neutral', thumb: 'ETH' }
 ]
 
 type NewsItem = typeof newsItems[number]
@@ -46,7 +47,7 @@ export default function Page() {
   const [stance, setStance] = useState('BUY')
   const [watching, setWatching] = useState(false)
   const [searched, setSearched] = useState('BTC/USD')
-  const [language, setLanguage] = useState<Language>('ko')
+  const [language, setLanguage] = useState<Language>('cn')
   const [eventOpen, setEventOpen] = useState(false)
   const [communityOpen, setCommunityOpen] = useState(false)
   const [newsOpen, setNewsOpen] = useState(false)
@@ -126,15 +127,15 @@ export default function Page() {
     },
     cn: {
       eyebrow: 'AI 事实核查与开源量化终端',
-      title: <>Proof over<br /><em>performance.</em></>,
-      description: <>为重视客观事实而非噪音的团队提供<br className="desktop-only" /> 企业级干净情报与可验证策略。</>,
+      title: <>Make the next<br /><em>informed move.</em></>,
+      description: <>为重视客观事实而非噪音的团队提供<br className="desktop-only" /> 企业级市场情报与可验证策略。</>,
       search: '搜索资产、市场或量化策略...',
       run: '运行分析',
-      market: '市场脉搏',
+      market: '实时市场脉搏',
       signals: '信号登记',
       decision: '综合决策',
-      insights: 'AI 事实核查与洞察',
-      operations: '运营'
+      insights: 'AI 事实核查与推理',
+      operations: '运营与导出'
     },
     ko: {
       eyebrow: 'AI FACT-CHECK & OPEN QUANT INTELLIGENCE',
@@ -361,7 +362,7 @@ export default function Page() {
                 <div className="news-meta">
                   <span className={`sentiment ${activeNews.tone}`}>{activeNews.sentiment}</span>
                   <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
-                  <span>🛡️ 팩트체크 일치</span>
+                  <span>FACT-CHECK VERIFIED</span>
                 </div>
               </div>
             </button>
@@ -428,22 +429,17 @@ export default function Page() {
                 style={{ fontSize: '8px' }}
                 onClick={() => setOrderbookOpen(!orderbookOpen)}
               >
-                {orderbookOpen ? '호가창 숨기기' : '호가창 열기'}
+                {orderbookOpen ? (language === 'cn' ? '隐藏订单簿' : 'Hide orderbook') : (language === 'cn' ? '显示订单簿' : 'Show orderbook')}
               </button>
               <span className="muted">{searched} / {period}</span>
             </div>
           </div>
 
           <div className="asset-tabs">
-            {['BTC/USD', 'ETH/USD', 'SOL/USD'].map((item) => (
-              <button
-                className={searched === item ? 'active' : ''}
-                key={item}
-                onClick={() => setSearched(item)}
-              >
-                {item}
-              </button>
-            ))}
+            {defaultAssets.map((asset) => {
+              const item = `${asset.symbol}/USD`
+              return <button className={searched === item ? 'active' : ''} key={item} onClick={() => setSearched(item)}><img className="asset-logo" src={asset.logo} alt={`${asset.name} logo`} />{item}</button>
+            })}
           </div>
 
           <div className="price-row">
@@ -506,7 +502,7 @@ export default function Page() {
                 key={asset.symbol}
                 onClick={() => setSearched(`${asset.symbol}/USD`)}
               >
-                <span className="asset-icon">{asset.symbol.slice(0, 1)}</span>
+                <span className="asset-icon"><img src={asset.logo} alt={`${asset.name} logo`} /></span>
                 <span className="asset-name">
                   <strong>{asset.symbol}/USD</strong>
                   <small>{asset.name}</small>
