@@ -14,6 +14,10 @@ const insights = [
   ['03', 'Risk', 'Funding divergence suggests elevated short squeeze risk.', 'MED'],
 ]
 
+const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
+
+type Language = keyof typeof languageLabels
+
 function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
 }
@@ -24,6 +28,13 @@ export default function Page() {
   const [stance, setStance] = useState('BUY')
   const [watching, setWatching] = useState(false)
   const [searched, setSearched] = useState('BTC/USD')
+  const [language, setLanguage] = useState<Language>('en')
+
+  const copy = {
+    en: { eyebrow: 'DECISION SUPPORT TERMINAL', title: <>Make the next<br /><em>informed</em> move.</>, description: <>Institutional-grade market intelligence for teams that<br className="desktop-only" /> value signal over noise.</>, search: 'Search asset, market, or metric...', run: 'RUN ANALYSIS', market: 'MARKET PULSE', signals: 'SIGNAL REGISTER', decision: 'INTEGRATED DECISION', insights: 'MODEL INSIGHTS', operations: 'OPERATIONS' },
+    cn: { eyebrow: '决策支持终端', title: <>Make the next<br /><em>informed</em> move.</>, description: <>为重视信号而非噪音的团队提供<br className="desktop-only" /> 企业级市场情报。</>, search: '搜索资产、市场或指标...', run: '运行分析', market: '市场脉搏', signals: '信号登记', decision: '综合决策', insights: '模型洞察', operations: '运营' },
+    ko: { eyebrow: '의사결정 지원 터미널', title: <>Make the next<br /><em>informed</em> move.</>, description: <>노이즈보다 신호를 중시하는 팀을 위한<br className="desktop-only" /> 엔터프라이즈급 시장 인텔리전스.</>, search: '자산, 시장 또는 지표 검색...', run: '분석 실행', market: '시장 펄스', signals: '시그널 레지스터', decision: '통합 의사결정', insights: '모델 인사이트', operations: '운영' },
+  }[language]
 
   const filteredAssets = useMemo(() => assets.filter((asset) =>
     `${asset.symbol} ${asset.name}`.toLowerCase().includes(query.toLowerCase())
@@ -36,17 +47,17 @@ export default function Page() {
           <div className="brand-mark">A</div>
           <div><strong>AETHER</strong><span>MARKET INTELLIGENCE</span></div>
         </div>
-        <div className="top-meta"><span className="live-dot" /> LIVE DATA <span className="top-divider" /> UTC 14:32:08</div>
+        <div className="top-meta"><span className="live-dot" /> LIVE DATA <span className="top-divider" /> UTC 14:32:08 <span className="language-switcher" aria-label="Language selector">{(Object.keys(languageLabels) as Language[]).map((item) => <button key={item} className={language === item ? 'selected' : ''} onClick={() => setLanguage(item)}>{languageLabels[item]}</button>)}</span></div>
         <button className="account-button">ACCOUNT <span>JD</span></button>
       </header>
 
       <section className="hero-section">
-        <div className="eyebrow"><Diamond /> DECISION SUPPORT TERMINAL <span>v2.4.1</span></div>
-        <h1>Make the next<br /><em>informed</em> move.</h1>
-        <p className="hero-copy">Institutional-grade market intelligence for teams that<br className="desktop-only" /> value signal over noise.</p>
+        <div className="eyebrow"><Diamond /> {copy.eyebrow} <span>v2.4.1</span></div>
+        <h1>{copy.title}</h1>
+        <p className="hero-copy">{copy.description}</p>
         <div className="search-row">
           <label className="search-box"><span>/</span><input aria-label="Search market" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { setSearched(query.toUpperCase() || 'BTC/USD'); setQuery('') } }} placeholder="Search asset, market, or metric..." /><kbd>⌘ K</kbd></label>
-          <button className="primary-button" onClick={() => setSearched(query.toUpperCase() || 'BTC/USD')}>RUN ANALYSIS <span>↗</span></button>
+          <button className="primary-button" onClick={() => setSearched(query.toUpperCase() || 'BTC/USD')}>{copy.run} <span>↗</span></button>
         </div>
       </section>
 
