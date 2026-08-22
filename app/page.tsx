@@ -186,6 +186,9 @@ export default function Page() {
           <button className={`league-link ${newsOpen ? 'active' : ''}`} onClick={() => setNewsOpen(!newsOpen)}>
             <Diamond /> LIVE NEWSWIRE
           </button>
+          <a className="league-link" href="/orderbook" style={{ textDecoration: 'none' }}>
+            <Diamond /> L2 ORDERBOOK
+          </a>
           <span className="language-switcher" aria-label="Language selector">
             {(Object.keys(languageLabels) as Language[]).map((item) => (
               <button key={item} className={language === item ? 'selected' : ''} onClick={() => setLanguage(item)}>
