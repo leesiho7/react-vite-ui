@@ -47,7 +47,7 @@ export default function Page() {
   const [stance, setStance] = useState('BUY')
   const [watching, setWatching] = useState(false)
   const [searched, setSearched] = useState('BTC/USD')
-  const [language, setLanguage] = useState<Language>('cn')
+  const [language, setLanguage] = useState<Language>('ko')
   const [eventOpen, setEventOpen] = useState(false)
   const [communityOpen, setCommunityOpen] = useState(false)
   const [newsOpen, setNewsOpen] = useState(false)
@@ -127,7 +127,7 @@ export default function Page() {
     },
     cn: {
       eyebrow: 'AI 事实核查与开源量化终端',
-      title: <>Make the next<br /><em>informed move.</em></>,
+      title: <>迈出下一步<br /><em>明智之选。</em></>,
       description: <>为重视客观事实而非噪音的团队提供<br className="desktop-only" /> 企业级市场情报与可验证策略。</>,
       search: '搜索资产、市场或量化策略...',
       run: '运行分析',
@@ -138,16 +138,16 @@ export default function Page() {
       operations: '运营与导出'
     },
     ko: {
-      eyebrow: 'AI FACT-CHECK & OPEN QUANT INTELLIGENCE',
-      title: <>Clean finance,<br /><em>verified quant.</em></>,
-      description: <>AI fact-checks the noise while open-source strategies remain reproducible.<br className="desktop-only" /> Institutional-grade intelligence, built for transparency.</>,
-      search: 'Search asset (BTC, ETH, SOL, NVDA) or quant strategy...',
-      run: 'RUN FUSION ANALYSIS',
-      market: 'LIVE MARKET PULSE',
-      signals: 'SIGNAL REGISTER',
-      decision: 'INTEGRATED DECISION',
-      insights: 'AI FACT-CHECK & EXPERT ADVISORY',
-      operations: 'OPERATIONS & EXPORT'
+      eyebrow: 'AI 팩트체크 & 오픈 퀀트 터미널',
+      title: <>다음 선택을<br /><em>현명하게.</em></>,
+      description: <>AI가 시장의 소음을 팩트체크하고, 오픈소스 전략은 재현 가능하게 검증합니다.<br className="desktop-only" /> 데이터를 기반으로 한 기관급 인텔리전스입니다.</>,
+      search: '자산(BTC, ETH, SOL, NVDA) 또는 전략 검색...',
+      run: 'AI 융합 분석 실행',
+      market: '실시간 시장 펄스',
+      signals: '시그널 레지스터',
+      decision: '통합 의사결정',
+      insights: 'AI 팩트체크 & 전문가 자문',
+      operations: '운영 및 내보내기'
     },
   }[language]
 
