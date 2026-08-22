@@ -153,7 +153,7 @@ export default function Page() {
       decision: 'INTEGRATED DECISION',
       insights: 'AI FACT-CHECK & REASONING',
       operations: 'OPERATIONS',
-      personas: '💎 3 MASTER INVESTORS BRIEFING:',
+      personas: '3 MASTER INVESTORS BRIEFING:',
       buffett: 'Buffett:',
       simons: 'Simons:',
       dalio: 'Dalio:',
@@ -545,11 +545,7 @@ export default function Page() {
         <div className="signals-panel panel">
           <div className="panel-heading">
             <span><Diamond /> {copy.signals}</span>
-<<<<<<< HEAD
-            <span className="status-tag">AI FACT-CHECK ACTIVE</span>
-=======
             <span className="status-tag">{copy.factCheckTag}</span>
->>>>>>> origin/master
           </div>
 
           <div className="signal-list">
@@ -577,40 +573,22 @@ export default function Page() {
           {/* ta4j + Chroma 4-Engine Confidence */}
           <div className="confidence">
             <div>
-<<<<<<< HEAD
               <span>AI COMPOSITE CONFIDENCE (FUSION SCORE)</span>
-              <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.68'}</strong>
-=======
-              <span>AI 종합 신뢰도 (FUSION SCORE)</span>
               <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.82'}</strong>
->>>>>>> origin/master
             </div>
             <div className="confidence-bar">
               <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.82) + 1) * 50)}%` }} />
             </div>
             <small>
-<<<<<<< HEAD
               {decisionReport?.divergenceRisk || 'NORMAL: Technical indicators and macro sentiment remain aligned.'}
             </small>
           </div>
 
           <div className="advisory-briefing">
-            <span className="advisory-title">3 EXPERT AI ADVISORY BRIEFING</span>
-            <div><b>BUFFETT</b><span>{englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</span></div>
-            <div><b>SIMONS</b><span>{englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</span></div>
-            <div><b>DALIO</b><span>{englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</span></div>
-=======
-              {decisionReport?.divergenceRisk || 'Normal: Technical indicators and institutional news sentiment are aligned.'}
-            </small>
-          </div>
-
-          {/* 3대 투자 대가 자문 브리핑 (다국어 자동 번역 지원) */}
-          <div style={{ margin: '14px 18px', padding: '12px', background: '#f8fafb', border: '1px solid #edf0f2', fontSize: '9px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ color: '#18334a', fontWeight: 600 }}>{copy.personas}</span>
-            <div><b style={{ color: '#7c3aed' }}>{copy.buffett}</b> {decisionReport?.personaAdvice?.warrenBuffett || 'If network utility and adoption continue expanding, ignore short-term volatility.'}</div>
-            <div><b style={{ color: '#367ca4' }}>{copy.simons}</b> {decisionReport?.personaAdvice?.jimSimons || 'RSI at 62 with moving averages in ascending alignment yields positive mathematical expectation.'}</div>
-            <div><b style={{ color: '#2b866d' }}>{copy.dalio}</b> {decisionReport?.personaAdvice?.rayDalio || 'Macro liquidity cycles favor digital store-of-value, yet maintain 20% dry-powder cash reserve.'}</div>
->>>>>>> origin/master
+            <span className="advisory-title">{copy.personas}</span>
+            <div><b>{copy.buffett}</b><span>{englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</span></div>
+            <div><b>{copy.simons}</b><span>{englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</span></div>
+            <div><b>{copy.dalio}</b><span>{englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</span></div>
           </div>
         </div>
       </section>
@@ -623,11 +601,7 @@ export default function Page() {
             <span className="overline">{copy.decision} (4-ENGINE FUSION)</span>
             <strong>{decisionReport?.finalAction || stance} · {searched}</strong>
             <p style={{ fontSize: '10px', color: '#74808c', margin: '4px 0 0' }}>
-<<<<<<< HEAD
-              {decisionReport?.decisionReason || 'Quant indicators, news sentiment, and historical fractal patterns support a strong uptrend.'}
-=======
-              {decisionReport?.decisionReason || 'ta4j quantitative metrics, institutional news sentiment, and fractal win rates support strong upside momentum.'}
->>>>>>> origin/master
+              {decisionReport?.decisionReason || (language === 'cn' ? 'ta4j 定量指标、机构新闻情绪与历史形态胜率共同支持上行动能。' : language === 'ko' ? 'ta4j 정량 지표, 기관 뉴스 감성, 과거 패턴 승률이 강한 상승 모멘텀을 지지합니다.' : 'Quant indicators, news sentiment, and historical fractal patterns support a strong uptrend.')}
             </p>
           </div>
         </div>
@@ -661,13 +635,8 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">01</span>
             <div>
-<<<<<<< HEAD
-              <strong>MACRO & NEWS SENTIMENT ANALYSIS</strong>
-              <p>{decisionReport?.qualInsight?.macroSummary || 'Fed signals a rate hold while Bitcoin spot ETFs see $480M in net inflows.'}</p>
-=======
-              <strong>{language === 'en' ? 'Macro & Institutional Sentiment' : language === 'cn' ? '宏观与机构情绪分析' : '매크로 & 뉴스 감성 분석'}</strong>
-              <p>{decisionReport?.qualInsight?.macroSummary || 'U.S. Spot ETF saw +$480M net institutional inflow; whale wallet outflows reduce exchange sell pressure.'}</p>
->>>>>>> origin/master
+              <strong>{language === 'cn' ? '宏观与机构情绪分析' : language === 'ko' ? '매크로 & 뉴스 감성 분석' : 'MACRO & NEWS SENTIMENT ANALYSIS'}</strong>
+              <p>{decisionReport?.qualInsight?.macroSummary || (language === 'cn' ? '美国现货 ETF 获得 4.8 亿美元机构净流入。' : language === 'ko' ? '미국 현물 ETF에 4.8억 달러의 기관 순유입이 발생했습니다.' : 'Fed signals a rate hold while Bitcoin spot ETFs see $480M in net inflows.')}</p>
             </div>
             <span className="level high">HIGH</span>
           </div>
@@ -675,13 +644,8 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">02</span>
             <div>
-<<<<<<< HEAD
-              <strong>HISTORICAL FRACTAL PATTERN MATCH (89%)</strong>
-              <p>{decisionReport?.patternInsight?.patternSummary || '과거 유사 패턴 5건 중 4건(승률 80%)에서 5일 내 평균 +6.4% 추가 상승'}</p>
-=======
-              <strong>{language === 'en' ? 'Fractal Historical Pattern (89%)' : language === 'cn' ? '历史分形图表形态 (89%)' : '과거 프랙탈 차트 패턴 유사도 (89%)'}</strong>
-              <p>{decisionReport?.patternInsight?.patternSummary || 'In 4 out of 5 historical instances (80% win rate), price expanded +6.4% within 5 trading days.'}</p>
->>>>>>> origin/master
+              <strong>{language === 'cn' ? '历史分形图表形态 (89%)' : language === 'ko' ? '과거 프랙탈 차트 패턴 유사도 (89%)' : 'HISTORICAL FRACTAL PATTERN MATCH (89%)'}</strong>
+              <p>{decisionReport?.patternInsight?.patternSummary || (language === 'cn' ? '在过去五次相似案例中，有四次在五个交易日内平均上涨 6.4%。' : language === 'ko' ? '과거 유사 사례 5건 중 4건에서 5거래일 내 평균 6.4% 상승했습니다.' : 'In 4 out of 5 historical instances, price expanded +6.4% within 5 trading days.')}</p> origin/master
             </div>
             <span className="level high">80% WIN</span>
           </div>
@@ -689,13 +653,8 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">03</span>
             <div>
-<<<<<<< HEAD
-              <strong>KEY RISKS & INVALIDATION CONDITIONS</strong>
-              <p>{decisionReport?.qualInsight?.riskFactors || '주요 저항선 돌파 실패 시 단기 차익 실현 조정 가능성 주시'}</p>
-=======
-              <strong>{language === 'en' ? 'Risk Invalidation & Resistance' : language === 'cn' ? '潜在风险与阻力位' : '잠재 리스크 & 지지선 무효화 조건'}</strong>
-              <p>{decisionReport?.qualInsight?.riskFactors || 'Watch for short-term rejection liquidity near the $71,200 psychological resistance.'}</p>
->>>>>>> origin/master
+              <strong>{language === 'cn' ? '潜在风险与阻力位' : language === 'ko' ? '잠재 리스크 & 지지선 무효화 조건' : 'KEY RISKS & INVALIDATION CONDITIONS'}</strong>
+              <p>{decisionReport?.qualInsight?.riskFactors || (language === 'cn' ? '关注 71,200 美元心理阻力位附近的短期抛压。' : language === 'ko' ? '주요 저항선 돌파 실패 시 단기 차익 실현 가능성을 주시하세요.' : 'Watch for short-term rejection liquidity near the $71,200 psychological resistance.')}</p> origin/master
             </div>
             <span className="level med">MED</span>
           </div>
