@@ -11,15 +11,20 @@ import {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 /**
- * 1. 4대 AI 융합 통합 의사결정 리포트 조회
+ * 1. 4대 AI 융합 통합 의사결정 리포트 조회 (다국어 locale 지원: en / ko / cn)
  */
 export async function fetchIntegratedDecision(
   symbol = 'BTCUSDT',
-  timeFrame = 'D1',
-  limit = 100
+  timeFrame = '4H',
+  limit = 100,
+  locale = 'ko'
 ): Promise<IntegratedDecisionReport> {
   try {
-    const res = await fetch(`${API_BASE}/trading/decision?symbol=${symbol}&timeFrame=${timeFrame}&limit=${limit}`);
+    const res = await fetch(`${API_BASE}/trading/decision?symbol=${symbol}&timeFrame=${timeFrame}&limit=${limit}&locale=${locale}`, {
+      headers: {
+        'Accept-Language': locale
+      }
+    });
     if (res.ok) {
       return await res.json();
     }
@@ -27,13 +32,120 @@ export async function fetchIntegratedDecision(
     console.warn('[API] Fallback for fetchIntegratedDecision:', err);
   }
 
-  // Standalone Mock Fallback
+  // Multilingual Standalone Fallbacks (EN / CN / KO)
+  if (locale === 'en') {
+    return {
+      symbol,
+      finalAction: 'STRONG_BUY',
+      totalScore: 0.82,
+      divergenceRisk: 'Normal: Technical indicators and institutional news sentiment are strongly aligned.',
+      decisionReason: 'ta4j quantitative indicators (0.65), institutional macro sentiment (0.88), and fractal historical win rate (80%) support upside momentum.',
+      quantSignal: {
+        symbol,
+        currentPrice: 67842.10,
+        rsi: 62.4,
+        rsiStatus: 'Bullish Expansion',
+        goldenCross: true,
+        deadCross: false,
+        sma20: 64200.0,
+        sma50: 61800.0,
+        bollingerUpper: 71200.0,
+        bollingerMiddle: 65500.0,
+        bollingerLower: 59800.0,
+        suggestedAction: 'BUY',
+        quantScore: 0.65,
+        signalsSummary: ['20/50 SMA Golden Cross confirmed', 'RSI stable above 60', 'Upper Bollinger band walk in progress']
+      },
+      qualInsight: {
+        symbol,
+        sentiment: 'BULLISH',
+        sentimentScore: 0.88,
+        confidence: 0.92,
+        macroSummary: 'U.S. Spot ETF saw +$480M net institutional inflow; whale wallet outflows reduce exchange sell pressure.',
+        keyHeadlines: [
+          'Bloomberg Terminal: Institutional ETF capital inflows accelerate to $480M single-day record',
+          'On-chain Intelligence: 14,200 BTC moved off exchanges to cold custody'
+        ],
+        riskFactors: 'Watch for short-term rejection liquidity near the $71,200 psychological resistance.'
+      },
+      patternInsight: {
+        patternName: 'Bullish Flag Breakout (Fractal Match 89%)',
+        mostSimilarPeriod: '2023-10-16 (U.S. ETF Breakout Cycle)',
+        similarityScore: 0.89,
+        historicalWinRate: 0.80,
+        expectedReturn5Day: 0.064,
+        patternSummary: 'In 4 out of 5 historical instances (80% win rate), price expanded +6.4% within 5 trading days.'
+      },
+      agentReflection: 'Reflection: Aligned momentum-sentiment setups yield an 83% win rate in backtested regimes.',
+      personaAdvice: {
+        warrenBuffett: 'If the network utility and institutional adoption continue expanding, ignore short-term volatility.',
+        jimSimons: 'RSI at 62 with moving averages in ascending alignment yields positive mathematical expectation (1:2.8 R:R).',
+        rayDalio: 'Macro liquidity cycles favor digital store-of-value, but always preserve a 20% dry-powder cash reserve.'
+      },
+      generatedAt: new Date().toISOString()
+    };
+  }
+
+  if (locale === 'cn') {
+    return {
+      symbol,
+      finalAction: 'STRONG_BUY',
+      totalScore: 0.82,
+      divergenceRisk: '正常：技术面量化指标与宏观机构情绪高度契合。',
+      decisionReason: 'ta4j技术指标(0.65)、机构新闻情绪(0.88)及历史分形胜率(80%)共同支撑强劲上行动能。',
+      quantSignal: {
+        symbol,
+        currentPrice: 67842.10,
+        rsi: 62.4,
+        rsiStatus: '多头扩张',
+        goldenCross: true,
+        deadCross: false,
+        sma20: 64200.0,
+        sma50: 61800.0,
+        bollingerUpper: 71200.0,
+        bollingerMiddle: 65500.0,
+        bollingerLower: 59800.0,
+        suggestedAction: 'BUY',
+        quantScore: 0.65,
+        signalsSummary: ['20/50 SMA 形成金叉', 'RSI 稳守 60 上方', '布林带上轨多头形态']
+      },
+      qualInsight: {
+        symbol,
+        sentiment: 'BULLISH',
+        sentimentScore: 0.88,
+        confidence: 0.92,
+        macroSummary: '美国现货ETF单日净流入4.8亿美元，链上巨鲸冷钱包转账减少抛售压力。',
+        keyHeadlines: [
+          '彭博终端：机构ETF资金加速净流入，单日规模超4.8亿美元',
+          '链上数据：14,200枚BTC转入冷钱包储备，交易所现货供给吃紧'
+        ],
+        riskFactors: '关注71,200美元强阻力位的短期获利回吐压力。'
+      },
+      patternInsight: {
+        patternName: '看涨旗形突破 (分形匹配度 89%)',
+        mostSimilarPeriod: '2023-10-16 (ETF 首次突破行情)',
+        similarityScore: 0.89,
+        historicalWinRate: 0.80,
+        expectedReturn5Day: 0.064,
+        patternSummary: '历史类似5次分形中4次(胜率80%)在5个交易日内平均进一步上涨+6.4%。'
+      },
+      agentReflection: '模型复盘：量化与宏观同向共振时，顺势分批入场胜率达83%。',
+      personaAdvice: {
+        warrenBuffett: '只要底层网络效应与基本面稳固，就无须理会市场短期噪音。',
+        jimSimons: 'RSI 62且均线多头排列构成统计学正期望值，建议设置 1:2.8 盈亏比。',
+        rayDalio: '全球流动性环境改善，但仍需保持20%现金储备以防范极端波动。'
+      },
+      generatedAt: new Date().toISOString()
+    };
+  }
+
+  // Default: Korean (KO)
   return {
     symbol,
     finalAction: 'STRONG_BUY',
-    totalScore: 0.68,
-    divergenceRisk: 'NORMAL: Quantitative indicators and qualitative market sentiment are aligned.',
-    decisionReason: 'ta4j (0.65), news sentiment (0.70), and historical pattern win rate (80%) support a strong uptrend.',
+    totalScore: 0.82,
+    divergenceRisk: '정상: 기술적 지표와 거시 외신 분위기가 강력한 동조를 이룹니다.',
+    decisionReason: 'ta4j 정량 지표(0.65), 외신 감성(0.88), 과거 프랙탈 패턴 승률(80%) 3박자가 강력한 상승 추세를 지지함',
     quantSignal: {
       symbol,
       currentPrice: 67842.10,
@@ -53,17 +165,17 @@ export async function fetchIntegratedDecision(
     qualInsight: {
       symbol,
       sentiment: 'BULLISH',
-      sentimentScore: 0.70,
-      confidence: 0.88,
-      macroSummary: '미 연준 금리 동결 시사 및 기관 현물 ETF 대규모 순유입세 지속',
+      sentimentScore: 0.88,
+      confidence: 0.92,
+      macroSummary: '미국 현물 ETF 4.8억 달러 대규모 기관 순유입 및 고래 지갑 외부 이체 지속',
       keyHeadlines: [
-        '미국 연준 금리 정책 완화 기조 및 비트코인 현물 ETF 4.8억 달러 순유입',
-        '온체인 고래 지갑 8,500 BTC 외부 콜드월렛 이체 (거래소 매도 압력 급감)'
+        '블룸버그 터미널: 비트코인 현물 ETF 하루 4.8억 달러 순유입 기록',
+        '온체인 데이터: 14,200 BTC 외부 콜드월렛 이체로 거래소 매도 압력 급감'
       ],
-      riskFactors: '주요 저항선(70K) 돌파 실패 시 단기 차익 실현 조정 가능성'
+      riskFactors: '주요 심리적 저항선(71,200달러) 도달 시 단기 차익 실현 매물 주시'
     },
     patternInsight: {
-      patternName: '상승 깃발형 돌파 (Bullish Flag Breakout)',
+      patternName: '상승 깃발형 돌파 (프랙탈 매칭 89%)',
       mostSimilarPeriod: '2023-10-16 (비트코인 1차 상승 돌파기)',
       similarityScore: 0.89,
       historicalWinRate: 0.80,
@@ -72,9 +184,15 @@ export async function fetchIntegratedDecision(
     },
     agentReflection: '과거 복기: 지표-뉴스 동조 국면에서 추세 추종 시 승률 83% 달성 (분할 매수 유효)',
     personaAdvice: {
+<<<<<<< HEAD
       warrenBuffett: 'Do not be distracted by short-term noise while durable fundamentals and network effects remain intact.',
       jimSimons: 'RSI at 62 and rising moving averages indicate a statistical edge. Target a 1:2.4 risk-reward ratio.',
       rayDalio: 'Liquidity conditions are supportive, but maintain a 20% cash buffer to diversify risk.'
+=======
+      warrenBuffett: '훌륭한 자산의 펀더멘털과 네트워크 효과가 유지된다면 단기 소음에 흔들리지 마라.',
+      jimSimons: 'RSI 62 및 이평선 상향 배열로 통계적 상승 우위 구간 진입. 손익비 1:2.8 설정 권고.',
+      rayDalio: '유동성 사이클이 우호적이나, 현금 비중 20%를 상시 유지하여 리스크를 분산하라.'
+>>>>>>> origin/master
     },
     generatedAt: new Date().toISOString()
   };
@@ -85,7 +203,7 @@ export async function fetchIntegratedDecision(
  */
 export async function fetchHistoricalCandles(
   symbol = 'BTCUSDT',
-  timeFrame = 'D1',
+  timeFrame = '4H',
   limit = 100
 ): Promise<CandleData[]> {
   try {
@@ -97,18 +215,17 @@ export async function fetchHistoricalCandles(
     console.warn('[API] Fallback for fetchHistoricalCandles:', err);
   }
 
-  // Generate realistic candles fallback
   const now = Math.floor(Date.now() / 1000);
-  const day = 86400;
-  let price = 60000;
+  const step = 3600 * 4;
+  let price = 62000;
   const list: CandleData[] = [];
   for (let i = limit; i >= 0; i--) {
-    const time = now - i * day;
-    const delta = (Math.random() - 0.48) * 1200;
+    const time = now - i * step;
+    const delta = (Math.random() - 0.48) * 800;
     const open = price;
     const close = price + delta;
-    const high = Math.max(open, close) + Math.random() * 600;
-    const low = Math.min(open, close) - Math.random() * 600;
+    const high = Math.max(open, close) + Math.random() * 400;
+    const low = Math.min(open, close) - Math.random() * 400;
     const volume = Math.floor(1000 + Math.random() * 5000);
     price = close;
     list.push({ timestamp: time, open, high, low, close, volume });
@@ -130,10 +247,9 @@ export async function fetchPredictionLeaderboard(limit = 10): Promise<Prediction
   }
 
   return [
-    { rank: 1, userId: 101, nickname: '오라클_스나이퍼', tier: 'ORACLE', currentStreak: 12, maxStreak: 15, winRatePct: 88.5, totalPredictions: 45, wonPredictions: 40, totalEarnedTokens: 420.0 },
-    { rank: 2, userId: 102, nickname: '알파_퀀트마스터', tier: 'GRAND_MASTER', currentStreak: 8, maxStreak: 11, winRatePct: 82.0, totalPredictions: 60, wonPredictions: 49, totalEarnedTokens: 310.5 },
-    { rank: 3, userId: 103, nickname: '서울_헤지개미', tier: 'MASTER', currentStreak: 6, maxStreak: 9, winRatePct: 78.4, totalPredictions: 38, wonPredictions: 30, totalEarnedTokens: 245.0 },
-    { rank: 4, userId: 104, nickname: '시몬스_제자', tier: 'MASTER', currentStreak: 5, maxStreak: 8, winRatePct: 75.0, totalPredictions: 52, wonPredictions: 39, totalEarnedTokens: 190.0 }
+    { rank: 1, userId: 101, nickname: 'Oracle_Sniper', tier: 'ORACLE', currentStreak: 12, maxStreak: 15, winRatePct: 88.5, totalPredictions: 45, wonPredictions: 40, totalEarnedTokens: 420.0 },
+    { rank: 2, userId: 102, nickname: 'Alpha_QuantMaster', tier: 'GRAND_MASTER', currentStreak: 8, maxStreak: 11, winRatePct: 82.0, totalPredictions: 60, wonPredictions: 49, totalEarnedTokens: 310.5 },
+    { rank: 3, userId: 103, nickname: 'Seoul_HedgeAnt', tier: 'MASTER', currentStreak: 6, maxStreak: 9, winRatePct: 78.4, totalPredictions: 38, wonPredictions: 30, totalEarnedTokens: 245.0 }
   ];
 }
 
@@ -152,13 +268,13 @@ export async function fetchHiveMindBattle(symbol = 'BTCUSDT'): Promise<HiveMindB
 
   return {
     symbol,
-    aiConfidenceScore: 0.68,
+    aiConfidenceScore: 0.82,
     aiDecision: 'BULLISH',
-    humanBullPercentage: 71.5,
-    humanBearPercentage: 28.5,
-    totalHumanVotes: 1420,
+    humanBullPercentage: 74.2,
+    humanBearPercentage: 25.8,
+    totalHumanVotes: 1840,
     winningSide: 'CONSENSUS_AGREED',
-    battleCommentary: 'AI 모델과 인간 집단지성 71.5%가 일치하여 강력한 상방 지지선 형성 중'
+    battleCommentary: 'AI 모델과 인간 집단지성 74.2%가 일치하여 강력한 상방 지지선 형성 중'
   };
 }
 
@@ -183,7 +299,7 @@ export async function fetchArenaLeaderboard(season = 'SEASON_1', limit = 10): Pr
 }
 
 /**
- * 6. 1초 소셜 로그인 (네이버, 카카오, 구글, 애플, 메타마스크)
+ * 6. 1초 소셜 로그인
  */
 export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResponse> {
   try {
@@ -199,13 +315,12 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
     console.warn('[API] Fallback for socialLogin:', err);
   }
 
-  // Standalone fallback
   return {
     success: true,
     message: `${payload.provider} 간편 로그인 완료`,
     userId: 999,
     username: `${payload.provider.toLowerCase()}_${payload.providerId}`,
-    nickname: payload.nickname || `${payload.provider}_투자자`,
+    nickname: payload.nickname || `${payload.provider}_Investor`,
     walletAddress: payload.walletAddress || null,
     reputationScore: 100,
     tokenBalance: 50.0,

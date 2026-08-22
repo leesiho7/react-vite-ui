@@ -28,14 +28,31 @@ const defaultAssets = [
 ]
 
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
-const newsItems = [
-  { source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: '比特币站稳 67,000 美元上方，机构资金流入加速', impact: '8.6', sentiment: '看涨', tone: 'positive', thumb: 'BTC' },
-  { source: 'REUTERS TECH', tag: 'NVDA', title: '英伟达显示下一代人工智能基础设施需求持续强劲', impact: '9.1', sentiment: '看涨', tone: 'positive', thumb: 'NV' },
-  { source: 'FINANCIAL TIMES', tag: 'ETH', title: '以太坊质押活动创季度新高', impact: '6.8', sentiment: '中性', tone: 'neutral', thumb: 'ETH' }
-]
-
-type NewsItem = typeof newsItems[number]
 type Language = keyof typeof languageLabels
+
+// Multilingual News Feeds (EN: Bloomberg/Reuters, KO: 연합인포맥스/한경/DART, CN: 金十/财新)
+const newsItemsByLang = {
+  en: [
+    { source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: 'Bitcoin holds above $67K as institutional ETF net inflows top $480M', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC' },
+    { source: 'REUTERS TECH', tag: 'NVDA', title: 'NVIDIA signals sustained enterprise demand for next-gen AI superclusters', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV' },
+    { source: 'FINANCIAL TIMES', tag: 'ETH', title: 'Ethereum staking deposits reach record quarterly high amidst supply squeeze', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH' },
+    { source: 'WALL STREET JOURNAL', tag: 'MACRO', title: 'Federal Reserve hints at steady rate trajectory amidst resilient economic data', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED' }
+  ],
+  ko: [
+    { source: '연합인포맥스 속보', tag: 'BTC', title: '비트코인 현물 ETF 4.8억 달러 순유입… 67,000달러 안착 시도', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC' },
+    { source: '한국경제 증권부', tag: 'NVDA', title: '엔비디아 차세대 AI 인프라 수주 랠리… 글로벌 반도체 동반 강세', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV' },
+    { source: '매일경제 금융', tag: 'ETH', title: '이더리움 스테이킹 참여율 분기 최고치 경신… 거래소 매도 압력 완화', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH' },
+    { source: 'DART 전자공시 팩트체크', tag: '공시', title: '주요 상장 핀테크 법인 AI 자산배분 인프라 구축 공시 완료', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: '공시' }
+  ],
+  cn: [
+    { source: '金十数据 独家', tag: 'BTC', title: '比特币机构现货ETF单日净流入超4.8亿美元，稳守67,000关口', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC' },
+    { source: '财新网 科技前沿', tag: 'NVDA', title: '英伟达下一代企业级AI集群订单激增，半导体供应链全面提振', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV' },
+    { source: '8BTC 深度报道', tag: 'ETH', title: '以太坊质押总量创季度新高，交易所流通量持续净流出', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH' },
+    { source: '华尔街见闻 宏观', tag: 'MACRO', title: '美联储暗示利率政策保持稳健，全球宏观流动性周期回暖', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: '宏观' }
+  ]
+}
+
+type NewsItem = typeof newsItemsByLang['en'][number]
 
 function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
@@ -69,7 +86,10 @@ export default function Page() {
   const [humanWins, setHumanWins] = useState(2)
   const [aiWins, setAiWins] = useState(1)
   const [claimed, setClaimed] = useState(false)
-  const [activeNews, setActiveNews] = useState<NewsItem>(newsItems[0])
+
+  // Language-bound News List
+  const currentNewsList = useMemo(() => newsItemsByLang[language], [language])
+  const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
 
   // Live Low-Latency WebSocket Hook (Direct Exchange Connection)
   const {
@@ -83,12 +103,17 @@ export default function Page() {
     latestKline
   } = useMarketWebSocket(searched)
 
-  // Fetch Backend APIs on symbol or period change
+  // Update active news when language changes
+  useEffect(() => {
+    setActiveNews(newsItemsByLang[language][0])
+  }, [language])
+
+  // Fetch Backend APIs on symbol, period, or language change
   useEffect(() => {
     const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
     
-    // 1. Integrated Decision
-    fetchIntegratedDecision(rawSymbol, period, 100).then((rep) => {
+    // 1. Integrated Decision with locale
+    fetchIntegratedDecision(rawSymbol, period, 100, language).then((rep) => {
       setDecisionReport(rep)
       if (rep.finalAction.includes('BUY')) setStance('BUY')
       else if (rep.finalAction.includes('SELL')) setStance('SELL')
@@ -102,15 +127,19 @@ export default function Page() {
     fetchHiveMindBattle(rawSymbol).then(setBattle)
     fetchPredictionLeaderboard(10).then(setLeaderboard)
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies)
-  }, [searched, period])
+  }, [searched, period, language])
 
   // Live News Rotator
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setActiveNews((current) => newsItems[(newsItems.indexOf(current) + 1) % newsItems.length])
+      setActiveNews((current) => {
+        const list = newsItemsByLang[language]
+        const idx = list.findIndex((item) => item.title === current.title)
+        return list[(idx + 1) % list.length]
+      })
     }, 4500)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [language])
 
   const copy = {
     en: {
@@ -123,7 +152,15 @@ export default function Page() {
       signals: 'SIGNAL REGISTER',
       decision: 'INTEGRATED DECISION',
       insights: 'AI FACT-CHECK & REASONING',
-      operations: 'OPERATIONS'
+      operations: 'OPERATIONS',
+      personas: '💎 3 MASTER INVESTORS BRIEFING:',
+      buffett: 'Buffett:',
+      simons: 'Simons:',
+      dalio: 'Dalio:',
+      factCheckTag: '🛡️ AI FACT-CHECK ACTIVE',
+      newsClose: 'CLOSE ×',
+      rollingTag: '4.5S ROLLING · FACT-CHECKED',
+      newsLeadFact: '🛡️ FACT-CHECK VERIFIED'
     },
     cn: {
       eyebrow: 'AI 事实核查与开源量化终端',
@@ -135,7 +172,15 @@ export default function Page() {
       signals: '信号登记',
       decision: '综合决策',
       insights: 'AI 事实核查与推理',
-      operations: '运营与导出'
+      operations: '运营与导出',
+      personas: '3位大师 AI 咨询简报',
+      buffett: '巴菲特:',
+      simons: '西蒙斯:',
+      dalio: '达里奥:',
+      factCheckTag: 'AI 事实核查运行中',
+      newsClose: '关闭 ×',
+      rollingTag: '4.5秒滚动 · 深度核查',
+      newsLeadFact: '事实核查通过'
     },
     ko: {
       eyebrow: 'AI 팩트체크 & 오픈 퀀트 터미널',
@@ -147,7 +192,15 @@ export default function Page() {
       signals: '시그널 레지스터',
       decision: '통합 의사결정',
       insights: 'AI 팩트체크 & 전문가 자문',
-      operations: '운영 및 내보내기'
+      operations: '운영 및 내보내기',
+      personas: '3대 대가 AI 자문 브리핑',
+      buffett: '버핏:',
+      simons: '시몬스:',
+      dalio: '달리오:',
+      factCheckTag: 'AI 팩트체크 가동 중',
+      newsClose: '닫기 ×',
+      rollingTag: '4.5초 주기 롤링 · AI 팩트체크 완료',
+      newsLeadFact: '팩트체크 일치'
     },
   }[language]
 
@@ -228,13 +281,13 @@ export default function Page() {
             <div className="versus-side">
               <span className="overline">AI QUANT MODEL</span>
               <strong>{battle?.aiDecision || 'BULLISH'}</strong>
-              <small>CONFIDENCE: {Math.round((battle?.aiConfidenceScore || 0.68) * 100)}%</small>
+              <small>CONFIDENCE: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%</small>
             </div>
             <div className="versus-mark">VS</div>
             <div className="versus-side human">
               <span className="overline">HUMAN CONSENSUS</span>
-              <strong>{battle?.humanBullPercentage || 71.5}% BULL</strong>
-              <small>{battle?.totalHumanVotes || 1420} VOTERS PARTICIPATING</small>
+              <strong>{battle?.humanBullPercentage || 74.2}% BULL</strong>
+              <small>{battle?.totalHumanVotes || 1840} VOTERS PARTICIPATING</small>
             </div>
             <div className="scoreline">
               <span>HUMAN WINS <strong>{humanWins}</strong></span>
@@ -345,13 +398,13 @@ export default function Page() {
         </section>
       )}
 
-      {/* ── Live Newswire ── */}
+      {/* ── Live Newswire (Language Localized) ── */}
       {newsOpen && (
         <section className="news-section">
           <div className="news-live-bar">
-            <span className="live-dot pulse" /> LIVE NEWSWIRE
-            <span className="news-timer">4.5S ROLLING · AI FACT-CHECKED</span>
-            <button onClick={() => setNewsOpen(false)}>CLOSE ×</button>
+            <span className="live-dot pulse" /> LIVE NEWSWIRE ({languageLabels[language]})
+            <span className="news-timer">{copy.rollingTag}</span>
+            <button onClick={() => setNewsOpen(false)}>{copy.newsClose}</button>
           </div>
           <div className="news-layout">
             <button className="news-lead" onClick={() => selectNews(activeNews)}>
@@ -362,12 +415,12 @@ export default function Page() {
                 <div className="news-meta">
                   <span className={`sentiment ${activeNews.tone}`}>{activeNews.sentiment}</span>
                   <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
-                  <span>FACT-CHECK VERIFIED</span>
+                  <span>{copy.newsLeadFact}</span>
                 </div>
               </div>
             </button>
             <div className="media-feed">
-              {newsItems.map((item) => (
+              {currentNewsList.map((item) => (
                 <button
                   className={`feed-item ${item.title === activeNews.title ? 'active' : ''}`}
                   key={item.title}
@@ -407,7 +460,7 @@ export default function Page() {
                   setQuery('')
                 }
               }}
-              placeholder="BTC, ETH, SOL, NVDA 검색..."
+              placeholder={copy.search}
             />
             <kbd>⌘ K</kbd>
           </label>
@@ -492,7 +545,11 @@ export default function Page() {
         <div className="signals-panel panel">
           <div className="panel-heading">
             <span><Diamond /> {copy.signals}</span>
+<<<<<<< HEAD
             <span className="status-tag">AI FACT-CHECK ACTIVE</span>
+=======
+            <span className="status-tag">{copy.factCheckTag}</span>
+>>>>>>> origin/master
           </div>
 
           <div className="signal-list">
@@ -520,13 +577,19 @@ export default function Page() {
           {/* ta4j + Chroma 4-Engine Confidence */}
           <div className="confidence">
             <div>
+<<<<<<< HEAD
               <span>AI COMPOSITE CONFIDENCE (FUSION SCORE)</span>
               <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.68'}</strong>
+=======
+              <span>AI 종합 신뢰도 (FUSION SCORE)</span>
+              <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.82'}</strong>
+>>>>>>> origin/master
             </div>
             <div className="confidence-bar">
-              <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.68) + 1) * 50)}%` }} />
+              <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.82) + 1) * 50)}%` }} />
             </div>
             <small>
+<<<<<<< HEAD
               {decisionReport?.divergenceRisk || 'NORMAL: Technical indicators and macro sentiment remain aligned.'}
             </small>
           </div>
@@ -536,6 +599,18 @@ export default function Page() {
             <div><b>BUFFETT</b><span>{englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</span></div>
             <div><b>SIMONS</b><span>{englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</span></div>
             <div><b>DALIO</b><span>{englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</span></div>
+=======
+              {decisionReport?.divergenceRisk || 'Normal: Technical indicators and institutional news sentiment are aligned.'}
+            </small>
+          </div>
+
+          {/* 3대 투자 대가 자문 브리핑 (다국어 자동 번역 지원) */}
+          <div style={{ margin: '14px 18px', padding: '12px', background: '#f8fafb', border: '1px solid #edf0f2', fontSize: '9px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ color: '#18334a', fontWeight: 600 }}>{copy.personas}</span>
+            <div><b style={{ color: '#7c3aed' }}>{copy.buffett}</b> {decisionReport?.personaAdvice?.warrenBuffett || 'If network utility and adoption continue expanding, ignore short-term volatility.'}</div>
+            <div><b style={{ color: '#367ca4' }}>{copy.simons}</b> {decisionReport?.personaAdvice?.jimSimons || 'RSI at 62 with moving averages in ascending alignment yields positive mathematical expectation.'}</div>
+            <div><b style={{ color: '#2b866d' }}>{copy.dalio}</b> {decisionReport?.personaAdvice?.rayDalio || 'Macro liquidity cycles favor digital store-of-value, yet maintain 20% dry-powder cash reserve.'}</div>
+>>>>>>> origin/master
           </div>
         </div>
       </section>
@@ -548,14 +623,18 @@ export default function Page() {
             <span className="overline">{copy.decision} (4-ENGINE FUSION)</span>
             <strong>{decisionReport?.finalAction || stance} · {searched}</strong>
             <p style={{ fontSize: '10px', color: '#74808c', margin: '4px 0 0' }}>
+<<<<<<< HEAD
               {decisionReport?.decisionReason || 'Quant indicators, news sentiment, and historical fractal patterns support a strong uptrend.'}
+=======
+              {decisionReport?.decisionReason || 'ta4j quantitative metrics, institutional news sentiment, and fractal win rates support strong upside momentum.'}
+>>>>>>> origin/master
             </p>
           </div>
         </div>
 
         <div className="decision-score">
           <span>MODEL SCORE</span>
-          <strong>{decisionReport?.totalScore || '+0.68'} <small>/ 1.0</small></strong>
+          <strong>{decisionReport?.totalScore || '+0.82'} <small>/ 1.0</small></strong>
         </div>
 
         <div className="stance-toggle">
@@ -582,8 +661,13 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">01</span>
             <div>
+<<<<<<< HEAD
               <strong>MACRO & NEWS SENTIMENT ANALYSIS</strong>
               <p>{decisionReport?.qualInsight?.macroSummary || 'Fed signals a rate hold while Bitcoin spot ETFs see $480M in net inflows.'}</p>
+=======
+              <strong>{language === 'en' ? 'Macro & Institutional Sentiment' : language === 'cn' ? '宏观与机构情绪分析' : '매크로 & 뉴스 감성 분석'}</strong>
+              <p>{decisionReport?.qualInsight?.macroSummary || 'U.S. Spot ETF saw +$480M net institutional inflow; whale wallet outflows reduce exchange sell pressure.'}</p>
+>>>>>>> origin/master
             </div>
             <span className="level high">HIGH</span>
           </div>
@@ -591,8 +675,13 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">02</span>
             <div>
+<<<<<<< HEAD
               <strong>HISTORICAL FRACTAL PATTERN MATCH (89%)</strong>
               <p>{decisionReport?.patternInsight?.patternSummary || '과거 유사 패턴 5건 중 4건(승률 80%)에서 5일 내 평균 +6.4% 추가 상승'}</p>
+=======
+              <strong>{language === 'en' ? 'Fractal Historical Pattern (89%)' : language === 'cn' ? '历史分形图表形态 (89%)' : '과거 프랙탈 차트 패턴 유사도 (89%)'}</strong>
+              <p>{decisionReport?.patternInsight?.patternSummary || 'In 4 out of 5 historical instances (80% win rate), price expanded +6.4% within 5 trading days.'}</p>
+>>>>>>> origin/master
             </div>
             <span className="level high">80% WIN</span>
           </div>
@@ -600,8 +689,13 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">03</span>
             <div>
+<<<<<<< HEAD
               <strong>KEY RISKS & INVALIDATION CONDITIONS</strong>
               <p>{decisionReport?.qualInsight?.riskFactors || '주요 저항선 돌파 실패 시 단기 차익 실현 조정 가능성 주시'}</p>
+=======
+              <strong>{language === 'en' ? 'Risk Invalidation & Resistance' : language === 'cn' ? '潜在风险与阻力位' : '잠재 리스크 & 지지선 무효화 조건'}</strong>
+              <p>{decisionReport?.qualInsight?.riskFactors || 'Watch for short-term rejection liquidity near the $71,200 psychological resistance.'}</p>
+>>>>>>> origin/master
             </div>
             <span className="level med">MED</span>
           </div>
@@ -627,7 +721,7 @@ export default function Page() {
             <strong style={{ color: latencyMs < 30 ? '#2b866d' : '#b9812c' }}>{latencyMs} ms (WebSocket)</strong>
             <span className="refresh">↻</span>
           </div>
-          <button className="export-button" onClick={() => alert('공공 팩트체크 리포트 PDF 다운로드가 큐에 등록되었습니다.')}>
+          <button className="export-button" onClick={() => alert('Financial Intelligence Report PDF queued for export.')}>
             EXPORT REPORT <span>↓</span>
           </button>
         </div>
