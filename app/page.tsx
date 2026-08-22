@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { UserRound } from 'lucide-react'
 import {
   fetchIntegratedDecision,
   fetchHistoricalCandles,
@@ -201,7 +202,7 @@ export default function Page() {
         </div>
 
         <div className="account-toggle">
-          <a className="member-icon" href="/profile" aria-label="Open member profile">♙</a>
+          <a className="member-icon" href="/profile" aria-label="Open member profile"><UserRound size={15} strokeWidth={1.5} /></a>
           <a href="/login">QUICK SOCIAL LOGIN</a>
         </div>
       </header>
