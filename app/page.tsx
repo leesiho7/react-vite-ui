@@ -29,6 +29,11 @@ export default function Page() {
   const [watching, setWatching] = useState(false)
   const [searched, setSearched] = useState('BTC/USD')
   const [language, setLanguage] = useState<Language>('en')
+  const [eventOpen, setEventOpen] = useState(false)
+  const [round, setRound] = useState(3)
+  const [streak, setStreak] = useState(2)
+  const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   const copy = {
     en: { eyebrow: 'DECISION SUPPORT TERMINAL', title: <>Make the next<br /><em>informed</em> move.</>, description: <>Institutional-grade market intelligence for teams that<br className="desktop-only" /> value signal over noise.</>, search: 'Search asset, market, or metric...', run: 'RUN ANALYSIS', market: 'MARKET PULSE', signals: 'SIGNAL REGISTER', decision: 'INTEGRATED DECISION', insights: 'MODEL INSIGHTS', operations: 'OPERATIONS' },
@@ -47,9 +52,11 @@ export default function Page() {
           <div className="brand-mark">A</div>
           <div><strong>AETHER</strong><span>MARKET INTELLIGENCE</span></div>
         </div>
-        <div className="top-meta"><span className="live-dot" /> LIVE DATA <span className="top-divider" /> UTC 14:32:08 <span className="language-switcher" aria-label="Language selector">{(Object.keys(languageLabels) as Language[]).map((item) => <button key={item} className={language === item ? 'selected' : ''} onClick={() => setLanguage(item)}>{languageLabels[item]}</button>)}</span></div>
+        <div className="top-meta"><span className="live-dot" /> LIVE DATA <span className="top-divider" /> UTC 14:32:08 <button className={`league-link ${eventOpen ? 'active' : ''}`} onClick={() => setEventOpen(!eventOpen)}><Diamond /> 10-WIN LEAGUE</button><span className="language-switcher" aria-label="Language selector">{(Object.keys(languageLabels) as Language[]).map((item) => <button key={item} className={language === item ? 'selected' : ''} onClick={() => setLanguage(item)}>{languageLabels[item]}</button>)}</span></div>
         <button className="account-button">ACCOUNT <span>JD</span></button>
       </header>
+
+      {eventOpen && <section className="league-section"><div className="league-header"><div><div className="eyebrow"><Diamond /> 24H PREDICTION LEAGUE <span>EVENT / 001</span></div><h2>10 wins.<br /><em>One claim.</em></h2><p>Predict the next market move. Complete ten consecutive rounds<br className="desktop-only" /> to unlock the reserved USDT reward pool.</p></div><div className="pool-readout"><span>RESERVED POOL</span><strong>10,000.00 <small>USDT</small></strong><span className="status-tag">ESCROW READY</span></div></div><div className="league-progress"><div><span>STREAK <strong>{streak} / 10</strong></span><span>ROUND <strong>{round} / 10</strong></span></div><div className="progress-track"><i style={{ width: `${streak * 10}%` }} /></div></div><div className="prediction-card panel"><div className="panel-heading"><span><Diamond /> ROUND {String(round).padStart(2, '0')} · BTC / USD</span><span className="muted">NEXT 24H CLOSE</span></div><div className="prediction-body"><div><span className="overline">CURRENT PRICE</span><strong>$67,842.10</strong><p>Select the direction you expect before the market window closes.</p></div><div className="prediction-actions"><button className={prediction === 'UP' ? 'prediction selected up' : 'prediction up'} onClick={() => setPrediction('UP')}>↑ <span>UP</span><small>ABOVE CURRENT</small></button><button className={prediction === 'DOWN' ? 'prediction selected down' : 'prediction down'} onClick={() => setPrediction('DOWN')}>↓ <span>DOWN</span><small>BELOW CURRENT</small></button></div></div><button className="primary-button submit-prediction" disabled={!prediction || submitted} onClick={() => { setSubmitted(true); setStreak(Math.min(streak + 1, 10)); setRound(Math.min(round + 1, 10)) }}>{submitted ? 'PREDICTION RECORDED' : prediction ? 'SUBMIT PREDICTION' : 'SELECT A DIRECTION'} <span>↗</span></button></div><div className="claim-strip"><span><Diamond /> CLAIM STATUS</span><strong>{streak >= 10 ? 'REWARD UNLOCKED' : `${10 - streak} consecutive wins remaining`}</strong><button className="export-button" disabled={streak < 10}>CLAIM {streak >= 10 ? '10,000.00' : 'USDT'} <span>↗</span></button></div></section>}
 
       <section className="hero-section">
         <div className="eyebrow"><Diamond /> {copy.eyebrow} <span>v2.4.1</span></div>
