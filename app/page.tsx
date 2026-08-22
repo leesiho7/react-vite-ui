@@ -531,12 +531,11 @@ export default function Page() {
             </small>
           </div>
 
-          {/* 3대 투자 대가 자문 퀵 프리뷰 */}
-          <div style={{ margin: '14px 18px', padding: '12px', background: '#f8fafb', border: '1px solid #edf0f2', fontSize: '9px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ color: '#18334a', fontWeight: 600 }}>3 EXPERT AI ADVISORY BRIEFING:</span>
-            <div><b style={{ color: '#7c3aed' }}>BUFFETT:</b> {englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</div>
-            <div><b style={{ color: '#367ca4' }}>SIMONS:</b> {englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</div>
-            <div><b style={{ color: '#2b866d' }}>DALIO:</b> {englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</div>
+          <div className="advisory-briefing">
+            <span className="advisory-title">3 EXPERT AI ADVISORY BRIEFING</span>
+            <div><b>BUFFETT</b><span>{englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</span></div>
+            <div><b>SIMONS</b><span>{englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</span></div>
+            <div><b>DALIO</b><span>{englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</span></div>
           </div>
         </div>
       </section>
