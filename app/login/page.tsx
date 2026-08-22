@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const handleSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
     setLoadingProvider(provider)
-    setFeedback(`⏳ [${provider}] 안전 1초 인증 진행 중...`)
+    setFeedback(`[${provider}] Secure one-second authentication in progress...`)
 
     let localKey = `social_user_${provider.toLowerCase()}`
     let storedId = typeof window !== 'undefined' ? localStorage.getItem(localKey) : null
@@ -38,7 +38,7 @@ export default function LoginPage() {
       })
 
       if (res.success) {
-        setFeedback(`🎉 ${provider} 인증 성공! (+50.0 AETHER 지급 완료)`)
+        setFeedback(`${provider} authentication successful. +50.0 AETHER credited.`)
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth_session', JSON.stringify(res))
         }
@@ -46,7 +46,7 @@ export default function LoginPage() {
           router.push('/')
         }, 800)
       } else {
-        setFeedback(res.message || '인증에 실패했습니다.')
+        setFeedback(res.message || 'Authentication failed. Please try again.')
       }
     } catch (e: any) {
       setFeedback(`🎉 ${provider} 간편 로그인 완료! (환영합니다)`)
@@ -66,7 +66,7 @@ export default function LoginPage() {
           <div className="auth-mark">A</div>
           <div className="eyebrow"><span className="diamond">◆</span> AI FACT-CHECK & QUANT</div>
           <h1>Decisions,<br /><em>with evidence.</em></h1>
-          <p>개인정보 입력 없이 1초 만에 나의 퀀트 워크스페이스와 검증된 시그널에 안전하게 접근하세요.</p>
+          <p>Access your quant workspace and verified signals securely in one second, without entering personal information.</p>
           <div className="auth-status">
             <span className="live-dot" /> SYSTEMS OPERATIONAL <span>ENCRYPTED ZERO-PII SESSION</span>
           </div>
@@ -77,7 +77,7 @@ export default function LoginPage() {
             <div>
               <span className="overline">ONE-SECOND ACCESS</span>
               <h2>Welcome back.</h2>
-              <p className="auth-subtitle">복잡한 비밀번호 입력 없이 소셜 1초 로그인으로 시작하세요.</p>
+              <p className="auth-subtitle">Start with one-second social access. No complex password required.</p>
             </div>
             <span className="status-tag">SECURE</span>
           </div>
@@ -144,7 +144,7 @@ export default function LoginPage() {
 
           <div className="auth-divider"><span>PRIVACY COMPLIANCE POLICY</span></div>
           <p className="privacy-note">
-            🔒 본 서비스는 개인정보보호법(제16조 최소수집원칙)을 준수하며, 비밀번호·주민번호 등 민감정보를 절대 요구하거나 저장하지 않습니다.
+            This service follows data minimization principles. We never request or store passwords, national IDs, or sensitive personal information.
           </p>
         </section>
       </div>

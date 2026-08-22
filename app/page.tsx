@@ -136,18 +136,20 @@ export default function Page() {
       operations: '运营'
     },
     ko: {
-      eyebrow: 'AI 팩트체크 & 오픈 퀀트 공공 인텔리전스',
-      title: <>선동 없는 클린 금융,<br /><em>검증 가능한 퀀트.</em></>,
-      description: <>찌라시는 AI가 팩트체크하고, 전략은 오픈소스 코드로 직접 검증합니다.<br className="desktop-only" /> 노이즈를 걷어낸 기관급 투명 인텔리전스.</>,
-      search: '종목(BTC, ETH, SOL, NVDA) 또는 퀀트 전략 검색...',
-      run: '4대 AI 융합 분석',
-      market: '실시간 시장 펄스',
-      signals: '시그널 레지스터',
-      decision: '통합 의사결정',
-      insights: 'AI 팩트체크 & 3대 대가 자문',
-      operations: '운영 및 내보내기'
+      eyebrow: 'AI FACT-CHECK & OPEN QUANT INTELLIGENCE',
+      title: <>Clean finance,<br /><em>verified quant.</em></>,
+      description: <>AI fact-checks the noise while open-source strategies remain reproducible.<br className="desktop-only" /> Institutional-grade intelligence, built for transparency.</>,
+      search: 'Search asset (BTC, ETH, SOL, NVDA) or quant strategy...',
+      run: 'RUN FUSION ANALYSIS',
+      market: 'LIVE MARKET PULSE',
+      signals: 'SIGNAL REGISTER',
+      decision: 'INTEGRATED DECISION',
+      insights: 'AI FACT-CHECK & EXPERT ADVISORY',
+      operations: 'OPERATIONS & EXPORT'
     },
   }[language]
+
+  const englishPersona = (value: string | undefined, fallback: string) => value && !/[가-힣]/.test(value) ? value : fallback
 
   const selectNews = (item: NewsItem) => {
     setActiveNews(item)
@@ -200,7 +202,7 @@ export default function Page() {
 
         <div className="account-toggle">
           <a className="member-icon" href="/profile" aria-label="Open member profile">♙</a>
-          <a href="/login">⚡ 1초 간편 로그인</a>
+          <a href="/login">QUICK SOCIAL LOGIN</a>
         </div>
       </header>
 
@@ -211,7 +213,7 @@ export default function Page() {
             <div>
               <div className="eyebrow"><Diamond /> 24H PREDICTION LEAGUE <span>AI vs HUMAN BATTLE</span></div>
               <h2>10 wins.<br /><em>One claim.</em></h2>
-              <p>인간 집단지성과 AI 퀀트 모델의 24H 방향성 대결.<br className="desktop-only" /> 10회 연속 적중 시 에스크로 보상 풀(10,000 USDT)을 수령하세요.</p>
+              <p>Compete against the AI quant model on the next 24H market direction.<br className="desktop-only" /> Claim the 10,000 USDT reward pool after ten consecutive wins.</p>
             </div>
             <div className="pool-readout">
               <span>RESERVED POOL</span>
@@ -257,7 +259,7 @@ export default function Page() {
               <div>
                 <span className="overline">REALTIME PRICE</span>
                 <strong>{priceFormatted}</strong>
-                <p>다음 24시간 캔들 마감 방향을 선택하세요.</p>
+                <p>Select the expected direction of the next 24-hour candle close.</p>
               </div>
               <div className="prediction-actions">
                 <button
@@ -493,7 +495,7 @@ export default function Page() {
         <div className="signals-panel panel">
           <div className="panel-heading">
             <span><Diamond /> {copy.signals}</span>
-            <span className="status-tag">🛡️ AI 팩트체크 가동 중</span>
+            <span className="status-tag">AI FACT-CHECK ACTIVE</span>
           </div>
 
           <div className="signal-list">
@@ -521,23 +523,23 @@ export default function Page() {
           {/* ta4j + Chroma 4-Engine Confidence */}
           <div className="confidence">
             <div>
-              <span>AI 종합 신뢰도 (FUSION SCORE)</span>
+              <span>AI COMPOSITE CONFIDENCE (FUSION SCORE)</span>
               <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.68'}</strong>
             </div>
             <div className="confidence-bar">
               <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.68) + 1) * 50)}%` }} />
             </div>
             <small>
-              {decisionReport?.divergenceRisk || '정상: 기술 지표와 거시 뉴스 분위기가 정합성을 보임'}
+              {decisionReport?.divergenceRisk || 'NORMAL: Technical indicators and macro sentiment remain aligned.'}
             </small>
           </div>
 
           {/* 3대 투자 대가 자문 퀵 프리뷰 */}
           <div style={{ margin: '14px 18px', padding: '12px', background: '#f8fafb', border: '1px solid #edf0f2', fontSize: '9px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ color: '#18334a', fontWeight: 600 }}>💎 3대 대가 AI 자문 브리핑:</span>
-            <div><b style={{ color: '#7c3aed' }}>버핏:</b> {decisionReport?.personaAdvice?.warrenBuffett || '펀더멘털이 견고하다면 단기 소음에 일희일비하지 마라.'}</div>
-            <div><b style={{ color: '#367ca4' }}>시몬스:</b> {decisionReport?.personaAdvice?.jimSimons || 'RSI 및 이평선 상향으로 통계적 우위 구간 진입.'}</div>
-            <div><b style={{ color: '#2b866d' }}>달리오:</b> {decisionReport?.personaAdvice?.rayDalio || '유동성 사이클에 순응하되 현금 비중 20%를 상시 유지하라.'}</div>
+            <span style={{ color: '#18334a', fontWeight: 600 }}>3 EXPERT AI ADVISORY BRIEFING:</span>
+            <div><b style={{ color: '#7c3aed' }}>BUFFETT:</b> {englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</div>
+            <div><b style={{ color: '#367ca4' }}>SIMONS:</b> {englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</div>
+            <div><b style={{ color: '#2b866d' }}>DALIO:</b> {englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</div>
           </div>
         </div>
       </section>
@@ -550,7 +552,7 @@ export default function Page() {
             <span className="overline">{copy.decision} (4-ENGINE FUSION)</span>
             <strong>{decisionReport?.finalAction || stance} · {searched}</strong>
             <p style={{ fontSize: '10px', color: '#74808c', margin: '4px 0 0' }}>
-              {decisionReport?.decisionReason || 'ta4j 정량 지표와 뉴스 감성, 과거 프랙탈 패턴이 강력한 상승 추세를 지지함'}
+              {decisionReport?.decisionReason || 'Quant indicators, news sentiment, and historical fractal patterns support a strong uptrend.'}
             </p>
           </div>
         </div>
@@ -584,8 +586,8 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">01</span>
             <div>
-              <strong>매크로 & 뉴스 감성 분석</strong>
-              <p>{decisionReport?.qualInsight?.macroSummary || '미 연준 금리 동결 시사 및 비트코인 현물 ETF 4.8억 달러 순유입'}</p>
+              <strong>MACRO & NEWS SENTIMENT ANALYSIS</strong>
+              <p>{decisionReport?.qualInsight?.macroSummary || 'Fed signals a rate hold while Bitcoin spot ETFs see $480M in net inflows.'}</p>
             </div>
             <span className="level high">HIGH</span>
           </div>
@@ -593,7 +595,7 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">02</span>
             <div>
-              <strong>과거 프랙탈 차트 패턴 유사도 (89%)</strong>
+              <strong>HISTORICAL FRACTAL PATTERN MATCH (89%)</strong>
               <p>{decisionReport?.patternInsight?.patternSummary || '과거 유사 패턴 5건 중 4건(승률 80%)에서 5일 내 평균 +6.4% 추가 상승'}</p>
             </div>
             <span className="level high">80% WIN</span>
@@ -602,7 +604,7 @@ export default function Page() {
           <div className="insight-row">
             <span className="insight-number">03</span>
             <div>
-              <strong>잠재 리스크 & 지지선 무효화 조건</strong>
+              <strong>KEY RISKS & INVALIDATION CONDITIONS</strong>
               <p>{decisionReport?.qualInsight?.riskFactors || '주요 저항선 돌파 실패 시 단기 차익 실현 조정 가능성 주시'}</p>
             </div>
             <span className="level med">MED</span>
