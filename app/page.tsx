@@ -83,8 +83,17 @@ function Diamond() {
 }
 
 const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET'])
+const assetAliases: Record<string, string> = {
+  '리플': 'XRP/USD', '리플코인': 'XRP/USD', '엑스알피': 'XRP/USD',
+  '비트코인': 'BTC/USD', '이더리움': 'ETH/USD', '엔비디아': 'NVDA/USD',
+  '테슬라': 'TSLA/USD', '애플': 'AAPL/USD', '삼성전자': '005930.KS',
+}
 
 function extractAssetSymbol(input: string, fallback = 'BTC/USD') {
+  // Korean asset names are normalized before ticker extraction.
+
+  const alias = Object.entries(assetAliases).find(([name]) => input.includes(name))
+  if (alias) return alias[1]
   const normalized = input.toUpperCase().replace(/\$/g, '')
   const pair = normalized.match(/\b[A-Z0-9]{2,12}\s*[./-]\s*(?:USD|USDT|KRW|EUR|JPY|KS)\b/)
   if (pair) return pair[0].replace(/\s+/g, '').replace('-', '/')
