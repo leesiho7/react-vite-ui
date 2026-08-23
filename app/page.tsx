@@ -278,11 +278,7 @@ export default function Page() {
     },
   }[language]
 
-  const personaText = (value: string | undefined, englishFallback: string, koreanFallback: string, chineseFallback: string) => {
-    if (language === 'ko') return value && /[가-힣]/.test(value) ? value : koreanFallback
-    if (language === 'cn') return value && /[\u4e00-\u9fff]/.test(value) ? value : chineseFallback
-    return value && !/[가-힣]/.test(value) ? value : englishFallback
-  }
+  const personaText = (value: string | undefined) => value?.trim() || (language === 'ko' ? '실시간 자문 데이터가 아직 도착하지 않았습니다.' : language === 'cn' ? '实时咨询数据尚未返回。' : 'Live advisory data has not returned yet.')
 
   const selectNews = (item: NewsItem) => {
     setActiveNews(item)
@@ -682,9 +678,9 @@ export default function Page() {
 
           <div className="advisory-briefing">
             <span className="advisory-title">{copy.personas}</span>
-            <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.', '견고한 펀더멘털에 집중하고 단기 시장 소음에 흔들리지 마세요.', '关注长期基本面，不要被短期市场噪音干扰。')}</span></div>
-            <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.', 'RSI와 이동평균선이 상승하며 통계적 우위 구간에 진입했습니다.', 'RSI与移动平均线同步上行，进入统计优势区间。')}</span></div>
-            <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.', '유동성 사이클을 존중하되 현금 비중 20%를 유지해 위험을 분산하세요.', '顺应流动性周期，同时���持20%的现金储备以分散风险。')}</span></div>
+            <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett)}</span></div>
+            <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons)}</span></div>
+            <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio)}</span></div>
           </div>
         </div>
       </section>
@@ -696,7 +692,7 @@ export default function Page() {
           <span className="status-tag">{researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}</span>
         </div>
         <div className="research-intro">
-          <div><span className="overline">SCENARIO ANALYSIS</span><h2>{language === 'cn' ? '验证你的下一步决策' : language === 'ko' ? '다음 투자 결정을 검증하세요' : 'Validate your next move'}</h2><p>{language === 'cn' ? '跨市场数据、新闻、宏观与链上证据。' : language === 'ko' ? '시장·뉴스·거시·온체인 근거를 한 번에 교차검증합니다.' : 'Cross-check market, news, macro, and on-chain evidence in one pass.'}</p></div>
+          <div><span className="overline">SCENARIO ANALYSIS</span><h2>{language === 'cn' ? '验证你的下一步决策' : language === 'ko' ? '다음 투자 결정을 검증하세요' : 'Validate your next move'}</h2><p>{language === 'cn' ? '跨市场数据、��闻、宏观与链上证据。' : language === 'ko' ? '시장·뉴스·거시·온체인 근거를 한 번에 교차검증합니다.' : 'Cross-check market, news, macro, and on-chain evidence in one pass.'}</p></div>
           <span className="research-context">{searched} · LIVE CONTEXT</span>
         </div>
         <div className="research-mode-switch" role="tablist" aria-label="Research mode">
