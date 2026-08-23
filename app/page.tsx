@@ -761,53 +761,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ── Expert Directory ── */}
-      <section className="expert-directory panel">
-        <div className="panel-heading"><span><Diamond /> EXPERT DIRECTORY</span><span className="status-tag">RANKED BY VERIFIED SIGNALS</span></div>
-        <div className="directory-intro"><div><span className="overline">ANALYST NETWORK</span><h2>Follow conviction, not noise.</h2><p>전문가의 분석 기록과 팩트체크 이력을 확인하고 한 번의 클릭으로 팔로우하세요.</p></div><button className="text-button">VIEW ALL EXPERTS ↗</button></div>
-        <div className="expert-grid">
-          {experts.map((expert) => {
-            const displayName = expert.nickname || expert.username || 'Analyst'
-            const role = expert.role || 'Quant Analyst'
-            const score = expert.reputationScore || 95
-            const posts = expert.posts || 104
-            const followerNum = typeof expert.followerCount === 'number' ? expert.followerCount : 12400
-            const followers = followerNum >= 1000 ? `${(followerNum / 1000).toFixed(1)}K` : followerNum
-            const tone = expert.tone || (displayName.includes('Mina') ? 'navy' : displayName.includes('Alex') ? 'green' : 'blue')
-            const initials = displayName.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
-
-            return (
-              <article className="expert-card" key={expert.userId || displayName}>
-                <div className={`expert-avatar ${tone}`}>{initials}</div>
-                <div className="expert-main">
-                  <div className="expert-name-row">
-                    <div>
-                      <strong>{displayName}</strong>
-                      <span>{role}</span>
-                    </div>
-                    <button
-                      className={`follow-button ${expert.isFollowedByMe ? 'following' : ''}`}
-                      onClick={() => handleFollow(expert.userId || 1)}
-                    >
-                      {expert.isFollowedByMe ? 'FOLLOWING ✓' : 'FOLLOW +'}
-                    </button>
-                  </div>
-                  <div className="expert-stats">
-                    <span>VERIFIED SCORE <b>{score}</b></span>
-                    <span>POSTS <b>{posts}</b></span>
-                    <span>FOLLOWERS <b>{followers}</b></span>
-                  </div>
-                  <div className="expert-note">
-                    <span>LAST SIGNAL</span>
-                    <strong>Fact-checked · {score}% confidence</strong>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
-      </section>
-
       {/* ── Footer ── */}
       <footer>
         <span>AETHER TERMINAL // AI FACT-CHECK & OPEN QUANT</span>
