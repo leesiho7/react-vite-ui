@@ -9,7 +9,8 @@ import {
   fetchHiveMindBattle,
   fetchArenaLeaderboard,
   fetchTopExperts,
-  toggleFollowExpert
+  toggleFollowExpert,
+  sendResearchChat
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
