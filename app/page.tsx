@@ -82,6 +82,16 @@ function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
 }
 
+const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET'])
+
+function extractAssetSymbol(input: string, fallback = 'BTC/USD') {
+  const normalized = input.toUpperCase().replace(/\$/g, '')
+  const pair = normalized.match(/\b[A-Z0-9]{2,12}\s*[./-]\s*(?:USD|USDT|KRW|EUR|JPY|KS)\b/)
+  if (pair) return pair[0].replace(/\s+/g, '').replace('-', '/')
+  const ticker = normalized.match(/\b[A-Z]{2,6}\b|\b\d{6}\b/g)?.find((candidate) => !symbolStopWords.has(candidate))
+  return ticker ? `${ticker}/USD` : fallback
+}
+
 export default function Page() {
   const [query, setQuery] = useState('')
   const [period, setPeriod] = useState('4H')
@@ -168,7 +178,7 @@ export default function Page() {
     try {
       const response = await sendResearchChat({
         prompt: researchPrompt.trim() || (researchMode === 'GUIDE' ? 'Explain the key risks and practical allocation guidance for this asset.' : 'Produce an institutional-grade research brief for this asset.'),
-        symbol: searched,
+        symbol: extractAssetSymbol(`${researchPrompt} ${searched}`, searched),
         mode: researchMode,
         language,
       })
@@ -531,7 +541,7 @@ export default function Page() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  setSearched(query.toUpperCase() || 'BTC/USD')
+                  setSearched(extractAssetSymbol(query))
                   setQuery('')
                 }
               }}
@@ -539,7 +549,7 @@ export default function Page() {
             />
             <kbd>⌘ K</kbd>
           </label>
-          <button className="primary-button" onClick={() => setSearched(query.toUpperCase() || 'BTC/USD')}>
+          <button className="primary-button" onClick={() => setSearched(extractAssetSymbol(query))}>
             {copy.run} <span>↗</span>
           </button>
         </div>
@@ -682,7 +692,7 @@ export default function Page() {
           <button role="tab" aria-selected={researchMode === 'INSIGHT'} className={researchMode === 'INSIGHT' ? 'selected' : ''} onClick={() => setResearchMode('INSIGHT')}><strong>INSIGHT MODE</strong><span>Bloomberg desk · TA4J · expert lenses</span></button>
           <button role="tab" aria-selected={researchMode === 'GUIDE'} className={researchMode === 'GUIDE' ? 'selected' : ''} onClick={() => setResearchMode('GUIDE')}><strong>GUIDE MODE</strong><span>Plain-language risk · allocation guidance</span></button>
         </div>
-        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절할지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>{researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
+        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절���지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>{researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
         {researchError && <div className="research-error" role="alert">{researchError}</div>}
         {researchRan && researchResponse && <div className="research-response"><div className="overline">LIVE BACKEND RESPONSE</div><div className="research-response-body">{typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}</div></div>}
         {researchRan && <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}><div><span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span><strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong></div>{researchMode === 'GUIDE' ? <div className="guide-cards"><span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span><span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span><span>NEXT STEP <b>지금 확인할 행동</b></span></div> : <div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>TA4J SIGNALS <b>CALCULATED</b></span><span>EXPERT LENSES <b>REVIEWED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div>}</div>}
