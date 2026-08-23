@@ -149,16 +149,16 @@ export default function Page() {
       if (rep.finalAction.includes('BUY')) setStance('BUY')
       else if (rep.finalAction.includes('SELL')) setStance('SELL')
       else setStance('HOLD')
-    })
+    }).catch((error) => console.error('[v0] Decision backend unavailable:', error))
 
     // 2. Historical Candles
-    fetchHistoricalCandles(rawSymbol, period, 40).then(setCandles)
+    fetchHistoricalCandles(rawSymbol, period, 40).then(setCandles).catch((error) => console.error('[v0] Candles backend unavailable:', error))
 
     // 3. Battle & Arena Data
-    fetchHiveMindBattle(rawSymbol).then(setBattle)
-    fetchPredictionLeaderboard(10).then(setLeaderboard)
-    fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies)
-    fetchTopExperts().then(setExperts)
+    fetchHiveMindBattle(rawSymbol).then(setBattle).catch((error) => console.error('[v0] Battle backend unavailable:', error))
+    fetchPredictionLeaderboard(10).then(setLeaderboard).catch((error) => console.error('[v0] Leaderboard backend unavailable:', error))
+    fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
+    fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
   }, [searched, period, language])
 
   // Live News Rotator
