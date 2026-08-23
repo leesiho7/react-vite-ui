@@ -9,7 +9,8 @@ import {
   fetchHiveMindBattle,
   fetchArenaLeaderboard,
   fetchTopExperts,
-  toggleFollowExpert
+  toggleFollowExpert,
+  sendResearchChat
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -102,6 +103,8 @@ export default function Page() {
   const [researchRan, setResearchRan] = useState(true)
   const [researchLoading, setResearchLoading] = useState(false)
   const [researchStep, setResearchStep] = useState('')
+  const [chatHistory, setChatHistory] = useState<Array<{ role: string; content: string }>>([])
+  const [customAiReply, setCustomAiReply] = useState<string>('')
   
   // Real Backend Data State
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
@@ -250,17 +253,43 @@ export default function Page() {
     setNewsOpen(true)
   }
 
-  const handleRunDeepResearch = () => {
+  const handleRunDeepResearch = async () => {
     setResearchLoading(true)
     setResearchStep('1/3: Scanning microstructure...')
-    setTimeout(() => {
-      setResearchStep('2/3: Checking Bright Data & macro...')
-      setTimeout(() => {
-        setResearchStep('3/3: Synthesizing LLaMA 3...')
-        setTimeout(() => {
+    
+    const queryText = researchPrompt.trim() || `${searched} 현재 매수/매도 타이밍 및 분할 진입 전략 분석`
+    
+    setTimeout(async () => {
+      setResearchStep('2/3: Checking Bright Data & memory...')
+      setTimeout(async () => {
+        setResearchStep('3/3: Synthesizing LLaMA 3 conversational reasoning...')
+        
+        try {
+          const res = await sendResearchChat({
+            symbol: searched,
+            prompt: queryText,
+            intent: researchIntent,
+            scope: researchScope,
+            depth: researchDepth,
+            amount: researchAmount,
+            horizon: researchHorizon,
+            history: chatHistory
+          })
+          
+          if (res && res.reply) {
+            setCustomAiReply(res.reply)
+            setChatHistory((prev) => [
+              ...prev,
+              { role: 'user', content: queryText },
+              { role: 'assistant', content: res.reply }
+            ])
+          }
+        } catch (e) {
+          console.warn('Research chat error:', e)
+        } finally {
           setResearchLoading(false)
           setResearchRan(true)
-        }, 350)
+        }
       }, 350)
     }, 350)
   }
@@ -759,11 +788,10 @@ export default function Page() {
                 </div>
 
                 <div className="report-section">
-                  <h4>05. ACTIONABLE EXECUTION ADVICE (실행 권고안)</h4>
-                  <p>
-                    {researchPrompt ? `질문 분석 ("${researchPrompt}"): ` : ''}
-                    현재 시점에서는 <strong>분할 매수(Scale-in)</strong> 전략이 가장 유리하며, 50일 이동평균선 이탈 시 포지션을 보수적으로 축소하는 리스크 관리를 권고합니다.
-                  </p>
+                  <h4>05. ACTIONABLE CONVERSATIONAL ADVICE (대화형 맞춤 실행 권고안)</h4>
+                  <div style={{ whiteSpace: 'pre-wrap', color: '#1a202c', lineHeight: 1.7, background: '#f8fafc', padding: '14px', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                    {customAiReply || `${searched} 분석: 현재 시점에서는 3단계 분할 매수(Scale-in: 30% / 40% / 30%) 전략이 가장 유리하며, 주요 지지선 이탈 시 리스크 관리를 권고합니다.`}
+                  </div>
                   <div className="report-tags">
                     <span className="report-tag">CONFIDENCE: {Math.round((decisionReport?.qualInsight?.confidence || 0.92) * 100)}%</span>
                     <span className="report-tag">RISK LEVEL: {decisionReport?.divergenceRisk ? 'LOW-MED' : 'NORMAL'}</span>
