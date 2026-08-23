@@ -107,6 +107,7 @@ export default function Page() {
   const [activeQueryAnswer, setActiveQueryAnswer] = useState('')
   const [streamedAnswer, setStreamedAnswer] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [latestAiResponse, setLatestAiResponse] = useState<any>(null)
   
   // Real Backend Data State
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
@@ -300,6 +301,7 @@ export default function Page() {
       })
 
       if (res) {
+        setLatestAiResponse(res);
         // 본문: answer -> content -> message -> reply 순서로 표시, 그 외는 JSON 출력
         if (typeof res === 'string') {
           fullAns = res
