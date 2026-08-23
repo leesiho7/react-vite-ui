@@ -54,3 +54,6 @@ button { cursor: pointer; }
   .research-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .expert-grid { grid-template-columns: 1fr; }
 }
+
+@keyframes blinkCursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.streaming-cursor { display: inline-block; width: 8px; height: 14px; background: #16a34a; vertical-align: middle; margin-left: 3px; animation: blinkCursor 0.6s infinite; }
