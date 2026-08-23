@@ -366,3 +366,33 @@ export async function toggleFollowExpert(followerId: number, targetUserId: numbe
 
   return { success: true, following: true, followerCount: 12401 };
 }
+
+/**
+ * 9. 대화형 AI 퀀트 리서치 질의 (Qwen 2.5 14B + BGE-M3 RAG)
+ */
+export async function sendResearchChat(payload: {
+  symbol?: string;
+  prompt: string;
+  conversationId?: string;
+  intent?: string;
+  scope?: string;
+  depth?: string;
+  amount?: string;
+  horizon?: string;
+  history?: Array<{ role: string; content: string }>;
+}): Promise<any> {
+  try {
+    const res = await fetch(API_BASE + '/ai/research-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] Error calling /ai/research-chat:', err);
+  }
+  return null;
+}
+
