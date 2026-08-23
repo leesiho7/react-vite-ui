@@ -534,7 +534,7 @@ export default function Page() {
           />
 
           <div className="period-row">
-            {['1H', '4H', '1D', '1W'].map((item) => (
+            {['1m', '5m', '15m', '30m', '1H', '4H', '1D', '1W'].map((item) => (
               <button
                 className={period === item ? 'selected' : ''}
                 key={item}
