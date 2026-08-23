@@ -33,3 +33,24 @@ button { cursor: pointer; }
 .news-photo-hero { width: 100%; height: 100%; object-fit: cover; display: block; }
 .news-photo-item { width: 100%; height: 100%; object-fit: cover; display: block; }
 .news-thumb { overflow: hidden; padding: 0 !important; }
+@media (max-width: 760px) {
+  .terminal-shell { width: 100%; max-width: 100%; padding: 0 28px; overflow-x: hidden; }
+  .topbar { width: 100%; min-width: 0; gap: 10px; }
+  .top-meta { min-width: 0; flex: 1; overflow: hidden; }
+  .workspace-grid, .lower-grid, .news-layout { display: block; width: 100%; min-width: 0; }
+  .workspace-grid > *, .lower-grid > *, .news-layout > * { width: 100%; min-width: 0; }
+  .market-panel { overflow: hidden; }
+  .panel-heading { min-width: 0; padding: 0 12px; }
+  .panel-heading > span { min-width: 0; }
+  .panel-heading > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .panel-heading > span:last-child { white-space: nowrap; }
+  .asset-tabs, .period-row { max-width: 100%; overflow-x: auto; }
+  .price-row { min-width: 0; padding: 22px 14px 10px; }
+  .chart-wrap { width: 100%; min-width: 0; overflow: hidden; padding-left: 34px; padding-right: 10px; }
+  .chart-wrap canvas, .chart { display: block; width: 100% !important; max-width: 100%; }
+  .news-lead { grid-template-columns: 78px minmax(0, 1fr); gap: 10px; }
+  .news-lead-copy, .feed-item > div { min-width: 0; }
+  .news-lead-copy h2, .feed-item strong { overflow-wrap: anywhere; }
+  .research-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .expert-grid { grid-template-columns: 1fr; }
+}
