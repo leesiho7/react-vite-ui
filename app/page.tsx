@@ -724,6 +724,15 @@ export default function Page() {
         </div>
       </section>
 
+      {/* ── Expert Directory ── */}
+      <section className="expert-directory panel">
+        <div className="panel-heading"><span><Diamond /> EXPERT DIRECTORY</span><span className="status-tag">RANKED BY VERIFIED SIGNALS</span></div>
+        <div className="directory-intro"><div><span className="overline">ANALYST NETWORK</span><h2>Follow conviction, not noise.</h2><p>전문가의 분석 기록과 팩트체크 이력을 확인하고 한 번의 클릭으로 팔로우하세요.</p></div><button className="text-button">VIEW ALL EXPERTS ↗</button></div>
+        <div className="expert-grid">
+          {[{name:'Mina Park', role:'Macro & Digital Assets', score:'94.8', posts:'128', followers:'12.4K', tone:'navy'}, {name:'J. Han', role:'Systematic Quant Research', score:'91.6', posts:'86', followers:'8.7K', tone:'blue'}, {name:'Alex Chen', role:'Global Equity Strategy', score:'89.3', posts:'104', followers:'6.2K', tone:'green'}].map((expert) => <article className="expert-card" key={expert.name}><div className={`expert-avatar ${expert.tone}`}>{expert.name.split(' ').map((part) => part[0]).join('')}</div><div className="expert-main"><div className="expert-name-row"><div><strong>{expert.name}</strong><span>{expert.role}</span></div><button className="follow-button" onClick={(event) => { event.currentTarget.textContent = event.currentTarget.textContent === 'FOLLOW' ? 'FOLLOWING' : 'FOLLOW' }}>{'FOLLOW'}</button></div><div className="expert-stats"><span>VERIFIED SCORE <b>{expert.score}</b></span><span>POSTS <b>{expert.posts}</b></span><span>FOLLOWERS <b>{expert.followers}</b></span></div><div className="expert-note"><span>LAST SIGNAL</span><strong>Fact-checked · {expert.score}% confidence</strong></div></div></article>)}
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer>
         <span>AETHER TERMINAL // AI FACT-CHECK & OPEN QUANT</span>
