@@ -338,7 +338,11 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
  */
 export async function fetchTopExperts(currentUserId?: number, limit = 10): Promise<any[]> {
   try {
+<<<<<<< HEAD
     const url = currentUserId
+=======
+    const url = currentUserId 
+>>>>>>> origin/master
       ? `${API_BASE}/community/experts?currentUserId=${currentUserId}&limit=${limit}`
       : `${API_BASE}/community/experts?limit=${limit}`;
     const res = await fetch(url);
@@ -355,9 +359,9 @@ export async function fetchTopExperts(currentUserId?: number, limit = 10): Promi
   throw new Error(`Backend experts API unavailable: ${API_BASE}/community/experts`)
 
   return [
-    { userId: 1, nickname: 'Mina Park', username: 'mina_park_macro', role: 'Macro & Digital Assets', reputationScore: 98, posts: 128, followerCount: 18700, isFollowedByMe: false, tone: 'navy' },
-    { userId: 2, nickname: 'Alex Chen', username: 'alex_chen_ai', role: 'Global Tech & Semiconductor Strategy', reputationScore: 95, posts: 104, followerCount: 12400, isFollowedByMe: false, tone: 'green' },
-    { userId: 3, nickname: 'J. Han', username: 'j_han_quant', role: 'Systematic Quant Research Lead', reputationScore: 92, posts: 86, followerCount: 8900, isFollowedByMe: false, tone: 'blue' }
+    { userId: 1, nickname: 'Mina Park', username: 'mina_park_macro', role: 'Macro & Digital Assets', reputationScore: 98, posts: 128, followerCount: 12400, isFollowedByMe: false, tone: 'navy' },
+    { userId: 2, nickname: 'Alex Chen', username: 'alex_chen_ai', role: 'Global Tech & Semiconductor Strategy', reputationScore: 95, posts: 104, followerCount: 8700, isFollowedByMe: false, tone: 'green' },
+    { userId: 3, nickname: 'J. Han', username: 'j_han_quant', role: 'Systematic Quant Research Lead', reputationScore: 92, posts: 86, followerCount: 6200, isFollowedByMe: false, tone: 'blue' }
   ];
 }
 
@@ -388,3 +392,33 @@ export async function toggleFollowExpert(followerId: number, targetUserId: numbe
 
   return { success: true, following: true, followerCount: 12401 };
 }
+
+/**
+ * 9. 대화형 AI 퀀트 리서치 질의 (Qwen 2.5 14B + BGE-M3 RAG)
+ */
+export async function sendResearchChat(payload: {
+  symbol?: string;
+  prompt: string;
+  conversationId?: string;
+  intent?: string;
+  scope?: string;
+  depth?: string;
+  amount?: string;
+  horizon?: string;
+  history?: Array<{ role: string; content: string }>;
+}): Promise<any> {
+  try {
+    const res = await fetch(API_BASE + '/ai/research-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] Error calling /ai/research-chat:', err);
+  }
+  return null;
+}
+
