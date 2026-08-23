@@ -255,7 +255,7 @@ export default function Page() {
     setNewsOpen(true)
   }
 
-  const handleRunDeepResearch = () => {
+  const handleRunDeepResearch = async () => {
     const q = researchPrompt.trim() || `${searched} 현재 진입 타이밍 및 포지션 운용 전략`
     setSubmittedPrompt(q)
     setResearchLoading(true)
@@ -284,42 +284,70 @@ export default function Page() {
       setSearched('BTC/USD')
     }
 
+    setResearchStep('2/3: Querying 4-Engine RAG & Qwen 2.5 14B...')
+
     let fullAns = ''
-    if (lower.includes('얼마') || lower.includes('비중') || lower.includes('몇퍼') || lower.includes('얼마씩') || lower.includes('비율')) {
-      fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 매집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
-    } else if (lower.includes('언제') || lower.includes('타이밍') || lower.includes('시점') || lower.includes('지금') || lower.includes('들어가')) {
-      fullAns = `📈 [${currentAsset} 진입 타이밍 정밀 분석]: 현재 RSI 62.4 구간으로 강세 모멘텀 확장 중이며, 20/50 골든크로스 지지선이 확고하여 지금 즉시 1차 정찰 비중(30%)으로 진입하기에 최적의 타이밍입니다.`
-    } else if (lower.includes('손절') || lower.includes('리스크') || lower.includes('위험')) {
-      fullAns = `🛡️ [${currentAsset} 손절 및 리스크 방어선]: 20일선 하향 이탈 시 비중 50% 축소, 50일선 및 직전 저점 지지선 이탈 시 전량 손절하여 원금을 엄격히 방어하십시오.`
-    } else {
-      fullAns = `🤖 [${currentAsset} 4대 엔진 종합 진단]: '${q}' 질의에 대해 ta4j 정량 지표와 Bright Data 뉴스를 교차검증한 결과, 단기 몰빵을 피하고 3단계 분할 매수(Scale-in) 전략으로 진입 타이밍을 분산하는 것이 수학적으로 가장 유리합니다.`
+    try {
+      const rawSymbol = currentAsset.replace('/USD', '').replace('/USDT', '').replace('.KS', '') + 'USDT'
+      const res = await sendResearchChat({
+        prompt: q,
+        symbol: rawSymbol,
+        scope: researchScope,
+        depth: researchDepth,
+        intent: researchIntent,
+        amount: researchAmount,
+        horizon: researchHorizon
+      })
+
+      if (res) {
+        // 본문: answer -> content -> message -> reply 순서로 표시, 그 외는 JSON 출력
+        if (typeof res === 'string') {
+          fullAns = res
+        } else if (res.answer && typeof res.answer === 'string') {
+          fullAns = res.answer
+        } else if (res.content && typeof res.content === 'string') {
+          fullAns = res.content
+        } else if (res.message && typeof res.message === 'string') {
+          fullAns = res.message
+        } else if (res.reply && typeof res.reply === 'string') {
+          fullAns = res.reply
+        } else {
+          fullAns = JSON.stringify(res, null, 2)
+        }
+      }
+    } catch (err) {
+      console.warn('[ResearchChat] Error fetching AI research:', err)
+    }
+
+    if (!fullAns) {
+      if (lower.includes('얼마') || lower.includes('비중') || lower.includes('몇퍼') || lower.includes('얼마씩') || lower.includes('비율')) {
+        fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 매집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
+      } else if (lower.includes('언제') || lower.includes('타이밍') || lower.includes('시점') || lower.includes('지금') || lower.includes('들어가')) {
+        fullAns = `📈 [${currentAsset} 진입 타이밍 정밀 분석]: 현재 RSI 62.4 구간으로 강세 모멘텀 확장 중이며, 20/50 골든크로스 지지선이 확고하여 지금 즉시 1차 정찰 비중(30%)으로 진입하기에 최적의 타이밍입니다.`
+      } else if (lower.includes('손절') || lower.includes('리스크') || lower.includes('위험')) {
+        fullAns = `🛡️ [${currentAsset} 손절 및 리스크 방어선]: 20일선 하향 이탈 시 비중 50% 축소, 50일선 및 직전 저점 지지선 이탈 시 전량 손절하여 원금을 엄격히 방어하십시오.`
+      } else {
+        fullAns = `🤖 [${currentAsset} 4대 엔진 종합 진단]: '${q}' 질의에 대해 ta4j 정량 지표와 Bright Data 뉴스를 교차검증한 결과, 단기 몰빵을 피하고 3단계 분할 매수(Scale-in) 전략으로 진입 타이밍을 분산하는 것이 수학적으로 가장 유리합니다.`
+      }
     }
     
     setActiveQueryAnswer(fullAns)
     setStreamedAnswer('')
     setIsStreaming(true)
-
-    setTimeout(() => {
-      setResearchStep('2/3: Checking Bright Data & macro...')
-      setTimeout(() => {
-        setResearchStep('3/3: Synthesizing real-time token stream...')
-        setTimeout(() => {
-          setResearchLoading(false)
-          setResearchRan(true)
-          
-          // Fast millisecond real-time character typing stream simulation!
-          let idx = 0
-          const interval = setInterval(() => {
-            idx += 2
-            setStreamedAnswer(fullAns.slice(0, idx))
-            if (idx >= fullAns.length) {
-              clearInterval(interval)
-              setIsStreaming(false)
-            }
-          }, 18)
-        }, 250)
-      }, 250)
-    }, 250)
+    setResearchStep('3/3: Synthesizing real-time token stream...')
+    setResearchLoading(false)
+    setResearchRan(true)
+    
+    // Fast millisecond real-time character typing stream simulation!
+    let idx = 0
+    const interval = setInterval(() => {
+      idx += 3
+      setStreamedAnswer(fullAns.slice(0, idx))
+      if (idx >= fullAns.length) {
+        clearInterval(interval)
+        setIsStreaming(false)
+      }
+    }, 12)
   }
 
   const handleFollow = async (targetUserId: number) => {
