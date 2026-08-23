@@ -415,7 +415,7 @@ export default function Page() {
           </div>
           <div className="news-layout">
             <button className="news-lead" onClick={() => selectNews(activeNews)}>
-              <div className="news-thumb hero-thumb">{activeNews.thumb}</div>
+              <div className="news-thumb hero-thumb">{activeNews.imageUrl ? <img src={activeNews.imageUrl} alt={activeNews.title} className="news-photo-hero" /> : activeNews.thumb}</div>
               <div className="news-lead-copy">
                 <span className="overline">{activeNews.source} · {activeNews.tag}</span>
                 <h2>{activeNews.title}</h2>
@@ -433,7 +433,7 @@ export default function Page() {
                   key={item.title}
                   onClick={() => selectNews(item)}
                 >
-                  <div className="news-thumb">{item.thumb}</div>
+                  <div className="news-thumb">{item.imageUrl ? <img src={item.imageUrl} alt={item.title} className="news-photo-item" /> : item.thumb}</div>
                   <div>
                     <span className="feed-source">{item.source} <b>{item.tag}</b></span>
                     <strong>{item.title}</strong>
@@ -723,4 +723,5 @@ export default function Page() {
     </main>
   )
 }
+
 
