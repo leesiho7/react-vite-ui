@@ -54,3 +54,14 @@ button { cursor: pointer; }
   .research-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .expert-grid { grid-template-columns: 1fr; }
 }
+
+.research-deep-report { margin: 18px 24px 24px; padding: 22px; background: white; border: 1px solid var(--line); border-left: 3px solid var(--navy); }
+.report-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.report-header strong { color: var(--navy); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.report-header span { color: var(--muted); font-size: 9px; }
+.report-body { display: grid; gap: 16px; color: var(--navy); font-size: 10px; line-height: 1.7; }
+.report-section { display: grid; gap: 6px; }
+.report-section h4 { font-size: 9px; color: var(--blue); margin: 0; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+.report-section p { margin: 0; color: #2d3748; font-size: 10px; }
+.report-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.report-tag { background: #f0f4f7; color: var(--navy); font-size: 8px; padding: 4px 7px; border: 1px solid #dce4ea; }
