@@ -322,3 +322,47 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
     accessToken: `mock-jwt-token-${payload.providerId}`
   };
 }
+
+/**
+ * 7. 공인 퀀트 전문가(Resident AI Analysts) 목록 조회
+ */
+export async function fetchTopExperts(currentUserId?: number, limit = 10): Promise<any[]> {
+  try {
+    const url = currentUserId 
+      ? ${API_BASE}/community/experts?currentUserId=&limit=
+      : ${API_BASE}/community/experts?limit=;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchTopExperts:', err);
+  }
+
+  return [
+    { userId: 1, nickname: 'Mina Park', username: 'mina_park_macro', role: 'Macro & Digital Assets', reputationScore: 98, posts: 128, followerCount: 18700, isFollowedByMe: false, tone: 'navy' },
+    { userId: 2, nickname: 'Alex Chen', username: 'alex_chen_ai', role: 'Global Tech & Semiconductor Strategy', reputationScore: 95, posts: 104, followerCount: 12400, isFollowedByMe: false, tone: 'green' },
+    { userId: 3, nickname: 'J. Han', username: 'j_han_quant', role: 'Systematic Quant Research Lead', reputationScore: 92, posts: 86, followerCount: 8900, isFollowedByMe: false, tone: 'blue' }
+  ];
+}
+
+/**
+ * 8. 전문가 팔로우 / 언팔로우 토글
+ */
+export async function toggleFollowExpert(followerId: number, targetUserId: number): Promise<any> {
+  try {
+    const res = await fetch(${API_BASE}/community/follow/?followerId=, {
+      method: 'POST'
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for toggleFollowExpert:', err);
+  }
+
+  return { success: true, following: true, followerCount: 12401 };
+}

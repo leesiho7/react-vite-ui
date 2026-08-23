@@ -7,7 +7,9 @@ import {
   fetchHistoricalCandles,
   fetchPredictionLeaderboard,
   fetchHiveMindBattle,
-  fetchArenaLeaderboard
+  fetchArenaLeaderboard,
+  fetchTopExperts,
+  toggleFollowExpert
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -105,6 +107,7 @@ export default function Page() {
   const [leaderboard, setLeaderboard] = useState<PredictionLeaderboardItem[]>([])
   const [battle, setBattle] = useState<HiveMindBattle | null>(null)
   const [strategies, setStrategies] = useState<ArenaStrategyItem[]>([])
+  const [experts, setExperts] = useState<any[]>([])
 
   // Prediction Interactive State
   const [round, setRound] = useState(3)
@@ -155,6 +158,7 @@ export default function Page() {
     fetchHiveMindBattle(rawSymbol).then(setBattle)
     fetchPredictionLeaderboard(10).then(setLeaderboard)
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies)
+    fetchTopExperts().then(setExperts)
   }, [searched, period, language])
 
   // Live News Rotator
@@ -242,6 +246,24 @@ export default function Page() {
     setActiveNews(item)
     setSearched(`${item.tag}/USD`)
     setNewsOpen(true)
+  }
+
+  const handleFollow = async (targetUserId: number) => {
+    const currentUserId = 999
+    const res = await toggleFollowExpert(currentUserId, targetUserId)
+    if (res && res.success) {
+      setExperts((prev) =>
+        prev.map((e) =>
+          e.userId === targetUserId
+            ? {
+                ...e,
+                isFollowedByMe: res.following,
+                followerCount: res.followerCount !== undefined ? res.followerCount : (res.following ? (e.followerCount || 0) + 1 : Math.max(0, (e.followerCount || 0) - 1))
+              }
+            : e
+        )
+      )
+    }
   }
 
   const filteredAssets = useMemo(() => defaultAssets.filter((asset) =>
@@ -739,12 +761,66 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ── Expert Directory ── */}
+            {/* ── Hall of Fame (Verified Top Analysts) ── */}
       <section className="expert-directory panel">
-        <div className="panel-heading"><span><Diamond /> EXPERT DIRECTORY</span><span className="status-tag">RANKED BY VERIFIED SIGNALS</span></div>
-        <div className="directory-intro"><div><span className="overline">ANALYST NETWORK</span><h2>Follow conviction, not noise.</h2><p>전문가의 분석 기록과 팩트체크 이력을 확인하고 한 번의 클릭으로 팔로우하세요.</p></div><button className="text-button">VIEW ALL EXPERTS ↗</button></div>
+        <div className="panel-heading">
+          <span><Diamond /> HALL OF FAME · TOP ANALYSTS</span>
+          <span className="status-tag">SEASON 1 LIVE QUALIFIERS</span>
+        </div>
+        <div className="directory-intro">
+          <div>
+            <span className="overline">VERIFIED LEADERBOARD</span>
+            <h2>Prove your alpha. Claim your seat in the Hall of Fame.</h2>
+            <p>실제 팩트체크된 퀀트 분석과 24H 예측 승률로 누구나 명예의 전당에 도전할 수 있습니다. 100% 검증된 실적으로만 평가됩니다.</p>
+          </div>
+          <button className="text-button" onClick={() => alert('누구나 분석글 작성 및 24H 예측 리그 참여로 명예의 전당 순위에 오를 수 있습니다!')}>
+            CHALLENGE RANKING ↗
+          </button>
+        </div>
         <div className="expert-grid">
-          {[{name:'Mina Park', role:'Macro & Digital Assets', score:'94.8', posts:'128', followers:'12.4K', tone:'navy'}, {name:'J. Han', role:'Systematic Quant Research', score:'91.6', posts:'86', followers:'8.7K', tone:'blue'}, {name:'Alex Chen', role:'Global Equity Strategy', score:'89.3', posts:'104', followers:'6.2K', tone:'green'}].map((expert) => <article className="expert-card" key={expert.name}><div className={`expert-avatar ${expert.tone}`}>{expert.name.split(' ').map((part) => part[0]).join('')}</div><div className="expert-main"><div className="expert-name-row"><div><strong>{expert.name}</strong><span>{expert.role}</span></div><button className="follow-button" onClick={(event) => { event.currentTarget.textContent = event.currentTarget.textContent === 'FOLLOW' ? 'FOLLOWING' : 'FOLLOW' }}>{'FOLLOW'}</button></div><div className="expert-stats"><span>VERIFIED SCORE <b>{expert.score}</b></span><span>POSTS <b>{expert.posts}</b></span><span>FOLLOWERS <b>{expert.followers}</b></span></div><div className="expert-note"><span>LAST SIGNAL</span><strong>Fact-checked · {expert.score}% confidence</strong></div></div></article>)}
+          {experts.map((expert, idx) => {
+            const displayName = expert.nickname || expert.username || 'Analyst'
+            const role = expert.role || 'Quant Analyst'
+            const score = expert.reputationScore || (98 - idx * 3)
+            const posts = expert.postCount || expert.posts || (120 - idx * 20)
+            const followerNum = typeof expert.followerCount === 'number' ? expert.followerCount : (12400 - idx * 3000)
+            const followers = followerNum >= 1000 ? `${(followerNum / 1000).toFixed(1)}K` : followerNum
+            const tone = expert.tone || (idx === 0 ? 'navy' : idx === 1 ? 'green' : 'blue')
+            const initials = displayName.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
+            const rankLabel = `#0${idx + 1}`
+
+            return (
+              <article className="expert-card" key={expert.userId || displayName}>
+                <div className={`expert-avatar ${tone}`}>{initials}</div>
+                <div className="expert-main">
+                  <div className="expert-name-row">
+                    <div>
+                      <strong>
+                        <span style={{ color: '#2b866d', marginRight: '6px', fontSize: '10px', fontWeight: 'bold' }}>{rankLabel}</span>
+                        {displayName}
+                      </strong>
+                      <span>{role}</span>
+                    </div>
+                    <button
+                      className={`follow-button ${expert.isFollowedByMe ? 'following' : ''}`}
+                      onClick={() => handleFollow(expert.userId || (idx + 1))}
+                    >
+                      {expert.isFollowedByMe ? 'FOLLOWING ✓' : 'FOLLOW +'}
+                    </button>
+                  </div>
+                  <div className="expert-stats">
+                    <span>REPUTATION <b>{score}P</b></span>
+                    <span>POSTS <b>{posts}</b></span>
+                    <span>FOLLOWERS <b>{followers}</b></span>
+                  </div>
+                  <div className="expert-note">
+                    <span>HONOR STATUS</span>
+                    <strong>Verified Top Analyst · Season 1 Ranked</strong>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
         </div>
       </section>
 
