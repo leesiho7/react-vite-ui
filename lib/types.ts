@@ -124,3 +124,28 @@ export interface AuthResponse {
   role?: string;
   accessToken?: string;
 }
+
+export interface ExpertProfile {
+  userId: number;
+  username: string;
+  nickname: string;
+  walletAddress?: string;
+  reputationScore: number;
+  role: string;
+  followerCount: number;
+  followingCount: number;
+  isFollowedByMe: boolean;
+  score?: string | number;
+  posts?: number;
+  tone?: string;
+  lastSignal?: string;
+}
+
+export interface FollowResponse {
+  success: boolean;
+  message: string;
+  following: boolean;
+  followerCount: number;
+  followingCount: number;
+  targetReputationScore: number;
+}
