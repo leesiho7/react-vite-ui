@@ -117,20 +117,20 @@ export default function Page() {
   const [forkedStrategy, setForkedStrategy] = useState<string | null>(null)
   const [researchMode, setResearchMode] = useState<'INSIGHT' | 'GUIDE'>('INSIGHT')
   const [researchPrompt, setResearchPrompt] = useState('')
-<<<<<<< HEAD
   const [researchRan, setResearchRan] = useState(false)
   const [researchResponse, setResearchResponse] = useState<any>(null)
   const [researchLoading, setResearchLoading] = useState(false)
   const [researchError, setResearchError] = useState<string | null>(null)
-=======
-  const [researchRan, setResearchRan] = useState(true)
-  const [researchLoading, setResearchLoading] = useState(false)
   const [researchStep, setResearchStep] = useState('')
   const [submittedPrompt, setSubmittedPrompt] = useState('')
   const [activeQueryAnswer, setActiveQueryAnswer] = useState('')
   const [streamedAnswer, setStreamedAnswer] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
->>>>>>> origin/master
+  const [researchScope] = useState('MARKET')
+  const [researchDepth] = useState('DEEP')
+  const [researchIntent] = useState('ANALYZE')
+  const [researchAmount] = useState('')
+  const [researchHorizon] = useState('MEDIUM')
   
   // Real Backend Data State
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
@@ -362,7 +362,7 @@ export default function Page() {
 
     if (!fullAns) {
       if (lower.includes('얼마') || lower.includes('비중') || lower.includes('몇퍼') || lower.includes('얼마씩') || lower.includes('비율')) {
-        fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 매집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
+        fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 ��집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
       } else if (lower.includes('언제') || lower.includes('타이밍') || lower.includes('시점') || lower.includes('지금') || lower.includes('들어가')) {
         fullAns = `📈 [${currentAsset} 진입 타이밍 정밀 분석]: 현재 RSI 62.4 구간으로 강세 모멘텀 확장 중이며, 20/50 골든크로스 지지선이 확고하여 지금 즉시 1차 정찰 비중(30%)으로 진입하기에 최적의 타이밍입니다.`
       } else if (lower.includes('손절') || lower.includes('리스크') || lower.includes('위험')) {
@@ -804,98 +804,11 @@ export default function Page() {
           <button role="tab" aria-selected={researchMode === 'INSIGHT'} className={researchMode === 'INSIGHT' ? 'selected' : ''} onClick={() => setResearchMode('INSIGHT')}><strong>INSIGHT MODE</strong><span>Bloomberg desk · TA4J · expert lenses</span></button>
           <button role="tab" aria-selected={researchMode === 'GUIDE'} className={researchMode === 'GUIDE' ? 'selected' : ''} onClick={() => setResearchMode('GUIDE')}><strong>GUIDE MODE</strong><span>Plain-language risk · allocation guidance</span></button>
         </div>
-<<<<<<< HEAD
         <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절���지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>{researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
         {researchError && <div className="research-error" role="alert">{researchError}</div>}
         {researchRan && researchResponse && <div className="research-response"><div className="overline">LIVE BACKEND RESPONSE</div><div className="research-response-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}</ReactMarkdown></div></div>}
         {researchRan && <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}><div><span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span><strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong></div>{researchMode === 'GUIDE' ? <div className="guide-cards"><span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span><span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span><span>NEXT STEP <b>지금 확인할 행동</b></span></div> : <div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>TA4J SIGNALS <b>CALCULATED</b></span><span>EXPERT LENSES <b>REVIEWED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div>}</div>}
-=======
-        <div className="research-query">
-          <label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label>
-          <textarea
-            id="research-prompt"
-            value={researchPrompt}
-            onChange={(event) => setResearchPrompt(event.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleRunDeepResearch()
-              }
-            }}
-            placeholder={language === 'ko' ? '질문을 입력하세요 (예: 수이 지금 분할매수 얼마씩 해야 돼?) [Enter로 전송]' : language === 'cn' ? '输入您的问题 [按回车发送]' : 'Enter your question (e.g. How much should I scale in?) [Press Enter]'}
-            rows={2}
-          />
-          <button
-            className="primary-button"
-            disabled={researchLoading}
-            onClick={handleRunDeepResearch}
-            style={{ minWidth: '180px', transition: 'all 0.2s' }}
-          >
-            {researchLoading ? researchStep : researchRan ? 'RE-RUN DEEP RESEARCH ↻' : 'RUN DEEP RESEARCH ↗'}
-          </button>
-        </div>
-        {researchRan && (
-          <div className="evidence-matrix">
-            <div>
-              <span className="overline">AI EVIDENCE MATRIX & REASONING</span>
-              <strong>{searched} · {researchIntent} SCENARIO · {researchScope} ({researchDepth})</strong>
-            </div>
-            
-            <div className="evidence-grid">
-              <span>MARKET DATA <b>ta4j CONFIRMED</b></span>
-              <span>NEWS CONSENSUS <b>Bright Data REVIEWED</b></span>
-              <span>MACRO CONTEXT <b>ALIGNED (+0.82)</b></span>
-              <span>SOURCE QUALITY <b>HIGH (VERIFIED)</b></span>
-            </div>
 
-            <div className="research-result">
-              <span>ENTRY QUALITY <strong>{Math.round(((decisionReport?.totalScore || 0.82) + 1) * 45 + 10)} / 100</strong></span>
-              <span>RECOMMENDATION <strong>{decisionReport?.finalAction || (researchIntent === 'BUY' ? 'SCALE IN' : 'HOLD')}</strong></span>
-              <span>INVALIDATION <strong>BREAK BELOW 50 SMA</strong></span>
-            </div>
-
-            {/* ── Real AI Deep Reasoning Analysis Text ── */}
-            <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'grid', gap: '12px', textAlign: 'left' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#0f2742', letterSpacing: '0.05em' }}>
-                  📊 [AI 융합 정밀 분석 전문 // {searched}]
-                </span>
-                <span style={{ fontSize: '9px', color: '#64748b' }}>
-                  {decisionReport?.generatedAt ? new Date(decisionReport.generatedAt).toLocaleTimeString() : '실시간 팩트체크 완료'}
-                </span>
-              </div>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 4대 엔진 종합 진단:</strong> {decisionReport?.decisionReason || `${searched}의 4대 AI 융합 분석 결과, 기술적 정량 지표(+0.65)와 뉴스 감성(+0.88), 과거 패턴 승률(80%)이 일치하여 견고한 상방 지지선을 형성하고 있습니다.`}
-              </p>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 실시간 뉴스/거시 팩트:</strong> {decisionReport?.qualInsight?.macroSummary || '글로벌 기관 자금 유입이 가속화되고 있으며 온체인 고래 지갑의 거래소 외부 유출로 매도 압력이 완화된 상태입니다.'}
-              </p>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 과거 5년 프랙탈 패턴:</strong> {decisionReport?.patternInsight?.patternSummary || '과거 유사 차트 패턴 5회 중 4회(승률 80%)에서 향후 5거래일 내 평균 +6.4% 가격 확장이 관측되었습니다.'}
-              </p>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 리스크 관리 & 무효화 기준:</strong> {decisionReport?.qualInsight?.riskFactors || '단기 주요 지지선 및 50일 이동평균선 이탈 시 포지션을 보수적으로 축소하십시오.'}
-              </p>
-
-              {/* ── Prominent Direct Query Answer ── */}
-              <div style={{ marginTop: '10px', padding: '14px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '4px solid #16a34a', borderRadius: '4px', fontSize: '11px', color: '#14532d', lineHeight: 1.7 }}>
-                <div style={{ fontWeight: 600, fontSize: '11px', color: '#15803d', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>💬 AI DIRECT QUERY ANSWER // {submittedPrompt || `${searched} 포지션 진입 전략`}</span>
-                  <span style={{ fontSize: '9px', fontWeight: 400, color: '#16a34a' }}>VERIFIED RESPONSE ✓</span>
-                </div>
-                <div>
-                  {streamedAnswer || activeQueryAnswer || `💡 [${searched} 분할 매수 가이드]: 20/50 골든크로스 지지선이 유효하므로 1차 30%(현재가) -> 2차 40%(눌림목) -> 3차 30%(돌파) 분할 진입을 권장합니다.`}
-                  {isStreaming && <span className="streaming-cursor" />}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
->>>>>>> origin/master
       </section>
 
       {/* ── Integrated Decision Banner ── */}
