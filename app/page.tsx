@@ -93,11 +93,7 @@ export default function Page() {
   const [newsOpen, setNewsOpen] = useState(false)
   const [orderbookOpen, setOrderbookOpen] = useState(true)
   const [forkedStrategy, setForkedStrategy] = useState<string | null>(null)
-  const [researchScope, setResearchScope] = useState('MARKET')
-  const [researchDepth, setResearchDepth] = useState('STANDARD')
-  const [researchIntent, setResearchIntent] = useState('BUY')
-  const [researchAmount, setResearchAmount] = useState('')
-  const [researchHorizon, setResearchHorizon] = useState('MEDIUM')
+  const [researchMode, setResearchMode] = useState<'INSIGHT' | 'GUIDE'>('INSIGHT')
   const [researchPrompt, setResearchPrompt] = useState('')
   const [researchRan, setResearchRan] = useState(false)
   
@@ -651,21 +647,18 @@ export default function Page() {
       <section className="research-terminal panel">
         <div className="panel-heading">
           <span><Diamond /> AI RESEARCH TERMINAL</span>
-          <span className="status-tag">{researchDepth}</span>
+          <span className="status-tag">{researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}</span>
         </div>
         <div className="research-intro">
           <div><span className="overline">SCENARIO ANALYSIS</span><h2>{language === 'cn' ? '验证你的下一步决策' : language === 'ko' ? '다음 투자 결정을 검증하세요' : 'Validate your next move'}</h2><p>{language === 'cn' ? '跨市场数据、新闻、宏观与链上证据。' : language === 'ko' ? '시장·뉴스·거시·온체인 근거를 한 번에 교차검증합니다.' : 'Cross-check market, news, macro, and on-chain evidence in one pass.'}</p></div>
           <span className="research-context">{searched} · LIVE CONTEXT</span>
         </div>
-        <div className="research-controls">
-          <div className="research-field"><label>RESEARCH SCOPE</label><div className="research-pills">{['MARKET', 'NEWS', 'MACRO', 'ON-CHAIN', 'SOCIAL'].map((scope) => <button key={scope} className={researchScope === scope ? 'selected' : ''} onClick={() => setResearchScope(scope)}>{scope}</button>)}</div></div>
-          <div className="research-field"><label>RESEARCH DEPTH</label><div className="research-pills">{['QUICK', 'STANDARD', 'DEEP'].map((depth) => <button key={depth} className={researchDepth === depth ? 'selected' : ''} onClick={() => setResearchDepth(depth)}>{depth}</button>)}</div></div>
-          <div className="research-field"><label>INTENT</label><div className="research-pills">{['BUY', 'HOLD', 'SELL'].map((intent) => <button key={intent} className={researchIntent === intent ? 'selected' : ''} onClick={() => setResearchIntent(intent)}>{intent}</button>)}</div></div>
-          <label className="research-input-field"><span>AMOUNT <small>OPTIONAL</small></span><input value={researchAmount} onChange={(event) => setResearchAmount(event.target.value)} placeholder="$500" inputMode="decimal" /></label>
-          <label className="research-input-field"><span>HORIZON</span><select value={researchHorizon} onChange={(event) => setResearchHorizon(event.target.value)}><option>SHORT</option><option>MEDIUM</option><option>LONG</option></select></label>
+        <div className="research-mode-switch" role="tablist" aria-label="Research mode">
+          <button role="tab" aria-selected={researchMode === 'INSIGHT'} className={researchMode === 'INSIGHT' ? 'selected' : ''} onClick={() => setResearchMode('INSIGHT')}><strong>INSIGHT MODE</strong><span>Bloomberg desk · TA4J · expert lenses</span></button>
+          <button role="tab" aria-selected={researchMode === 'GUIDE'} className={researchMode === 'GUIDE' ? 'selected' : ''} onClick={() => setResearchMode('GUIDE')}><strong>GUIDE MODE</strong><span>Plain-language risk · allocation guidance</span></button>
         </div>
-        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={language === 'ko' ? '현재 가격에 500달러 매수해도 괜찮을까?' : language === 'cn' ? '当前价格是否适合分批买入？' : 'Is this a reasonable entry at the current price?'} rows={2} /><button className="primary-button" onClick={() => setResearchRan(true)}>{researchRan ? 'RESEARCH COMPLETE' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
-        {researchRan && <div className="evidence-matrix"><div><span className="overline">EVIDENCE MATRIX</span><strong>{researchIntent} SCENARIO · {researchScope} · {researchDepth}</strong></div><div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>NEWS CONSENSUS <b>REVIEWED</b></span><span>MACRO CONTEXT <b>ALIGNED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div><div className="research-result"><span>ENTRY QUALITY <strong>72 / 100</strong></span><span>RECOMMENDATION <strong>SCALE IN</strong></span><span>INVALIDATION <strong>BREAK BELOW SUPPORT</strong></span></div></div>}
+        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절할지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={() => setResearchRan(true)}>{researchRan ? 'RESEARCH COMPLETE' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
+        {researchRan && <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}><div><span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span><strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong></div>{researchMode === 'GUIDE' ? <div className="guide-cards"><span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span><span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span><span>NEXT STEP <b>지금 확인할 행동</b></span></div> : <div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>TA4J SIGNALS <b>CALCULATED</b></span><span>EXPERT LENSES <b>REVIEWED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div>}</div>}
       </section>
 
       {/* ── Integrated Decision Banner ── */}
