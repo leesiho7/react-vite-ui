@@ -329,8 +329,8 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
 export async function fetchTopExperts(currentUserId?: number, limit = 10): Promise<any[]> {
   try {
     const url = currentUserId 
-      ? ${API_BASE}/community/experts?currentUserId=&limit=
-      : ${API_BASE}/community/experts?limit=;
+      ? `${API_BASE}/community/experts?currentUserId=${currentUserId}&limit=${limit}`
+      : `${API_BASE}/community/experts?limit=${limit}`;
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
@@ -343,9 +343,9 @@ export async function fetchTopExperts(currentUserId?: number, limit = 10): Promi
   }
 
   return [
-    { userId: 1, nickname: 'Mina Park', username: 'mina_park_macro', role: 'Macro & Digital Assets', reputationScore: 98, posts: 128, followerCount: 18700, isFollowedByMe: false, tone: 'navy' },
-    { userId: 2, nickname: 'Alex Chen', username: 'alex_chen_ai', role: 'Global Tech & Semiconductor Strategy', reputationScore: 95, posts: 104, followerCount: 12400, isFollowedByMe: false, tone: 'green' },
-    { userId: 3, nickname: 'J. Han', username: 'j_han_quant', role: 'Systematic Quant Research Lead', reputationScore: 92, posts: 86, followerCount: 8900, isFollowedByMe: false, tone: 'blue' }
+    { userId: 1, nickname: 'Mina Park', username: 'mina_park_macro', role: 'Macro & Digital Assets', reputationScore: 98, posts: 128, followerCount: 12400, isFollowedByMe: false, tone: 'navy' },
+    { userId: 2, nickname: 'Alex Chen', username: 'alex_chen_ai', role: 'Global Tech & Semiconductor Strategy', reputationScore: 95, posts: 104, followerCount: 8700, isFollowedByMe: false, tone: 'green' },
+    { userId: 3, nickname: 'J. Han', username: 'j_han_quant', role: 'Systematic Quant Research Lead', reputationScore: 92, posts: 86, followerCount: 6200, isFollowedByMe: false, tone: 'blue' }
   ];
 }
 
@@ -354,7 +354,7 @@ export async function fetchTopExperts(currentUserId?: number, limit = 10): Promi
  */
 export async function toggleFollowExpert(followerId: number, targetUserId: number): Promise<any> {
   try {
-    const res = await fetch(${API_BASE}/community/follow/?followerId=, {
+    const res = await fetch(`${API_BASE}/community/follow/${targetUserId}?followerId=${followerId}`, {
       method: 'POST'
     });
     if (res.ok) {
