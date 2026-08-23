@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { UserRound } from 'lucide-react'
 import {
   fetchIntegratedDecision,
@@ -703,7 +705,7 @@ export default function Page() {
         </div>
         <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절���지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>{researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
         {researchError && <div className="research-error" role="alert">{researchError}</div>}
-        {researchRan && researchResponse && <div className="research-response"><div className="overline">LIVE BACKEND RESPONSE</div><div className="research-response-body">{typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}</div></div>}
+        {researchRan && researchResponse && <div className="research-response"><div className="overline">LIVE BACKEND RESPONSE</div><div className="research-response-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}</ReactMarkdown></div></div>}
         {researchRan && <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}><div><span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span><strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong></div>{researchMode === 'GUIDE' ? <div className="guide-cards"><span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span><span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span><span>NEXT STEP <b>지금 확인할 행동</b></span></div> : <div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>TA4J SIGNALS <b>CALCULATED</b></span><span>EXPERT LENSES <b>REVIEWED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div>}</div>}
       </section>
 
