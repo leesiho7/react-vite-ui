@@ -328,9 +328,9 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
  */
 export async function fetchTopExperts(currentUserId?: number, limit = 10): Promise<any[]> {
   try {
-    const url = currentUserId 
-      ? ${API_BASE}/community/experts?currentUserId=&limit=
-      : ${API_BASE}/community/experts?limit=;
+    const url = currentUserId
+      ? `${API_BASE}/community/experts?currentUserId=${currentUserId}&limit=${limit}`
+      : `${API_BASE}/community/experts?limit=${limit}`;
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
@@ -354,7 +354,7 @@ export async function fetchTopExperts(currentUserId?: number, limit = 10): Promi
  */
 export async function toggleFollowExpert(followerId: number, targetUserId: number): Promise<any> {
   try {
-    const res = await fetch(${API_BASE}/community/follow/?followerId=, {
+    const res = await fetch(`${API_BASE}/community/follow/${targetUserId}?followerId=${followerId}`, {
       method: 'POST'
     });
     if (res.ok) {
