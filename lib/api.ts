@@ -364,6 +364,16 @@ export async function fetchTopExperts(currentUserId?: number, limit = 10): Promi
 /**
  * 8. 전문가 팔로우 / 언팔로우 토글
  */
+export async function sendResearchChat(payload: { prompt: string; symbol: string; mode: 'INSIGHT' | 'GUIDE'; language: string }): Promise<any> {
+  const res = await fetch(`${API_BASE}/ai/research-chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`Research API failed: ${res.status}`)
+  return res.json()
+}
+
 export async function toggleFollowExpert(followerId: number, targetUserId: number): Promise<any> {
   try {
     const res = await fetch(`${API_BASE}/community/follow/${targetUserId}?followerId=${followerId}`, {

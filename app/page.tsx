@@ -9,7 +9,8 @@ import {
   fetchHiveMindBattle,
   fetchArenaLeaderboard,
   fetchTopExperts,
-  toggleFollowExpert
+  toggleFollowExpert,
+  sendResearchChat
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -96,6 +97,9 @@ export default function Page() {
   const [researchMode, setResearchMode] = useState<'INSIGHT' | 'GUIDE'>('INSIGHT')
   const [researchPrompt, setResearchPrompt] = useState('')
   const [researchRan, setResearchRan] = useState(false)
+  const [researchResponse, setResearchResponse] = useState<any>(null)
+  const [researchLoading, setResearchLoading] = useState(false)
+  const [researchError, setResearchError] = useState<string | null>(null)
   
   // Real Backend Data State
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
@@ -156,6 +160,27 @@ export default function Page() {
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
     fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
   }, [searched, period, language])
+
+  const handlerRunDeepResearch = async () => {
+    setResearchLoading(true)
+    setResearchError(null)
+    setResearchRan(false)
+    try {
+      const response = await sendResearchChat({
+        prompt: researchPrompt.trim() || (researchMode === 'GUIDE' ? 'Explain the key risks and practical allocation guidance for this asset.' : 'Produce an institutional-grade research brief for this asset.'),
+        symbol: searched,
+        mode: researchMode,
+        language,
+      })
+      setResearchResponse(response)
+      setResearchRan(true)
+    } catch (error) {
+      console.error('[v0] Research chat backend unavailable:', error)
+      setResearchError(error instanceof Error ? error.message : 'Research request failed')
+    } finally {
+      setResearchLoading(false)
+    }
+  }
 
   // Live News Rotator
   useEffect(() => {
@@ -657,7 +682,9 @@ export default function Page() {
           <button role="tab" aria-selected={researchMode === 'INSIGHT'} className={researchMode === 'INSIGHT' ? 'selected' : ''} onClick={() => setResearchMode('INSIGHT')}><strong>INSIGHT MODE</strong><span>Bloomberg desk · TA4J · expert lenses</span></button>
           <button role="tab" aria-selected={researchMode === 'GUIDE'} className={researchMode === 'GUIDE' ? 'selected' : ''} onClick={() => setResearchMode('GUIDE')}><strong>GUIDE MODE</strong><span>Plain-language risk · allocation guidance</span></button>
         </div>
-        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절할지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={() => setResearchRan(true)}>{researchRan ? 'RESEARCH COMPLETE' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
+        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절할지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>{researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
+        {researchError && <div className="research-error" role="alert">{researchError}</div>}
+        {researchRan && researchResponse && <div className="research-response"><div className="overline">LIVE BACKEND RESPONSE</div><div className="research-response-body">{typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}</div></div>}
         {researchRan && <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}><div><span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span><strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong></div>{researchMode === 'GUIDE' ? <div className="guide-cards"><span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span><span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span><span>NEXT STEP <b>지금 확인할 행동</b></span></div> : <div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>TA4J SIGNALS <b>CALCULATED</b></span><span>EXPERT LENSES <b>REVIEWED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div>}</div>}
       </section>
 
