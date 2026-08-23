@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { UserRound } from 'lucide-react'
 import {
   fetchIntegratedDecision,
@@ -82,6 +84,25 @@ function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
 }
 
+const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET'])
+const assetAliases: Record<string, string> = {
+  '리플': 'XRP/USD', '리플코인': 'XRP/USD', '엑스알피': 'XRP/USD',
+  '비트코인': 'BTC/USD', '이더리움': 'ETH/USD', '엔비디아': 'NVDA/USD',
+  '테슬라': 'TSLA/USD', '애플': 'AAPL/USD', '삼성전자': '005930.KS',
+}
+
+function extractAssetSymbol(input: string, fallback = 'BTC/USD') {
+  // Korean asset names are normalized before ticker extraction.
+
+  const alias = Object.entries(assetAliases).find(([name]) => input.includes(name))
+  if (alias) return alias[1]
+  const normalized = input.toUpperCase().replace(/\$/g, '')
+  const pair = normalized.match(/\b[A-Z0-9]{2,12}\s*[./-]\s*(?:USD|USDT|KRW|EUR|JPY|KS)\b/)
+  if (pair) return pair[0].replace(/\s+/g, '').replace('-', '/')
+  const ticker = normalized.match(/\b[A-Z]{2,6}\b|\b\d{6}\b/g)?.find((candidate) => !symbolStopWords.has(candidate))
+  return ticker ? `${ticker}/USD` : fallback
+}
+
 export default function Page() {
   const [query, setQuery] = useState('')
   const [period, setPeriod] = useState('4H')
@@ -94,20 +115,23 @@ export default function Page() {
   const [newsOpen, setNewsOpen] = useState(false)
   const [orderbookOpen, setOrderbookOpen] = useState(true)
   const [forkedStrategy, setForkedStrategy] = useState<string | null>(null)
-  const [researchScope, setResearchScope] = useState('MARKET')
-  const [researchDepth, setResearchDepth] = useState('STANDARD')
-  const [researchIntent, setResearchIntent] = useState('BUY')
-  const [researchAmount, setResearchAmount] = useState('')
-  const [researchHorizon, setResearchHorizon] = useState('MEDIUM')
+  const [researchMode, setResearchMode] = useState<'INSIGHT' | 'GUIDE'>('INSIGHT')
   const [researchPrompt, setResearchPrompt] = useState('')
-  const [researchRan, setResearchRan] = useState(true)
+  const [researchRan, setResearchRan] = useState(false)
+  const [researchResponse, setResearchResponse] = useState<any>(null)
   const [researchLoading, setResearchLoading] = useState(false)
+  const [researchError, setResearchError] = useState<string | null>(null)
   const [researchStep, setResearchStep] = useState('')
   const [submittedPrompt, setSubmittedPrompt] = useState('')
   const [activeQueryAnswer, setActiveQueryAnswer] = useState('')
   const [streamedAnswer, setStreamedAnswer] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [latestAiResponse, setLatestAiResponse] = useState<any>(null)
+  const [researchScope, setResearchScope] = useState('MARKET')
+  const [researchDepth, setResearchDepth] = useState('STANDARD')
+  const [researchIntent, setResearchIntent] = useState('BUY')
+  const [researchAmount, setResearchAmount] = useState('')
+  const [researchHorizon, setResearchHorizon] = useState('MEDIUM')
   
   // Real Backend Data State
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
@@ -157,17 +181,38 @@ export default function Page() {
       if (rep.finalAction.includes('BUY')) setStance('BUY')
       else if (rep.finalAction.includes('SELL')) setStance('SELL')
       else setStance('HOLD')
-    })
+    }).catch((error) => console.error('[v0] Decision backend unavailable:', error))
 
     // 2. Historical Candles
-    fetchHistoricalCandles(rawSymbol, period, 40).then(setCandles)
+    fetchHistoricalCandles(rawSymbol, period, 40).then(setCandles).catch((error) => console.error('[v0] Candles backend unavailable:', error))
 
     // 3. Battle & Arena Data
-    fetchHiveMindBattle(rawSymbol).then(setBattle)
-    fetchPredictionLeaderboard(10).then(setLeaderboard)
-    fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies)
-    fetchTopExperts().then(setExperts)
+    fetchHiveMindBattle(rawSymbol).then(setBattle).catch((error) => console.error('[v0] Battle backend unavailable:', error))
+    fetchPredictionLeaderboard(10).then(setLeaderboard).catch((error) => console.error('[v0] Leaderboard backend unavailable:', error))
+    fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
+    fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
   }, [searched, period, language])
+
+  const handlerRunDeepResearch = async () => {
+    setResearchLoading(true)
+    setResearchError(null)
+    setResearchRan(false)
+    try {
+      const response = await sendResearchChat({
+        prompt: researchPrompt.trim() || (researchMode === 'GUIDE' ? 'Explain the key risks and practical allocation guidance for this asset.' : 'Produce an institutional-grade research brief for this asset.'),
+        symbol: extractAssetSymbol(`${researchPrompt} ${searched}`, searched),
+        mode: researchMode,
+        language,
+      })
+      setResearchResponse(response)
+      setResearchRan(true)
+    } catch (error) {
+      console.error('[v0] Research chat backend unavailable:', error)
+      setResearchError(error instanceof Error ? error.message : 'Research request failed')
+    } finally {
+      setResearchLoading(false)
+    }
+  }
 
   // Live News Rotator
   useEffect(() => {
@@ -244,11 +289,7 @@ export default function Page() {
     },
   }[language]
 
-  const personaText = (value: string | undefined, englishFallback: string, koreanFallback: string, chineseFallback: string) => {
-    if (language === 'ko') return value && /[가-힣]/.test(value) ? value : koreanFallback
-    if (language === 'cn') return value && /[\u4e00-\u9fff]/.test(value) ? value : chineseFallback
-    return value && !/[가-힣]/.test(value) ? value : englishFallback
-  }
+  const personaText = (value: string | undefined) => value?.trim() || (language === 'ko' ? '실시간 자문 데이터가 아직 도착하지 않았습니다.' : language === 'cn' ? '实时咨询数据尚未返回。' : 'Live advisory data has not returned yet.')
 
   const selectNews = (item: NewsItem) => {
     setActiveNews(item)
@@ -323,7 +364,7 @@ export default function Page() {
 
     if (!fullAns) {
       if (lower.includes('얼마') || lower.includes('비중') || lower.includes('몇퍼') || lower.includes('얼마씩') || lower.includes('비율')) {
-        fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 매집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
+        fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 ��집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
       } else if (lower.includes('언제') || lower.includes('타이밍') || lower.includes('시점') || lower.includes('지금') || lower.includes('들어가')) {
         fullAns = `📈 [${currentAsset} 진입 타이밍 정밀 분석]: 현재 RSI 62.4 구간으로 강세 모멘텀 확장 중이며, 20/50 골든크로스 지지선이 확고하여 지금 즉시 1차 정찰 비중(30%)으로 진입하기에 최적의 타이밍입니다.`
       } else if (lower.includes('손절') || lower.includes('리스크') || lower.includes('위험')) {
@@ -614,7 +655,7 @@ export default function Page() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  setSearched(query.toUpperCase() || 'BTC/USD')
+                  setSearched(extractAssetSymbol(query))
                   setQuery('')
                 }
               }}
@@ -622,7 +663,7 @@ export default function Page() {
             />
             <kbd>⌘ K</kbd>
           </label>
-          <button className="primary-button" onClick={() => setSearched(query.toUpperCase() || 'BTC/USD')}>
+          <button className="primary-button" onClick={() => setSearched(extractAssetSymbol(query))}>
             {copy.run} <span>↗</span>
           </button>
         </div>
@@ -744,9 +785,9 @@ export default function Page() {
 
           <div className="advisory-briefing">
             <span className="advisory-title">{copy.personas}</span>
-            <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.', '견고한 펀더멘털에 집중하고 단기 시장 소음에 흔들리지 마세요.', '关注长期基本面，不要被短期市场噪音干扰。')}</span></div>
-            <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.', 'RSI와 이동평균선이 상승하며 통계적 우위 구간에 진입했습니다.', 'RSI与移动平均线同步上行，进入统计优势区间。')}</span></div>
-            <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.', '유동성 사이클을 존중하되 현금 비중 20%를 유지해 위험을 분산하세요.', '顺应流动性周期，同时���持20%的现金储备以分散风险。')}</span></div>
+            <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett)}</span></div>
+            <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons)}</span></div>
+            <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio)}</span></div>
           </div>
         </div>
       </section>
@@ -755,104 +796,21 @@ export default function Page() {
       <section className="research-terminal panel">
         <div className="panel-heading">
           <span><Diamond /> AI RESEARCH TERMINAL</span>
-          <span className="status-tag">{researchDepth}</span>
+          <span className="status-tag">{researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}</span>
         </div>
         <div className="research-intro">
-          <div><span className="overline">SCENARIO ANALYSIS</span><h2>{language === 'cn' ? '验证你的下一步决策' : language === 'ko' ? '다음 투자 결정을 검증하세요' : 'Validate your next move'}</h2><p>{language === 'cn' ? '跨市场数据、新闻、宏观与链上证据。' : language === 'ko' ? '시장·뉴스·거시·온체인 근거를 한 번에 교차검증합니다.' : 'Cross-check market, news, macro, and on-chain evidence in one pass.'}</p></div>
+          <div><span className="overline">SCENARIO ANALYSIS</span><h2>{language === 'cn' ? '验证你的下一步决策' : language === 'ko' ? '다음 투자 결정을 검증하세요' : 'Validate your next move'}</h2><p>{language === 'cn' ? '跨市场数据、��闻、宏观与链上证据。' : language === 'ko' ? '시장·뉴스·거시·온체인 근거를 한 번에 교차검증합니다.' : 'Cross-check market, news, macro, and on-chain evidence in one pass.'}</p></div>
           <span className="research-context">{searched} · LIVE CONTEXT</span>
         </div>
-        <div className="research-controls">
-          <div className="research-field"><label>RESEARCH SCOPE</label><div className="research-pills">{['MARKET', 'NEWS', 'MACRO', 'ON-CHAIN', 'SOCIAL'].map((scope) => <button key={scope} className={researchScope === scope ? 'selected' : ''} onClick={() => setResearchScope(scope)}>{scope}</button>)}</div></div>
-          <div className="research-field"><label>RESEARCH DEPTH</label><div className="research-pills">{['QUICK', 'STANDARD', 'DEEP'].map((depth) => <button key={depth} className={researchDepth === depth ? 'selected' : ''} onClick={() => setResearchDepth(depth)}>{depth}</button>)}</div></div>
-          <div className="research-field"><label>INTENT</label><div className="research-pills">{['BUY', 'HOLD', 'SELL'].map((intent) => <button key={intent} className={researchIntent === intent ? 'selected' : ''} onClick={() => setResearchIntent(intent)}>{intent}</button>)}</div></div>
-          <label className="research-input-field"><span>AMOUNT <small>OPTIONAL</small></span><input value={researchAmount} onChange={(event) => setResearchAmount(event.target.value)} placeholder="$500" inputMode="decimal" /></label>
-          <label className="research-input-field"><span>HORIZON</span><select value={researchHorizon} onChange={(event) => setResearchHorizon(event.target.value)}><option>SHORT</option><option>MEDIUM</option><option>LONG</option></select></label>
+        <div className="research-mode-switch" role="tablist" aria-label="Research mode">
+          <button role="tab" aria-selected={researchMode === 'INSIGHT'} className={researchMode === 'INSIGHT' ? 'selected' : ''} onClick={() => setResearchMode('INSIGHT')}><strong>INSIGHT MODE</strong><span>Bloomberg desk · TA4J · expert lenses</span></button>
+          <button role="tab" aria-selected={researchMode === 'GUIDE'} className={researchMode === 'GUIDE' ? 'selected' : ''} onClick={() => setResearchMode('GUIDE')}><strong>GUIDE MODE</strong><span>Plain-language risk · allocation guidance</span></button>
         </div>
-        <div className="research-query">
-          <label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label>
-          <textarea
-            id="research-prompt"
-            value={researchPrompt}
-            onChange={(event) => setResearchPrompt(event.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleRunDeepResearch()
-              }
-            }}
-            placeholder={language === 'ko' ? '질문을 입력하세요 (예: 수이 지금 분할매수 얼마씩 해야 돼?) [Enter로 전송]' : language === 'cn' ? '输入您的问题 [按回车发送]' : 'Enter your question (e.g. How much should I scale in?) [Press Enter]'}
-            rows={2}
-          />
-          <button
-            className="primary-button"
-            disabled={researchLoading}
-            onClick={handleRunDeepResearch}
-            style={{ minWidth: '180px', transition: 'all 0.2s' }}
-          >
-            {researchLoading ? researchStep : researchRan ? 'RE-RUN DEEP RESEARCH ↻' : 'RUN DEEP RESEARCH ↗'}
-          </button>
-        </div>
-        {researchRan && (
-          <div className="evidence-matrix">
-            <div>
-              <span className="overline">AI EVIDENCE MATRIX & REASONING</span>
-              <strong>{searched} · {researchIntent} SCENARIO · {researchScope} ({researchDepth})</strong>
-            </div>
-            
-            <div className="evidence-grid">
-              <span>MARKET DATA <b>ta4j CONFIRMED</b></span>
-              <span>NEWS CONSENSUS <b>Bright Data REVIEWED</b></span>
-              <span>MACRO CONTEXT <b>ALIGNED (+0.82)</b></span>
-              <span>SOURCE QUALITY <b>HIGH (VERIFIED)</b></span>
-            </div>
+        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절���지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')} rows={3} /><button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>{researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
+        {researchError && <div className="research-error" role="alert">{researchError}</div>}
+        {researchRan && researchResponse && <div className="research-response"><div className="overline">LIVE BACKEND RESPONSE</div><div className="research-response-body"><ReactMarkdown remarkPlugins={[remarkGfm]}>{typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}</ReactMarkdown></div></div>}
+        {researchRan && <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}><div><span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span><strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong></div>{researchMode === 'GUIDE' ? <div className="guide-cards"><span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span><span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span><span>NEXT STEP <b>지금 확인할 행동</b></span></div> : <div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>TA4J SIGNALS <b>CALCULATED</b></span><span>EXPERT LENSES <b>REVIEWED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div>}</div>}
 
-            <div className="research-result">
-              <span>ENTRY QUALITY <strong>{Math.round(((decisionReport?.totalScore || 0.82) + 1) * 45 + 10)} / 100</strong></span>
-              <span>RECOMMENDATION <strong>{decisionReport?.finalAction || (researchIntent === 'BUY' ? 'SCALE IN' : 'HOLD')}</strong></span>
-              <span>INVALIDATION <strong>BREAK BELOW 50 SMA</strong></span>
-            </div>
-
-            {/* ── Real AI Deep Reasoning Analysis Text ── */}
-            <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'grid', gap: '12px', textAlign: 'left' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#0f2742', letterSpacing: '0.05em' }}>
-                  📊 [AI 융합 정밀 분석 전문 // {searched}]
-                </span>
-                <span style={{ fontSize: '9px', color: '#64748b' }}>
-                  {decisionReport?.generatedAt ? new Date(decisionReport.generatedAt).toLocaleTimeString() : '실시간 팩트체크 완료'}
-                </span>
-              </div>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 4대 엔진 종합 진단:</strong> {decisionReport?.decisionReason || `${searched}의 4대 AI 융합 분석 결과, 기술적 정량 지표(+0.65)와 뉴스 감성(+0.88), 과거 패턴 승률(80%)이 일치하여 견고한 상방 지지선을 형성하고 있습니다.`}
-              </p>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 실시간 뉴스/거시 팩트:</strong> {decisionReport?.qualInsight?.macroSummary || '글로벌 기관 자금 유입이 가속화되고 있으며 온체인 고래 지갑의 거래소 외부 유출로 매도 압력이 완화된 상태입니다.'}
-              </p>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 과거 5년 프랙탈 패턴:</strong> {decisionReport?.patternInsight?.patternSummary || '과거 유사 차트 패턴 5회 중 4회(승률 80%)에서 향후 5거래일 내 평균 +6.4% 가격 확장이 관측되었습니다.'}
-              </p>
-
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: 1.7, color: '#1e293b' }}>
-                <strong>• 리스크 관리 & 무효화 기준:</strong> {decisionReport?.qualInsight?.riskFactors || '단기 주요 지지선 및 50일 이동평균선 이탈 시 포지션을 보수적으로 축소하십시오.'}
-              </p>
-
-              {/* ── Prominent Direct Query Answer ── */}
-              <div style={{ marginTop: '10px', padding: '14px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderLeft: '4px solid #16a34a', borderRadius: '4px', fontSize: '11px', color: '#14532d', lineHeight: 1.7 }}>
-                <div style={{ fontWeight: 600, fontSize: '11px', color: '#15803d', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>💬 AI DIRECT QUERY ANSWER // {submittedPrompt || `${searched} 포지션 진입 전략`}</span>
-                  <span style={{ fontSize: '9px', fontWeight: 400, color: '#16a34a' }}>VERIFIED RESPONSE ✓</span>
-                </div>
-                <div>
-                  {streamedAnswer || activeQueryAnswer || `💡 [${searched} 분할 매수 가이드]: 20/50 골든크로스 지지선이 유효하므로 1차 30%(현재가) -> 2차 40%(눌림목) -> 3차 30%(돌파) 분할 진입을 권장합니다.`}
-                  {isStreaming && <span className="streaming-cursor" />}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* ── Integrated Decision Banner ── */}
