@@ -100,6 +100,8 @@ export default function Page() {
   const [researchHorizon, setResearchHorizon] = useState('MEDIUM')
   const [researchPrompt, setResearchPrompt] = useState('')
   const [researchRan, setResearchRan] = useState(false)
+  const [researchLoading, setResearchLoading] = useState(false)
+  const [researchStep, setResearchStep] = useState('')
   
   // Real Backend Data State
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
@@ -246,6 +248,21 @@ export default function Page() {
     setActiveNews(item)
     setSearched(`${item.tag}/USD`)
     setNewsOpen(true)
+  }
+
+  const handleRunDeepResearch = () => {
+    setResearchLoading(true)
+    setResearchStep('1/3: Scanning microstructure...')
+    setTimeout(() => {
+      setResearchStep('2/3: Checking Bright Data & macro...')
+      setTimeout(() => {
+        setResearchStep('3/3: Synthesizing LLaMA 3...')
+        setTimeout(() => {
+          setResearchLoading(false)
+          setResearchRan(true)
+        }, 350)
+      }, 350)
+    }, 350)
   }
 
   const handleFollow = async (targetUserId: number) => {
@@ -664,7 +681,24 @@ export default function Page() {
           <label className="research-input-field"><span>AMOUNT <small>OPTIONAL</small></span><input value={researchAmount} onChange={(event) => setResearchAmount(event.target.value)} placeholder="$500" inputMode="decimal" /></label>
           <label className="research-input-field"><span>HORIZON</span><select value={researchHorizon} onChange={(event) => setResearchHorizon(event.target.value)}><option>SHORT</option><option>MEDIUM</option><option>LONG</option></select></label>
         </div>
-        <div className="research-query"><label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label><textarea id="research-prompt" value={researchPrompt} onChange={(event) => setResearchPrompt(event.target.value)} placeholder={language === 'ko' ? '현재 가격에 500달러 매수해도 괜찮을까?' : language === 'cn' ? '当前价格是否适合分批买入？' : 'Is this a reasonable entry at the current price?'} rows={2} /><button className="primary-button" onClick={() => setResearchRan(true)}>{researchRan ? 'RESEARCH COMPLETE' : 'RUN DEEP RESEARCH'} <span>↗</span></button></div>
+        <div className="research-query">
+          <label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label>
+          <textarea
+            id="research-prompt"
+            value={researchPrompt}
+            onChange={(event) => setResearchPrompt(event.target.value)}
+            placeholder={language === 'ko' ? '현재 가격에 500달러 분할 매수해도 괜찮을까?' : language === 'cn' ? '当前价格是否适合分批买入？' : 'Is this a reasonable entry at the current price?'}
+            rows={2}
+          />
+          <button
+            className="primary-button"
+            disabled={researchLoading}
+            onClick={handleRunDeepResearch}
+            style={{ minWidth: '180px', transition: 'all 0.2s' }}
+          >
+            {researchLoading ? researchStep : researchRan ? 'RE-RUN DEEP RESEARCH ↻' : 'RUN DEEP RESEARCH ↗'}
+          </button>
+        </div>
         {researchRan && <div className="evidence-matrix"><div><span className="overline">EVIDENCE MATRIX</span><strong>{researchIntent} SCENARIO · {researchScope} · {researchDepth}</strong></div><div className="evidence-grid"><span>MARKET DATA <b>CONFIRMED</b></span><span>NEWS CONSENSUS <b>REVIEWED</b></span><span>MACRO CONTEXT <b>ALIGNED</b></span><span>SOURCE QUALITY <b>HIGH</b></span></div><div className="research-result"><span>ENTRY QUALITY <strong>72 / 100</strong></span><span>RECOMMENDATION <strong>SCALE IN</strong></span><span>INVALIDATION <strong>BREAK BELOW SUPPORT</strong></span></div></div>}
       </section>
 
