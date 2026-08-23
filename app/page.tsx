@@ -260,16 +260,38 @@ export default function Page() {
     setResearchLoading(true)
     setResearchStep('1/3: Scanning microstructure...')
     
+    // Auto-detect asset from prompt!
     const lower = q.toLowerCase()
+    let currentAsset = searched
+    if (lower.includes('수이') || lower.includes('sui')) {
+      currentAsset = 'SUI/USD'
+      setSearched('SUI/USD')
+    } else if (lower.includes('이더') || lower.includes('eth') || lower.includes('ethereum')) {
+      currentAsset = 'ETH/USD'
+      setSearched('ETH/USD')
+    } else if (lower.includes('솔라나') || lower.includes('sol') || lower.includes('solana')) {
+      currentAsset = 'SOL/USD'
+      setSearched('SOL/USD')
+    } else if (lower.includes('엔비디아') || lower.includes('nvda') || lower.includes('nvidia')) {
+      currentAsset = 'NVDA/USD'
+      setSearched('NVDA/USD')
+    } else if (lower.includes('삼성') || lower.includes('samsung')) {
+      currentAsset = '005930.KS'
+      setSearched('005930.KS')
+    } else if (lower.includes('비트') || lower.includes('btc') || lower.includes('bitcoin')) {
+      currentAsset = 'BTC/USD'
+      setSearched('BTC/USD')
+    }
+
     let fullAns = ''
     if (lower.includes('얼마') || lower.includes('비중') || lower.includes('몇퍼') || lower.includes('얼마씩') || lower.includes('비율')) {
-      fullAns = `💡 [${searched} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 매집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
-    } else if (lower.includes('언제') || lower.includes('타이밍') || lower.includes('시점') || lower.includes('지금')) {
-      fullAns = `📈 [${searched} 진입 타이밍 정밀 분석]: 현재 RSI 62.4 구간으로 강세 모멘텀 확장 중이며, 20/50 골든크로스 지지선이 확고하여 지금 즉시 1차 정찰 비중(30%)으로 진입하기에 최적의 타이밍입니다.`
+      fullAns = `💡 [${currentAsset} 분할 매수 구체적 비중 가이드]: 가용 예산 기준 1차 30%(현재가 정찰 진입) ➔ 2차 40%(20일 이동평균선 눌림목 지지선 추가 매집) ➔ 3차 30%(전고점 돌파 확인 후 불타기)의 3단계 분할 매수를 강력 권고합니다. (⚠️ 50일선 이탈 시 리스크 관리 손절)`
+    } else if (lower.includes('언제') || lower.includes('타이밍') || lower.includes('시점') || lower.includes('지금') || lower.includes('들어가')) {
+      fullAns = `📈 [${currentAsset} 진입 타이밍 정밀 분석]: 현재 RSI 62.4 구간으로 강세 모멘텀 확장 중이며, 20/50 골든크로스 지지선이 확고하여 지금 즉시 1차 정찰 비중(30%)으로 진입하기에 최적의 타이밍입니다.`
     } else if (lower.includes('손절') || lower.includes('리스크') || lower.includes('위험')) {
-      fullAns = `🛡️ [${searched} 손절 및 리스크 방어선]: 20일선 하향 이탈 시 비중 50% 축소, 50일선 및 직전 저점 지지선 이탈 시 전량 손절하여 원금을 엄격히 방어하십시오.`
+      fullAns = `🛡️ [${currentAsset} 손절 및 리스크 방어선]: 20일선 하향 이탈 시 비중 50% 축소, 50일선 및 직전 저점 지지선 이탈 시 전량 손절하여 원금을 엄격히 방어하십시오.`
     } else {
-      fullAns = `🤖 [${searched} 4대 엔진 종합 진단]: '${q}' 질의에 대해 ta4j 정량 지표와 Bright Data 뉴스를 교차검증한 결과, 단기 몰빵을 피하고 3단계 분할 매수(Scale-in) 전략으로 진입 타이밍을 분산하는 것이 수학적으로 가장 유리합니다.`
+      fullAns = `🤖 [${currentAsset} 4대 엔진 종합 진단]: '${q}' 질의에 대해 ta4j 정량 지표와 Bright Data 뉴스를 교차검증한 결과, 단기 몰빵을 피하고 3단계 분할 매수(Scale-in) 전략으로 진입 타이밍을 분산하는 것이 수학적으로 가장 유리합니다.`
     }
     
     setActiveQueryAnswer(fullAns)
