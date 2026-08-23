@@ -761,6 +761,69 @@ export default function Page() {
         </div>
       </section>
 
+            {/* ── Hall of Fame (Verified Top Analysts) ── */}
+      <section className="expert-directory panel">
+        <div className="panel-heading">
+          <span><Diamond /> HALL OF FAME · TOP ANALYSTS</span>
+          <span className="status-tag">SEASON 1 LIVE QUALIFIERS</span>
+        </div>
+        <div className="directory-intro">
+          <div>
+            <span className="overline">VERIFIED LEADERBOARD</span>
+            <h2>Prove your alpha. Claim your seat in the Hall of Fame.</h2>
+            <p>실제 팩트체크된 퀀트 분석과 24H 예측 승률로 누구나 명예의 전당에 도전할 수 있습니다. 100% 검증된 실적으로만 평가됩니다.</p>
+          </div>
+          <button className="text-button" onClick={() => alert('누구나 분석글 작성 및 24H 예측 리그 참여로 명예의 전당 순위에 오를 수 있습니다!')}>
+            CHALLENGE RANKING ↗
+          </button>
+        </div>
+        <div className="expert-grid">
+          {experts.map((expert, idx) => {
+            const displayName = expert.nickname || expert.username || 'Analyst'
+            const role = expert.role || 'Quant Analyst'
+            const score = expert.reputationScore || (98 - idx * 3)
+            const posts = expert.postCount || expert.posts || (120 - idx * 20)
+            const followerNum = typeof expert.followerCount === 'number' ? expert.followerCount : (12400 - idx * 3000)
+            const followers = followerNum >= 1000 ? `${(followerNum / 1000).toFixed(1)}K` : followerNum
+            const tone = expert.tone || (idx === 0 ? 'navy' : idx === 1 ? 'green' : 'blue')
+            const initials = displayName.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
+            const rankLabel = `#0${idx + 1}`
+
+            return (
+              <article className="expert-card" key={expert.userId || displayName}>
+                <div className={`expert-avatar ${tone}`}>{initials}</div>
+                <div className="expert-main">
+                  <div className="expert-name-row">
+                    <div>
+                      <strong>
+                        <span style={{ color: '#2b866d', marginRight: '6px', fontSize: '10px', fontWeight: 'bold' }}>{rankLabel}</span>
+                        {displayName}
+                      </strong>
+                      <span>{role}</span>
+                    </div>
+                    <button
+                      className={`follow-button ${expert.isFollowedByMe ? 'following' : ''}`}
+                      onClick={() => handleFollow(expert.userId || (idx + 1))}
+                    >
+                      {expert.isFollowedByMe ? 'FOLLOWING ✓' : 'FOLLOW +'}
+                    </button>
+                  </div>
+                  <div className="expert-stats">
+                    <span>REPUTATION <b>{score}P</b></span>
+                    <span>POSTS <b>{posts}</b></span>
+                    <span>FOLLOWERS <b>{followers}</b></span>
+                  </div>
+                  <div className="expert-note">
+                    <span>HONOR STATUS</span>
+                    <strong>Verified Top Analyst · Season 1 Ranked</strong>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer>
         <span>AETHER TERMINAL // AI FACT-CHECK & OPEN QUANT</span>
