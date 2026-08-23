@@ -211,7 +211,11 @@ export default function Page() {
     },
   }[language]
 
-  const englishPersona = (value: string | undefined, fallback: string) => value && !/[가-힣]/.test(value) ? value : fallback
+  const personaText = (value: string | undefined, englishFallback: string, koreanFallback: string, chineseFallback: string) => {
+    if (language === 'ko') return value && /[가-힣]/.test(value) ? value : koreanFallback
+    if (language === 'cn') return value && /[\u4e00-\u9fff]/.test(value) ? value : chineseFallback
+    return value && !/[가-힣]/.test(value) ? value : englishFallback
+  }
 
   const selectNews = (item: NewsItem) => {
     setActiveNews(item)
@@ -593,9 +597,9 @@ export default function Page() {
 
           <div className="advisory-briefing">
             <span className="advisory-title">{copy.personas}</span>
-            <div><b>{copy.buffett}</b><span>{englishPersona(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.')}</span></div>
-            <div><b>{copy.simons}</b><span>{englishPersona(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.')}</span></div>
-            <div><b>{copy.dalio}</b><span>{englishPersona(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.')}</span></div>
+            <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett, 'Stay focused on durable fundamentals and ignore short-term noise.', '견고한 펀더멘털에 집중하고 단기 시장 소음에 흔들리지 마세요.', '关注长期基本面，不要被短期市场噪音干扰。')}</span></div>
+            <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons, 'Statistical edge detected as RSI and moving averages trend higher.', 'RSI와 이동평균선이 상승하며 통계적 우위 구간에 진입했습니다.', 'RSI与移动平均线同步上行，进入统计优势区间。')}</span></div>
+            <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio, 'Respect the liquidity cycle and maintain a 20% cash buffer.', '유동성 사이클을 존중하되 현금 비중 20%를 유지해 위험을 분산하세요.', '顺应流动性周期，同时保持20%的现金储备以分散风险。')}</span></div>
           </div>
         </div>
       </section>
