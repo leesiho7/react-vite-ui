@@ -184,15 +184,9 @@ export async function fetchIntegratedDecision(
     },
     agentReflection: '과거 복기: 지표-뉴스 동조 국면에서 추세 추종 시 승률 83% 달성 (분할 매수 유효)',
     personaAdvice: {
-<<<<<<< HEAD
       warrenBuffett: 'Do not be distracted by short-term noise while durable fundamentals and network effects remain intact.',
       jimSimons: 'RSI at 62 and rising moving averages indicate a statistical edge. Target a 1:2.4 risk-reward ratio.',
       rayDalio: 'Liquidity conditions are supportive, but maintain a 20% cash buffer to diversify risk.'
-=======
-      warrenBuffett: '훌륭한 자산의 펀더멘털과 네트워크 효과가 유지된다면 단기 소음에 흔들리지 마라.',
-      jimSimons: 'RSI 62 및 이평선 상향 배열로 통계적 상승 우위 구간 진입. 손익비 1:2.8 설정 권고.',
-      rayDalio: '유동성 사이클이 우호적이나, 현금 비중 20%를 상시 유지하여 리스크를 분산하라.'
->>>>>>> origin/master
     },
     generatedAt: new Date().toISOString()
   };
@@ -321,7 +315,7 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
     userId: 999,
     username: `${payload.provider.toLowerCase()}_${payload.providerId}`,
     nickname: payload.nickname || `${payload.provider}_Investor`,
-    walletAddress: payload.walletAddress || null,
+    walletAddress: payload.walletAddress || undefined,
     reputationScore: 100,
     tokenBalance: 50.0,
     role: 'ROLE_USER',
