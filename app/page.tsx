@@ -12,7 +12,8 @@ import {
   fetchArenaLeaderboard,
   fetchTopExperts,
   toggleFollowExpert,
-  sendResearchChat
+  sendResearchChat,
+  fetchNewsChannel
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -41,44 +42,28 @@ const defaultAssets = [
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 type Language = keyof typeof languageLabels
 
-// Multilingual News Feeds (EN: Bloomberg/Reuters/CNN/CNBC, KO: 연합인포맥스/한경/매경/DART/블룸버그/로이터/CNN, CN: 金十/财新/彭博/路透)
-const newsItemsByLang = {
-  en: [
-    { source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: 'Bitcoin holds above  as institutional ETF net inflows top ', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
-    { source: 'REUTERS TECH', tag: 'NVDA', title: 'NVIDIA signals sustained enterprise demand for next-gen AI superclusters', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
-    { source: 'BLOOMBERG MARKETS', tag: 'SOL', title: 'Solana decentralized exchange volume hits all-time record amidst liquidity surge', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
-    { source: 'REUTERS AUTOMOTIVE', tag: 'TSLA', title: 'Tesla autonomous FSD v13 rollout accelerates regulatory approval timeline', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { source: 'FINANCIAL TIMES', tag: 'ETH', title: 'Ethereum staking deposits reach record quarterly high amidst supply squeeze', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
-    { source: 'CNN BUSINESS', tag: 'MACRO', title: 'Federal Reserve hints at steady rate trajectory amidst resilient economic data', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
-    { source: 'CNBC MARKETS', tag: 'AAPL', title: 'Apple Intelligence expansion drives record upgrade cycle expectations', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
-    { source: 'WALL STREET JOURNAL', tag: 'MACRO', title: 'Global equity markets rally as corporate earnings exceed Wall Street estimates', impact: '8.1', sentiment: 'BULLISH', tone: 'positive', thumb: 'WSJ', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
-    { source: 'COINDESK ONCHAIN', tag: 'ONCHAIN', title: 'Whale address accumulation reaches 3-month peak with 32,000 BTC net intake', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: 'WHALE', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
-  ],
-  ko: [
-    { source: '연합인포맥스 속보', tag: 'BTC', title: '비트코인 현물 ETF 4.8억 달러 순유입… 67,000달러 안착 시도', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
-    { source: '한국경제 증권부', tag: 'NVDA', title: '엔비디아 차세대 AI 인프라 수주 랠리… 글로벌 반도체 동반 강세', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
-    { source: '블룸버그 코리아', tag: 'SOL', title: '솔라나 DEX 24시간 거래량 역대 최대치 경신… 기관 유동성 집중', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
-    { source: '로이터 테크', tag: 'TSLA', title: '테슬라 자율주행 FSD v13 글로벌 승인 가속… AI 로보택시 기대감 고조', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { source: '매일경제 금융', tag: 'ETH', title: '이더리움 스테이킹 참여율 분기 최고치 경신… 거래소 매도 압력 완화', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
-    { source: 'CNN 비즈니스', tag: 'MACRO', title: '미국 연준(Fed) 금리 동결 시사 및 유동성 회복… 글로벌 위험자산 랠리', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
-    { source: 'CNBC 코리아', tag: 'AAPL', title: '애플 온디바이스 인텔리전스 기기 교체 슈퍼사이클 진입 전망', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
-    { source: 'DART 전자공시 팩트체크', tag: '공시', title: '주요 상장 핀테크 법인 AI 자산배분 인프라 구축 공시 완료', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: '공시', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
-    { source: '블록미디어 온체인', tag: 'ONCHAIN', title: '온체인 고래 지갑 72시간 동안 32,000 BTC 순매집 확인', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: '고래', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
-  ],
-  cn: [
-    { source: '金十数据 独家', tag: 'BTC', title: '比特币机构现货ETF单日净流入超4.8亿美元，稳守67,000关口', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
-    { source: '财新网 科技前沿', tag: 'NVDA', title: '英伟达下一代企业级AI集群订单激增，半导体供应链全面提振', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
-    { source: '彭博商业周刊', tag: 'SOL', title: 'Solana链上DEX单日交易量创历史新高，机构流动性加速涌入', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
-    { source: '路透社 汽车科技', tag: 'TSLA', title: '特斯拉FSD v13全自动驾驶全球审批加速，无人出租车量产提速', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { source: '8BTC 深度报道', tag: 'ETH', title: '以太坊质押总量创季度新高，交易所流通量持续净流出', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
-    { source: 'CNN 商业频道', tag: 'MACRO', title: '美联储暗示利率政策保持稳健，全球宏观流动性周期回暖', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
-    { source: 'CNBC 独家', tag: 'AAPL', title: '苹果AI大模型生态全面落地，供应链迎来超级换机周期', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
-    { source: '华尔街见闻 宏观', tag: 'MACRO', title: '全球主要权益市场全线上扬，企业盈利超华尔街机构普遍预期', impact: '8.1', sentiment: 'BULLISH', tone: 'positive', thumb: '宏观', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
-    { source: '金色财经 链上', tag: 'ONCHAIN', title: '链上巨鲸地址72小时内净增持32,000枚比特币，筹码集中度攀升', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: '链上', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
-  ]
+export interface NewsItem {
+  source: string
+  tag: string
+  title: string
+  impact: string
+  sentiment: string
+  tone: 'positive' | 'negative' | 'neutral'
+  thumb: string
+  imageUrl?: string
+  snippet?: string
 }
 
-type NewsItem = typeof newsItemsByLang['en'][number]
+const defaultNewsItem: NewsItem = {
+  source: 'BLOOMBERG',
+  tag: 'BTC',
+  title: '실시간 금융 웹 속보를 수집하고 있습니다...',
+  impact: '8.8',
+  sentiment: 'BULLISH',
+  tone: 'positive',
+  thumb: 'BTC',
+  imageUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80'
+}
 
 function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
@@ -150,9 +135,10 @@ export default function Page() {
   const [aiWins, setAiWins] = useState(1)
   const [claimed, setClaimed] = useState(false)
 
-  // Language-bound News List
-  const currentNewsList = useMemo(() => newsItemsByLang[language], [language])
-  const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
+  // Language & Backend News Feed State
+  const [newsCategory, setNewsCategory] = useState<'ALL' | 'CRYPTO' | 'KOREA' | 'US_TECH' | 'MACRO'>('ALL')
+  const [liveNewsFeed, setLiveNewsFeed] = useState<NewsItem[]>([defaultNewsItem])
+  const [activeNews, setActiveNews] = useState<NewsItem>(defaultNewsItem)
 
   // Live Low-Latency WebSocket Hook (Direct Exchange Connection)
   const {
@@ -166,10 +152,30 @@ export default function Page() {
     latestKline
   } = useMarketWebSocket(searched)
 
-  // Update active news when language changes
+  // Fetch real-time multi-channel news feed from Spring Boot backend (Live Web Scraper)
   useEffect(() => {
-    setActiveNews(newsItemsByLang[language][0])
-  }, [language])
+    const rawSym = searched.replace('/USD', '').replace('/USDT', '').replace('.KS', '') + 'USDT'
+    fetchNewsChannel(newsCategory, rawSym).then((items) => {
+      if (items && items.length > 0) {
+        const mapped: NewsItem[] = items.map((it: any) => ({
+          source: it.source ? it.source.toUpperCase() : 'BLOOMBERG',
+          tag: it.symbol ? it.symbol.replace('USDT', '').replace('.KS', '') : 'MARKET',
+          title: it.title,
+          impact: it.impactPercent ? (it.impactPercent / 10).toFixed(1) : (it.impact === 'HIGH' ? '9.0' : '7.5'),
+          sentiment: it.sentiment || 'BULLISH',
+          tone: it.sentiment === 'BULLISH' ? 'positive' : it.sentiment === 'BEARISH' ? 'negative' : 'neutral',
+          thumb: it.symbol ? it.symbol.slice(0, 3).toUpperCase() : 'NEWS',
+          imageUrl: it.imageUrl,
+          snippet: it.snippet
+        }))
+        setLiveNewsFeed(mapped)
+        setActiveNews(mapped[0])
+      }
+    }).catch((err) => {
+      console.warn('[LiveNewswire] Backend live scraper API unavailable:', err)
+    })
+  }, [newsCategory, searched])
+
 
   // Fetch Backend APIs on symbol, period, or language change
   useEffect(() => {
@@ -214,17 +220,18 @@ export default function Page() {
     }
   }
 
-  // Live News Rotator
+  // Live News Rotator (Cycles through live web-scraped feed)
   useEffect(() => {
+    if (!liveNewsFeed || liveNewsFeed.length <= 1) return
     const timer = window.setInterval(() => {
       setActiveNews((current) => {
-        const list = newsItemsByLang[language]
-        const idx = list.findIndex((item) => item.title === current.title)
-        return list[(idx + 1) % list.length]
+        if (!current) return liveNewsFeed[0]
+        const idx = liveNewsFeed.findIndex((item) => item.title === current.title)
+        return liveNewsFeed[(idx + 1) % liveNewsFeed.length]
       })
-    }, 4500)
+    }, 5000)
     return () => window.clearInterval(timer)
-  }, [language])
+  }, [liveNewsFeed])
 
   const copy = {
     en: {
@@ -597,11 +604,25 @@ export default function Page() {
         </section>
       )}
 
-      {/* ── Live Newswire (Language Localized) ── */}
+      {/* ── Live Newswire (Multi-Channel RAG + Language Localized) ── */}
       {newsOpen && (
         <section className="news-section">
           <div className="news-live-bar">
             <span className="live-dot pulse" /> LIVE NEWSWIRE ({languageLabels[language]})
+            <span className="language-switcher" style={{ marginLeft: '12px' }}>
+              {(['ALL', 'CRYPTO', 'KOREA', 'US_TECH', 'MACRO'] as const).map((cat) => (
+                <button
+                  key={cat}
+                  className={newsCategory === cat ? 'selected' : ''}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setNewsCategory(cat)
+                  }}
+                >
+                  {cat === 'ALL' ? 'ALL' : cat === 'CRYPTO' ? 'CRYPTO' : cat === 'KOREA' ? 'KOSPI/DART' : cat === 'US_TECH' ? 'US TECH' : 'MACRO'}
+                </button>
+              ))}
+            </span>
             <span className="news-timer">{copy.rollingTag}</span>
             <button onClick={() => setNewsOpen(false)}>{copy.newsClose}</button>
           </div>
@@ -619,7 +640,7 @@ export default function Page() {
               </div>
             </button>
             <div className="media-feed">
-              {currentNewsList.map((item) => (
+              {liveNewsFeed.map((item) => (
                 <button
                   className={`feed-item ${item.title === activeNews.title ? 'active' : ''}`}
                   key={item.title}

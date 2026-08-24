@@ -149,3 +149,21 @@ export interface FollowResponse {
   followingCount: number;
   targetReputationScore: number;
 }
+
+export interface RichNewsItem {
+  id: string;
+  symbol: string;
+  category: 'ALL' | 'CRYPTO' | 'KOREA' | 'US_TECH' | 'MACRO';
+  categoryLabel: string;
+  title: string;
+  snippet: string;
+  source: string;
+  timestamp: string;
+  imageUrl: string;
+  sentiment: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  sentimentScore: number;
+  impact: 'HIGH' | 'MED' | 'LOW';
+  impactPercent: number;
+  link?: string;
+}
+

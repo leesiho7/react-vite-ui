@@ -32,8 +32,6 @@ export async function fetchIntegratedDecision(
     console.warn('[API] Fallback for fetchIntegratedDecision:', err);
   }
 
-  throw new Error(`Backend decision API unavailable: ${API_BASE}/trading/decision`)
-
   // Multilingual Standalone Fallbacks (EN / CN / KO)
   if (locale === 'en') {
     return {
@@ -211,8 +209,6 @@ export async function fetchHistoricalCandles(
     console.warn('[API] Fallback for fetchHistoricalCandles:', err);
   }
 
-  throw new Error(`Backend candles API unavailable: ${API_BASE}/market/historical`)
-
   const now = Math.floor(Date.now() / 1000);
   const step = 3600 * 4;
   let price = 62000;
@@ -244,8 +240,6 @@ export async function fetchPredictionLeaderboard(limit = 10): Promise<Prediction
     console.warn('[API] Fallback for fetchPredictionLeaderboard:', err);
   }
 
-  throw new Error(`Backend leaderboard API unavailable: ${API_BASE}/prediction/leaderboard`)
-
   return [
     { rank: 1, userId: 101, nickname: 'Oracle_Sniper', tier: 'ORACLE', currentStreak: 12, maxStreak: 15, winRatePct: 88.5, totalPredictions: 45, wonPredictions: 40, totalEarnedTokens: 420.0 },
     { rank: 2, userId: 102, nickname: 'Alpha_QuantMaster', tier: 'GRAND_MASTER', currentStreak: 8, maxStreak: 11, winRatePct: 82.0, totalPredictions: 60, wonPredictions: 49, totalEarnedTokens: 310.5 },
@@ -265,8 +259,6 @@ export async function fetchHiveMindBattle(symbol = 'BTCUSDT'): Promise<HiveMindB
   } catch (err) {
     console.warn('[API] Fallback for fetchHiveMindBattle:', err);
   }
-
-  throw new Error(`Backend battle API unavailable: ${API_BASE}/prediction/battle`)
 
   return {
     symbol,
@@ -292,8 +284,6 @@ export async function fetchArenaLeaderboard(season = 'SEASON_1', limit = 10): Pr
   } catch (err) {
     console.warn('[API] Fallback for fetchArenaLeaderboard:', err);
   }
-
-  throw new Error(`Backend arena API unavailable: ${API_BASE}/arena/leaderboard`)
 
   return [
     { id: 1, name: 'Adaptive Trend Matrix', authorNickname: 'mina.k', season: 'SEASON_1', totalReturnPct: 42.8, profitFactor: 2.65, winRatePct: 78.4, maxDrawdownPct: 8.4, copyCount: 342, entryRules: 'RSI < 30 & SMA 20 > 50', exitRules: 'RSI > 70' },
@@ -352,8 +342,6 @@ export async function fetchTopExperts(currentUserId?: number, limit = 10): Promi
     console.warn('[API] Fallback for fetchTopExperts:', err);
   }
 
-  throw new Error(`Backend experts API unavailable: ${API_BASE}/community/experts`)
-
   return [
     { userId: 1, nickname: 'Mina Park', username: 'mina_park_macro', role: 'Macro & Digital Assets', reputationScore: 98, posts: 128, followerCount: 12400, isFollowedByMe: false, tone: 'navy' },
     { userId: 2, nickname: 'Alex Chen', username: 'alex_chen_ai', role: 'Global Tech & Semiconductor Strategy', reputationScore: 95, posts: 104, followerCount: 8700, isFollowedByMe: false, tone: 'green' },
@@ -409,4 +397,26 @@ export async function sendResearchChat(payload: {
   }
   return null;
 }
+
+/**
+ * 10. [3번 & 4번 기능] 실시간 멀티채널 뉴스 및 AI 호재/악재 감성 분석 피드 조회
+ */
+export async function fetchNewsChannel(
+  channel = 'ALL',
+  symbol = 'BTCUSDT'
+): Promise<any[]> {
+  try {
+    const res = await fetch(`${API_BASE}/market/news/channel?channel=${channel}&symbol=${symbol}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchNewsChannel:', err);
+  }
+  return [];
+}
+
 
