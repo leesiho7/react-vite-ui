@@ -276,7 +276,7 @@ export default function Page() {
   // 4. 파이썬 코드 샌드박스 백테스트 & 검증
   const handleTestSandbox = async () => {
     setSandboxLoading(true)
-    setSandboxLog('Running Python 3.11 isolated sandbox container...\nScanning AST tree for disallowed syscalls...')
+    setSandboxLog('Running Python 3.12 isolated sandbox container...\nScanning AST tree & Executing strategy ticks...')
     try {
       const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
       const res = await testPythonCode({
@@ -285,10 +285,10 @@ export default function Page() {
         timeFrame: period
       })
       if (res) {
-        setSandboxLog(res.stdoutLogs || `✅ Syntax Validated.\nSimulated ${res.simulatedTrades || 12} trades.\nWin Rate: ${res.simulatedWinRate || 75.0}%\nCumulative PnL: +${res.simulatedPnlPct || 6.4}%`)
+        setSandboxLog(res.simulatedOutput || res.stdoutLogs || res.message || 'Validation finished.')
       }
     } catch (e) {
-      setSandboxLog('⚠️ Sandbox executed locally. AST validation: PASS.')
+      setSandboxLog('⚠️ Sandbox execution failed to connect to backend.')
     } finally {
       setSandboxLoading(false)
     }
