@@ -1548,7 +1548,7 @@ export default function Page() {
                     }}
                   >
                     <div style={{ fontSize: '8px', color: isWon ? '#059669' : isCurrent ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
-                      {isFinal ? 'FINAL' : `R${stepNum}`}
+                      {isFinal ? '🏆 FINAL' : `R${stepNum}`}
                     </div>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: isWon ? '#059669' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#94a3b8', marginTop: '2px' }}>
                       {isWon ? 'WIN' : isCurrent ? 'ACTIVE' : isFinal ? '$10' : '—'}
@@ -1711,7 +1711,7 @@ export default function Page() {
         <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="panel" style={{ width: '480px', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <strong style={{ fontSize: '15px' }}>10연승 챌린지 $10.00 USDT Claim</strong>
+              <strong style={{ fontSize: '15px' }}>🏆 10연승 챌린지 $10.00 USDT Claim</strong>
               <button className="text-button" onClick={() => setClaimModalOpen(false)}>닫기 ×</button>
             </div>
 
