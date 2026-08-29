@@ -591,8 +591,8 @@ export async function fetchDepositWallets(): Promise<any> {
     amountUsdt: 7.0,
     currency: 'USDT',
     wallets: {
-      polygon: '0x71C8364f3B80430C4361b17b2F3057173b0638A9',
-      bsc: '0x71C8364f3B80430C4361b17b2F3057173b0638A9',
+      polygon: '0xb0390a087488E304cA32996532Ab9f40028511fE',
+      bsc: '0xb0390a087488E304cA32996532Ab9f40028511fE',
       trc20: 'TYDzsYUE282QJ84qjxoKqT5wD3ZgK8ZABC',
       solana: '8cEVKX4SzUUADEkkp9X62eWrgXRuU9zZiWBTgQfupqKA'
     },
