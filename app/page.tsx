@@ -889,6 +889,7 @@ export default function Page() {
   const [claimNetwork, setClaimNetwork] = useState('polygon')
   const [claimLoading, setClaimLoading] = useState(false)
   const [claimSuccessData, setClaimSuccessData] = useState<any>(null)
+  const [claimTeaserModalOpen, setClaimTeaserModalOpen] = useState(false)
   const [escrowPool, setEscrowPool] = useState<EscrowPoolStatus | null>(null)
 
   // 1. Mount: Load User Auth & That Specific User's Private Chat History
@@ -1696,14 +1697,14 @@ export default function Page() {
               <div className="pool-readout" style={{ minWidth: '175px', padding: '10px 14px', background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600 }}>RESERVED ESCROW POOL</span>
-                  <span className="live-dot pulse" style={{ width: '6px', height: '6px' }} />
+                  <span className="live-dot" style={{ width: '6px', height: '6px', background: (escrowPool?.currentBalance ?? 0) > 0 ? '#10b981' : '#94a3b8' }} />
                 </div>
-                <strong style={{ fontSize: '20px', color: '#0f766e', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
-                  {(escrowPool?.currentBalance ?? 100.0).toFixed(2)} <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
+                <strong style={{ fontSize: '20px', color: (escrowPool?.currentBalance ?? 0) > 0 ? '#0f766e' : '#475569', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                  {(escrowPool?.currentBalance ?? 0.0).toFixed(2)} <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
                 </strong>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '2px' }}>
-                  <span style={{ fontSize: '8.5px', color: '#0284c7', background: '#e0f2fe', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
-                    {escrowPool ? `${escrowPool.remainingWinners} / ${escrowPool.maxWinners} CLAIMS LEFT` : '10 / 10 CLAIMS LEFT'}
+                  <span style={{ fontSize: '8.5px', color: (escrowPool?.currentBalance ?? 0) > 0 ? '#0284c7' : '#64748b', background: (escrowPool?.currentBalance ?? 0) > 0 ? '#e0f2fe' : '#f1f5f9', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
+                    {(escrowPool?.currentBalance ?? 0) > 0 ? `${escrowPool?.remainingWinners} / ${escrowPool?.maxWinners} CLAIMS LEFT` : '0 / 0 CLAIMS (EVENT STANDBY)'}
                   </span>
                   <span style={{ fontSize: '8.5px', color: '#059669', background: '#ecfdf5', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
                     $10.00/WINNER
@@ -1777,26 +1778,65 @@ export default function Page() {
 
           {/* 10-Win Streak Dot Matrix Tracker */}
           <div style={{ margin: '22px 0', padding: '16px 20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
-                <strong style={{ fontSize: '11.5px', color: '#18334a' }}>10연승 연승 트래커 (Streak Milestone)</strong>
+                <strong style={{ fontSize: '12px', color: '#18334a' }}>10연승 연승 트래커 (Streak Milestone)</strong>
                 <span style={{ fontSize: '9.5px', color: '#64748b', marginLeft: '8px' }}>
-                  현재 {humanWins} / 10 승 달성 ({10 - humanWins}승 남음)
+                  현재 <b>{humanWins} / 10</b> 승 달성 ({10 - humanWins}승 남음)
                 </span>
               </div>
+
+              {/* ── High-Adrenaline "딸랑딸랑" Golden Claim Button ── */}
               {humanWins >= 10 ? (
                 <button
-                  className="primary-button"
-                  style={{ background: '#0f766e', color: '#fff', padding: '5px 14px', fontSize: '10.5px', fontWeight: 700, borderRadius: '3px' }}
+                  type="button"
+                  className="primary-button claim-ready-btn"
+                  style={{
+                    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                    color: '#ffffff',
+                    padding: '8px 20px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    border: '1px solid #34d399',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer'
+                  }}
                   onClick={() => setClaimModalOpen(true)}
                 >
-                  <Award size={13} style={{ display: 'inline', marginRight: '5px' }} />
-                  $10.00 USDT 즉시 수령하기 ↗
+                  <span className="bell-shaking" style={{ fontSize: '14px' }}>🔔</span>
+                  <Award size={15} />
+                  <span>🔥 $10.00 USDT 즉시 출금하기 (CLAIM NOW ↗)</span>
+                  <span className="bell-shaking" style={{ fontSize: '14px' }}>🔔</span>
                 </button>
               ) : (
-                <span style={{ fontSize: '10px', color: '#0369a1', fontWeight: 600 }}>
-                  ROUND #{round} 진행 중 (1시간 캔들 정산)
-                </span>
+                <button
+                  type="button"
+                  className="golden-tease-btn"
+                  style={{
+                    background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                    border: '1.5px solid #f59e0b',
+                    color: '#92400e',
+                    padding: '7px 16px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '7px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setClaimTeaserModalOpen(true)}
+                  title="클릭하여 10연승 $10 USDT 보상 수령 조건을 확인하세요!"
+                >
+                  <span className="bell-shaking" style={{ fontSize: '13px' }}>🔔</span>
+                  <span>🔒 $10.00 USDT CLAIM (현재 {humanWins}/10승 · {10 - humanWins}연승 남음!)</span>
+                  <span style={{ fontSize: '9px', background: '#f59e0b', color: '#fff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>
+                    보상 잠금
+                  </span>
+                </button>
               )}
             </div>
 
@@ -2244,6 +2284,72 @@ export default function Page() {
             </div>
           </div>
         </section>
+      )}
+
+      {/* ── 10-Win Streak Locked Claim Teaser Modal (안달나는 도파민 훅 팝업) ── */}
+      {claimTeaserModalOpen && (
+        <div
+          className="modal-overlay"
+          style={{ position: 'fixed', inset: 0, background: 'rgba(11, 19, 30, 0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '20px' }}
+          onClick={() => setClaimTeaserModalOpen(false)}
+        >
+          <div
+            className="panel"
+            style={{ width: '490px', maxWidth: '100%', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '24px', boxShadow: '0 20px 45px rgba(0,0,0,0.35)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #edf0f2', paddingBottom: '14px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="bell-shaking" style={{ fontSize: '18px' }}>🔔</span>
+                <strong style={{ fontSize: '14px', color: '#92400e', letterSpacing: '.04em' }}>
+                  🔒 10연승 $10.00 USDT CLAIM 잠금 상태
+                </strong>
+              </div>
+              <button className="text-button" onClick={() => setClaimTeaserModalOpen(false)}>닫기 ×</button>
+            </div>
+
+            <div style={{ textAlign: 'center', padding: '10px 0 16px' }}>
+              <div style={{ width: '64px', height: '64px', margin: '0 auto 14px', background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', borderRadius: '50%', display: 'grid', placeItems: 'center', border: '2px solid #f59e0b', boxShadow: '0 0 20px rgba(245, 158, 11, 0.3)' }}>
+                <span style={{ fontSize: '28px' }}>💎</span>
+              </div>
+              <h3 style={{ fontSize: '18px', margin: '0 0 6px', color: '#18334a' }}>
+                현재 <b>{humanWins} / 10</b> 승 달성 중!
+              </h3>
+              <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.6 }}>
+                앞으로 <b style={{ color: '#d97706', fontSize: '14px' }}>{10 - humanWins}연승</b>만 더 달성하시면 이 황금 자물쇠가 풀리며,<br />
+                스마트 에스크로 풀에서 <b>$10.00 USDT</b>를 즉시 내 지갑으로 인출할 수 있습니다! 🔥
+              </p>
+
+              {/* Progress visual bar */}
+              <div style={{ background: '#f1f5f9', height: '14px', borderRadius: '7px', overflow: 'hidden', border: '1px solid #cbd5e1', marginBottom: '18px' }}>
+                <div
+                  style={{
+                    width: `${Math.max(5, (humanWins / 10) * 100)}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #f59e0b 0%, #10b981 100%)',
+                    borderRadius: '7px',
+                    transition: 'width 0.4s ease'
+                  }}
+                />
+              </div>
+
+              <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '12px 14px', fontSize: '11px', textAlign: 'left', lineHeight: 1.6, color: '#334155' }}>
+                <div>• <b>규칙:</b> 1시간 기준가 대비 연속 10회 종가 방향(UP/DOWN) 적중</div>
+                <div>• <b>보상:</b> 10연승 즉시 $10.00 USDT 온체인 출금 (가스비 100% 무료 지원)</div>
+                <div>• <b>실시간 풀:</b> 실제 이벤트 예치금 온체인 잔액과 1:1 직결</div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="primary-button"
+              style={{ width: '100%', background: '#0f766e', color: '#fff', fontSize: '12px', fontWeight: 700, borderRadius: '4px' }}
+              onClick={() => setClaimTeaserModalOpen(false)}
+            >
+              계속해서 ROUND #{round} 예측 도전하기 ↗
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ── 10-Win Streak Claim Modal (Non-Custodial) ── */}
