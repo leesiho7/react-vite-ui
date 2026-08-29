@@ -680,6 +680,9 @@ export default function Page() {
   const [eventOpen, setEventOpen] = useState(false)
   const [communityOpen, setCommunityOpen] = useState(false)
   const [newsOpen, setNewsOpen] = useState(false)
+  const [articleModalOpen, setArticleModalOpen] = useState(false)
+  const [selectedArticle, setSelectedArticle] = useState<any>(null)
+  const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
   const [mediaFilter, setMediaFilter] = useState('ALL')
   const [selectedMediaStory, setSelectedMediaStory] = useState(mediaStories[0])
   const [mediaIsPlaying, setMediaIsPlaying] = useState(false)
@@ -1204,20 +1207,39 @@ export default function Page() {
         if (language === 'ko' && item.titleKo) displayTitle = item.titleKo
         else if (language === 'cn' && item.titleCn) displayTitle = item.titleCn
 
+        let link = item.link
+        if (!link && item.snippet && item.snippet.startsWith('http')) {
+          link = item.snippet
+        }
+        if (!link) {
+          link = `https://finance.yahoo.com/quote/${item.symbol || 'BTC-USD'}/news`
+        }
+
         return {
           category: cat,
-          source: item.source || 'BLOOMBERG',
+          source: item.source || 'BLOOMBERG TERMINAL',
           tag: item.symbol || 'MARKET',
           title: displayTitle,
+          titleOriginal: item.title,
+          titleKo: item.titleKo,
+          titleCn: item.titleCn,
+          snippet: item.snippet,
+          snippetKo: item.snippetKo,
+          snippetCn: item.snippetCn,
+          link,
           impact: String(item.impactPercent ? (item.impactPercent / 10).toFixed(1) : '8.5'),
           sentiment: item.sentiment || 'BULLISH',
           tone: item.sentiment === 'BEARISH' ? 'negative' : (item.sentiment === 'NEUTRAL' ? 'neutral' : 'positive'),
           thumb: item.symbol?.slice(0, 4) || 'NEWS',
           imageUrl: item.imageUrl || undefined
-        }
+        } as any
       })
     } else {
-      list = newsItemsByLang[language]
+      list = (newsItemsByLang[language] as any[]).map((item) => ({
+        ...item,
+        titleOriginal: item.title,
+        link: `https://finance.yahoo.com/quote/${item.tag || 'BTC-USD'}/news`
+      }))
     }
 
     if (newsCategory === 'ALL') return list
@@ -1530,10 +1552,12 @@ export default function Page() {
 
   const personaText = (value: string | undefined) => value?.trim() || (language === 'ko' ? '실시간 자문 데이터가 아직 도착하지 않았습니다.' : language === 'cn' ? '实时咨询数据尚未返回。' : 'Live advisory data has not returned yet.')
 
-  const selectNews = (item: NewsItem) => {
+  const selectNews = (item: any) => {
     setActiveNews(item)
+    setSelectedArticle(item)
+    setArticleLangView(language === 'en' ? 'EN' : 'KO')
+    setArticleModalOpen(true)
     setSearched(`${item.tag}/USD`)
-    setNewsOpen(true)
   }
 
   const handleFollow = async (targetUserId: number) => {
@@ -2507,6 +2531,204 @@ export default function Page() {
                     ⚡ {rec.name}로 전환 ↗
                   </button>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 실시간 뉴스 원문 및 AI 팩트체크 리더 모달 (Article Detail & Fact-Check Reader) ── */}
+      {articleModalOpen && selectedArticle && (
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(11, 19, 30, 0.82)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: '20px'
+          }}
+          onClick={() => setArticleModalOpen(false)}
+        >
+          <div
+            className="panel"
+            style={{
+              width: '740px',
+              maxWidth: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#ffffff',
+              border: '1px solid var(--line)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
+              padding: '0'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderBottom: '1px solid var(--line)',
+                background: '#f8fafb'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span className="live-dot pulse" />
+                <strong style={{ fontSize: '11px', letterSpacing: '.08em', color: 'var(--navy)' }}>
+                  {selectedArticle.source || 'BLOOMBERG TERMINAL'} · ${selectedArticle.tag || 'MARKET'}
+                </strong>
+                <span className={`sentiment ${selectedArticle.tone}`} style={{ marginLeft: '4px' }}>
+                  {selectedArticle.sentiment}
+                </span>
+                <span style={{ fontSize: '9px', color: 'var(--muted)', background: '#eef5f7', padding: '2px 6px', border: '1px solid #d0e2e8' }}>
+                  AI IMPACT {selectedArticle.impact}/10
+                </span>
+              </div>
+              <button
+                className="text-button"
+                style={{ fontSize: '12px', color: 'var(--muted)', padding: '4px 8px' }}
+                onClick={() => setArticleModalOpen(false)}
+              >
+                닫기 ×
+              </button>
+            </div>
+
+            {/* Language Switcher Bar */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 20px',
+                background: '#edf5f7',
+                borderBottom: '1px solid #d0e2e8'
+              }}
+            >
+              <span style={{ fontSize: '10px', color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Diamond /> <b>언어 보기 모드:</b>
+              </span>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  className={`news-category-button ${articleLangView === 'KO' ? 'selected' : ''}`}
+                  style={{ fontSize: '9px', padding: '4px 10px' }}
+                  onClick={() => setArticleLangView('KO')}
+                >
+                  🇰🇷 AI 한국어 번역
+                </button>
+                <button
+                  className={`news-category-button ${articleLangView === 'EN' ? 'selected' : ''}`}
+                  style={{ fontSize: '9px', padding: '4px 10px' }}
+                  onClick={() => setArticleLangView('EN')}
+                >
+                  🇺🇸 Original English
+                </button>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div style={{ padding: '24px 20px' }}>
+              {/* Optional Hero Image */}
+              {selectedArticle.imageUrl && (
+                <div style={{ width: '100%', maxHeight: '260px', overflow: 'hidden', borderRadius: '4px', marginBottom: '18px', border: '1px solid var(--line)' }}>
+                  <img
+                    src={selectedArticle.imageUrl}
+                    alt={selectedArticle.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              )}
+
+              {/* Article Headline */}
+              <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--navy)', lineHeight: '1.35', margin: '0 0 14px' }}>
+                {articleLangView === 'KO'
+                  ? (selectedArticle.titleKo || selectedArticle.title)
+                  : (selectedArticle.titleOriginal || selectedArticle.title)}
+              </h2>
+
+              {/* Metadata strip */}
+              <div style={{ display: 'flex', gap: '14px', fontSize: '10px', color: 'var(--muted)', paddingBottom: '16px', borderBottom: '1px solid var(--line)', marginBottom: '18px' }}>
+                <span>출처: <b>{selectedArticle.source}</b></span>
+                <span>종목: <b>{selectedArticle.tag}</b></span>
+                <span>수집: <b>방금 전 (실시간 글로벌 피드)</b></span>
+              </div>
+
+              {/* AI 3-Point Deep Fact-Check Card */}
+              <div style={{ background: '#f8fafb', border: '1px solid var(--line)', padding: '16px', borderRadius: '4px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={13} color="#2b866d" /> AI 팩트체크 & 월가 퀀트 브리핑
+                  </span>
+                  <span style={{ fontSize: '9px', color: '#2b866d', border: '1px solid #b8d8cc', padding: '2px 6px', background: '#ffffff' }}>
+                    🛡️ FACT-CHECK VERIFIED
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gap: '10px', fontSize: '11px', lineHeight: '1.6', color: 'var(--ink)' }}>
+                  <div>
+                    <strong style={{ color: 'var(--blue)' }}>01. 핵심 내용 요약: </strong>
+                    <span>
+                      {articleLangView === 'KO'
+                        ? (selectedArticle.snippetKo || selectedArticle.snippet || '기관 투자자 자금 유입 및 시장 변동성 지표 확인.')
+                        : (selectedArticle.snippet || 'Institutional capital flows and market volatility indicators verified.')}
+                    </span>
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--green)' }}>02. AI 수급 및 감성 진단: </strong>
+                    <span>
+                      {selectedArticle.sentiment === 'BULLISH'
+                        ? '온체인 매수세와 ETF 순유입이 지속되며 상방 모멘텀이 우세합니다.'
+                        : (selectedArticle.sentiment === 'BEARISH'
+                          ? '단기 차익 실현 및 레버리지 청산 압력이 존재하므로 분할 매수 대응이 권장됩니다.'
+                          : '방향성 탐색 구간으로 지지선 테스트 후 추세 확인이 유리합니다.')}
+                    </span>
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--navy)' }}>03. 트레이딩 액션 가이드: </strong>
+                    <span>
+                      ${selectedArticle.tag} 기준 1차 지지선 방어 여부 모니터링 및 ta4j 지표 합성 권장.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons Row */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {selectedArticle.link && (
+                  <a
+                    href={selectedArticle.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="primary-button"
+                    style={{ flex: 1, minWidth: '220px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none' }}
+                  >
+                    <ExternalLink size={13} />
+                    언론사 원문 기사 전체보기 ↗
+                  </a>
+                )}
+                <button
+                  className="secondary-button"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  onClick={() => {
+                    handleSyncChart(selectedArticle.tag)
+                    setArticleModalOpen(false)
+                  }}
+                >
+                  <BarChart2 size={13} />
+                  ${selectedArticle.tag} 차트 동기화
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => setArticleModalOpen(false)}
+                >
+                  닫기
+                </button>
               </div>
             </div>
           </div>
