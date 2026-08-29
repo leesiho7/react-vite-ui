@@ -647,6 +647,55 @@ export default function Page() {
     }
   }
 
+  // AI Conversational Deep-Dive Follow-Up Suggestions
+  const followUpSuggestions = useMemo(() => {
+    const sym = searched.replace('/', '').replace('USDT', '')
+    if (language === 'ko') {
+      return [
+        `🎯 ${sym} 1차/2차 지지·저항선과 손절(SL) 가격대를 세부적으로 계산해줘`,
+        `📊 ${sym} 선물 펀딩비와 온체인 청산 맵(Liquidation Heatmap) 위험도 진단해줘`,
+        `🛡️ ${sym} 변동성 급증 시 포트폴리오 비중 축소 및 헤징 시나리오 잡아줘`,
+        `🌐 ${sym} 글로벌 거시경제(금리/달러) 지표와의 상관관계 및 수급 분석해줘`
+      ]
+    } else if (language === 'cn') {
+      return [
+        `🎯 计算 ${sym} 的具体支撑/阻力位与止损(SL)价格区间`,
+        `📊 深度诊断 ${sym} 永续合约资金费率与清算热力图风险`,
+        `🛡️ 为 ${sym} 制定波动率对冲与仓位分批管理方案`,
+        `🌐 评估 ${sym} 与宏观利率周期的跨资产相关性`
+      ]
+    } else {
+      return [
+        `🎯 Calculate exact support/resistance levels & stop-loss price for ${sym}`,
+        `📊 Analyze ${sym} perpetual funding rates & liquidation cascade risk`,
+        `🛡️ Formulate a portfolio sizing & tail-risk hedging plan for ${sym}`,
+        `🌐 Evaluate ${sym} cross-asset correlation with macro rate cycles`
+      ]
+    }
+  }, [searched, language])
+
+  const handleExecuteFollowUp = async (query: string) => {
+    setResearchPrompt(query)
+    setResearchLoading(true)
+    setResearchError(null)
+    setResearchRan(false)
+    try {
+      const response = await sendResearchChat({
+        prompt: query,
+        symbol: extractAssetSymbol(`${query} ${searched}`, searched),
+        mode: researchMode,
+        language,
+      })
+      setResearchResponse(response)
+      setResearchRan(true)
+    } catch (error) {
+      console.error('[v0] Research chat backend unavailable:', error)
+      setResearchError(error instanceof Error ? error.message : 'Research request failed')
+    } finally {
+      setResearchLoading(false)
+    }
+  }
+
   // Live News Rotator
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1499,16 +1548,77 @@ export default function Page() {
             {researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span>
           </button>
         </div>
-        {researchError && <div className="research-error" role="alert">{researchError}</div>}
-        {researchRan && researchResponse && (
-          <div className="research-response">
-            <div className="overline">LIVE BACKEND RESPONSE</div>
-            <div className="research-response-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}
-              </ReactMarkdown>
+
+        {/* ── Pre-research Quick Prompt Suggestions ── */}
+        {!researchRan && (
+          <div className="followup-routing-box" style={{ margin: '0 24px 20px', background: '#fafbfc' }}>
+            <div className="followup-heading">
+              <span className="followup-badge">💡 SUGGESTED RESEARCH PROMPTS (1-CLICK DEEP DIVE)</span>
+              <span className="followup-sub">
+                {language === 'ko'
+                  ? '궁금한 질문을 직접 입력하거나 아래 추천 질문을 클릭하여 즉시 기관급 분석을 시작하세요:'
+                  : language === 'cn'
+                  ? '直接输入您的问题，或点击下方推荐问题一键发起机构级深度分析：'
+                  : 'Type your question or click a recommended prompt below to run an instant institutional brief:'}
+              </span>
+            </div>
+            <div className="followup-chips">
+              {followUpSuggestions.map((query, idx) => (
+                <button
+                  key={idx}
+                  className="followup-chip-button"
+                  onClick={() => handleExecuteFollowUp(query)}
+                  disabled={researchLoading}
+                >
+                  <span className="chip-icon">↳</span>
+                  <span className="chip-text">{query}</span>
+                  <span className="chip-action">RUN ↗</span>
+                </button>
+              ))}
             </div>
           </div>
+        )}
+
+        {researchError && <div className="research-error" role="alert">{researchError}</div>}
+        {researchRan && researchResponse && (
+          <>
+            <div className="research-response">
+              <div className="overline">LIVE BACKEND RESPONSE</div>
+              <div className="research-response-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}
+                </ReactMarkdown>
+              </div>
+            </div>
+
+            {/* ── Conversational Follow-Up Routing (Gemini/OpenAI style) ── */}
+            <div className="followup-routing-box">
+              <div className="followup-heading">
+                <span className="followup-badge">🧭 AI CONVERSATIONAL ROUTING & DEEP DIVE</span>
+                <span className="followup-sub">
+                  {language === 'ko'
+                    ? '💡 현재 분석 내용에 대해 더 알고 싶은 부분이나 심층 대응전략을 잡아드릴까요? 아래 가이드를 클릭해 보세요:'
+                    : language === 'cn'
+                    ? '💡 关于当前分析，是否需要进一步深化具体指标或应对策略？请点击下方推荐指引：'
+                    : '💡 Would you like to explore deeper indicator dynamics or tailor a detailed execution strategy? Select a guided route below:'}
+                </span>
+              </div>
+              <div className="followup-chips">
+                {followUpSuggestions.map((query, idx) => (
+                  <button
+                    key={idx}
+                    className="followup-chip-button"
+                    onClick={() => handleExecuteFollowUp(query)}
+                    disabled={researchLoading}
+                  >
+                    <span className="chip-icon">↳</span>
+                    <span className="chip-text">{query}</span>
+                    <span className="chip-action">ASK AI ↗</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
         {researchRan && (
           <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}>

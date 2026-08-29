@@ -165,4 +165,82 @@ button { cursor: pointer; }
 .media-sync-badge:hover { background: var(--navy); color: white; border-color: var(--navy); }
 .media-actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: auto; width: 100%; }
 
+/* ── AI Conversational Follow-Up Routing (Gemini/OpenAI style) ── */
+.followup-routing-box {
+  margin: 16px 24px 0;
+  padding: 16px 18px;
+  background: #f4f8fa;
+  border: 1px solid #d0e2ea;
+  border-left: 3px solid var(--blue);
+  border-radius: 2px;
+}
+.followup-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.followup-badge {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--blue);
+  letter-spacing: .09em;
+}
+.followup-sub {
+  font-size: 10px;
+  color: var(--navy);
+  font-style: italic;
+}
+.followup-chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (max-width: 760px) {
+  .followup-chips {
+    grid-template-columns: 1fr;
+  }
+}
+.followup-chip-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #cfe0e8;
+  color: var(--navy);
+  text-align: left;
+  font-size: 9.5px;
+  line-height: 1.4;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all .2s ease;
+}
+.followup-chip-button:hover {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 51, 74, 0.15);
+}
+.followup-chip-button .chip-icon {
+  color: var(--blue);
+  font-weight: bold;
+}
+.followup-chip-button:hover .chip-icon {
+  color: #a9d1db;
+}
+.followup-chip-button .chip-text {
+  flex: 1;
+}
+.followup-chip-button .chip-action {
+  font-size: 8px;
+  font-weight: bold;
+  color: #2b866d;
+  opacity: .85;
+}
+.followup-chip-button:hover .chip-action {
+  color: #8fc5a7;
+}
+
 
