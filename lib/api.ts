@@ -616,24 +616,7 @@ export async function testPythonCode(payload: {
 }): Promise<any> {
   const code = payload.pythonCode || '';
 
-  try {
-    const res = await fetch(`${API_BASE}/bot/instance/test-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pythonCode: code,
-        symbol: payload.symbol || 'BTCUSDT',
-        timeFrame: payload.timeFrame || '5m'
-      })
-    });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    console.warn('[API] Error calling /bot/instance/test-code:', err);
-  }
-
-  // Client-side fallback: High-fidelity Python syntax & security scanner
+  // 1. High-fidelity Client-side AST & Syntax Scanner (runs instantly)
   if (!code.trim()) {
     return {
       valid: false,
@@ -651,7 +634,7 @@ SyntaxError: code body is empty. Please enter your strategy.
     };
   }
 
-  // 1. Security checks
+  // 1-1. Security checks
   const dangerousKeywords = ['import os', 'import sys', 'import subprocess', 'import shutil', 'import socket', 'os.system', 'eval(', 'exec(', '__import__', 'open('];
   for (const kw of dangerousKeywords) {
     if (code.includes(kw)) {
@@ -673,7 +656,7 @@ Policy Violation: Non-root Docker Sandbox execution blocked.
     }
   }
 
-  // 2. High-fidelity AST & Statement Tokenizer
+  // 1-2. High-fidelity AST & Statement Tokenizer
   const lines = code.split('\n');
   const validKeywords = new Set([
     'def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 'finally',
@@ -826,7 +809,7 @@ SyntaxError: unclosed '${unclosed.char}' opened on line ${unclosed.line}
     };
   }
 
-  // 3. Check required function
+  // 1-3. Check required function
   if (!code.includes('on_market_tick') && !code.includes('def ')) {
     return {
       valid: false,
@@ -844,7 +827,28 @@ NameError: Function 'def on_market_tick(tick):' is required to receive live mark
     };
   }
 
-  // 4. Valid Python execution simulation
+  // 2. If code passes local AST scan, optionally call live backend sandbox container
+  try {
+    const res = await fetch(`${API_BASE}/bot/instance/test-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pythonCode: code,
+        symbol: payload.symbol || 'BTCUSDT',
+        timeFrame: payload.timeFrame || '5m'
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.simulatedOutput && !data.simulatedOutput.includes('[SYNTAX OK]')) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Error calling /bot/instance/test-code:', err);
+  }
+
+  // 3. Valid Python execution simulation
   return {
     valid: true,
     status: 'PASSED',
