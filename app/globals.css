@@ -165,4 +165,506 @@ button { cursor: pointer; }
 .media-sync-badge:hover { background: var(--navy); color: white; border-color: var(--navy); }
 .media-actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: auto; width: 100%; }
 
+/* ── AI Agent Studio (3-Column Copilot Workstation) ── */
+.agent-studio-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 310px;
+  gap: 1px;
+  background: var(--line);
+  border-top: 1px solid var(--line);
+  min-height: 680px;
+}
+
+/* 1. Left Sidebar: Sessions & Personas */
+.agent-sidebar {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+}
+.agent-sidebar-top {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.new-session-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--navy);
+  color: white;
+  border: 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background .15s ease;
+}
+.new-session-btn:hover {
+  background: var(--blue);
+}
+.persona-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.persona-btn {
+  border: 0;
+  background: #f8fafb;
+  color: var(--muted);
+  padding: 8px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.persona-btn.active {
+  background: var(--navy);
+  color: white;
+}
+.persona-btn strong {
+  display: block;
+  font-size: 8px;
+  letter-spacing: .05em;
+}
+.persona-btn span {
+  display: block;
+  font-size: 7px;
+  opacity: .75;
+  margin-top: 2px;
+}
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+.session-group-label {
+  padding: 8px 16px 4px;
+  font-size: 7.5px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all .15s ease;
+}
+.session-item:hover {
+  background: #f8fafb;
+}
+.session-item.active {
+  background: #f4f8fa;
+  border-left-color: var(--blue);
+}
+.session-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.session-item-title {
+  font-size: 9.5px;
+  color: var(--navy);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-item.active .session-item-title {
+  font-weight: 600;
+  color: var(--blue);
+}
+.session-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 7.5px;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.session-badge {
+  padding: 1px 4px;
+  background: #eef5f8;
+  color: var(--blue);
+  border-radius: 2px;
+  font-size: 7px;
+}
+.session-delete-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  opacity: 0;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 10px;
+  transition: opacity .15s ease;
+}
+.session-item:hover .session-delete-btn {
+  opacity: 0.7;
+}
+.session-delete-btn:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
+/* 2. Center Panel: Multi-turn Chat Stream */
+.agent-chat-main {
+  background: #fdfefe;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.agent-chat-header {
+  padding: 14px 20px;
+  background: white;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.agent-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.agent-header-title h3 {
+  font: 400 16px/1.2 Georgia, serif;
+  color: var(--navy);
+  margin: 0;
+}
+.agent-header-title span {
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: .08em;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.chat-messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 520px;
+}
+.chat-msg-user {
+  align-self: flex-end;
+  max-width: 80%;
+  background: #eef5f8;
+  border: 1px solid #d4e5ee;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+.chat-msg-user-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 7.5px;
+  color: var(--blue);
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+.chat-msg-user-body {
+  font-size: 10.5px;
+  color: var(--navy);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.chat-msg-agent {
+  align-self: flex-start;
+  width: 100%;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.chat-msg-agent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.agent-persona-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: .06em;
+}
+.agent-persona-role {
+  padding: 1px 5px;
+  background: #eef5f8;
+  color: var(--blue);
+  font-size: 7px;
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.agent-tool-accordion {
+  background: #f8fafb;
+  border: 1px solid #e2ecf0;
+  border-radius: 2px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+}
+.tool-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--blue);
+  font-weight: 600;
+}
+.tool-items-list {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #d8e5ec;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted);
+}
+.tool-item-line b {
+  color: var(--navy);
+  font-weight: 500;
+}
+.chat-msg-agent-body {
+  color: var(--navy);
+  font-size: 10.5px;
+  line-height: 1.65;
+}
+.chat-msg-agent-body h3, .chat-msg-agent-body h4 {
+  color: var(--navy);
+  font: 400 15px/1.2 Georgia, serif;
+  margin: 14px 0 8px;
+}
+.chat-msg-agent-body p {
+  margin: 0 0 10px;
+}
+.chat-msg-agent-body ul, .chat-msg-agent-body ol {
+  margin: 0 0 12px;
+  padding-left: 16px;
+}
+.chat-msg-agent-body li {
+  margin-bottom: 4px;
+}
+.chat-msg-agent-body hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 16px 0;
+}
+.chat-thinking-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #f4f8fa;
+  border: 1px solid #cce1ea;
+  border-radius: 4px;
+  color: var(--blue);
+  font-size: 9px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* 2-1. Sticky Bottom Input Bar */
+.agent-chat-input-wrapper {
+  padding: 16px 20px;
+  background: white;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.chat-input-textarea {
+  width: 100%;
+  min-height: 52px;
+  max-height: 120px;
+  border: 1px solid var(--line);
+  background: #fdfefe;
+  padding: 10px 14px;
+  font-size: 10.5px;
+  color: var(--navy);
+  line-height: 1.5;
+  resize: vertical;
+  border-radius: 2px;
+  outline: none;
+  transition: border-color .15s ease;
+}
+.chat-input-textarea:focus {
+  border-color: var(--blue);
+  background: white;
+}
+.chat-input-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.quick-prompt-chips-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 70%;
+}
+.quick-chip {
+  padding: 4px 8px;
+  background: #f8fafb;
+  border: 1px solid var(--line);
+  font-size: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 2px;
+  transition: all .15s ease;
+}
+.quick-chip:hover {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+}
+
+/* 3. Right Panel: Telemetry Context HUD */
+.agent-hud {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+  padding: 16px;
+  gap: 16px;
+  overflow-y: auto;
+}
+.hud-widget {
+  border: 1px solid var(--line);
+  background: #fcfdfe;
+  padding: 14px;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hud-widget-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 7.5px;
+  font-weight: 600;
+  color: var(--blue);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.hud-quote-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.hud-quote-row strong {
+  font: 400 20px/1 Georgia, serif;
+  color: var(--navy);
+}
+.hud-quote-row span {
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+}
+.hud-quant-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.hud-metric-cell {
+  background: white;
+  border: 1px solid var(--line);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hud-metric-cell span {
+  font-size: 7px;
+  color: var(--muted);
+  letter-spacing: .06em;
+}
+.hud-metric-cell strong {
+  font-size: 10px;
+  color: var(--navy);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.hud-news-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hud-news-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.hud-news-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.hud-news-title {
+  font-size: 8.5px;
+  color: var(--navy);
+  line-height: 1.35;
+  text-decoration: none;
+}
+.hud-news-title:hover {
+  color: var(--blue);
+}
+.hud-news-meta {
+  font-size: 7px;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .agent-studio-layout {
+    grid-template-columns: 240px 1fr;
+  }
+  .agent-hud {
+    display: none;
+  }
+}
+@media (max-width: 768px) {
+  .agent-studio-layout {
+    grid-template-columns: 1fr;
+  }
+  .agent-sidebar {
+    display: none;
+  }
+}
+
 

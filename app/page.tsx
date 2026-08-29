@@ -365,6 +365,163 @@ function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
 }
 
+export type PersonaType = 'alex' | 'mina' | 'jhan'
+
+export interface AgentToolCall {
+  name: string
+  detail: string
+  status: 'DONE' | 'RUNNING'
+}
+
+export interface AgentMessage {
+  id: string
+  role: 'user' | 'agent'
+  content: string
+  timestamp: string
+  persona?: PersonaType
+  toolCalls?: AgentToolCall[]
+}
+
+export interface AgentSession {
+  id: string
+  title: string
+  symbol: string
+  persona: PersonaType
+  mode: 'INSIGHT' | 'GUIDE'
+  updatedAt: string
+  messages: AgentMessage[]
+}
+
+const personaProfiles: Record<PersonaType, { name: string; tag: string; title: string; desc: string }> = {
+  alex: {
+    name: 'Alex Chen AI',
+    tag: 'ON-CHAIN QUANT',
+    title: 'Senior On-Chain & Derivatives Quant',
+    desc: '청산 맵, 스마트머니 고래 지갑, 선물 펀딩비 전문'
+  },
+  mina: {
+    name: 'Mina Park',
+    tag: 'MACRO STRATEGIST',
+    title: 'Chief Global Macro & Flow Economist',
+    desc: '연준(Fed) 금리 정책, ETF 수급 사이클, 거시경제 헷징 전문'
+  },
+  jhan: {
+    name: 'J. Han',
+    tag: 'SYSTEM TRADING',
+    title: 'Director of Quantitative Execution',
+    desc: 'ta4j 프랙탈 패턴, 비대칭 손익비(1:3.4), 모멘텀 돌파 전문'
+  }
+}
+
+const initialAgentSessions: AgentSession[] = [
+  {
+    id: 'sess-btc-1',
+    title: 'BTC 4H 스윙 전략 & 지지선 진단',
+    symbol: 'BTC/USD',
+    persona: 'alex',
+    mode: 'INSIGHT',
+    updatedAt: '10분 전',
+    messages: [
+      {
+        id: 'm1',
+        role: 'user',
+        content: 'BTC 77K 지지선 깨지면 다음 어디서 받아야 해? 온체인 고래랑 청산 맵 기준으로 봐줘.',
+        timestamp: '23:18'
+      },
+      {
+        id: 'm2',
+        role: 'agent',
+        persona: 'alex',
+        timestamp: '23:18',
+        toolCalls: [
+          { name: 'ta4j.calculateSignals', detail: 'BTCUSDT (4H) · RSI 43.8 · SMA20 $76,245', status: 'DONE' },
+          { name: 'brightdata.scrapeNews', detail: '3 hits · Spot ETF net inflow $320M', status: 'DONE' },
+          { name: 'qwen2.5.synthesize', detail: 'Institutional 4-Engine Fusion memo generated', status: 'DONE' }
+        ],
+        content: `### 🏛️ [ON-CHAIN QUANT BRIEF: BTC/USD]
+**분석가:** Alex Chen AI (On-Chain / Derivatives Desk)
+
+---
+
+#### 📊 1. 청산 맵 & 핵심 지지선 진단
+• **1차 지지선:** \`$76,245\` (20일 이동평균선 & 숏 레버리지 청산 클러스터)
+• **2차 핵심 지지선:** \`$74,382\` (피보나치 0.618 & 기관 고래 누적 평단가)
+• **하방 리스크:** $74,382 이탈 시 $72,100까지 롱 스퀴즈(Long Squeeze) 연쇄 청산 위험이 열립니다.
+
+#### 🎯 2. 실전 분할 매수 액션 플랜
+1. **1차 정찰 (30%):** $76,245 도달 시 지지력 확인 후 진입
+2. **2차 주력 (40%):** $74,382 피보나치 0.618 눌림목에서 가중 진입
+3. **손절(SL):** $73,600 (-5.2% 하방 이탈 시 즉시 비중 축소)`
+      }
+    ]
+  },
+  {
+    id: 'sess-nvda-2',
+    title: 'NVDA 실적 발표 후 밸류에이션 분석',
+    symbol: 'NVDA',
+    persona: 'mina',
+    mode: 'INSIGHT',
+    updatedAt: '2시간 전',
+    messages: [
+      {
+        id: 'm3',
+        role: 'user',
+        content: 'NVDA 다음 분기 실적 서프라이즈 가능성이랑 데이터센터 CAPEX 전망 어때?',
+        timestamp: '21:04'
+      },
+      {
+        id: 'm4',
+        role: 'agent',
+        persona: 'mina',
+        timestamp: '21:04',
+        toolCalls: [
+          { name: 'brightdata.scrapeNews', detail: 'TheStreet: 5-star analyst price target upgrade', status: 'DONE' },
+          { name: 'ta4j.calculateSignals', detail: 'NVDA · RSI 62.4 · Bullish Momentum', status: 'DONE' }
+        ],
+        content: `### 🏛️ [GLOBAL MACRO BRIEF: NVDA]
+**분석가:** Mina Park (Chief Macro Strategist)
+
+---
+
+• **빅테크 CAPEX 사이클:** 마이크로소프트/구글/메타의 2026 AI 인프라 투자액이 전년 대비 +24% 증가 추세를 유지하고 있습니다.
+• **밸류에이션:** 선행 P/E 32.4배로 역사적 밴드 중간값에 안착, $138 지지선 상회 시 1차 목표가 $165가 유효합니다.`
+      }
+    ]
+  },
+  {
+    id: 'sess-sol-3',
+    title: 'SOL 온체인 청산 맵 & 변동성 밴드',
+    symbol: 'SOL/USD',
+    persona: 'jhan',
+    mode: 'GUIDE',
+    updatedAt: '어제',
+    messages: [
+      {
+        id: 'm5',
+        role: 'user',
+        content: 'SOL 지금 비중 얼마나 실어야 해? 초보자 입장에서 쉽게 가이드해줘.',
+        timestamp: '어제 16:40'
+      },
+      {
+        id: 'm6',
+        role: 'agent',
+        persona: 'jhan',
+        timestamp: '어제 16:40',
+        toolCalls: [
+          { name: 'ta4j.calculateSignals', detail: 'SOLUSDT · Volatility Band 0.38', status: 'DONE' }
+        ],
+        content: `### 💡 [PLAIN-LANGUAGE RISK GUIDE: SOL]
+**분석가:** J. Han (System Trading Director)
+
+---
+
+• **핵심 위험 요인:** 솔라나는 비트코인 대비 변동성이 1.8배 높습니다.
+• **추천 비중:** 전체 자산의 **10~15% 이내**로 제한하시고, $178 지지선에서 1차 매수(50%), $165에서 2차 매수(50%)로 분할 접근하세요.`
+      }
+    ]
+  }
+]
+
 const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET'])
 const assetAliases: Record<string, string> = {
   '리플': 'XRP/USD', '리플코인': 'XRP/USD', '엑스알피': 'XRP/USD',
@@ -427,6 +584,122 @@ export default function Page() {
   const [researchResponse, setResearchResponse] = useState<any>(null)
   const [researchLoading, setResearchLoading] = useState(false)
   const [researchError, setResearchError] = useState<string | null>(null)
+
+  // AI Agent Studio (Multi-turn Sessions & Copilot) State
+  const [agentSessions, setAgentSessions] = useState<AgentSession[]>(initialAgentSessions)
+  const [activeSessionId, setActiveSessionId] = useState<string>('sess-btc-1')
+  const [selectedPersona, setSelectedPersona] = useState<PersonaType>('alex')
+  const [agentInputPrompt, setAgentInputPrompt] = useState<string>('')
+  const [agentThinking, setAgentThinking] = useState<boolean>(false)
+  const [agentThinkingStep, setAgentThinkingStep] = useState<string>('ta4j 퀀트 지표 & 20/50 SMA 계산 중...')
+
+  const currentSession = useMemo(() => {
+    return agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || initialAgentSessions[0]
+  }, [agentSessions, activeSessionId])
+
+  const handleCreateNewSession = (symbolOverride?: string) => {
+    const sym = symbolOverride || searched
+    const newId = 'sess-' + Date.now()
+    const newSession: AgentSession = {
+      id: newId,
+      title: `${sym} 리서치 세션 #${agentSessions.length + 1}`,
+      symbol: sym,
+      persona: selectedPersona,
+      mode: researchMode,
+      updatedAt: '방금 전',
+      messages: [
+        {
+          id: 'welcome-' + Date.now(),
+          role: 'agent',
+          persona: selectedPersona,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          content: `안녕하세요. **${personaProfiles[selectedPersona].name} (${personaProfiles[selectedPersona].tag})**입니다.\n\n현재 **${sym}**의 실시간 시장 미시구조, 온체인 유동성, 그리고 Bright Data 실시간 뉴스 피드를 모니터링하고 있습니다.\n\n궁금하신 지지/저항 가격대, 숏/롱 청산 리스크, 또는 자본 배분 전략을 편하게 질문해 주세요.`
+        }
+      ]
+    }
+    setAgentSessions(prev => [newSession, ...prev])
+    setActiveSessionId(newId)
+  }
+
+  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (agentSessions.length <= 1) {
+      alert('최소 1개의 리서치 세션은 유지되어야 합니다.')
+      return
+    }
+    const filtered = agentSessions.filter(s => s.id !== id)
+    setAgentSessions(filtered)
+    if (activeSessionId === id) {
+      setActiveSessionId(filtered[0].id)
+    }
+  }
+
+  const handleSendAgentMessage = async (customPrompt?: string) => {
+    const text = (customPrompt || agentInputPrompt).trim()
+    if (!text || agentThinking) return
+    setAgentInputPrompt('')
+    setAgentThinking(true)
+    setAgentThinkingStep('ta4j 퀀트 지표 & 20/50 SMA 계산 중...')
+
+    const userMsg: AgentMessage = {
+      id: 'usr-' + Date.now(),
+      role: 'user',
+      content: text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+
+    const curSess = agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || initialAgentSessions[0]
+    const updatedMessages = [...curSess.messages, userMsg]
+    
+    setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
+      ...s,
+      messages: updatedMessages,
+      updatedAt: '방금 전'
+    } : s))
+
+    setTimeout(() => {
+      setAgentThinkingStep('Bright Data 글로벌 금융 뉴스 스크래핑 & 감성 분석 중...')
+    }, 800)
+
+    setTimeout(() => {
+      setAgentThinkingStep('Qwen 2.5 14B + 골드만삭스 퀀트 모델 합성 중...')
+    }, 1600)
+
+    try {
+      const resp = await sendResearchChat({
+        prompt: text,
+        symbol: extractAssetSymbol(`${text} ${curSess.symbol}`, curSess.symbol),
+        mode: curSess.mode,
+        language,
+        history: updatedMessages.map(m => ({ role: m.role, content: m.content }))
+      })
+
+      const replyContent = resp?.reply || resp?.answer || resp?.content || (typeof resp === 'string' ? resp : 'Analysis complete.')
+
+      const agentMsg: AgentMessage = {
+        id: 'agt-' + Date.now(),
+        role: 'agent',
+        persona: selectedPersona,
+        content: replyContent,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        toolCalls: [
+          { name: 'ta4j.calculateSignals', detail: `${curSess.symbol} RSI, SMA20/50, Volatility Bands calculated`, status: 'DONE' },
+          { name: 'brightdata.scrapeNews', detail: `Bright Data real-time financial news stream & sentiment scoring`, status: 'DONE' },
+          { name: 'qwen2.5.synthesize', detail: `${personaProfiles[selectedPersona].name} Deep Intelligence Synthesis complete`, status: 'DONE' }
+        ]
+      }
+
+      setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
+        ...s,
+        messages: [...updatedMessages, agentMsg],
+        updatedAt: '방금 전'
+      } : s))
+    } catch (err) {
+      console.error('[AgentStudio] Error generating research:', err)
+    } finally {
+      setAgentThinking(false)
+    }
+  }
   
   // Bot Hosting & Developer Sandbox State
   const [botMode, setBotMode] = useState<'GENERAL' | 'DEVELOPER'>('GENERAL')
@@ -1465,74 +1738,276 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ── AI Research Terminal ── */}
+      {/* ── AI Agent Studio (3-Column Copilot Workstation) ── */}
       <section className="research-terminal panel" id="research-terminal">
         <div className="panel-heading">
-          <span><Diamond /> AI RESEARCH TERMINAL</span>
-          <span className="status-tag">{researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}</span>
+          <span><Diamond /> AI AGENT WORKSPACE · {currentSession?.symbol || searched}</span>
+          <span className="status-tag">
+            {personaProfiles[selectedPersona]?.name} · {researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}
+          </span>
         </div>
-        <div className="research-intro">
-          <div>
-            <span className="overline">SCENARIO ANALYSIS</span>
-            <h2>{language === 'cn' ? '验证你的下一步决策' : language === 'ko' ? '다음 투자 결정을 검증하세요' : 'Validate your next move'}</h2>
-            <p>{language === 'cn' ? '跨市场数据、新闻、宏观与链上证据。' : language === 'ko' ? '시장·뉴스·거시·온체인 근거를 한 번에 교차검증합니다.' : 'Cross-check market, news, macro, and on-chain evidence in one pass.'}</p>
-          </div>
-          <span className="research-context">{searched} · LIVE CONTEXT</span>
-        </div>
-        <div className="research-mode-switch" role="tablist" aria-label="Research mode">
-          <button role="tab" aria-selected={researchMode === 'INSIGHT'} className={researchMode === 'INSIGHT' ? 'selected' : ''} onClick={() => setResearchMode('INSIGHT')}>
-            <strong>INSIGHT MODE</strong><span>Bloomberg desk · TA4J · expert lenses</span>
-          </button>
-          <button role="tab" aria-selected={researchMode === 'GUIDE'} className={researchMode === 'GUIDE' ? 'selected' : ''} onClick={() => setResearchMode('GUIDE')}>
-            <strong>GUIDE MODE</strong><span>Plain-language risk · allocation guidance</span>
-          </button>
-        </div>
-        <div className="research-query">
-          <label htmlFor="research-prompt">RESEARCH QUESTION <small>OPTIONAL</small></label>
-          <textarea
-            id="research-prompt"
-            value={researchPrompt}
-            onChange={(event) => setResearchPrompt(event.target.value)}
-            placeholder={researchMode === 'GUIDE' ? (language === 'ko' ? '이 자산이 왜 위험한지, 비중을 어떻게 조절할지 물어보세요.' : 'Ask why this asset is risky and how to size it.') : (language === 'ko' ? '이 자산의 다음 움직임을 기관급으로 분석해줘.' : 'Ask for a full institutional-grade research brief.')}
-            rows={3}
-          />
-          <button className="primary-button" onClick={handlerRunDeepResearch} disabled={researchLoading}>
-            {researchLoading ? 'RESEARCHING…' : researchRan ? 'RESEARCH COMPLETE' : researchMode === 'GUIDE' ? 'RUN GUIDED ANALYSIS' : 'RUN DEEP RESEARCH'} <span>↗</span>
-          </button>
-        </div>
-        {researchError && <div className="research-error" role="alert">{researchError}</div>}
-        {researchRan && researchResponse && (
-          <div className="research-response">
-            <div className="overline">LIVE BACKEND RESPONSE</div>
-            <div className="research-response-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {typeof researchResponse === 'string' ? researchResponse : researchResponse.answer || researchResponse.content || researchResponse.message || JSON.stringify(researchResponse, null, 2)}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-        {researchRan && (
-          <div className={`evidence-matrix ${researchMode === 'GUIDE' ? 'guide-result' : 'insight-result'}`}>
-            <div>
-              <span className="overline">{researchMode === 'GUIDE' ? 'PLAIN-LANGUAGE BRIEFING' : 'RAW INTELLIGENCE BRIEF'}</span>
-              <strong>{researchMode === 'GUIDE' ? 'RISK · ALLOCATION · NEXT STEP' : 'DESK RESEARCH · TA4J SIGNALS · EXPERT LENSES'}</strong>
-            </div>
-            {researchMode === 'GUIDE' ? (
-              <div className="guide-cards">
-                <span>WHY IT MATTERS <b>핵심 위험 요인을 쉽게 설명</b></span>
-                <span>PORTFOLIO WEIGHT <b>비중 조절 시나리오</b></span>
-                <span>NEXT STEP <b>지금 확인할 행동</b></span>
+
+        <div className="agent-studio-layout">
+          {/* 1. Left Column: Sessions & Personas */}
+          <aside className="agent-sidebar">
+            <div className="agent-sidebar-top">
+              <button className="new-session-btn" onClick={() => handleCreateNewSession()}>
+                <span>+ NEW RESEARCH SESSION</span>
+                <span>↗</span>
+              </button>
+
+              <div className="persona-selector-grid">
+                {(['alex', 'mina', 'jhan'] as PersonaType[]).map((pKey) => (
+                  <button
+                    key={pKey}
+                    className={`persona-btn ${selectedPersona === pKey ? 'active' : ''}`}
+                    onClick={() => setSelectedPersona(pKey)}
+                  >
+                    <strong>{pKey === 'alex' ? 'ALEX CHEN' : pKey === 'mina' ? 'MINA PARK' : 'J. HAN'}</strong>
+                    <span>{pKey === 'alex' ? 'ON-CHAIN' : pKey === 'mina' ? 'MACRO' : 'QUANT'}</span>
+                  </button>
+                ))}
               </div>
-            ) : (
-              <div className="evidence-grid">
-                <span>MARKET DATA <b>CONFIRMED</b></span>
-                <span>TA4J SIGNALS <b>CALCULATED</b></span>
-                <span>EXPERT LENSES <b>REVIEWED</b></span>
-                <span>SOURCE QUALITY <b>HIGH</b></span>
+            </div>
+
+            <div className="session-list">
+              <span className="session-group-label">ACTIVE SESSIONS</span>
+              {agentSessions.map((sess) => (
+                <div
+                  key={sess.id}
+                  className={`session-item ${activeSessionId === sess.id ? 'active' : ''}`}
+                  onClick={() => setActiveSessionId(sess.id)}
+                >
+                  <div className="session-item-info">
+                    <span className="session-item-title">{sess.title}</span>
+                    <div className="session-item-meta">
+                      <span className="session-badge">{sess.symbol}</span>
+                      <span>{sess.updatedAt}</span>
+                    </div>
+                  </div>
+                  <button
+                    className="session-delete-btn"
+                    title="세션 삭제"
+                    onClick={(e) => handleDeleteSession(sess.id, e)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* 2. Center Column: Multi-turn Chat Stream */}
+          <main className="agent-chat-main">
+            <div className="agent-chat-header">
+              <div className="agent-header-title">
+                <h3>{currentSession?.title || `${searched} Research`}</h3>
+                <span>
+                  {personaProfiles[selectedPersona]?.name} · {personaProfiles[selectedPersona]?.title}
+                </span>
               </div>
-            )}
-          </div>
-        )}
+              <div className="research-mode-switch" role="tablist" style={{ margin: 0 }}>
+                <button
+                  role="tab"
+                  aria-selected={researchMode === 'INSIGHT'}
+                  className={researchMode === 'INSIGHT' ? 'selected' : ''}
+                  onClick={() => setResearchMode('INSIGHT')}
+                >
+                  <strong>INSIGHT</strong>
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={researchMode === 'GUIDE'}
+                  className={researchMode === 'GUIDE' ? 'selected' : ''}
+                  onClick={() => setResearchMode('GUIDE')}
+                >
+                  <strong>GUIDE</strong>
+                </button>
+              </div>
+            </div>
+
+            <div className="chat-messages-container">
+              {currentSession?.messages?.map((msg) => (
+                <div key={msg.id} className={msg.role === 'user' ? 'chat-msg-user' : 'chat-msg-agent'}>
+                  {msg.role === 'user' ? (
+                    <>
+                      <div className="chat-msg-user-header">
+                        <span>YOU · PROMPT</span>
+                        <span>{msg.timestamp}</span>
+                      </div>
+                      <div className="chat-msg-user-body">{msg.content}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="chat-msg-agent-header">
+                        <div className="agent-persona-tag">
+                          <Diamond />
+                          <span>{personaProfiles[msg.persona || selectedPersona]?.name}</span>
+                          <span className="agent-persona-role">{personaProfiles[msg.persona || selectedPersona]?.tag}</span>
+                        </div>
+                        <span style={{ fontSize: '7.5px', color: 'var(--muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
+                          {msg.timestamp} · AUDITED
+                        </span>
+                      </div>
+
+                      {msg.toolCalls && msg.toolCalls.length > 0 && (
+                        <div className="agent-tool-accordion">
+                          <div className="tool-summary-row">
+                            <span>🧠 AGENT TOOL CALLS ({msg.toolCalls.length} EXECUTED)</span>
+                            <span style={{ color: '#10b981' }}>SUCCESS ✓</span>
+                          </div>
+                          <div className="tool-items-list">
+                            {msg.toolCalls.map((tc, idx) => (
+                              <div key={idx} className="tool-item-line">
+                                <b>↳ {tc.name}:</b> {tc.detail}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="chat-msg-agent-body">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {agentThinking && (
+                <div className="chat-thinking-box">
+                  <span className="animate-spin">⚡</span>
+                  <span><strong>AI AGENT REASONING:</strong> {agentThinkingStep}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Input Area */}
+            <div className="agent-chat-input-wrapper">
+              <div className="chat-input-actions">
+                <div className="quick-prompt-chips-bar">
+                  <button className="quick-chip" onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
+                    🎯 지지선 & 숏스퀴즈 진단
+                  </button>
+                  <button className="quick-chip" onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 3단계 분할 매수 비중 어떻게 조절해?`)}>
+                    📊 3단계 분할 매수 비중
+                  </button>
+                  <button className="quick-chip" onClick={() => handleSendAgentMessage(`만약 50일 이동평균선 이탈 시 손절 및 헷징 플랜은?`)}>
+                    🛡️ 손절 & 헷징 시나리오
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                className="chat-input-textarea"
+                placeholder={
+                  researchMode === 'GUIDE'
+                    ? `${personaProfiles[selectedPersona]?.name}에게 위험 요인과 자산 비중 조절법을 편하게 물어보세요... (Enter로 전송, Shift+Enter 줄바꿈)`
+                    : `${personaProfiles[selectedPersona]?.name}에게 ${currentSession?.symbol || searched}의 기관급 퀀트 시나리오를 질의하세요... (Enter로 전송, Shift+Enter 줄바꿈)`
+                }
+                value={agentInputPrompt}
+                onChange={(e) => setAgentInputPrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendAgentMessage()
+                  }
+                }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <small style={{ fontSize: '8px', color: 'var(--muted)' }}>
+                  Active Engine: Qwen 2.5 14B + ta4j Multi-Fractal + Bright Data RAG
+                </small>
+                <button
+                  className="primary-button"
+                  onClick={() => handleSendAgentMessage()}
+                  disabled={agentThinking || !agentInputPrompt.trim()}
+                  style={{ padding: '8px 16px', fontSize: '9px' }}
+                >
+                  {agentThinking ? 'SYNTHESIZING…' : 'SEND PROMPT'} <span>↗</span>
+                </button>
+              </div>
+            </div>
+          </main>
+
+          {/* 3. Right Column: Telemetry Context HUD */}
+          <aside className="agent-hud">
+            <div className="hud-widget">
+              <div className="hud-widget-head">
+                <span><Diamond /> ASSET TELEMETRY</span>
+                <span>REALTIME</span>
+              </div>
+              <div className="hud-quote-row">
+                <strong>{currentSession?.symbol || searched}</strong>
+                <span style={{ color: '#2b866d' }}>
+                  ${candles.length > 0 ? candles[candles.length - 1]?.close.toLocaleString() : '77,642.99'}
+                </span>
+              </div>
+              <button
+                className="secondary-button"
+                style={{ fontSize: '8px', padding: '5px 8px', width: '100%', marginTop: '4px' }}
+                onClick={() => handleSyncChart(currentSession?.symbol || searched)}
+              >
+                SYNC TO MAIN CHART ↗
+              </button>
+            </div>
+
+            <div className="hud-widget">
+              <div className="hud-widget-head">
+                <span><Diamond /> TA4J QUANT SIGNALS</span>
+                <span>4-ENGINE</span>
+              </div>
+              <div className="hud-quant-metrics">
+                <div className="hud-metric-cell">
+                  <span>RSI (14)</span>
+                  <strong>43.8 <small style={{ color: 'var(--blue)' }}>(NEUTRAL)</small></strong>
+                </div>
+                <div className="hud-metric-cell">
+                  <span>COMPOSITE SCORE</span>
+                  <strong style={{ color: '#2b866d' }}>{decisionReport?.totalScore || '+0.82'}</strong>
+                </div>
+                <div className="hud-metric-cell">
+                  <span>1ST SUPPORT (SMA20)</span>
+                  <strong>$76,245</strong>
+                </div>
+                <div className="hud-metric-cell">
+                  <span>1ST RESISTANCE</span>
+                  <strong>$80,360</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="hud-widget">
+              <div className="hud-widget-head">
+                <span><Diamond /> LIVE NEWS WIRE</span>
+                <span>BRIGHT DATA</span>
+              </div>
+              <div className="hud-news-feed">
+                <div className="hud-news-item">
+                  <a href="#media-intelligence" className="hud-news-title">
+                    VUG vs. VOOG Is Not a Fee Fight | How Vanguard Growth ETF Leads
+                  </a>
+                  <div className="hud-news-meta">
+                    <span>24/7 Wall St.</span>
+                    <span style={{ color: 'var(--blue)' }}>SENTIMENT +0.15</span>
+                  </div>
+                </div>
+                <div className="hud-news-item">
+                  <a href="#media-intelligence" className="hud-news-title">
+                    Spot Bitcoin ETF Net Inflows Accelerate Past $320M
+                  </a>
+                  <div className="hud-news-meta">
+                    <span>Bloomberg News</span>
+                    <span style={{ color: '#2b866d' }}>SENTIMENT +0.85</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
       </section>
 
       {/* ── Integrated Decision Banner ── */}
