@@ -20,7 +20,9 @@ import {
   testPythonCode,
   submitPredictionApi,
   fetchUserPredictionStats,
-  fetchLiveFinancialNewsFeed
+  fetchLiveFinancialNewsFeed,
+  fetchEscrowPoolStatus,
+  EscrowPoolStatus
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -887,6 +889,7 @@ export default function Page() {
   const [claimNetwork, setClaimNetwork] = useState('polygon')
   const [claimLoading, setClaimLoading] = useState(false)
   const [claimSuccessData, setClaimSuccessData] = useState<any>(null)
+  const [escrowPool, setEscrowPool] = useState<EscrowPoolStatus | null>(null)
 
   // 1. Mount: Load User Auth & That Specific User's Private Chat History
   useEffect(() => {
@@ -1292,6 +1295,11 @@ export default function Page() {
       }
     }).catch((e) => console.log('Wallets fetch fallback:', e))
 
+    // Fetch 100 USDT Escrow Pool Real Status
+    fetchEscrowPoolStatus().then((pool) => {
+      if (pool) setEscrowPool(pool)
+    }).catch((e) => console.log('Escrow pool fetch fallback:', e))
+
     // Check user license token & telegram linkage
     fetchUserLicenseToken(1).then((lic) => {
       if (lic && lic.isActive) {
@@ -1448,6 +1456,7 @@ export default function Page() {
       })
       if (res && res.success) {
         setClaimSuccessData(res)
+        fetchEscrowPoolStatus().then((pool) => pool && setEscrowPool(pool)).catch(() => {})
       } else {
         alert(res?.message || '출금 처리 실패')
       }
@@ -1684,14 +1693,22 @@ export default function Page() {
             </div>
 
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <div className="pool-readout" style={{ minWidth: '160px', padding: '10px 14px', background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
-                <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, display: 'block' }}>RESERVED ESCROW POOL</span>
-                <strong style={{ fontSize: '20px', color: '#0f766e', display: 'block', margin: '4px 0 2px' }}>
-                  10,000.00 <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
+              <div className="pool-readout" style={{ minWidth: '175px', padding: '10px 14px', background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600 }}>RESERVED ESCROW POOL</span>
+                  <span className="live-dot pulse" style={{ width: '6px', height: '6px' }} />
+                </div>
+                <strong style={{ fontSize: '20px', color: '#0f766e', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                  {(escrowPool?.currentBalance ?? 100.0).toFixed(2)} <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
                 </strong>
-                <span style={{ fontSize: '8.5px', color: '#0284c7', background: '#e0f2fe', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
-                  NON-CUSTODIAL ESCROW
-                </span>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '2px' }}>
+                  <span style={{ fontSize: '8.5px', color: '#0284c7', background: '#e0f2fe', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
+                    {escrowPool ? `${escrowPool.remainingWinners} / ${escrowPool.maxWinners} CLAIMS LEFT` : '10 / 10 CLAIMS LEFT'}
+                  </span>
+                  <span style={{ fontSize: '8.5px', color: '#059669', background: '#ecfdf5', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
+                    $10.00/WINNER
+                  </span>
+                </div>
               </div>
 
               <div style={{ minWidth: '160px', padding: '10px 14px', background: '#0b131e', border: '1px solid #1e293b', borderRadius: '4px', color: '#ffffff' }}>

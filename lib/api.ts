@@ -1082,3 +1082,32 @@ export async function fetchLiveFinancialNewsFeed(channel = 'ALL', symbol?: strin
   }
   return [];
 }
+
+/**
+ * 18. [10-Win Streak] 100 USDT 온체인 에스크로 보상 풀 실시간 잔액 및 당첨자 현황 조회 API
+ */
+export interface EscrowPoolStatus {
+  poolName: string;
+  initialCapacity: number;
+  currentBalance: number;
+  claimedAmount: number;
+  totalWinners: number;
+  maxWinners: number;
+  remainingWinners: number;
+  rewardPerWinner: number;
+  escrowAddress: string;
+  network: string;
+  status: string;
+}
+
+export async function fetchEscrowPoolStatus(): Promise<EscrowPoolStatus | null> {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/escrow-pool-status`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for fetchEscrowPoolStatus:', e);
+  }
+  return null;
+}
