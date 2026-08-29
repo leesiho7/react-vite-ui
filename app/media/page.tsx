@@ -375,9 +375,10 @@ export default function MediaPage() {
         {isPlaying ? (
           <div className="media-feature-player">
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${selected.embedId}?autoplay=1&start=${startSecond}`}
+              src={`https://www.youtube.com/embed/${selected.embedId}?autoplay=1&start=${startSecond}&rel=0`}
               title={text(selected.title)}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
           </div>
