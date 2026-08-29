@@ -26,7 +26,8 @@ import {
   CandleData,
   PredictionLeaderboardItem,
   HiveMindBattle,
-  ArenaStrategyItem
+  ArenaStrategyItem,
+  AuthResponse
 } from '../lib/types'
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
 import { RealtimeChart } from '../components/RealtimeChart'
@@ -942,7 +943,23 @@ export default function Page() {
   const [claimSuccessData, setClaimSuccessData] = useState<any>(null)
 
   // Real Backend Data State
+  const [currentUser, setCurrentUser] = useState<AuthResponse | null>(null)
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('auth_session')
+      if (stored) {
+        setCurrentUser(JSON.parse(stored))
+      }
+    } catch (e) {}
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_session')
+    setCurrentUser(null)
+    window.location.reload()
+  }
   const [candles, setCandles] = useState<CandleData[]>([])
   const [leaderboard, setLeaderboard] = useState<PredictionLeaderboardItem[]>([])
   const [battle, setBattle] = useState<HiveMindBattle | null>(null)
@@ -1467,9 +1484,38 @@ export default function Page() {
           </span>
         </div>
 
-        <div className="account-toggle">
-          <a className="member-icon" href="/profile" aria-label="Open member profile"><UserRound size={15} strokeWidth={1.5} /></a>
-          <a href="/login">QUICK SOCIAL LOGIN</a>
+        <div className="account-toggle" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {currentUser ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <a className="member-icon" href="/profile" aria-label="Open member profile" title="내 프로필"><UserRound size={15} strokeWidth={1.5} /></a>
+              <span style={{ fontSize: '11px', color: '#0f766e', fontWeight: 700 }}>
+                {currentUser.nickname || currentUser.username}
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  fontSize: '9.5px',
+                  background: '#f1f5f9',
+                  color: '#64748b',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '3px',
+                  padding: '3px 7px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                LOGOUT
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <a className="member-icon" href="/login" aria-label="Open member profile"><UserRound size={15} strokeWidth={1.5} /></a>
+              <a href="/login" style={{ fontSize: '10.5px', fontWeight: 600, color: '#18334a' }}>LOGIN</a>
+              <span style={{ color: '#cbd5e1' }}>|</span>
+              <a href="/signup" style={{ fontSize: '10.5px', background: '#0284c7', color: '#fff', padding: '3px 8px', borderRadius: '3px', fontWeight: 700, textDecoration: 'none' }}>SIGN UP</a>
+            </div>
+          )}
         </div>
       </header>
 

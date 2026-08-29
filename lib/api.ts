@@ -360,6 +360,52 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
 }
 
 /**
+ * 6-1. 일반 회원가입 (Username, Password, Nickname)
+ */
+export async function signUpApi(payload: {
+  username: string;
+  password: string;
+  nickname: string;
+  walletAddress?: string;
+}): Promise<AuthResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false,
+      message: '서버 연결에 실패했습니다: ' + (err?.message || 'Network Error')
+    };
+  }
+}
+
+/**
+ * 6-2. 일반 로그인 (Username, Password)
+ */
+export async function loginApi(payload: {
+  username: string;
+  password: string;
+}): Promise<AuthResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false,
+      message: '서버 연결에 실패했습니다: ' + (err?.message || 'Network Error')
+    };
+  }
+}
+
+/**
  * 7. 공인 퀀트 전문가(Resident AI Analysts) 목록 조회
  */
 export async function fetchTopExperts(currentUserId?: number, limit = 10): Promise<any[]> {
