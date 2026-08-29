@@ -202,7 +202,7 @@ const mediaStories = [
   {
     source: 'GOLDMAN SACHS',
     key: 'MACRO',
-    embedId: '3JZ_D3ELwOQ',
+    embedId: '_2eA1vQe0E8',
     targetSymbol: 'GOLD/USD',
     title: ['Emerging markets and the dollar path', '신흥시장과 달러의 경로', '新兴市场与美元走势'],
     description: ['Macro scenarios for FX, commodities and emerging-market risk premia.', 'FX, 원자재와 신흥시장 리스크 프리미엄의 거시 시나리오입니다.', '外汇、大宗商品和新兴市场风险溢价的宏观情景。'],
@@ -210,7 +210,7 @@ const mediaStories = [
     duration: '21:51',
     tone: 'blue',
     channel: 'Goldman Sachs',
-    link: 'https://www.youtube.com/watch?v=3JZ_D3ELwOQ',
+    link: 'https://www.youtube.com/watch?v=_2eA1vQe0E8',
     takeaways: [
       ['US Dollar softening unlocks capital flow into undervalued emerging markets.', '미 달러화 완화 국면이 저평가된 신흥시장으로의 대규모 자금 유입을 촉진합니다.', '美元走软为被低估的新兴市场解锁了大规模资本流入通道。'],
       ['Central bank gold accumulation establishes resilient floor on precious metals.', '각국 중앙은행의 공격적인 금 매입이 귀금속 가격의 강력한 하방 지지선을 형성합니다.', '全球央行持续增持黄金储备，为贵金属价格构筑了坚韧底部。'],
@@ -1629,6 +1629,12 @@ export default function Page() {
               onClick={() => handlePlayMediaStory(0)}
               title={mediaCopy[language].clickToPlay}
             >
+              <img
+                src={`https://img.youtube.com/vi/${selectedMediaStory.embedId}/hqdefault.jpg`}
+                alt={mediaText(selectedMediaStory.title)}
+                className="media-feature-thumb"
+                loading="eager"
+              />
               <div className="play-glow">
                 <Play size={32} fill="currentColor" />
               </div>
@@ -1712,7 +1718,15 @@ export default function Page() {
               onClick={() => handleSelectMediaStory(story)}
             >
               <div className={`media-card-thumb tone-${story.tone}`}>
-                <Play size={18} fill="currentColor" />
+                <img
+                  src={`https://img.youtube.com/vi/${story.embedId}/hqdefault.jpg`}
+                  alt={mediaText(story.title)}
+                  className="media-thumb-img"
+                  loading="lazy"
+                />
+                <div className="play-icon-overlay">
+                  <Play size={16} fill="currentColor" />
+                </div>
                 <span>{story.duration}</span>
               </div>
               <div className="media-card-body">
