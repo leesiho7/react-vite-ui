@@ -19,7 +19,8 @@ import {
   fetchUserLicenseToken,
   testPythonCode,
   submitPredictionApi,
-  fetchUserPredictionStats
+  fetchUserPredictionStats,
+  fetchLiveFinancialNewsFeed
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -1173,23 +1174,52 @@ export default function Page() {
   const priceDeltaPct = (priceDelta / (numericBasePrice || 1)) * 100
   const isUpWinning = priceDelta >= 0
 
-  // Language and Category-bound News List
+  // Real-time Live Financial News Feed (Dynamic Web Scraped from Spring Boot + Yahoo / Bloomberg)
+  const [liveNewsFeed, setLiveNewsFeed] = useState<NewsItem[]>([])
+
+  useEffect(() => {
+    fetchLiveFinancialNewsFeed('ALL')
+      .then((items) => {
+        if (Array.isArray(items) && items.length > 0) {
+          const mapped: NewsItem[] = items.map((item: any) => {
+            let cat: NewsCategoryKey = 'ALL'
+            if (item.category === 'CRYPTO') cat = 'CRYPTO'
+            else if (item.category === 'US_TECH' || item.category === 'TECH') cat = 'TECH'
+            else if (item.category === 'MACRO') cat = 'MACRO'
+            else if (item.category === 'KOREA' || item.category === 'ONCHAIN') cat = 'ONCHAIN'
+
+            return {
+              category: cat,
+              source: item.source || 'BLOOMBERG',
+              tag: item.symbol || 'MARKET',
+              title: item.title,
+              impact: String(item.impactPercent ? (item.impactPercent / 10).toFixed(1) : '8.5'),
+              sentiment: item.sentiment || 'BULLISH',
+              tone: item.sentiment === 'BEARISH' ? 'negative' : (item.sentiment === 'NEUTRAL' ? 'neutral' : 'positive'),
+              thumb: item.symbol?.slice(0, 4) || 'NEWS',
+              imageUrl: item.imageUrl || undefined
+            }
+          })
+          setLiveNewsFeed(mapped)
+        }
+      })
+      .catch((err) => console.warn('[v0] Live news feed fallback:', err))
+  }, [])
+
+  // Language and Category-bound News List (Dynamic real-time scraped feed with fallback)
   const [newsCategory, setNewsCategory] = useState<NewsCategoryKey>('ALL')
   const currentNewsList = useMemo(() => {
-    const list = newsItemsByLang[language]
+    const list = liveNewsFeed.length > 0 ? liveNewsFeed : newsItemsByLang[language]
     if (newsCategory === 'ALL') return list
     return list.filter((item) => item.category === newsCategory)
-  }, [language, newsCategory])
+  }, [liveNewsFeed, language, newsCategory])
   const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
 
   useEffect(() => {
-    const list = newsCategory === 'ALL'
-      ? newsItemsByLang[language]
-      : newsItemsByLang[language].filter((item) => item.category === newsCategory)
-    if (list.length > 0) {
-      setActiveNews(list[0])
+    if (currentNewsList.length > 0) {
+      setActiveNews(currentNewsList[0])
     }
-  }, [language, newsCategory])
+  }, [currentNewsList])
 
   // Fetch Backend APIs
   useEffect(() => {

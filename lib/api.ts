@@ -1063,6 +1063,22 @@ export async function fetchStreamInsights(channelId?: number, symbol?: string): 
   return [];
 }
 
-
-
-
+/**
+ * 17. [실시간 속보 피드] Spring Boot + BrightData / Yahoo Finance 실시간 멀티채널 뉴스 수집 조회 API
+ */
+export async function fetchLiveFinancialNewsFeed(channel = 'ALL', symbol?: string): Promise<any[]> {
+  try {
+    let url = `${API_BASE}/market/news/channel?channel=${channel}`;
+    if (symbol) url += `&symbol=${symbol}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchLiveFinancialNewsFeed:', err);
+  }
+  return [];
+}
