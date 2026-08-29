@@ -13,9 +13,9 @@ export default function OrderbookPage() {
           </Link>
         </div>
         <div className="top-meta">
-          <span className="live-dot" /> L2 DEPTH 100ms
+          <span>CROSS-EXCHANGE ARBITRAGE MATRIX</span>
           <span className="top-divider" />
-          <span>NETWORK INFRASTRUCTURE BENCHMARK</span>
+          <span>DELTA-NEUTRAL HEDGE ENGINE</span>
         </div>
         <div className="account-toggle">
           <Link href="/profile" className="member-icon" aria-label="Open member profile">♙</Link>
@@ -25,10 +25,10 @@ export default function OrderbookPage() {
 
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ color: '#18334a', font: '400 clamp(32px, 4vw, 48px)/1.1 Georgia, serif', margin: '0 0 8px' }}>
-          Realtime Level-2 <em>Orderbook & Latency</em>
+          Cross-Exchange <em>Arbitrage & L2 Depth</em>
         </h1>
         <p style={{ color: '#74808c', fontSize: '12px', margin: 0 }}>
-          거래소 다이렉트 100ms 호가창 스트림과 밀리초(ms) 단위 패킷 RTT/지터(Jitter) 네트워크 품질 측정기
+          바이낸스 vs 바이비트 실시간 호가 스프레드(%) 차익거래 스캐너 및 8시간 무위험 델타 뉴트럴 펀딩비(Funding APY) 수익 매트릭스
         </p>
       </div>
 
