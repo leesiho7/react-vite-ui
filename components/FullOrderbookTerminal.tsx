@@ -43,74 +43,31 @@ interface FundingRateItem {
 
 export type ExchangeId = 'BINANCE' | 'BYBIT' | 'OKX' | 'UPBIT' | 'BITUNIX';
 
-export function BinanceLogo({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="32" height="32" rx="6" fill="#181A20" />
-      <path d="M16 6.27L19.66 9.93L16 13.59L12.34 9.93L16 6.27ZM10.26 10L12.34 12.08L8.68 15.74L6.6 13.66L10.26 10ZM21.74 10L25.4 13.66L23.32 15.74L19.66 12.08L21.74 10ZM16 13.93L18.07 16L16 18.07L13.93 16L16 13.93ZM8.18 16.08L11.84 19.74L9.76 21.82L6.1 18.16L8.18 16.08ZM23.82 16.08L25.9 18.16L22.24 21.82L20.16 19.74L23.82 16.08ZM16 18.2L19.66 21.86L16 25.52L12.34 21.86L16 18.2Z" fill="#F0B90B" />
-    </svg>
-  );
-}
-
-export function BybitLogo({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="32" height="32" rx="6" fill="#17181E" />
-      <path d="M7.5 8H14.2C17.2 8 19.2 9.6 19.2 12.2C19.2 13.9 18.2 15.2 16.6 15.8C18.6 16.3 19.9 17.8 19.9 20C19.9 22.8 17.6 24.6 14.3 24.6H7.5V8ZM10.8 14H13.1C14.3 14 15.2 13.3 15.2 12.2C15.2 11.1 14.3 10.4 13.1 10.4H10.8V14ZM10.8 22.2H13.3C14.7 22.2 15.7 21.4 15.7 20.1C15.7 18.9 14.7 18.1 13.3 18.1H10.8V22.2Z" fill="#F7A600" />
-      <path d="M21.2 19.5L23.5 17.2L26.2 20V13.2H28.5V24.2H26.2V22.9L23.5 20L21.2 22.4V19.5Z" fill="#FFFFFF" />
-    </svg>
-  );
-}
-
-export function OkxLogo({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="32" height="32" rx="6" fill="#000000" />
-      {/* O */}
-      <path d="M4.5 11C4.5 9.3 5.8 8 7.5 8H9.5C11.2 8 12.5 9.3 12.5 11V21C12.5 22.7 11.2 24 9.5 24H7.5C5.8 24 4.5 22.7 4.5 21V11ZM7.5 10.8V21.2H9.5V10.8H7.5Z" fill="#FFFFFF" />
-      {/* K */}
-      <path d="M14 8H16.8V13.8L19.8 8H23L19.2 15L23.4 24H20.2L16.8 16.8V24H14V8Z" fill="#FFFFFF" />
-      {/* X */}
-      <path d="M24 8H26.8L28.6 13.5L30.4 8H33.2L30.2 15.8L33.4 24H30.6L28.6 18.2L26.6 24H23.8L27 15.8L24 8Z" fill="#FFFFFF" />
-    </svg>
-  );
-}
-
-export function UpbitLogo({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="32" height="32" rx="6" fill="#093687" />
-      <path d="M8 8.5H12.5V17C12.5 19 14 20.5 16 20.5C18 20.5 19.5 19 19.5 17V8.5H24V17C24 21.4 20.4 25 16 25C11.6 25 8 21.4 8 17V8.5Z" fill="#00E5FF" />
-      <path d="M18.5 12L22 8.5L25.5 12" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-export function BitunixLogo({ size = 16 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="32" height="32" rx="6" fill="#6C28D9" />
-      <path d="M8.5 8H15.2C18 8 20 9.4 20 11.7C20 13.2 19 14.3 17.6 14.9C19.4 15.4 20.6 16.8 20.6 18.8C20.6 21.4 18.5 23.2 15.3 23.2H8.5V8ZM11.8 13.6H14.9C16 13.6 16.8 13 16.8 12C16.8 11 16 10.4 14.9 10.4H11.8V13.6ZM11.8 20.8H15.1C16.3 20.8 17.2 20.1 17.2 19C17.2 17.9 16.3 17.2 15.1 17.2H11.8V20.8Z" fill="#FFFFFF" />
-      <path d="M23 7L26.5 10.5L23 14L19.5 10.5L23 7Z" fill="#00F0FF" />
-    </svg>
-  );
-}
-
 export function ExchangeLogo({ exchange, size = 16 }: { exchange: ExchangeId; size?: number }) {
-  switch (exchange) {
-    case 'BINANCE':
-      return <BinanceLogo size={size} />;
-    case 'BYBIT':
-      return <BybitLogo size={size} />;
-    case 'OKX':
-      return <OkxLogo size={size} />;
-    case 'UPBIT':
-      return <UpbitLogo size={size} />;
-    case 'BITUNIX':
-      return <BitunixLogo size={size} />;
-    default:
-      return null;
-  }
+  const logoSrcMap: Record<ExchangeId, string> = {
+    BINANCE: '/exchanges/binance.jpg',
+    BYBIT: '/exchanges/bybit.png',
+    OKX: '/exchanges/okx.png',
+    UPBIT: '/exchanges/upbit.png',
+    BITUNIX: '/exchanges/bitunix.png',
+  };
+
+  return (
+    <img
+      src={logoSrcMap[exchange]}
+      alt={`${exchange} official logo`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: '3px',
+        objectFit: 'contain',
+        flexShrink: 0,
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        background: '#ffffff'
+      }}
+    />
+  );
 }
 
 export interface ExchangeInfo {
