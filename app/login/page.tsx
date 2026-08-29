@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { loginApi, socialLogin } from '../../lib/api'
 
 export default function LoginPage() {
@@ -13,6 +13,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<string>('')
   const [isError, setIsError] = useState(false)
+
+  useEffect(() => {
+    // Google Identity Services (GSI) SDK 로드
+    if (typeof window !== 'undefined' && !document.getElementById('google-gsi-client')) {
+      const script = document.createElement('script')
+      script.id = 'google-gsi-client'
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+    }
+  }, [])
 
   const handleCredentialsLogin = async (e: FormEvent) => {
     e.preventDefault()
@@ -53,7 +65,102 @@ export default function LoginPage() {
     }
   }
 
+  // 진짜 구글 OAuth 2.0 팝업 로그인 처리
+  const handleGoogleLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('google_custom_client_id') : null)
+
+    if (!clientId) {
+      const inputId = window.prompt(
+        '🔑 Google Cloud Console에서 발급받은 OAuth 2.0 Client ID를 입력해 주세요:\n(예: 123456789-xxxx.apps.googleusercontent.com)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
+        ''
+      )
+      if (inputId && inputId.trim()) {
+        localStorage.setItem('google_custom_client_id', inputId.trim())
+        triggerGooglePopup(inputId.trim())
+        return
+      } else {
+        handleSocial('GOOGLE')
+        return
+      }
+    } else {
+      triggerGooglePopup(clientId)
+    }
+  }
+
+  const triggerGooglePopup = (clientId: string) => {
+    if (typeof window === 'undefined' || !(window as any).google?.accounts?.oauth2) {
+      setFeedback('구글 인증 라이브러리를 로딩 중입니다. 1초 후 다시 클릭해 주세요.')
+      return
+    }
+
+    setLoading(true)
+    setFeedback('구글 공식 계정 로그인 창을 여는 중...')
+    setIsError(false)
+
+    try {
+      const client = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'email profile openid',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              setFeedback('구글 공식 프로필 확인 중...')
+              const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+              })
+              const userInfo = await userRes.json()
+
+              if (userInfo && userInfo.email) {
+                const res = await socialLogin({
+                  provider: 'GOOGLE',
+                  providerId: userInfo.sub,
+                  email: userInfo.email,
+                  nickname: userInfo.name || userInfo.email.split('@')[0],
+                  avatarUrl: userInfo.picture
+                })
+
+                if (res.success) {
+                  setFeedback(`🎉 [${userInfo.name || userInfo.email}] 님, 구글 공식 계정 로그인 성공!`)
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('auth_session', JSON.stringify(res))
+                  }
+                  setTimeout(() => {
+                    router.push('/')
+                  }, 800)
+                } else {
+                  setFeedback(res.message || '구글 로그인 처리에 실패했습니다.')
+                  setIsError(true)
+                }
+              }
+            } catch (err: any) {
+              setFeedback('구글 프로필 조회 오류: ' + (err?.message || ''))
+              setIsError(true)
+            } finally {
+              setLoading(false)
+            }
+          }
+        },
+        error_callback: () => {
+          setFeedback('구글 로그인이 취소되었거나 팝업이 닫혔습니다.')
+          setIsError(true)
+          setLoading(false)
+        }
+      })
+
+      client.requestAccessToken()
+    } catch (e: any) {
+      setFeedback('구글 로그인 초기화 오류: ' + (e?.message || ''))
+      setIsError(true)
+      setLoading(false)
+    }
+  }
+
   const handleSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
+    if (provider === 'GOOGLE') {
+      handleGoogleLogin()
+      return
+    }
+
     setLoading(true)
     setFeedback(`[${provider}] 간편 소셜 인증 진행 중...`)
     setIsError(false)

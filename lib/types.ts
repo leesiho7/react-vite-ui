@@ -110,6 +110,7 @@ export interface SocialLoginRequest {
   nickname?: string;
   email?: string;
   walletAddress?: string | null;
+  avatarUrl?: string;
 }
 
 export interface AuthResponse {
