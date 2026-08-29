@@ -46,12 +46,8 @@ export type ExchangeId = 'BINANCE' | 'BYBIT' | 'OKX' | 'UPBIT' | 'BITUNIX';
 export function BinanceLogo({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="32" height="32" rx="6" fill="#F3BA2F" />
-      <path d="M16 6L12.5 9.5L16 13L19.5 9.5L16 6Z" fill="#181A20" />
-      <path d="M8 12.5L4.5 16L8 19.5L11.5 16L8 12.5Z" fill="#181A20" />
-      <path d="M24 12.5L20.5 16L24 19.5L27.5 16L24 12.5Z" fill="#181A20" />
-      <path d="M16 14L14 16L16 18L18 16L16 14Z" fill="#181A20" />
-      <path d="M16 20L12.5 23.5L16 27L19.5 23.5L16 20Z" fill="#181A20" />
+      <rect width="32" height="32" rx="6" fill="#181A20" />
+      <path d="M16 6.27L19.66 9.93L16 13.59L12.34 9.93L16 6.27ZM10.26 10L12.34 12.08L8.68 15.74L6.6 13.66L10.26 10ZM21.74 10L25.4 13.66L23.32 15.74L19.66 12.08L21.74 10ZM16 13.93L18.07 16L16 18.07L13.93 16L16 13.93ZM8.18 16.08L11.84 19.74L9.76 21.82L6.1 18.16L8.18 16.08ZM23.82 16.08L25.9 18.16L22.24 21.82L20.16 19.74L23.82 16.08ZM16 18.2L19.66 21.86L16 25.52L12.34 21.86L16 18.2Z" fill="#F0B90B" />
     </svg>
   );
 }
