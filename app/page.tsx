@@ -1181,14 +1181,15 @@ export default function Page() {
   const [rawLiveItems, setRawLiveItems] = useState<any[]>([])
 
   useEffect(() => {
-    fetchLiveFinancialNewsFeed('ALL')
+    const sym = searched.replace('/USD', '').replace('/USDT', '').trim()
+    fetchLiveFinancialNewsFeed('ALL', sym)
       .then((items) => {
         if (Array.isArray(items) && items.length > 0) {
           setRawLiveItems(items)
         }
       })
       .catch((err) => console.warn('[v0] Live news feed fallback:', err))
-  }, [])
+  }, [searched])
 
   // Language and Category-bound News List (Dynamic real-time scraped feed with multilingual translation)
   const [newsCategory, setNewsCategory] = useState<NewsCategoryKey>('ALL')
@@ -1218,7 +1219,7 @@ export default function Page() {
         return {
           category: cat,
           source: item.source || 'BLOOMBERG TERMINAL',
-          tag: item.symbol || 'MARKET',
+          tag: item.symbol?.replace('.KS', '').replace('USDT', '') || 'MARKET',
           title: displayTitle,
           titleOriginal: item.title,
           titleKo: item.titleKo,
@@ -1226,6 +1227,9 @@ export default function Page() {
           snippet: item.snippet,
           snippetKo: item.snippetKo,
           snippetCn: item.snippetCn,
+          actionGuideKo: item.actionGuideKo,
+          actionGuideEn: item.actionGuideEn,
+          actionGuideCn: item.actionGuideCn,
           link,
           impact: String(item.impactPercent ? (item.impactPercent / 10).toFixed(1) : '8.5'),
           sentiment: item.sentiment || 'BULLISH',
@@ -2692,7 +2696,9 @@ export default function Page() {
                   <div>
                     <strong style={{ color: 'var(--navy)' }}>03. 트레이딩 액션 가이드: </strong>
                     <span>
-                      ${selectedArticle.tag} 기준 1차 지지선 방어 여부 모니터링 및 ta4j 지표 합성 권장.
+                      {articleLangView === 'KO'
+                        ? (selectedArticle.actionGuideKo || `$${selectedArticle.tag} 기관 수급 및 1차 지지선 방어 여부 모니터링, ta4j 지표 합성 매매 권장.`)
+                        : (selectedArticle.actionGuideEn || `$${selectedArticle.tag} Monitor institutional flows and 1st support defense with ta4j indicators.`)}
                     </span>
                   </div>
                 </div>
