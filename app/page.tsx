@@ -774,6 +774,12 @@ export default function Page() {
           <button className={`league-link ${newsOpen ? 'active' : ''}`} onClick={() => setNewsOpen(!newsOpen)}>
             <Diamond /> LIVE NEWSWIRE
           </button>
+          <a className="league-link" href="#trading-console" style={{ textDecoration: 'none' }}>
+            <Diamond /> 24H BOT
+          </a>
+          <a className="league-link" href="#research-terminal" style={{ textDecoration: 'none' }}>
+            <Diamond /> AI RESEARCH
+          </a>
           <a className="league-link" href="#media-wire" style={{ textDecoration: 'none' }}>
             <Diamond /> NEWS
           </a>
@@ -1343,7 +1349,7 @@ export default function Page() {
       </section>
 
       {/* ── 24H Trading Operations Console ── */}
-      <section className="trading-console panel">
+      <section className="trading-console panel" id="trading-console">
         <div className="panel-heading">
           <span><Diamond /> 24H TRADING OPERATIONS</span>
           <span className="status-tag">HETZNER / DOCKER BOT PLANE</span>
@@ -1425,7 +1431,7 @@ export default function Page() {
       </section>
 
       {/* ── AI Research Terminal ── */}
-      <section className="research-terminal panel">
+      <section className="research-terminal panel" id="research-terminal">
         <div className="panel-heading">
           <span><Diamond /> AI RESEARCH TERMINAL</span>
           <span className="status-tag">{researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}</span>
