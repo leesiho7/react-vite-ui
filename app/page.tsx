@@ -355,6 +355,7 @@ const mediaCopy = {
     timestampsTitle: '关键时刻跳转',
     syncChart: '联动图表',
     playingNow: '正在终端播放',
+    clickToPlay: '点击在终端内直接播放'
   }
 }
 
