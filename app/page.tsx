@@ -1458,7 +1458,7 @@ export default function Page() {
                   📊 [1번] 실시간 군중 합의율 (Human Market Consensus)
                 </span>
                 <span style={{ fontSize: '9px', color: '#64748b' }}>
-                  총 {battle?.totalHumanVotes || 1842}명 실시간 참여 중
+                  {(battle?.totalHumanVotes ?? 0) > 0 ? `총 ${battle?.totalHumanVotes}명 실시간 참여 중` : '현재 라운드 첫 번째 예측자를 기다리는 중입니다'}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#475569' }}>
@@ -1470,7 +1470,7 @@ export default function Page() {
             <div style={{ height: '36px', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
               <div
                 style={{
-                  width: `${battle?.humanBullPercentage || 68.4}%`,
+                  width: `${(battle?.totalHumanVotes ?? 0) > 0 ? (battle?.humanBullPercentage ?? 50.0) : 50}%`,
                   background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
                   color: '#ffffff',
                   display: 'flex',
@@ -1481,11 +1481,11 @@ export default function Page() {
                   transition: 'width 0.4s ease'
                 }}
               >
-                🟢 UP {battle?.humanBullPercentage || 68.4}% (상승 예측)
+                🟢 UP {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBullPercentage}%` : '50% (대기)'} (상승 예측)
               </div>
               <div
                 style={{
-                  width: `${100 - (battle?.humanBullPercentage || 68.4)}%`,
+                  width: `${(battle?.totalHumanVotes ?? 0) > 0 ? (battle?.humanBearPercentage ?? 50.0) : 50}%`,
                   background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
                   color: '#ffffff',
                   display: 'flex',
@@ -1497,7 +1497,7 @@ export default function Page() {
                   transition: 'width 0.4s ease'
                 }}
               >
-                DOWN {(100 - (battle?.humanBullPercentage || 68.4)).toFixed(1)}% (하락 예측) 🔴
+                DOWN {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBearPercentage}%` : '50% (대기)'} (하락 예측) 🔴
               </div>
             </div>
           </div>
@@ -1614,7 +1614,7 @@ export default function Page() {
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
                   <strong style={{ fontSize: '18px', color: '#059669' }}>
-                    {battle?.humanBullPercentage || 68.4}%
+                    {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBullPercentage}%` : '50%'}
                   </strong>
                 </div>
               </button>
@@ -1654,7 +1654,7 @@ export default function Page() {
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
                   <strong style={{ fontSize: '18px', color: '#dc2626' }}>
-                    {(100 - (battle?.humanBullPercentage || 68.4)).toFixed(1)}%
+                    {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBearPercentage}%` : '50%'}
                   </strong>
                 </div>
               </button>

@@ -300,11 +300,11 @@ export async function fetchHiveMindBattle(symbol = 'BTCUSDT'): Promise<HiveMindB
     symbol,
     aiConfidenceScore: 0.82,
     aiDecision: 'BULLISH',
-    humanBullPercentage: 74.2,
-    humanBearPercentage: 25.8,
-    totalHumanVotes: 1840,
-    winningSide: 'CONSENSUS_AGREED',
-    battleCommentary: 'AI 모델과 인간 집단지성 74.2%가 일치하여 강력한 상방 지지선 형성 중'
+    humanBullPercentage: 50.0,
+    humanBearPercentage: 50.0,
+    totalHumanVotes: 0,
+    winningSide: 'AI_VS_HUMAN_CONFLICT',
+    battleCommentary: '실시간 참여자 대기 중'
   };
 }
 
