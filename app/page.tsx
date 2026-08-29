@@ -1123,18 +1123,22 @@ export default function Page() {
     }
   }, [numericCurrentPrice, numericBasePrice])
 
-  // Periodic Micro-Jitter if market is between WebSocket ticks to keep tension alive
+  // Real-Time Organic Snake Wave Micro-Ticker (Polymarket Harmonic Undulation)
   useEffect(() => {
-    const jitterInterval = setInterval(() => {
+    let tickCount = 0
+    const snakeTimer = setInterval(() => {
+      tickCount++
       setStrikePriceHistory((prev) => {
         if (prev.length === 0) return prev
         const last = prev[prev.length - 1]
-        const jitter = (Math.random() - 0.49) * 0.00015 * numericBasePrice
-        const next = last + jitter
+        // Smooth harmonic wave perturbation so it slithers like a living snake
+        const harmonic = Math.sin(tickCount * 0.35) * 0.00014 * numericBasePrice
+        const microNoise = (Math.random() - 0.49) * 0.00008 * numericBasePrice
+        const next = last + harmonic + microNoise
         return [...prev.slice(-39), next]
       })
-    }, 1000)
-    return () => clearInterval(jitterInterval)
+    }, 400)
+    return () => clearInterval(snakeTimer)
   }, [numericBasePrice])
 
   const latestHistoryPrice = strikePriceHistory.length > 0 ? strikePriceHistory[strikePriceHistory.length - 1] : numericCurrentPrice
@@ -1684,16 +1688,23 @@ export default function Page() {
                 <svg viewBox="0 0 640 140" style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="strikeUpGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                      <stop offset="0%" stopColor="#00d395" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#00d395" stopOpacity="0.0" />
                     </linearGradient>
                     <linearGradient id="strikeDownGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ef4444" stopOpacity="0.0" />
-                      <stop offset="100%" stopColor="#ef4444" stopOpacity="0.25" />
+                      <stop offset="0%" stopColor="#ff4d6d" stopOpacity="0.0" />
+                      <stop offset="100%" stopColor="#ff4d6d" stopOpacity="0.28" />
                     </linearGradient>
+                    <filter id="polyGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
                   </defs>
 
-                  {/* Horizontal Center Strike Base Line */}
+                  {/* Horizontal Center Strike Base Line (Polymarket Dotted Axis) */}
                   <line
                     x1="0"
                     y1="70"
@@ -1701,7 +1712,8 @@ export default function Page() {
                     y2="70"
                     stroke="#f59e0b"
                     strokeWidth="1.5"
-                    strokeDasharray="4 3"
+                    strokeDasharray="4 4"
+                    opacity="0.8"
                   />
 
                   {(() => {
@@ -1712,49 +1724,86 @@ export default function Page() {
 
                     const pts = hist.map((val, i) => {
                       const x = (i / (hist.length - 1 || 1)) * 640;
-                      const y = Math.max(10, Math.min(130, 140 - ((val - minP) / pRange) * 140));
+                      const y = Math.max(12, Math.min(128, 140 - ((val - minP) / pRange) * 140));
                       return { x, y };
                     });
 
-                    const pathStr = pts.length > 0 ? `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map(p => `L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') : '';
+                    // Cubic Bezier Spline generator for organic undulating snake wave
+                    const getCubicSpline = (pList: Array<{ x: number; y: number }>) => {
+                      if (pList.length === 0) return '';
+                      if (pList.length === 1) return `M ${pList[0].x} ${pList[0].y}`;
+                      let d = `M ${pList[0].x.toFixed(1)} ${pList[0].y.toFixed(1)}`;
+                      for (let i = 0; i < pList.length - 1; i++) {
+                        const p0 = pList[i === 0 ? 0 : i - 1];
+                        const p1 = pList[i];
+                        const p2 = pList[i + 1];
+                        const p3 = pList[i + 2] || p2;
+
+                        const cp1x = p1.x + (p2.x - p0.x) / 5.2;
+                        const cp1y = p1.y + (p2.y - p0.y) / 5.2;
+                        const cp2x = p2.x - (p3.x - p1.x) / 5.2;
+                        const cp2y = p2.y - (p3.y - p1.y) / 5.2;
+
+                        d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+                      }
+                      return d;
+                    };
+
+                    const splineD = getCubicSpline(pts);
+                    const areaD = pts.length > 0 ? `${splineD} L 640 140 L 0 140 Z` : '';
                     const lastPt = pts[pts.length - 1] || { x: 640, y: 70 };
+                    const strokeColor = isUpWinning ? '#00d395' : '#ff4d6d';
+                    const glowColor = isUpWinning ? 'rgba(0, 211, 149, 0.45)' : 'rgba(255, 77, 109, 0.45)';
 
                     return (
-                      <g key="strike-wave">
+                      <g key="poly-snake-wave">
                         {/* Shaded Area Under Curve */}
                         <path
-                          d={`${pathStr} L 640 140 L 0 140 Z`}
+                          d={areaD}
                           fill={isUpWinning ? 'url(#strikeUpGrad)' : 'url(#strikeDownGrad)'}
                         />
 
-                        {/* Live Moving Price Line */}
+                        {/* Snake Body Outer Neon Glow Layer */}
                         <path
-                          d={pathStr}
+                          d={splineD}
                           fill="none"
-                          stroke={isUpWinning ? '#10b981' : '#ef4444'}
-                          strokeWidth="2.5"
+                          stroke={glowColor}
+                          strokeWidth="6"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
 
-                        {/* Pulsing Live Head Cursor */}
+                        {/* Snake Body Core High-Definition Solid Line */}
+                        <path
+                          d={splineD}
+                          fill="none"
+                          stroke={strokeColor}
+                          strokeWidth="2.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+
+                        {/* Sonar Radar Expanding Pulse Ring */}
                         <circle
                           cx={lastPt.x}
                           cy={lastPt.y}
-                          r="7"
-                          fill={isUpWinning ? '#34d399' : '#f87171'}
-                          opacity="0.4"
+                          r="5"
+                          fill="none"
+                          stroke={strokeColor}
+                          strokeWidth="1.6"
                         >
-                          <animate attributeName="r" values="4;11;4" dur="1.5s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.5s" repeatCount="indefinite" />
+                          <animate attributeName="r" values="3;16" dur="1.2s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.8;0" dur="1.2s" repeatCount="indefinite" />
                         </circle>
+
+                        {/* Glowing Snake Head Solid Core */}
                         <circle
                           cx={lastPt.x}
                           cy={lastPt.y}
-                          r="4"
-                          fill={isUpWinning ? '#10b981' : '#ef4444'}
+                          r="4.5"
+                          fill={strokeColor}
                           stroke="#ffffff"
-                          strokeWidth="1.5"
+                          strokeWidth="1.8"
                         />
                       </g>
                     );
