@@ -651,7 +651,7 @@ SyntaxError: code body is empty. Please enter your strategy.
     };
   }
 
-  // Security checks
+  // 1. Security checks
   const dangerousKeywords = ['import os', 'import sys', 'import subprocess', 'import shutil', 'import socket', 'os.system', 'eval(', 'exec(', '__import__', 'open('];
   for (const kw of dangerousKeywords) {
     if (code.includes(kw)) {
@@ -673,11 +673,50 @@ Policy Violation: Non-root Docker Sandbox execution blocked.
     }
   }
 
-  // Basic syntax heuristics
+  // 2. High-fidelity AST & Statement Tokenizer
   const lines = code.split('\n');
+  const validKeywords = new Set([
+    'def', 'class', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 'finally',
+    'with', 'as', 'return', 'yield', 'pass', 'break', 'continue', 'raise', 'import',
+    'from', 'assert', 'global', 'nonlocal', 'del', 'lambda'
+  ]);
+
+  const parenStack: { char: string; line: number }[] = [];
+  let prevLineHadColon = false;
+
   for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    if ((trimmed.startsWith('def ') || trimmed.startsWith('if ') || trimmed.startsWith('elif ') || trimmed.startsWith('else:') || trimmed.startsWith('for ') || trimmed.startsWith('while ')) && !trimmed.endsWith(':')) {
+    const rawLine = lines[i];
+    const lineNum = i + 1;
+    const trimmed = rawLine.trim();
+
+    if (!trimmed || trimmed.startsWith('#')) {
+      continue;
+    }
+
+    // Check indentation after colon
+    const indent = rawLine.search(/\S/);
+    if (prevLineHadColon && indent === 0) {
+      return {
+        valid: false,
+        status: 'INDENTATION_ERROR',
+        simulatedOutput: `[Sandbox Test Output - Python 3.12 Isolated Container]
+===========================================================
+[ERROR] IndentationError: expected an indented block
+-----------------------------------------------------------
+Traceback (most recent call last):
+  File "strategy.py", line ${lineNum}
+    ${rawLine}
+    ^
+IndentationError: expected an indented block after statement header
+===========================================================
+❌ [FAILED] Indentation error detected. Please indent your code block.`
+      };
+    }
+    prevLineHadColon = trimmed.endsWith(':');
+
+    // Check statements requiring colon
+    const headerMatch = trimmed.match(/^(def|class|if|elif|else|for|while|try|except|finally|with)\b/);
+    if (headerMatch && !trimmed.endsWith(':')) {
       return {
         valid: false,
         status: 'SYNTAX_ERROR',
@@ -686,17 +725,108 @@ Policy Violation: Non-root Docker Sandbox execution blocked.
 [ERROR] SyntaxError: expected ':'
 -----------------------------------------------------------
 Traceback (most recent call last):
-  File "strategy.py", line ${i + 1}
-    ${lines[i]}
-    ${' '.repeat(lines[i].length)}^
+  File "strategy.py", line ${lineNum}
+    ${rawLine}
+    ${' '.repeat(rawLine.length)}^
 SyntaxError: expected ':' after statement header
 ===========================================================
 ❌ [FAILED] Please fix syntax error before live deployment!`
       };
     }
+
+    // Token check for invalid syntax like 'turn {...}', 'trun ...', 'retur {...}'
+    const firstWordMatch = trimmed.match(/^[a-zA-Z_][a-zA-Z0-9_]*/);
+    if (firstWordMatch) {
+      const firstWord = firstWordMatch[0];
+      if (!validKeywords.has(firstWord)) {
+        const afterWord = trimmed.slice(firstWord.length).trim();
+        const isAssignment = /^[+\-*/%&|^]?=/.test(afterWord);
+        const isCallOrIndex = afterWord.startsWith('(') || afterWord.startsWith('[');
+        const isDotAccess = afterWord.startsWith('.');
+
+        if (!isAssignment && !isCallOrIndex && !isDotAccess) {
+          return {
+            valid: false,
+            status: 'SYNTAX_ERROR',
+            simulatedOutput: `[Sandbox Test Output - Python 3.12 Isolated Container]
+===========================================================
+[ERROR] SyntaxError: invalid syntax ('${firstWord}')
+-----------------------------------------------------------
+Traceback (most recent call last):
+  File "strategy.py", line ${lineNum}
+    ${rawLine}
+    ${' '.repeat(rawLine.indexOf(firstWord))}^^^^^^
+SyntaxError: invalid syntax ('${firstWord}' is not a valid statement keyword or variable assignment)
+===========================================================
+❌ [FAILED] Syntax error on line ${lineNum}: Check keyword spelling (e.g. 'return')!`
+          };
+        }
+      }
+    }
+
+    // Bracket balance check
+    for (let charIdx = 0; charIdx < trimmed.length; charIdx++) {
+      const c = trimmed[charIdx];
+      if (c === '(' || c === '[' || c === '{') {
+        parenStack.push({ char: c, line: lineNum });
+      } else if (c === ')' || c === ']' || c === '}') {
+        if (parenStack.length === 0) {
+          return {
+            valid: false,
+            status: 'SYNTAX_ERROR',
+            simulatedOutput: `[Sandbox Test Output - Python 3.12 Isolated Container]
+===========================================================
+[ERROR] SyntaxError: unmatched '${c}'
+-----------------------------------------------------------
+Traceback (most recent call last):
+  File "strategy.py", line ${lineNum}
+    ${rawLine}
+SyntaxError: unmatched closing parenthesis '${c}'
+===========================================================
+❌ [FAILED] Unmatched bracket on line ${lineNum}.`
+          };
+        }
+        const last = parenStack.pop()!;
+        const expected = ({ '(': ')', '[': ']', '{': '}' } as Record<string, string>)[last.char];
+        if (expected !== c) {
+          return {
+            valid: false,
+            status: 'SYNTAX_ERROR',
+            simulatedOutput: `[Sandbox Test Output - Python 3.12 Isolated Container]
+===========================================================
+[ERROR] SyntaxError: closing '${c}' does not match '${last.char}'
+-----------------------------------------------------------
+Traceback (most recent call last):
+  File "strategy.py", line ${lineNum}
+    ${rawLine}
+SyntaxError: closing parenthesis '${c}' does not match opening parenthesis '${last.char}' on line ${last.line}
+===========================================================
+❌ [FAILED] Mismatched bracket on line ${lineNum}.`
+          };
+        }
+      }
+    }
   }
 
-  // Check required function
+  if (parenStack.length > 0) {
+    const unclosed = parenStack.pop()!;
+    return {
+      valid: false,
+      status: 'SYNTAX_ERROR',
+      simulatedOutput: `[Sandbox Test Output - Python 3.12 Isolated Container]
+===========================================================
+[ERROR] SyntaxError: unclosed '${unclosed.char}'
+-----------------------------------------------------------
+Traceback (most recent call last):
+  File "strategy.py", line ${unclosed.line}
+    ${lines[unclosed.line - 1] || ''}
+SyntaxError: unclosed '${unclosed.char}' opened on line ${unclosed.line}
+===========================================================
+❌ [FAILED] SyntaxError: bracket opened on line ${unclosed.line} was never closed.`
+    };
+  }
+
+  // 3. Check required function
   if (!code.includes('on_market_tick') && !code.includes('def ')) {
     return {
       valid: false,
@@ -714,7 +844,7 @@ NameError: Function 'def on_market_tick(tick):' is required to receive live mark
     };
   }
 
-  // Valid Python execution simulation
+  // 4. Valid Python execution simulation
   return {
     valid: true,
     status: 'PASSED',
