@@ -1123,23 +1123,29 @@ export default function Page() {
     }
   }, [numericCurrentPrice, numericBasePrice])
 
-  // Real-Time Organic Snake Wave Micro-Ticker (Polymarket Harmonic Undulation)
+  // Real-Time 1-Second Bitcoin Tick Physics Engine (Sub-second jitter & energetic bouncing radar)
   useEffect(() => {
     let tickCount = 0
-    const snakeTimer = setInterval(() => {
+    let velocity = 0
+    const tickInterval = setInterval(() => {
       tickCount++
       setStrikePriceHistory((prev) => {
         if (prev.length === 0) return prev
         const last = prev[prev.length - 1]
-        // Smooth harmonic wave perturbation so it slithers like a living snake
-        const harmonic = Math.sin(tickCount * 0.35) * 0.00014 * numericBasePrice
-        const microNoise = (Math.random() - 0.49) * 0.00008 * numericBasePrice
-        const next = last + harmonic + microNoise
-        return [...prev.slice(-39), next]
+        
+        // Simulating authentic Bitcoin 1-second candle orderbook bouncing & tick volatility
+        const momentumPull = (numericCurrentPrice - last) * 0.16 // Spring pull towards live WebSocket price
+        const randomShock = (Math.random() - 0.492) * 0.00032 * numericBasePrice // Sudden orderbook bid/ask jumps ($4~$18)
+        const microHarmonic = Math.sin(tickCount * 0.65) * 0.00016 * numericBasePrice // High-frequency respiration
+        
+        velocity = velocity * 0.62 + (momentumPull + randomShock + microHarmonic) * 0.38
+        const nextPrice = last + velocity
+
+        return [...prev.slice(-39), nextPrice]
       })
-    }, 400)
-    return () => clearInterval(snakeTimer)
-  }, [numericBasePrice])
+    }, 180) // 180ms high-frequency tick interval for realistic 1-second candle bouncing
+    return () => clearInterval(tickInterval)
+  }, [numericCurrentPrice, numericBasePrice])
 
   const latestHistoryPrice = strikePriceHistory.length > 0 ? strikePriceHistory[strikePriceHistory.length - 1] : numericCurrentPrice
   const priceDelta = latestHistoryPrice - numericBasePrice
@@ -1783,28 +1789,92 @@ export default function Page() {
                           strokeLinejoin="round"
                         />
 
-                        {/* Sonar Radar Expanding Pulse Ring */}
+                        {/* Vertical Crosshair Line at Current Tick */}
+                        <line
+                          x1={lastPt.x}
+                          y1="0"
+                          x2={lastPt.x}
+                          y2="140"
+                          stroke={strokeColor}
+                          strokeWidth="1"
+                          strokeDasharray="2 3"
+                          opacity="0.35"
+                        />
+
+                        {/* Horizontal Price Ray from Head to Right Edge */}
+                        <line
+                          x1={lastPt.x}
+                          y1={lastPt.y}
+                          x2="640"
+                          y2={lastPt.y}
+                          stroke={strokeColor}
+                          strokeWidth="1"
+                          strokeDasharray="3 3"
+                          opacity="0.5"
+                        />
+
+                        {/* High-Frequency Inner Sonar Radar Ping (Fast Pulse) */}
                         <circle
                           cx={lastPt.x}
                           cy={lastPt.y}
-                          r="5"
+                          r="4"
                           fill="none"
                           stroke={strokeColor}
-                          strokeWidth="1.6"
+                          strokeWidth="1.8"
                         >
-                          <animate attributeName="r" values="3;16" dur="1.2s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.8;0" dur="1.2s" repeatCount="indefinite" />
+                          <animate attributeName="r" values="3;18" dur="0.85s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.9;0" dur="0.85s" repeatCount="indefinite" />
                         </circle>
 
-                        {/* Glowing Snake Head Solid Core */}
+                        {/* Atmospheric Outer Sonar Radar Ring (Broad Pulse) */}
                         <circle
                           cx={lastPt.x}
                           cy={lastPt.y}
-                          r="4.5"
+                          r="6"
+                          fill="none"
+                          stroke={strokeColor}
+                          strokeWidth="1.2"
+                          opacity="0.6"
+                        >
+                          <animate attributeName="r" values="6;32" dur="1.5s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.6;0" dur="1.5s" repeatCount="indefinite" />
+                        </circle>
+
+                        {/* Solid Bouncing Snake Head Core Dot */}
+                        <circle
+                          cx={lastPt.x}
+                          cy={lastPt.y}
+                          r="5.5"
                           fill={strokeColor}
                           stroke="#ffffff"
-                          strokeWidth="1.8"
+                          strokeWidth="2"
                         />
+
+                        {/* Floating Live Price Pin Tooltip (Moves Dynamically with Head) */}
+                        <g transform={`translate(${Math.min(lastPt.x - 98, 515)}, ${Math.max(10, Math.min(112, lastPt.y - 24))})`}>
+                          <rect
+                            x="0"
+                            y="0"
+                            width="94"
+                            height="20"
+                            rx="3"
+                            fill="#070d17"
+                            stroke={strokeColor}
+                            strokeWidth="1.2"
+                            opacity="0.95"
+                          />
+                          <text
+                            x="47"
+                            y="14"
+                            textAnchor="middle"
+                            fill={strokeColor}
+                            fontSize="9.5"
+                            fontWeight="700"
+                            fontFamily="'IBM Plex Mono', monospace"
+                          >
+                            ${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                          </text>
+                        </g>
                       </g>
                     );
                   })()}
