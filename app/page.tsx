@@ -1880,10 +1880,12 @@ export default function Page() {
 
         <div className="bot-mode-switch" role="tablist" aria-label="Bot execution mode">
           <button role="tab" aria-selected={botMode === 'GENERAL'} className={botMode === 'GENERAL' ? 'selected' : ''} onClick={() => setBotMode('GENERAL')}>
-            <strong>GENERAL MODE</strong><span>TA4J quant controls</span>
+            <strong>GENERAL MODE {language === 'ko' ? '(입문용 모드)' : language === 'cn' ? '(入门模式)' : ''}</strong>
+            <span>{language === 'ko' ? 'ta4j 노코드 퀀트 파라미터 제어' : language === 'cn' ? 'TA4J 无代码量化参数控制' : 'TA4J quant controls'}</span>
           </button>
           <button role="tab" aria-selected={botMode === 'DEVELOPER'} className={botMode === 'DEVELOPER' ? 'selected' : ''} onClick={() => setBotMode('DEVELOPER')}>
-            <strong>DEVELOPER MODE</strong><span>Python sandbox terminal</span>
+            <strong>DEVELOPER MODE {language === 'ko' ? '(개발자 모드)' : language === 'cn' ? '(开发者模式)' : ''}</strong>
+            <span>{language === 'ko' ? '파이썬 3.12 도커 샌드박스 터미널' : language === 'cn' ? 'Python 3.12 Docker 沙盒终端' : 'Python sandbox terminal'}</span>
           </button>
         </div>
 
