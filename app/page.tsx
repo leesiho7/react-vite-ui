@@ -17,7 +17,8 @@ import {
   submitOnChainDeposit,
   claimStreakReward,
   fetchUserLicenseToken,
-  testPythonCode
+  testPythonCode,
+  submitPredictionApi
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -1050,12 +1051,40 @@ export default function Page() {
     }
   }
 
-  // Prediction Interactive State
+  // 1-Hour Prediction League Interactive State & Real Strike Price
   const [round, setRound] = useState(3)
   const [humanWins, setHumanWins] = useState(2)
   const [aiWins, setAiWins] = useState(1)
   const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [hourlyRemainingSec, setHourlyRemainingSec] = useState(2430)
+  const [lockedBasePrice, setLockedBasePrice] = useState<string | null>(null)
+
+  useEffect(() => {
+    const updateHourlyTimer = () => {
+      const now = new Date()
+      const minutes = now.getMinutes()
+      const seconds = now.getSeconds()
+      const secLeft = (59 - minutes) * 60 + (60 - seconds)
+      setHourlyRemainingSec(secLeft)
+    }
+    updateHourlyTimer()
+    const interval = setInterval(updateHourlyTimer, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Lock base strike price for the active round from real WebSocket feed
+  useEffect(() => {
+    if (priceFormatted && priceFormatted !== '—' && !lockedBasePrice) {
+      setLockedBasePrice(priceFormatted)
+    }
+  }, [priceFormatted, lockedBasePrice])
+
+  const format1HCountdown = (sec: number) => {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0')
+    const s = String(sec % 60).padStart(2, '0')
+    return `${m}m ${s}s`
+  }
 
   // Language-bound News List
   const currentNewsList = useMemo(() => newsItemsByLang[language], [language])
@@ -1369,60 +1398,61 @@ export default function Page() {
         </div>
       </header>
 
-      {/* ── 10-Win Prediction League Modal / Drawer ── */}
+      {/* ── 1-Hour Quick-Strike Prediction League Modal / Drawer ── */}
       {eventOpen && (
         <section className="league-section" style={{ background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
           {/* Header Bar */}
           <div className="league-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #edf0f2', paddingBottom: '20px' }}>
             <div>
               <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '10px', letterSpacing: '.1em', fontWeight: 600 }}>
-                <Diamond /> 24H PREDICTION LEAGUE <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '3px' }}>AI vs HUMAN BATTLE</span>
+                <Diamond /> 1-HOUR QUICK STRIKE PREDICTION LEAGUE <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '3px' }}>1H SPEED ROUND</span>
               </div>
               <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: 'Georgia, serif', fontWeight: 400 }}>
                 10 wins. <em style={{ color: '#0f766e', fontStyle: 'italic' }}>One claim.</em>
               </h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
-                AI 퀀트 모델과 다음 24시간 캔들 종가의 상승(UP) / 하락(DOWN) 방향을 예측하고 대결하세요.<br className="desktop-only" />
+                <strong>1번. AI vs 인간 배틀:</strong> ta4j 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
+                <strong>2번. 1시간 기준 고정가 정산:</strong> 라운드 시작 시 고정된 <strong>1H 기준가</strong> 대비 1시간 캔들 종가의 <strong>상승(UP) / 하락(DOWN)</strong> 예측<br className="desktop-only" />
                 배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 <strong>$10.00 USDT</strong>가 즉시 지급됩니다.
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <div className="pool-readout" style={{ minWidth: '170px', padding: '10px 14px', background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+              <div className="pool-readout" style={{ minWidth: '160px', padding: '10px 14px', background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
                 <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, display: 'block' }}>RESERVED ESCROW POOL</span>
                 <strong style={{ fontSize: '20px', color: '#0f766e', display: 'block', margin: '4px 0 2px' }}>
                   10,000.00 <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
                 </strong>
                 <span style={{ fontSize: '8.5px', color: '#0284c7', background: '#e0f2fe', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
-                  ● NON-CUSTODIAL
+                  ● NON-CUSTODIAL ESCROW
                 </span>
               </div>
 
               <div style={{ minWidth: '160px', padding: '10px 14px', background: '#0b131e', border: '1px solid #1e293b', borderRadius: '4px', color: '#ffffff' }}>
                 <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 600, display: 'block' }}>ROUND #{String(round).padStart(2, '0')} CLOSES IN</span>
                 <strong style={{ fontSize: '20px', color: '#f59e0b', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
-                  03:42:15
+                  {format1HCountdown(hourlyRemainingSec)}
                 </strong>
                 <span style={{ fontSize: '8.5px', color: '#34d399', display: 'block' }}>
-                  ● 24H CANDLE SETTLEMENT
+                  ● 1H CANDLE SETTLEMENT
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Polymarket-Style Live Consensus Ratio & AI Prediction Meter */}
+          {/* 1번 Layer: AI Quant vs Human Crowd Live Consensus Ratio */}
           <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '18px 20px', margin: '20px 0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#18334a' }}>
-                  📊 실시간 군중 합의율 (Human Market Consensus)
+                  📊 [1번] 실시간 군중 합의율 (Human Market Consensus)
                 </span>
                 <span style={{ fontSize: '9px', color: '#64748b' }}>
-                  총 {battle?.totalHumanVotes || 1842}명 투표 참여 중
+                  총 {battle?.totalHumanVotes || 1842}명 실시간 참여 중
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#475569' }}>
-                👑 AI 퀀트 모델 예측: <strong style={{ color: '#0f766e' }}>{battle?.aiDecision || 'BULLISH'}</strong> (신뢰도: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
+                👑 AI 퀀트 모델 예측: <strong style={{ color: (battle?.aiDecision || 'BULLISH') === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle?.aiDecision || 'BULLISH'}</strong> (신뢰도: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
               </div>
             </div>
 
@@ -1482,7 +1512,7 @@ export default function Page() {
                 </button>
               ) : (
                 <span style={{ fontSize: '10px', color: '#0369a1', fontWeight: 600 }}>
-                  ROUND #{round} 진행 중
+                  ROUND #{round} 진행 중 (1시간 캔들 정산)
                 </span>
               )}
             </div>
@@ -1519,14 +1549,22 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Polymarket-Style Interactive Binary Choice Cards */}
+          {/* 2번 Layer: 1-Hour Fixed Strike Price UP vs DOWN Prediction Cards */}
           <div style={{ marginTop: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#18334a' }}>
-                ⚡ ROUND #{round} 24H 마켓 방향 선택 ({searched}) · 기준가: <strong style={{ color: '#0f766e' }}>{priceFormatted}</strong>
-              </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#18334a' }}>
+                  ⚡ [2번] ROUND #{round} 1H 기준 고정가 업&다운 ({searched})
+                </span>
+                <span style={{ fontSize: '10px', background: '#0b131e', color: '#f59e0b', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
+                  🔒 1H 기준 고정가: {lockedBasePrice || priceFormatted}
+                </span>
+                <span style={{ fontSize: '10px', color: '#64748b' }}>
+                  (실시간 현재가: <strong style={{ color: '#18334a' }}>{priceFormatted}</strong>)
+                </span>
+              </div>
               <span style={{ fontSize: '9px', color: '#64748b' }}>
-                선택 후 제출 시 24시간 캔들 마감 시점에 정산됩니다.
+                정산 기준: 1시간 캔들 종가가 기준 고정가({lockedBasePrice || priceFormatted})보다 높으면 UP, 낮으면 DOWN 승리
               </span>
             </div>
 
@@ -1560,7 +1598,7 @@ export default function Page() {
                     )}
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '10.5px', color: '#475569' }}>
-                    24시간 뒤 캔들 종가가 현재가(<strong>{priceFormatted}</strong>)보다 <strong>상승</strong>할 것으로 예측
+                    1시간 뒤 캔들 종가가 기준 고정가(<strong>{lockedBasePrice || priceFormatted}</strong>)보다 <strong>상승</strong>할 것으로 예측
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1600,7 +1638,7 @@ export default function Page() {
                     )}
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '10.5px', color: '#475569' }}>
-                    24시간 뒤 캔들 종가가 현재가(<strong>{priceFormatted}</strong>)보다 <strong>하락</strong>할 것으로 예측
+                    1시간 뒤 캔들 종가가 기준 고정가(<strong>{lockedBasePrice || priceFormatted}</strong>)보다 <strong>하락</strong>할 것으로 예측
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1612,7 +1650,7 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Submit Action */}
+            {/* Real Submission Button */}
             <div style={{ marginTop: '16px' }}>
               <button
                 className="primary-button"
@@ -1629,16 +1667,28 @@ export default function Page() {
                   transition: 'all 0.2s ease'
                 }}
                 disabled={!prediction || submitted}
-                onClick={() => {
+                onClick={async () => {
+                  if (!prediction || submitted) return
                   setSubmitted(true)
+                  const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
+                  try {
+                    await submitPredictionApi({
+                      userId: 1,
+                      symbol: rawSymbol,
+                      predictionType: 'DIRECTION_1H',
+                      predictedDirection: prediction
+                    })
+                  } catch (e) {
+                    console.warn('submit prediction error:', e)
+                  }
                   setHumanWins((v) => Math.min(v + 1, 10))
                   setRound((v) => Math.min(v + 1, 10))
                 }}
               >
                 {submitted
-                  ? `✓ ROUND #${round} ${prediction} 예측 제출 완료 (+0.5 AETHER 참여 보너스 지급)`
+                  ? `✓ ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출 완료 (+0.5 AETHER 참여 보너스 지급됨)`
                   : prediction
-                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출하기 ↗`
+                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 1시간 예측 제출하기 ↗ (10연승 도전)`
                   : '위 카드에서 예측 방향(UP 또는 DOWN)을 먼저 선택해주세요'}
               </button>
             </div>

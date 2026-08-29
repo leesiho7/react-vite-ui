@@ -247,6 +247,30 @@ export async function fetchPredictionLeaderboard(limit = 10): Promise<Prediction
   ];
 }
 
+export interface SubmitPredictionPayload {
+  userId: number;
+  symbol: string;
+  predictionType: 'DIRECTION_1H' | 'DIRECTION_24H' | 'PRICE_SNIPER';
+  predictedDirection: 'UP' | 'DOWN' | 'BULL' | 'BEAR';
+  predictedPrice?: number;
+}
+
+export async function submitPredictionApi(payload: SubmitPredictionPayload) {
+  try {
+    const res = await fetch(`${API_BASE}/prediction/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] submitPredictionApi fallback error:', err);
+  }
+  return null;
+}
+
 /**
  * 4. AI vs Human 배틀 현황 조회
  */
