@@ -626,28 +626,15 @@ export async function submitOnChainDeposit(payload: {
         tradeSymbol: payload.tradeSymbol || 'BTCUSDT'
       })
     });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
+    const data = await res.json();
+    return data;
+  } catch (err: any) {
     console.warn('[API] Error calling simulate-deposit:', err);
+    return {
+      success: false,
+      message: '서버와 연결할 수 없거나 블록체인 검증에 실패했습니다: ' + (err?.message || '')
+    };
   }
-
-  // Fallback Mock Result
-  const mockToken = 'SHA256_ONCHAIN_' + Date.now();
-  return {
-    success: true,
-    message: '온체인 입금이 성공적으로 확인되었으며, 24시간 봇 인스턴스가 활성화되었습니다!',
-    licenseToken: mockToken,
-    userId: payload.userId,
-    txHash: payload.txHash,
-    network: payload.network,
-    amountUsdt: payload.amount || 7.0,
-    telegramDeepLink: `https://t.me/AetherQuantOfficialBot?start=${mockToken}`,
-    telegramBotUsername: 'AetherQuantOfficialBot',
-    instanceStatus: 'RUNNING',
-    remainingDays: 30
-  };
 }
 
 

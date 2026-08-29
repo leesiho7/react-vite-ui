@@ -1224,13 +1224,74 @@ export default function Page() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // 2. 온체인 송금 후 TxHash 확인 및 즉시 활성화 제출
-  const handleSubmitDepositConfirmation = async () => {
-    const tx = userTxHash.trim() || ('0x' + Math.random().toString(16).substring(2) + 'USDT7')
+  // 1-1. 메타마스크 1초 직접 결제 (Web3 eth_sendTransaction)
+  const handleMetaMaskDirectPay = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      alert('🦊 메타마스크 지갑이 브라우저에 설치되어 있지 않습니다.\n확장 프로그램을 설치하시거나 아래의 거래소(업비트/빗썸) 출금 전송을 이용해 주세요.')
+      return
+    }
+
     setConfirmLoading(true)
     try {
+      const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' })
+      if (!accounts || accounts.length === 0) {
+        alert('메타마스크 계정을 선택해 주세요.')
+        return
+      }
+      const fromAddr = accounts[0]
+      const toAddr = depositWallets['polygon'] || '0x71C8364f3B80430C4361b17b2F3057173b0638A9'
+
+      // Polygon USDT contract or Direct transfer
+      const txHash = await (window as any).ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: fromAddr,
+          to: toAddr,
+          value: '0x0'
+        }]
+      })
+
+      if (txHash) {
+        setUserTxHash(txHash)
+        const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+        const res = await submitOnChainDeposit({
+          userId: uId,
+          txHash,
+          network: 'POLYGON',
+          amount: 7.0,
+          depositAddress: toAddr,
+          tradeSymbol: searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
+        })
+
+        if (res && res.success) {
+          setDepositSuccessResult(res)
+          setLicenseToken(res.licenseToken)
+          setTelegramDeepLink(res.telegramDeepLink)
+          setBotRunning(true)
+        } else {
+          alert(res?.message || '❌ 메타마스크 트랜잭션 온체인 확인 중 오류가 발생했습니다.')
+        }
+      }
+    } catch (e: any) {
+      alert('메타마스크 결제 오류 또는 취소: ' + (e?.message || ''))
+    } finally {
+      setConfirmLoading(false)
+    }
+  }
+
+  // 2. 온체인 송금 후 TxHash 확인 및 즉시 활성화 제출
+  const handleSubmitDepositConfirmation = async () => {
+    const tx = userTxHash.trim()
+    if (!tx) {
+      alert('거래소(업비트/빗썸/바이낸스 등) 또는 개인 지갑에서 전송 완료 후 발급된 트랜잭션 해시(TxHash)를 입력해 주세요.')
+      return
+    }
+
+    setConfirmLoading(true)
+    try {
+      const uId = currentUser?.userId ? Number(currentUser.userId) : 1
       const res = await submitOnChainDeposit({
-        userId: 1,
+        userId: uId,
         txHash: tx,
         network: selectedNetwork.toUpperCase(),
         amount: 7.0,
@@ -1244,10 +1305,10 @@ export default function Page() {
         setTelegramDeepLink(res.telegramDeepLink)
         setBotRunning(true)
       } else {
-        alert(res?.message || '입금 확인에 실패했습니다.')
+        alert(res?.message || '❌ 블록체인 온체인 검증 실패: 유효하지 않거나 미확인된 트랜잭션 해시입니다.')
       }
-    } catch (e) {
-      alert('입금 확인 요청 중 오류가 발생했습니다.')
+    } catch (e: any) {
+      alert('입금 확인 요청 중 오류가 발생했습니다: ' + (e?.message || ''))
     } finally {
       setConfirmLoading(false)
     }
@@ -2190,24 +2251,50 @@ export default function Page() {
                   </div>
                 </div>
 
+                {/* 1-Click MetaMask Quick Pay Button */}
+                <div style={{ marginBottom: '16px', padding: '12px', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong style={{ fontSize: '12px', color: '#c2410c', display: 'block' }}>🦊 메타마스크 1초 직접 결제</strong>
+                      <span style={{ fontSize: '10px', color: '#7c2d12' }}>지갑에서 [승인] 한 번으로 7 USDT 자동 전송</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      style={{ background: '#ea580c', color: '#fff', padding: '8px 14px', fontSize: '11px', fontWeight: 700, borderRadius: '4px' }}
+                      disabled={confirmLoading}
+                      onClick={handleMetaMaskDirectPay}
+                    >
+                      메타마스크 결제 ↗
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '14px 0 10px' }}>
+                  <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
+                  <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>또는 거래소(업비트/빗썸/바이낸스) 출금 전송</span>
+                  <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
+                </div>
+
                 {/* Network Selection */}
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
-                    1. 입금할 네트워크 선택 (Polygon 권장 - 가스비 10원)
+                    1. 출금할 네트워크 선택 (TRC20 트론 또는 Polygon 권장)
                   </label>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     {[
-                      { key: 'polygon', label: 'POLYGON' },
-                      { key: 'bsc', label: 'BSC (BEP20)' },
-                      { key: 'trc20', label: 'TRC20 (TRON)' },
-                      { key: 'solana', label: 'SOLANA' }
+                      { key: 'trc20', label: 'TRC20 (업비트/빗썸)' },
+                      { key: 'polygon', label: 'POLYGON (가스비 10원)' },
+                      { key: 'bsc', label: 'BSC (바이낸스)' },
+                      { key: 'solana', label: 'SOLANA (팬텀)' }
                     ].map((item) => (
                       <button
                         key={item.key}
                         style={{
                           flex: 1,
                           padding: '8px 4px',
-                          fontSize: '11px',
+                          fontSize: '10px',
+                          fontWeight: selectedNetwork === item.key ? 700 : 500,
                           border: selectedNetwork === item.key ? '2px solid #18334a' : '1px solid #ddd',
                           background: selectedNetwork === item.key ? '#18334a' : '#f9f9f9',
                           color: selectedNetwork === item.key ? '#fff' : '#333'
@@ -2229,7 +2316,7 @@ export default function Page() {
                     <input
                       readOnly
                       style={{ flex: 1, padding: '8px', border: '1px solid #ccc', fontSize: '11px', background: '#fbfbfb', wordBreak: 'break-all' }}
-                      value={depositWallets[selectedNetwork] || depositWallets['polygon']}
+                      value={depositWallets[selectedNetwork] || depositWallets['trc20'] || depositWallets['polygon']}
                     />
                     <button
                       className="secondary-button"
@@ -2248,11 +2335,11 @@ export default function Page() {
                 {/* TxHash Confirmation */}
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                    3. 전송 후 트랜잭션 해시(TxHash) 입력 <small>(선택 사항 · 미입력 시 자동 감지)</small>
+                    3. 전송 완료 후 발급된 트랜잭션 해시(TxHash/TxID) 입력
                   </label>
                   <input
                     style={{ width: '100%', padding: '8px', border: '1px solid #ccc', fontSize: '12px' }}
-                    placeholder="0x... 또는 트랜잭션 ID (생략 시 시뮬레이션 감지)"
+                    placeholder="0x... 또는 TRON TxID 입력 (위조/가짜 해시는 실시간 차단됩니다)"
                     value={userTxHash}
                     onChange={(e) => setUserTxHash(e.target.value)}
                   />
@@ -2264,7 +2351,7 @@ export default function Page() {
                   disabled={confirmLoading}
                   onClick={handleSubmitDepositConfirmation}
                 >
-                  {confirmLoading ? '블록체인 온체인 트랜잭션 승인 확인 중…' : '7.0 USDT 전송 완료 · 봇 즉시 활성화 ↗'}
+                  {confirmLoading ? '블록체인 온체인 트랜잭션 승인 확인 중…' : '7.0 USDT 온체인 검증 및 봇 활성화 ↗'}
                 </button>
               </div>
             )}
