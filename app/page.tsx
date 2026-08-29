@@ -1617,7 +1617,7 @@ export default function Page() {
           {/* 2번 Layer: 1-Hour Fixed Strike Price UP vs DOWN Prediction Cards */}
           <div style={{ marginTop: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#18334a' }}>
                   [LAYER 2] ROUND #{round} 1H 기준 고정가 업&다운 ({searched})
                 </span>
@@ -1628,9 +1628,19 @@ export default function Page() {
                   (실시간 현재가: <strong style={{ color: isUpWinning ? '#059669' : '#dc2626' }}>${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>)
                 </span>
               </div>
-              <span style={{ fontSize: '9px', color: '#64748b' }}>
-                정산 기준: 1시간 캔들 종가가 기준 고정가보다 높으면 UP, 낮으면 DOWN 승리
-              </span>
+
+              {/* 15-Minute Lockout Status Badge */}
+              <div>
+                {(hourlyRemainingSec <= 900) ? (
+                  <span style={{ fontSize: '9px', background: '#fffbeb', color: '#b45309', padding: '3px 8px', borderRadius: '3px', fontWeight: 700, border: '1px solid #fde68a' }}>
+                    [15M SETTLEMENT WATCH] 마감 15분 전 신규 예측 마감 (실시간 관전 모드)
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '9px', background: '#ecfdf5', color: '#047857', padding: '3px 8px', borderRadius: '3px', fontWeight: 700, border: '1px solid #a7f3d0' }}>
+                    [SUBMISSIONS OPEN] 매 정각 45분 전(XX:44:59)까지 예측 제출 가능
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* ── Polymarket-Style Live Oscillating Strike Arena Chart ── */}
@@ -1757,18 +1767,23 @@ export default function Page() {
               {/* UP Card */}
               <button
                 type="button"
-                onClick={() => setPrediction('UP')}
+                onClick={() => {
+                  if (hourlyRemainingSec <= 900 && !submitted) return
+                  setPrediction('UP')
+                }}
+                disabled={(hourlyRemainingSec <= 900 && !submitted) || submitted}
                 style={{
                   border: prediction === 'UP' ? '2px solid #059669' : '1px solid #cbd5e1',
-                  background: prediction === 'UP' ? '#f0fdf4' : '#ffffff',
+                  background: prediction === 'UP' ? '#f0fdf4' : (hourlyRemainingSec <= 900 && !submitted) ? '#f8fafc' : '#ffffff',
                   boxShadow: prediction === 'UP' ? '0 0 0 1px #059669, 0 4px 12px rgba(5, 150, 105, 0.12)' : 'none',
                   padding: '20px 24px',
                   borderRadius: '6px',
                   textAlign: 'left',
-                  cursor: 'pointer',
+                  cursor: (hourlyRemainingSec <= 900 && !submitted) || submitted ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  opacity: (hourlyRemainingSec <= 900 && !submitted) ? 0.7 : 1,
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -1797,18 +1812,23 @@ export default function Page() {
               {/* DOWN Card */}
               <button
                 type="button"
-                onClick={() => setPrediction('DOWN')}
+                onClick={() => {
+                  if (hourlyRemainingSec <= 900 && !submitted) return
+                  setPrediction('DOWN')
+                }}
+                disabled={(hourlyRemainingSec <= 900 && !submitted) || submitted}
                 style={{
                   border: prediction === 'DOWN' ? '2px solid #dc2626' : '1px solid #cbd5e1',
-                  background: prediction === 'DOWN' ? '#fef2f2' : '#ffffff',
+                  background: prediction === 'DOWN' ? '#fef2f2' : (hourlyRemainingSec <= 900 && !submitted) ? '#f8fafc' : '#ffffff',
                   boxShadow: prediction === 'DOWN' ? '0 0 0 1px #dc2626, 0 4px 12px rgba(220, 38, 38, 0.12)' : 'none',
                   padding: '20px 24px',
                   borderRadius: '6px',
                   textAlign: 'left',
-                  cursor: 'pointer',
+                  cursor: (hourlyRemainingSec <= 900 && !submitted) || submitted ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  opacity: (hourlyRemainingSec <= 900 && !submitted) ? 0.7 : 1,
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -1842,18 +1862,18 @@ export default function Page() {
                 style={{
                   width: '100%',
                   height: '46px',
-                  background: submitted ? '#1e293b' : prediction ? (prediction === 'UP' ? '#059669' : '#dc2626') : '#94a3b8',
+                  background: submitted ? '#1e293b' : (hourlyRemainingSec <= 900) ? '#475569' : prediction ? (prediction === 'UP' ? '#059669' : '#dc2626') : '#94a3b8',
                   color: '#ffffff',
                   fontSize: '11px',
                   fontWeight: 700,
                   letterSpacing: '.06em',
-                  cursor: (!prediction || submitted) ? 'not-allowed' : 'pointer',
+                  cursor: (!prediction || submitted || hourlyRemainingSec <= 900) ? 'not-allowed' : 'pointer',
                   borderRadius: '4px',
                   transition: 'all 0.2s ease'
                 }}
-                disabled={!prediction || submitted}
+                disabled={!prediction || submitted || (hourlyRemainingSec <= 900 && !submitted)}
                 onClick={async () => {
-                  if (!prediction || submitted) return
+                  if (!prediction || submitted || hourlyRemainingSec <= 900) return
                   setSubmitted(true)
                   const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
                   try {
@@ -1871,7 +1891,9 @@ export default function Page() {
                 }}
               >
                 {submitted
-                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출 완료 (+0.5 AETHER 참여 보너스 지급됨)`
+                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출 완료 (실시간 정산 관전 중)`
+                  : (hourlyRemainingSec <= 900)
+                  ? `🔒 ROUND #${round} 마감 15분 전 락아웃 (신규 예측 마감 · 실시간 관전 모드 · 다음 정각 라운드 대기)`
                   : prediction
                   ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 1시간 예측 제출하기 (10연승 도전)`
                   : '위 카드에서 예측 방향(UP 또는 DOWN)을 먼저 선택해주세요'}
