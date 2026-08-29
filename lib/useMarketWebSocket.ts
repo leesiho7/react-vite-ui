@@ -156,8 +156,7 @@ export function useMarketWebSocket(symbol: string) {
       }
     };
 
-    ws.onerror = (e) => {
-      console.warn('[WebSocket] Connection error:', e);
+    ws.onerror = () => {
       setConnectionStatus('DISCONNECTED');
     };
 

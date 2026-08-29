@@ -642,5 +642,54 @@ export async function testPythonCode(payload: {
   };
 }
 
+/**
+ * 15. [금융 미디어 인텔리전스] 실시간 공식 기관 방송 & 영상 채널 목록 조회
+ */
+export async function fetchStreamChannels(category?: string, symbol?: string): Promise<any[]> {
+  try {
+    let url = `${API_BASE}/stream/channels`;
+    const params = new URLSearchParams();
+    if (category && category !== 'ALL') params.append('category', category);
+    if (symbol) params.append('symbol', symbol);
+    if (params.toString()) url += `?${params.toString()}`;
+
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchStreamChannels:', err);
+  }
+  return [];
+}
+
+/**
+ * 16. [금융 미디어 인텔리전스] AI 타임스탬프 인사이트 & 알파 발언 목록 조회
+ */
+export async function fetchStreamInsights(channelId?: number, symbol?: string): Promise<any[]> {
+  try {
+    let url = `${API_BASE}/stream/insights`;
+    const params = new URLSearchParams();
+    if (channelId) params.append('channelId', String(channelId));
+    if (symbol) params.append('symbol', symbol);
+    if (params.toString()) url += `?${params.toString()}`;
+
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchStreamInsights:', err);
+  }
+  return [];
+}
+
+
 
 
