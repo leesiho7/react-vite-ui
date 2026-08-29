@@ -667,4 +667,240 @@ button { cursor: pointer; }
   }
 }
 
+/* ── AWS / Hetzner Virtual Cloud Instance Control Box ── */
+.virtual-instance-box {
+  margin: 18px 24px 20px;
+  background: #090f17;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 16px 20px;
+  color: #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.instance-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 12px;
+}
+
+.instance-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.instance-identity strong {
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: #f8fafc;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.instance-identity span {
+  font-size: 8px;
+  color: #64748b;
+  background: #1e293b;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.instance-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8.5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: .05em;
+}
+
+.instance-status-pill.running {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.instance-status-pill.paused {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.instance-status-pill.rebooting {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.instance-status-pill.stopped {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.instance-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.instance-status-pill.running .instance-status-dot {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 1.8s infinite;
+}
+
+.instance-status-pill.paused .instance-status-dot {
+  background: #f59e0b;
+}
+
+.instance-status-pill.rebooting .instance-status-dot {
+  background: #3b82f6;
+  animation: pulse-dot 0.8s infinite;
+}
+
+.instance-status-pill.stopped .instance-status-dot {
+  background: #ef4444;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.instance-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+@media (max-width: 900px) {
+  .instance-specs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.instance-spec-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.instance-spec-cell span {
+  font-size: 7px;
+  color: #64748b;
+  letter-spacing: .06em;
+  font-family: 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+}
+
+.instance-spec-cell strong {
+  font-size: 9.5px;
+  color: #cbd5e1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+}
+
+.instance-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.instance-ctrl-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8.5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 3px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+.instance-ctrl-btn:hover:not(:disabled) {
+  background: #334155;
+  border-color: #475569;
+  color: #ffffff;
+}
+
+.instance-ctrl-btn.primary {
+  background: #0f766e;
+  border-color: #14b8a6;
+  color: #ffffff;
+}
+
+.instance-ctrl-btn.primary:hover:not(:disabled) {
+  background: #115e59;
+}
+
+.instance-ctrl-btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.instance-ctrl-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+}
+
+.instance-ctrl-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.instance-live-terminal {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  line-height: 1.6;
+  color: #94a3b8;
+  height: 100px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.terminal-log-line {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-log-line .t-time {
+  color: #475569;
+}
+
+.terminal-log-line .t-tag {
+  color: #38bdf8;
+}
+
+.terminal-log-line .t-text {
+  color: #cbd5e1;
+}
+
+
 

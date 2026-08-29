@@ -832,17 +832,6 @@ export default function Page() {
   const [strategies, setStrategies] = useState<ArenaStrategyItem[]>([])
   const [experts, setExperts] = useState<any[]>([])
 
-  // Prediction Interactive State
-  const [round, setRound] = useState(3)
-  const [humanWins, setHumanWins] = useState(2)
-  const [aiWins, setAiWins] = useState(1)
-  const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
-  const [submitted, setSubmitted] = useState(false)
-
-  // Language-bound News List
-  const currentNewsList = useMemo(() => newsItemsByLang[language], [language])
-  const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
-
   // Live WebSocket Hook
   const {
     price,
@@ -854,6 +843,91 @@ export default function Page() {
     orderbook,
     latestKline
   } = useMarketWebSocket(searched)
+
+  // AWS / Hetzner Cloud Virtual Instance Sandbox State
+  const [instanceStatus, setInstanceStatus] = useState<'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED'>('RUNNING')
+  const [instanceUptime, setInstanceUptime] = useState<number>(52140)
+  const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([
+    { time: '00:40:12', tag: 'DOCKER', text: 'Container initialized: hetzner-bot-sandbox-node1 (Python 3.12, ta4j engine v0.15)' },
+    { time: '00:40:18', tag: 'NET-IO', text: 'WebSocket stream established with Binance Core (49.12.240.118 -> wss://stream.binance.com)' },
+    { time: '00:40:24', tag: 'SECURITY', text: 'AST static validation passed: 0 dangerous OS calls · memory cap 1024MB enforced' },
+    { time: '00:40:30', tag: 'RUNNER', text: 'Strategy active: ta4j Multi-Fractal + Dynamic Stop-loss Guard armed' }
+  ])
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (instanceStatus === 'RUNNING') {
+      interval = setInterval(() => {
+        setInstanceUptime(prev => prev + 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [instanceStatus])
+
+  useEffect(() => {
+    if (instanceStatus !== 'RUNNING') return
+    const logTimer = setInterval(() => {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      const sampleLogs = [
+        { tag: 'ta4j-Engine', text: `Tick processed for ${searched} · Invalidation guard verified` },
+        { tag: 'Docker-Worker', text: `Memory footprint 39.2MB / 1024MB · Execution cycle 12ms (Zero slippage)` },
+        { tag: 'Stream-Receiver', text: `WebSocket tick price updated: ${priceFormatted} · Orderbook balanced` },
+        { tag: 'Quant-Core', text: `Multi-fractal pattern matched 89% · Position sizing 30% armed` },
+      ]
+      const chosen = sampleLogs[Math.floor(Math.random() * sampleLogs.length)]
+      setInstanceLogs(prev => [...prev.slice(-12), { time: timeStr, tag: chosen.tag, text: chosen.text }])
+    }, 4500)
+    return () => clearInterval(logTimer)
+  }, [instanceStatus, searched, priceFormatted])
+
+  const handleStartInstance = () => {
+    setInstanceStatus('RUNNING')
+    setBotRunning(true)
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '▶ Virtual Cloud Container resumed execution loop.' }])
+  }
+
+  const handlePauseInstance = () => {
+    setInstanceStatus('PAUSED')
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '⏸️ Trading execution loop paused by user. Open positions are guarded.' }])
+  }
+
+  const handleRebootInstance = () => {
+    setInstanceStatus('REBOOTING')
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'DOCKER', text: '🔄 Rebooting container sandbox (Graceful SIGTERM)...' }])
+    setTimeout(() => {
+      setInstanceStatus('RUNNING')
+      const restartTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      setInstanceLogs(prev => [...prev, { time: restartTime, tag: 'DOCKER', text: '🟢 Container sandbox rebooted successfully (PID: 3419, Python 3.12 active).' }])
+    }, 1500)
+  }
+
+  const handleStopInstance = () => {
+    setInstanceStatus('STOPPED')
+    setBotRunning(false)
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '⏹ Container stopped. Cold-standby ready.' }])
+  }
+
+  const formatUptimeStr = (sec: number) => {
+    const h = Math.floor(sec / 3600)
+    const m = Math.floor((sec % 3600) / 60)
+    const s = sec % 60
+    return `${h}h ${m}m ${s}s`
+  }
+
+  // Prediction Interactive State
+  const [round, setRound] = useState(3)
+  const [humanWins, setHumanWins] = useState(2)
+  const [aiWins, setAiWins] = useState(1)
+  const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+
+  // Language-bound News List
+  const currentNewsList = useMemo(() => newsItemsByLang[language], [language])
+  const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
 
   useEffect(() => {
     setActiveNews(newsItemsByLang[language][0])
@@ -1718,9 +1792,92 @@ export default function Page() {
       {/* ── 24H Trading Operations Console ── */}
       <section className="trading-console panel" id="trading-console">
         <div className="panel-heading">
-          <span><Diamond /> 24H TRADING OPERATIONS</span>
+          <span><Diamond /> 24H TRADING OPERATIONS · CLOUD INSTANCE</span>
           <span className="status-tag">HETZNER / DOCKER BOT PLANE</span>
         </div>
+
+        {/* AWS / Hetzner Cloud Virtual Instance Control Box */}
+        <div className="virtual-instance-box">
+          <div className="instance-head-row">
+            <div className="instance-identity">
+              <Diamond />
+              <strong>HETZNER CLOUD VIRTUAL INSTANCE</strong>
+              <span>i-{licenseToken ? licenseToken.slice(-8) : '7d8e4a91'}</span>
+              <span>DOCKER SANDBOX</span>
+            </div>
+
+            <div className={`instance-status-pill ${instanceStatus.toLowerCase()}`}>
+              <div className="instance-status-dot" />
+              <span>
+                {instanceStatus === 'RUNNING' && `RUNNING · UPTIME ${formatUptimeStr(instanceUptime)}`}
+                {instanceStatus === 'PAUSED' && 'PAUSED · EXECUTION FROZEN'}
+                {instanceStatus === 'REBOOTING' && 'REBOOTING CONTAINER...'}
+                {instanceStatus === 'STOPPED' && 'STOPPED · STANDBY'}
+              </span>
+            </div>
+          </div>
+
+          <div className="instance-specs-grid">
+            <div className="instance-spec-cell">
+              <span>CLOUD REGION</span>
+              <strong>Frankfurt, DE (nbg1-dc3)</strong>
+            </div>
+            <div className="instance-spec-cell">
+              <span>COMPUTE SPECS</span>
+              <strong>1 vCPU · 1.0 GB RAM · 10 GB NVMe</strong>
+            </div>
+            <div className="instance-spec-cell">
+              <span>ISOLATED IP</span>
+              <strong>49.12.240.118 (IPv4 Active)</strong>
+            </div>
+            <div className="instance-spec-cell">
+              <span>TARGET ASSET</span>
+              <strong>{searched} (ta4j Fusion Loop)</strong>
+            </div>
+          </div>
+
+          <div className="instance-controls-bar">
+            <button
+              className="instance-ctrl-btn primary"
+              onClick={handleStartInstance}
+              disabled={instanceStatus === 'RUNNING' || instanceStatus === 'REBOOTING'}
+            >
+              ▶ START / RESUME
+            </button>
+            <button
+              className="instance-ctrl-btn"
+              onClick={handlePauseInstance}
+              disabled={instanceStatus !== 'RUNNING'}
+            >
+              ⏸ PAUSE BOT
+            </button>
+            <button
+              className="instance-ctrl-btn"
+              onClick={handleRebootInstance}
+              disabled={instanceStatus === 'REBOOTING'}
+            >
+              🔄 REBOOT CONTAINER
+            </button>
+            <button
+              className="instance-ctrl-btn danger"
+              onClick={handleStopInstance}
+              disabled={instanceStatus === 'STOPPED'}
+            >
+              ⏹ TERMINATE / STOP
+            </button>
+          </div>
+
+          <div className="instance-live-terminal">
+            {instanceLogs.map((log, idx) => (
+              <div key={idx} className="terminal-log-line">
+                <span className="t-time">[{log.time}]</span>
+                <span className="t-tag">[{log.tag}]</span>
+                <span className="t-text">{log.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="bot-mode-switch" role="tablist" aria-label="Bot execution mode">
           <button role="tab" aria-selected={botMode === 'GENERAL'} className={botMode === 'GENERAL' ? 'selected' : ''} onClick={() => setBotMode('GENERAL')}>
             <strong>GENERAL MODE</strong><span>TA4J quant controls</span>
