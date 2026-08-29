@@ -550,6 +550,63 @@ const assetAliases: Record<string, string> = {
   '현대차': '005380.KS', '현대자동차': '005380.KS'
 }
 
+export const SUPPORTED_ASSETS_REGISTRY = [
+  { symbol: 'BTC/USD', raw: 'BTCUSDT', name: '비트코인 (Bitcoin)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'ETH/USD', raw: 'ETHUSDT', name: '이더리움 (Ethereum)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'SOL/USD', raw: 'SOLUSDT', name: '솔라나 (Solana)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'XRP/USD', raw: 'XRPUSDT', name: '리플 (XRP)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'SUI/USD', raw: 'SUIUSDT', name: '수이 (Sui)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'DOGE/USD', raw: 'DOGEUSDT', name: '도지코인 (Dogecoin)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'NVDA/USD', raw: 'NVDA', name: '엔비디아 (NVIDIA)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
+  { symbol: 'TSLA/USD', raw: 'TSLA', name: '테슬라 (Tesla)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
+  { symbol: 'AAPL/USD', raw: 'AAPL', name: '애플 (Apple)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
+  { symbol: 'MSFT/USD', raw: 'MSFT', name: '마이크로소프트 (MSFT)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
+  { symbol: 'GOOGL/USD', raw: 'GOOGL', name: '구글 (Alphabet)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
+  { symbol: '005930.KS', raw: '005930.KS', name: '삼성전자 (005930.KS)', category: '국내 주식 (KOSPI)', flag: '🇰🇷' },
+  { symbol: '000660.KS', raw: '000660.KS', name: 'SK하이닉스 (000660.KS)', category: '국내 주식 (KOSPI)', flag: '🇰🇷' },
+  { symbol: '005380.KS', raw: '005380.KS', name: '현대자동차 (005380.KS)', category: '국내 주식 (KOSPI)', flag: '🇰🇷' }
+]
+
+function checkAssetSupport(input: string): { isSupported: boolean; resolvedSymbol?: string } {
+  if (!input || !input.trim()) return { isSupported: true, resolvedSymbol: 'BTC/USD' }
+  const trimmed = input.trim()
+  
+  // 1. Direct Korean/English alias match
+  const aliasMatch = Object.entries(assetAliases).find(([name]) => trimmed.includes(name) || trimmed.toLowerCase() === name.toLowerCase())
+  if (aliasMatch) {
+    return { isSupported: true, resolvedSymbol: aliasMatch[1] }
+  }
+
+  // 2. Direct registry match
+  const upper = trimmed.toUpperCase().replace(/\$/g, '')
+  const regMatch = SUPPORTED_ASSETS_REGISTRY.find(a => 
+    upper === a.symbol || 
+    upper === a.raw || 
+    upper === a.symbol.replace('/USD', '') ||
+    upper === a.symbol.replace('.KS', '') ||
+    upper.startsWith(a.raw) ||
+    upper.startsWith(a.symbol)
+  )
+  if (regMatch) {
+    return { isSupported: true, resolvedSymbol: regMatch.symbol }
+  }
+
+  // 3. Extracted ticker check
+  const extracted = extractAssetSymbol(trimmed, '')
+  if (extracted) {
+    const matchedExtracted = SUPPORTED_ASSETS_REGISTRY.find(a => 
+      extracted.toUpperCase() === a.symbol || 
+      extracted.toUpperCase() === a.raw || 
+      extracted.toUpperCase() === `${a.raw}/USD`
+    )
+    if (matchedExtracted) {
+      return { isSupported: true, resolvedSymbol: matchedExtracted.symbol }
+    }
+  }
+
+  return { isSupported: false }
+}
+
 function extractAssetSymbol(input: string, fallback = 'BTC/USD') {
   const alias = Object.entries(assetAliases).find(([name]) => input.includes(name))
   if (alias) return alias[1]
@@ -916,6 +973,23 @@ export default function Page() {
     const m = Math.floor((sec % 3600) / 60)
     const s = sec % 60
     return `${h}h ${m}m ${s}s`
+  }
+
+  // Unsupported Asset Guidance Modal State
+  const [unsupportedModalOpen, setUnsupportedModalOpen] = useState(false)
+  const [unsupportedQuery, setUnsupportedQuery] = useState('')
+
+  const handlePerformSearch = (text: string) => {
+    if (!text.trim()) return
+    const result = checkAssetSupport(text)
+    if (result.isSupported && result.resolvedSymbol) {
+      setSearched(result.resolvedSymbol)
+      setUnsupportedModalOpen(false)
+      setQuery('')
+    } else {
+      setUnsupportedQuery(text.trim())
+      setUnsupportedModalOpen(true)
+    }
   }
 
   // Prediction Interactive State
@@ -1544,6 +1618,100 @@ export default function Page() {
         </div>
       )}
 
+      {/* ── 지원 불가 자산 예외 안내 모달 (Unsupported Asset Guidance Modal) ── */}
+      {unsupportedModalOpen && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+          <div className="panel" style={{ width: '540px', maxWidth: '92vw', background: '#0b131e', border: '1px solid #334155', padding: '24px', borderRadius: '6px', boxShadow: '0 12px 40px rgba(0,0,0,0.5)', color: '#f1f5f9' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #1e293b', paddingBottom: '14px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>⚠️</span>
+                <div>
+                  <strong style={{ fontSize: '13px', color: '#f87171', letterSpacing: '.05em', fontFamily: "'IBM Plex Mono', monospace" }}>
+                    [지원 불가 자산 예외 안내]
+                  </strong>
+                  <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '2px' }}>
+                    UNSUPPORTED ASSET / LIQUIDITY FILTER
+                  </div>
+                </div>
+              </div>
+              <button
+                className="text-button"
+                style={{ color: '#94a3b8', fontSize: '14px', padding: '2px 8px', border: '1px solid #334155', borderRadius: '3px', cursor: 'pointer' }}
+                onClick={() => setUnsupportedModalOpen(false)}
+              >
+                닫기 ×
+              </button>
+            </div>
+
+            <div style={{ background: '#1e1b18', border: '1px solid #78350f', padding: '12px 14px', borderRadius: '4px', marginBottom: '16px' }}>
+              <p style={{ fontSize: '11px', color: '#fef3c7', lineHeight: '1.6', margin: 0 }}>
+                입력하신 검색어 <b style={{ color: '#fbbf24', textDecoration: 'underline' }}>'{unsupportedQuery}'</b>는 24시간 실시간 호가 스트림 및 도커 샌드박스 안정성 검증 목록에 포함되어 있지 않습니다.
+              </p>
+              <small style={{ fontSize: '9px', color: '#d97706', display: 'block', marginTop: '6px' }}>
+                * 사유: 오더북 유동성 부족, 비상장 자산, 또는 호가 지연(Slippage) 방지 정책
+              </small>
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 600, letterSpacing: '.08em', display: 'block', marginBottom: '8px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                💡 현재 24H 클라우드 봇 지원 자산군 (INSTITUTIONAL GRADE)
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '9px', color: '#cbd5e1' }}>
+                <div style={{ background: '#0f172a', padding: '8px', borderRadius: '3px', border: '1px solid #1e293b' }}>
+                  <b style={{ color: '#fbbf24', display: 'block', marginBottom: '4px' }}>🪙 가상자산 (Crypto)</b>
+                  BTC, ETH, SOL, XRP, SUI, DOGE
+                </div>
+                <div style={{ background: '#0f172a', padding: '8px', borderRadius: '3px', border: '1px solid #1e293b' }}>
+                  <b style={{ color: '#60a5fa', display: 'block', marginBottom: '4px' }}>🇺🇸 미국 주식 (US)</b>
+                  NVDA, TSLA, AAPL, MSFT, GOOGL
+                </div>
+                <div style={{ background: '#0f172a', padding: '8px', borderRadius: '3px', border: '1px solid #1e293b' }}>
+                  <b style={{ color: '#34d399', display: 'block', marginBottom: '4px' }}>🇰🇷 국내 주식 (KRX)</b>
+                  삼성전자, SK하이닉스, 현대차
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span style={{ fontSize: '9.5px', color: '#94a3b8', display: 'block', marginBottom: '8px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                👉 검증된 메이저 자산으로 즉시 전환하기:
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                {[
+                  { name: '🪙 비트코인 (BTC/USD)', sym: 'BTC/USD' },
+                  { name: '🇺🇸 엔비디아 (NVDA/USD)', sym: 'NVDA/USD' },
+                  { name: '🇰🇷 삼성전자 (005930.KS)', sym: '005930.KS' },
+                  { name: '🪙 솔라나 (SOL/USD)', sym: 'SOL/USD' }
+                ].map(rec => (
+                  <button
+                    key={rec.sym}
+                    style={{
+                      background: '#0f766e',
+                      border: '1px solid #14b8a6',
+                      color: '#ffffff',
+                      padding: '8px 10px',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      fontFamily: "'IBM Plex Mono', monospace"
+                    }}
+                    onClick={() => {
+                      setSearched(rec.sym)
+                      setUnsupportedModalOpen(false)
+                      setQuery('')
+                    }}
+                  >
+                    ⚡ {rec.name}로 전환 ↗
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Strategy Commons (Public Quant) ── */}
       {communityOpen && (
         <section className="commons-section">
@@ -1652,15 +1820,14 @@ export default function Page() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  setSearched(extractAssetSymbol(query))
-                  setQuery('')
+                  handlePerformSearch(query)
                 }
               }}
               placeholder={copy.search}
             />
             <kbd>⌘ K</kbd>
           </label>
-          <button className="primary-button" onClick={() => setSearched(extractAssetSymbol(query))}>
+          <button className="primary-button" onClick={() => handlePerformSearch(query)}>
             {copy.run} <span>↗</span>
           </button>
         </div>
@@ -1831,8 +1998,38 @@ export default function Page() {
               <strong>49.12.240.118 (IPv4 Active)</strong>
             </div>
             <div className="instance-spec-cell">
-              <span>TARGET ASSET</span>
-              <strong>{searched} (ta4j Fusion Loop)</strong>
+              <span>TARGET ASSET (실시간 봇 타겟)</span>
+              <strong style={{ color: '#38bdf8' }}>{searched} (ta4j Loop)</strong>
+              <div style={{ display: 'flex', gap: '4px', marginTop: '5px', flexWrap: 'wrap' }}>
+                {[
+                  { label: '🪙 BTC', sym: 'BTC/USD' },
+                  { label: '🪙 ETH', sym: 'ETH/USD' },
+                  { label: '🪙 SOL', sym: 'SOL/USD' },
+                  { label: '🇺🇸 NVDA', sym: 'NVDA/USD' },
+                  { label: '🇰🇷 삼성전자', sym: '005930.KS' }
+                ].map(chip => (
+                  <button
+                    key={chip.sym}
+                    style={{
+                      fontSize: '7.5px',
+                      padding: '2px 5px',
+                      borderRadius: '2px',
+                      border: searched === chip.sym ? '1px solid #38bdf8' : '1px solid #334155',
+                      background: searched === chip.sym ? '#0369a1' : '#1e293b',
+                      color: searched === chip.sym ? '#ffffff' : '#94a3b8',
+                      cursor: 'pointer',
+                      fontFamily: "'IBM Plex Mono', monospace"
+                    }}
+                    onClick={() => {
+                      setSearched(chip.sym)
+                      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                      setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'TARGET-SWITCH', text: `🎯 Target asset switched to ${chip.sym}. Docker container re-anchored.` }])
+                    }}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
