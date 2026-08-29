@@ -1415,14 +1415,14 @@ export default function Page() {
           <div className="league-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #edf0f2', paddingBottom: '20px' }}>
             <div>
               <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '10px', letterSpacing: '.1em', fontWeight: 600 }}>
-                <Diamond /> 1-HOUR QUICK STRIKE PREDICTION LEAGUE <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '3px' }}>1H SPEED ROUND</span>
+                1-HOUR QUICK STRIKE PREDICTION LEAGUE <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '3px' }}>1H SPEED ROUND</span>
               </div>
               <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: 'Georgia, serif', fontWeight: 400 }}>
                 10 wins. <em style={{ color: '#0f766e', fontStyle: 'italic' }}>One claim.</em>
               </h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
-                <strong>1번. AI vs 인간 배틀:</strong> ta4j 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
-                <strong>2번. 1시간 기준 고정가 정산:</strong> 라운드 시작 시 고정된 <strong>1H 기준가</strong> 대비 1시간 캔들 종가의 <strong>상승(UP) / 하락(DOWN)</strong> 예측<br className="desktop-only" />
+                <strong>[LAYER 1] AI vs 인간 배틀:</strong> ta4j 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
+                <strong>[LAYER 2] 1시간 기준 고정가 정산:</strong> 라운드 시작 시 고정된 <strong>1H 기준가</strong> 대비 1시간 캔들 종가의 <strong>상승(UP) / 하락(DOWN)</strong> 예측<br className="desktop-only" />
                 배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 <strong>$10.00 USDT</strong>가 즉시 지급됩니다.
               </p>
             </div>
@@ -1434,7 +1434,7 @@ export default function Page() {
                   10,000.00 <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
                 </strong>
                 <span style={{ fontSize: '8.5px', color: '#0284c7', background: '#e0f2fe', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
-                  ● NON-CUSTODIAL ESCROW
+                  NON-CUSTODIAL ESCROW
                 </span>
               </div>
 
@@ -1444,7 +1444,7 @@ export default function Page() {
                   {format1HCountdown(hourlyRemainingSec)}
                 </strong>
                 <span style={{ fontSize: '8.5px', color: '#34d399', display: 'block' }}>
-                  ● 1H CANDLE SETTLEMENT
+                  1H CANDLE SETTLEMENT
                 </span>
               </div>
             </div>
@@ -1455,14 +1455,14 @@ export default function Page() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#18334a' }}>
-                  📊 [1번] 실시간 군중 합의율 (Human Market Consensus)
+                  [LAYER 1] 실시간 군중 합의율 (Human Market Consensus)
                 </span>
                 <span style={{ fontSize: '9px', color: '#64748b' }}>
                   {(battle?.totalHumanVotes ?? 0) > 0 ? `총 ${battle?.totalHumanVotes}명 실시간 참여 중` : '현재 라운드 첫 번째 예측자를 기다리는 중입니다'}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#475569' }}>
-                👑 AI 퀀트 모델 예측: <strong style={{ color: (battle?.aiDecision || 'BULLISH') === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle?.aiDecision || 'BULLISH'}</strong> (신뢰도: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
+                AI 퀀트 모델 예측: <strong style={{ color: (battle?.aiDecision || 'BULLISH') === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle?.aiDecision || 'BULLISH'}</strong> (신뢰도: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
               </div>
             </div>
 
@@ -1481,7 +1481,7 @@ export default function Page() {
                   transition: 'width 0.4s ease'
                 }}
               >
-                🟢 UP {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBullPercentage}%` : '50% (대기)'} (상승 예측)
+                UP {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBullPercentage}%` : '50% (대기)'} (상승 예측)
               </div>
               <div
                 style={{
@@ -1497,7 +1497,7 @@ export default function Page() {
                   transition: 'width 0.4s ease'
                 }}
               >
-                DOWN {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBearPercentage}%` : '50% (대기)'} (하락 예측) 🔴
+                DOWN {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBearPercentage}%` : '50% (대기)'} (하락 예측)
               </div>
             </div>
           </div>
@@ -1506,7 +1506,7 @@ export default function Page() {
           <div style={{ margin: '22px 0', padding: '16px 20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <strong style={{ fontSize: '11.5px', color: '#18334a' }}>🎯 10연승 연승 트래커 (Streak Milestone)</strong>
+                <strong style={{ fontSize: '11.5px', color: '#18334a' }}>10연승 연승 트래커 (Streak Milestone)</strong>
                 <span style={{ fontSize: '9.5px', color: '#64748b', marginLeft: '8px' }}>
                   현재 {humanWins} / 10 승 달성 ({10 - humanWins}승 남음)
                 </span>
@@ -1518,7 +1518,7 @@ export default function Page() {
                   onClick={() => setClaimModalOpen(true)}
                 >
                   <Award size={13} style={{ display: 'inline', marginRight: '5px' }} />
-                  🎉 $10.00 USDT 즉시 수령하기 ↗
+                  $10.00 USDT 즉시 수령하기 ↗
                 </button>
               ) : (
                 <span style={{ fontSize: '10px', color: '#0369a1', fontWeight: 600 }}>
@@ -1548,10 +1548,10 @@ export default function Page() {
                     }}
                   >
                     <div style={{ fontSize: '8px', color: isWon ? '#059669' : isCurrent ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
-                      {isFinal ? '🏆 FINAL' : `R${stepNum}`}
+                      {isFinal ? 'FINAL' : `R${stepNum}`}
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: isWon ? '#059669' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#64748b', marginTop: '2px' }}>
-                      {isWon ? '✓' : isCurrent ? '●' : isFinal ? '$10' : '○'}
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: isWon ? '#059669' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#94a3b8', marginTop: '2px' }}>
+                      {isWon ? 'WIN' : isCurrent ? 'ACTIVE' : isFinal ? '$10' : '—'}
                     </div>
                   </div>
                 );
@@ -1564,10 +1564,10 @@ export default function Page() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#18334a' }}>
-                  ⚡ [2번] ROUND #{round} 1H 기준 고정가 업&다운 ({searched})
+                  [LAYER 2] ROUND #{round} 1H 기준 고정가 업&다운 ({searched})
                 </span>
                 <span style={{ fontSize: '10px', background: '#0b131e', color: '#f59e0b', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
-                  🔒 1H 기준 고정가: {lockedBasePrice || priceFormatted}
+                  1H 기준 고정가: {lockedBasePrice || priceFormatted}
                 </span>
                 <span style={{ fontSize: '10px', color: '#64748b' }}>
                   (실시간 현재가: <strong style={{ color: '#18334a' }}>{priceFormatted}</strong>)
@@ -1599,11 +1599,11 @@ export default function Page() {
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '20px', color: '#059669' }}>↑</span>
-                    <strong style={{ fontSize: '16px', color: '#059669' }}>PREDICT UP (상승)</strong>
+                    <span style={{ fontSize: '13px', color: '#059669', fontWeight: 700, background: '#e6f4ea', padding: '2px 6px', borderRadius: '3px' }}>[UP]</span>
+                    <strong style={{ fontSize: '15px', color: '#059669' }}>PREDICT UP (상승)</strong>
                     {prediction === 'UP' && (
                       <span style={{ fontSize: '9px', background: '#059669', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
-                        선택됨 ✓
+                        선택됨
                       </span>
                     )}
                   </div>
@@ -1639,11 +1639,11 @@ export default function Page() {
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '20px', color: '#dc2626' }}>↓</span>
-                    <strong style={{ fontSize: '16px', color: '#dc2626' }}>PREDICT DOWN (하락)</strong>
+                    <span style={{ fontSize: '13px', color: '#dc2626', fontWeight: 700, background: '#fce8e6', padding: '2px 6px', borderRadius: '3px' }}>[DOWN]</span>
+                    <strong style={{ fontSize: '15px', color: '#dc2626' }}>PREDICT DOWN (하락)</strong>
                     {prediction === 'DOWN' && (
                       <span style={{ fontSize: '9px', background: '#dc2626', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
-                        선택됨 ✓
+                        선택됨
                       </span>
                     )}
                   </div>
@@ -1696,9 +1696,9 @@ export default function Page() {
                 }}
               >
                 {submitted
-                  ? `✓ ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출 완료 (+0.5 AETHER 참여 보너스 지급됨)`
+                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출 완료 (+0.5 AETHER 참여 보너스 지급됨)`
                   : prediction
-                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 1시간 예측 제출하기 ↗ (10연승 도전)`
+                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 1시간 예측 제출하기 (10연승 도전)`
                   : '위 카드에서 예측 방향(UP 또는 DOWN)을 먼저 선택해주세요'}
               </button>
             </div>
@@ -1711,7 +1711,7 @@ export default function Page() {
         <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div className="panel" style={{ width: '480px', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <strong style={{ fontSize: '15px' }}>🏆 10연승 챌린지 $10.00 USDT Claim</strong>
+              <strong style={{ fontSize: '15px' }}>10연승 챌린지 $10.00 USDT Claim</strong>
               <button className="text-button" onClick={() => setClaimModalOpen(false)}>닫기 ×</button>
             </div>
 
