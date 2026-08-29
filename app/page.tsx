@@ -413,10 +413,26 @@ const personaProfiles: Record<PersonaType, { name: string; tag: string; title: s
   }
 }
 
+function extractTopicTitle(prompt: string, symbol: string): string {
+  const clean = prompt.replace(/[\r\n\t]+/g, ' ').replace(/[?!.,~]/g, '').trim()
+  if (!clean) return `${symbol} 전략 리서치`
+
+  if (clean.includes('지지') || clean.includes('저항')) return `${symbol} 77K 지지선 및 하방 청산 리스크`
+  if (clean.includes('비중') || clean.includes('배분') || clean.includes('얼마')) return `${symbol} 3단계 자본 배분 및 포지션 비중`
+  if (clean.includes('손절') || clean.includes('헷징') || clean.includes('무효화')) return `${symbol} 50일선 이탈 무효화 및 헷징 플랜`
+  if (clean.includes('실적') || clean.includes('CAPEX') || clean.includes('매크로')) return `${symbol} 실적 전망 및 밸류에이션 점검`
+  if (clean.includes('숏스퀴즈') || clean.includes('펀딩비') || clean.includes('청산')) return `${symbol} 온체인 청산 맵 & 숏스퀴즈 진단`
+
+  const words = clean.split(/\s+/)
+  if (words.length <= 4 && clean.length <= 22) return clean
+  const preview = words.slice(0, 4).join(' ')
+  return preview.length > 20 ? preview.slice(0, 18) + '…' : preview
+}
+
 const initialAgentSessions: AgentSession[] = [
   {
     id: 'sess-btc-1',
-    title: 'BTC 4H 스윙 전략 & 지지선 진단',
+    title: 'BTC 77K 지지선 및 하방 청산 리스크 분석',
     symbol: 'BTC/USD',
     persona: 'alex',
     mode: 'INSIGHT',
@@ -438,8 +454,8 @@ const initialAgentSessions: AgentSession[] = [
           { name: 'brightdata.scrapeNews', detail: '3 hits · Spot ETF net inflow $320M', status: 'DONE' },
           { name: 'qwen2.5.synthesize', detail: 'Institutional 4-Engine Fusion memo generated', status: 'DONE' }
         ],
-        content: `### 🏛️ [ON-CHAIN QUANT BRIEF: BTC/USD]
-**분석가:** Alex Chen AI (On-Chain / Derivatives Desk)
+        content: `### 🏛️ [INSTITUTIONAL QUANT BRIEF: BTC/USD]
+**분석 엔진:** Bloomberg Desk & ta4j 4-Engine Fusion
 
 ---
 
@@ -457,7 +473,7 @@ const initialAgentSessions: AgentSession[] = [
   },
   {
     id: 'sess-nvda-2',
-    title: 'NVDA 실적 발표 후 밸류에이션 분석',
+    title: 'NVDA 빅테크 AI CAPEX 및 밸류에이션 점검',
     symbol: 'NVDA',
     persona: 'mina',
     mode: 'INSIGHT',
@@ -479,7 +495,7 @@ const initialAgentSessions: AgentSession[] = [
           { name: 'ta4j.calculateSignals', detail: 'NVDA · RSI 62.4 · Bullish Momentum', status: 'DONE' }
         ],
         content: `### 🏛️ [GLOBAL MACRO BRIEF: NVDA]
-**분석가:** Mina Park (Chief Macro Strategist)
+**분석 엔진:** Bloomberg Desk & ta4j 4-Engine Fusion
 
 ---
 
@@ -490,7 +506,7 @@ const initialAgentSessions: AgentSession[] = [
   },
   {
     id: 'sess-sol-3',
-    title: 'SOL 온체인 청산 맵 & 변동성 밴드',
+    title: 'SOL 변동성 밴드 기반 자본 배분 전략',
     symbol: 'SOL/USD',
     persona: 'jhan',
     mode: 'GUIDE',
@@ -511,7 +527,7 @@ const initialAgentSessions: AgentSession[] = [
           { name: 'ta4j.calculateSignals', detail: 'SOLUSDT · Volatility Band 0.38', status: 'DONE' }
         ],
         content: `### 💡 [PLAIN-LANGUAGE RISK GUIDE: SOL]
-**분석가:** J. Han (System Trading Director)
+**분석 엔진:** Bloomberg Desk & ta4j 4-Engine Fusion
 
 ---
 
@@ -602,18 +618,18 @@ export default function Page() {
     const newId = 'sess-' + Date.now()
     const newSession: AgentSession = {
       id: newId,
-      title: `${sym} 리서치 세션 #${agentSessions.length + 1}`,
+      title: `${sym} 신규 리서치 토픽`,
       symbol: sym,
-      persona: selectedPersona,
+      persona: 'alex',
       mode: researchMode,
       updatedAt: '방금 전',
       messages: [
         {
           id: 'welcome-' + Date.now(),
           role: 'agent',
-          persona: selectedPersona,
+          persona: 'alex',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          content: `안녕하세요. **${personaProfiles[selectedPersona].name} (${personaProfiles[selectedPersona].tag})**입니다.\n\n현재 **${sym}**의 실시간 시장 미시구조, 온체인 유동성, 그리고 Bright Data 실시간 뉴스 피드를 모니터링하고 있습니다.\n\n궁금하신 지지/저항 가격대, 숏/롱 청산 리스크, 또는 자본 배분 전략을 편하게 질문해 주세요.`
+          content: `안녕하세요. **AETHER AI 리서치 데스크 (Bloomberg Desk & ta4j Multi-Fractal)**입니다.\n\n현재 **${sym}**의 실시간 시장 미시구조, 온체인 유동성, 그리고 Bright Data 실시간 뉴스 피드를 모니터링하고 있습니다.\n\n궁금하신 지지/저항 가격대, 숏/롱 청산 리스크, 또는 자본 배분 전략을 편하게 질문해 주세요.`
         }
       ]
     }
@@ -651,8 +667,13 @@ export default function Page() {
     const curSess = agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || initialAgentSessions[0]
     const updatedMessages = [...curSess.messages, userMsg]
     
+    // Dynamically update topic title based on user question
+    const isGenericTitle = curSess.title.includes('신규 리서치') || curSess.title.includes('리서치 세션') || curSess.messages.filter(m => m.role === 'user').length === 0
+    const dynamicTitle = isGenericTitle ? extractTopicTitle(text, curSess.symbol) : curSess.title
+
     setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
       ...s,
+      title: dynamicTitle,
       messages: updatedMessages,
       updatedAt: '방금 전'
     } : s))
@@ -685,7 +706,7 @@ export default function Page() {
         toolCalls: [
           { name: 'ta4j.calculateSignals', detail: `${curSess.symbol} RSI, SMA20/50, Volatility Bands calculated`, status: 'DONE' },
           { name: 'brightdata.scrapeNews', detail: `Bright Data real-time financial news stream & sentiment scoring`, status: 'DONE' },
-          { name: 'qwen2.5.synthesize', detail: `${personaProfiles[selectedPersona].name} Deep Intelligence Synthesis complete`, status: 'DONE' }
+          { name: 'qwen2.5.synthesize', detail: `Institutional 4-Engine Quantitative Fusion complete`, status: 'DONE' }
         ]
       }
 
@@ -1743,35 +1764,25 @@ export default function Page() {
         <div className="panel-heading">
           <span><Diamond /> AI AGENT WORKSPACE · {currentSession?.symbol || searched}</span>
           <span className="status-tag">
-            {personaProfiles[selectedPersona]?.name} · {researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}
+            AETHER AI COPILOT · {researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}
           </span>
         </div>
 
         <div className="agent-studio-layout">
-          {/* 1. Left Column: Sessions & Personas */}
+          {/* 1. Left Column: Sessions & Topic Manager */}
           <aside className="agent-sidebar">
             <div className="agent-sidebar-top">
               <button className="new-session-btn" onClick={() => handleCreateNewSession()}>
                 <span>+ NEW RESEARCH SESSION</span>
                 <span>↗</span>
               </button>
-
-              <div className="persona-selector-grid">
-                {(['alex', 'mina', 'jhan'] as PersonaType[]).map((pKey) => (
-                  <button
-                    key={pKey}
-                    className={`persona-btn ${selectedPersona === pKey ? 'active' : ''}`}
-                    onClick={() => setSelectedPersona(pKey)}
-                  >
-                    <strong>{pKey === 'alex' ? 'ALEX CHEN' : pKey === 'mina' ? 'MINA PARK' : 'J. HAN'}</strong>
-                    <span>{pKey === 'alex' ? 'ON-CHAIN' : pKey === 'mina' ? 'MACRO' : 'QUANT'}</span>
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div className="session-list">
-              <span className="session-group-label">ACTIVE SESSIONS</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px 4px' }}>
+                <span className="session-group-label" style={{ padding: 0 }}>RESEARCH TOPICS</span>
+                <span style={{ fontSize: '7px', color: 'var(--blue)', fontFamily: "'IBM Plex Mono', monospace" }}>{agentSessions.length} TOPICS</span>
+              </div>
               {agentSessions.map((sess) => (
                 <div
                   key={sess.id}
@@ -1803,7 +1814,7 @@ export default function Page() {
               <div className="agent-header-title">
                 <h3>{currentSession?.title || `${searched} Research`}</h3>
                 <span>
-                  {personaProfiles[selectedPersona]?.name} · {personaProfiles[selectedPersona]?.title}
+                  Bloomberg Desk & ta4j Multi-Fractal Fusion · Live Context
                 </span>
               </div>
               <div className="research-mode-switch" role="tablist" style={{ margin: 0 }}>
@@ -1842,8 +1853,8 @@ export default function Page() {
                       <div className="chat-msg-agent-header">
                         <div className="agent-persona-tag">
                           <Diamond />
-                          <span>{personaProfiles[msg.persona || selectedPersona]?.name}</span>
-                          <span className="agent-persona-role">{personaProfiles[msg.persona || selectedPersona]?.tag}</span>
+                          <span>AETHER QUANT AI</span>
+                          <span className="agent-persona-role">INSTITUTIONAL COPILOT</span>
                         </div>
                         <span style={{ fontSize: '7.5px', color: 'var(--muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
                           {msg.timestamp} · AUDITED
@@ -1904,8 +1915,8 @@ export default function Page() {
                 className="chat-input-textarea"
                 placeholder={
                   researchMode === 'GUIDE'
-                    ? `${personaProfiles[selectedPersona]?.name}에게 위험 요인과 자산 비중 조절법을 편하게 물어보세요... (Enter로 전송, Shift+Enter 줄바꿈)`
-                    : `${personaProfiles[selectedPersona]?.name}에게 ${currentSession?.symbol || searched}의 기관급 퀀트 시나리오를 질의하세요... (Enter로 전송, Shift+Enter 줄바꿈)`
+                    ? `위험 요인과 자산 비중 조절법을 편하게 물어보세요... (Enter로 전송, Shift+Enter 줄바꿈)`
+                    : `${currentSession?.symbol || searched}의 기관급 퀀트 시나리오 및 진입 지지선을 질의하세요... (Enter로 전송, Shift+Enter 줄바꿈)`
                 }
                 value={agentInputPrompt}
                 onChange={(e) => setAgentInputPrompt(e.target.value)}
