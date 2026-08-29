@@ -941,23 +941,23 @@ export default function Page() {
     setInstanceStatus('RUNNING')
     setBotRunning(true)
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '▶ Virtual Cloud Container resumed execution loop.' }])
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[RESUME] Virtual Cloud Container resumed execution loop.' }])
   }
 
   const handlePauseInstance = () => {
     setInstanceStatus('PAUSED')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '⏸️ Trading execution loop paused by user. Open positions are guarded.' }])
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[PAUSE] Trading execution loop paused by user. Open positions are guarded.' }])
   }
 
   const handleRebootInstance = () => {
     setInstanceStatus('REBOOTING')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'DOCKER', text: '🔄 Rebooting container sandbox (Graceful SIGTERM)...' }])
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'DOCKER', text: '[REBOOT] Rebooting container sandbox (Graceful SIGTERM)...' }])
     setTimeout(() => {
       setInstanceStatus('RUNNING')
       const restartTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      setInstanceLogs(prev => [...prev, { time: restartTime, tag: 'DOCKER', text: '🟢 Container sandbox rebooted successfully (PID: 3419, Python 3.12 active).' }])
+      setInstanceLogs(prev => [...prev, { time: restartTime, tag: 'DOCKER', text: '[READY] Container sandbox rebooted successfully (PID: 3419, Python 3.12 active).' }])
     }, 1500)
   }
 
@@ -965,7 +965,7 @@ export default function Page() {
     setInstanceStatus('STOPPED')
     setBotRunning(false)
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '⏹ Container stopped. Cold-standby ready.' }])
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[STOP] Container stopped. Cold-standby ready.' }])
   }
 
   const formatUptimeStr = (sec: number) => {
@@ -2023,7 +2023,7 @@ export default function Page() {
                     onClick={() => {
                       setSearched(chip.sym)
                       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                      setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'TARGET-SWITCH', text: `🎯 Target asset switched to ${chip.sym}. Docker container re-anchored.` }])
+                      setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'ROUTING', text: `Target asset switched to ${chip.sym}. Docker container re-anchored.` }])
                     }}
                   >
                     {chip.label}
