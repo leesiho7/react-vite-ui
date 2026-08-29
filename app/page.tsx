@@ -54,11 +54,11 @@ const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 type Language = keyof typeof languageLabels
 
 const newsCategoryTabs = [
-  { key: 'ALL', labels: { en: 'ALL (9)', ko: '전체 (9)', cn: '全部 (9)' } },
-  { key: 'CRYPTO', labels: { en: '🪙 CRYPTO (3)', ko: '🪙 가상자산 (3)', cn: '🪙 加密资产 (3)' } },
-  { key: 'TECH', labels: { en: '🤖 TECH & AI (3)', ko: '🤖 빅테크·AI (3)', cn: '🤖 科技与AI (3)' } },
-  { key: 'MACRO', labels: { en: '🌐 MACRO & FED (2)', ko: '🌐 거시·연준 (2)', cn: '🌐 宏观与美联储 (2)' } },
-  { key: 'ONCHAIN', labels: { en: '⛓️ ON-CHAIN & DART (2)', ko: '⛓️ 온체인·공시 (2)', cn: '⛓️ 链上与公告 (2)' } }
+  { key: 'ALL', count: 9, labels: { en: 'ALL WIRES', ko: '전체 속보', cn: '全部快讯' } },
+  { key: 'CRYPTO', count: 3, labels: { en: 'CRYPTO ASSETS', ko: '가상자산', cn: '加密资产' } },
+  { key: 'TECH', count: 3, labels: { en: 'TECH & AI', ko: '빅테크·AI', cn: '科技与AI' } },
+  { key: 'MACRO', count: 2, labels: { en: 'MACRO & FED', ko: '거시경제·연준', cn: '宏观与美联储' } },
+  { key: 'ONCHAIN', count: 2, labels: { en: 'ON-CHAIN & DART', ko: '온체인·공시', cn: '链上与公告' } }
 ] as const
 
 type NewsCategoryKey = typeof newsCategoryTabs[number]['key']
@@ -2532,27 +2532,21 @@ export default function Page() {
             <button onClick={() => setNewsOpen(false)}>{copy.newsClose}</button>
           </div>
 
-          {/* ── Category Filter Pills ── */}
-          <div style={{ display: 'flex', gap: '6px', padding: '10px 16px', background: '#0b131e', borderBottom: '1px solid #1e293b', flexWrap: 'wrap' }}>
+          {/* ── Institutional Category Filter Bar ── */}
+          <div className="news-category-bar">
+            <span className="news-category-label">
+              <Diamond /> CATEGORY
+            </span>
             {newsCategoryTabs.map((tab) => {
               const isSelected = newsCategory === tab.key;
               return (
                 <button
                   key={tab.key}
-                  style={{
-                    padding: '6px 12px',
-                    fontSize: '11px',
-                    fontWeight: isSelected ? 700 : 500,
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    border: isSelected ? '1px solid #38bdf8' : '1px solid #334155',
-                    background: isSelected ? '#0369a1' : '#1e293b',
-                    color: isSelected ? '#ffffff' : '#94a3b8'
-                  }}
+                  className={`news-category-button ${isSelected ? 'selected' : ''}`}
                   onClick={() => setNewsCategory(tab.key as any)}
                 >
-                  {tab.labels[language]}
+                  <span>{tab.labels[language]}</span>
+                  <small>{tab.count}</small>
                 </button>
               );
             })}
