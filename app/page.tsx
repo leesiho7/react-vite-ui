@@ -1891,67 +1891,68 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ── Main Workspace Grid (Chart & Orderbook + AI Signals) ── */}
-      <section className="workspace-grid">
-        {/* Left: Interactive Real-Time Chart & Orderbook */}
-        <div className="market-panel panel">
-          <div className="panel-heading">
-            <span><Diamond /> {copy.market}</span>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button
-                className="text-button"
-                style={{ fontSize: '8px' }}
-                onClick={() => setOrderbookOpen(!orderbookOpen)}
-              >
-                {orderbookOpen ? (language === 'cn' ? '隐藏订单簿' : 'Hide orderbook') : (language === 'cn' ? '显示订单簿' : 'Show orderbook')}
-              </button>
-              <span className="muted">{searched} / {period}</span>
+      {/* ── 1. Real-Time Market Pulse & Interactive Chart (Unified Full-Width Panel) ── */}
+      <section className="market-panel panel" id="market-panel">
+        <div className="panel-heading">
+          <span><Diamond /> {copy.market}</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              className="text-button"
+              style={{ fontSize: '8px' }}
+              onClick={() => setOrderbookOpen(!orderbookOpen)}
+            >
+              {orderbookOpen ? (language === 'cn' ? '隐藏订单簿' : 'Hide orderbook') : (language === 'cn' ? '显示订单簿' : 'Show orderbook')}
+            </button>
+            <span className="muted">{searched} / {period}</span>
+          </div>
+        </div>
+
+        <div className="asset-tabs">
+          {defaultAssets.map((asset) => {
+            const item = asset.symbol === '005930' ? `${asset.symbol}.KS` : asset.symbol === 'GOLD' ? 'XAU/USD' : asset.symbol === 'OIL' ? 'WTI/USD' : `${asset.symbol}/USD`
+            return <button className={searched === item ? 'active' : ''} key={item} onClick={() => setSearched(item)}>{asset.logo ? <img className="asset-logo" src={asset.logo} alt={`${asset.name} logo`} /> : <span className="asset-logo-text" aria-hidden="true">{asset.symbol.slice(0, 1)}</span>}{item}</button>
+          })}
+        </div>
+
+        <div className="market-panel-content">
+          <div className="market-chart-col">
+            <div className="price-row">
+              <div>
+                <span className="overline">{searched} · SPOT LIVE WEBSOCKET</span>
+                <strong style={{ color: tickDirection === 'UP' ? '#2b866d' : tickDirection === 'DOWN' ? '#ac5d59' : '#18334a' }}>
+                  {priceFormatted}
+                </strong>
+              </div>
+              <span className={priceChange24h.startsWith('+') ? 'gain' : 'drawdown'}>
+                {priceChange24h} <small>24H</small>
+              </span>
             </div>
-          </div>
 
-          <div className="asset-tabs">
-            {defaultAssets.map((asset) => {
-              const item = asset.symbol === '005930' ? `${asset.symbol}.KS` : asset.symbol === 'GOLD' ? 'XAU/USD' : asset.symbol === 'OIL' ? 'WTI/USD' : `${asset.symbol}/USD`
-              return <button className={searched === item ? 'active' : ''} key={item} onClick={() => setSearched(item)}>{asset.logo ? <img className="asset-logo" src={asset.logo} alt={`${asset.name} logo`} /> : <span className="asset-logo-text" aria-hidden="true">{asset.symbol.slice(0, 1)}</span>}{item}</button>
-            })}
-          </div>
+            {/* Realtime Canvas Chart */}
+            <RealtimeChart
+              initialCandles={candles}
+              latestKline={latestKline}
+              currentPrice={price}
+              symbol={searched}
+              period={period}
+            />
 
-          <div className="price-row">
-            <div>
-              <span className="overline">{searched} · SPOT LIVE WEBSOCKET</span>
-              <strong style={{ color: tickDirection === 'UP' ? '#2b866d' : tickDirection === 'DOWN' ? '#ac5d59' : '#18334a' }}>
-                {priceFormatted}
-              </strong>
+            <div className="period-row">
+              {['1m', '5m', '15m', '30m', '1H', '4H', '1D', '1W'].map((item) => (
+                <button
+                  className={period === item ? 'selected' : ''}
+                  key={item}
+                  onClick={() => setPeriod(item)}
+                >
+                  {item}
+                </button>
+              ))}
             </div>
-            <span className={priceChange24h.startsWith('+') ? 'gain' : 'drawdown'}>
-              {priceChange24h} <small>24H</small>
-            </span>
-          </div>
-
-          {/* Realtime Canvas Chart */}
-          <RealtimeChart
-            initialCandles={candles}
-            latestKline={latestKline}
-            currentPrice={price}
-            symbol={searched}
-            period={period}
-          />
-
-          <div className="period-row">
-            {['1m', '5m', '15m', '30m', '1H', '4H', '1D', '1W'].map((item) => (
-              <button
-                className={period === item ? 'selected' : ''}
-                key={item}
-                onClick={() => setPeriod(item)}
-              >
-                {item}
-              </button>
-            ))}
           </div>
 
           {/* Ultra-Fast 100ms Live Orderbook (Depth) */}
           {orderbookOpen && (
-            <div style={{ borderTop: '1px solid #d8dee4', padding: '10px' }}>
+            <div className="market-orderbook-col">
               <Orderbook
                 orderbook={orderbook}
                 latencyMs={latencyMs}
@@ -1961,15 +1962,17 @@ export default function Page() {
             </div>
           )}
         </div>
+      </section>
 
-        {/* Right: 4-Engine AI Signal Register & Fact-Check Hub */}
-        <div className="signals-panel panel">
-          <div className="panel-heading">
-            <span><Diamond /> {copy.signals}</span>
-            <span className="status-tag">{copy.factCheckTag}</span>
-          </div>
+      {/* ── 2. 4-Engine AI Signal Register & Fact-Check Matrix (Unified Full-Width Panel) ── */}
+      <section className="signals-panel panel" id="signals-panel">
+        <div className="panel-heading">
+          <span><Diamond /> {copy.signals}</span>
+          <span className="status-tag">{copy.factCheckTag}</span>
+        </div>
 
-          <div className="signal-list">
+        <div className="signals-panel-content">
+          <div className="signals-list-col">
             {filteredAssets.map((asset) => (
               <button
                 className="signal-item"
@@ -1991,25 +1994,27 @@ export default function Page() {
             ))}
           </div>
 
-          {/* ta4j + Chroma 4-Engine Confidence */}
-          <div className="confidence">
-            <div>
-              <span>AI COMPOSITE CONFIDENCE (FUSION SCORE)</span>
-              <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.82'}</strong>
+          <div className="signals-decision-col">
+            {/* ta4j + Chroma 4-Engine Confidence */}
+            <div className="confidence">
+              <div>
+                <span>AI COMPOSITE CONFIDENCE (FUSION SCORE)</span>
+                <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.82'}</strong>
+              </div>
+              <div className="confidence-bar">
+                <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.82) + 1) * 50)}%` }} />
+              </div>
+              <small>
+                {decisionReport?.divergenceRisk || (language === 'ko' ? '정상: 기술적 지표와 거시 외신 감성이 강력한 상방 동조를 이룹니다.' : language === 'cn' ? '正常：技术面量化指标与宏观机构情绪高度契合。' : 'NORMAL: Technical indicators and macro sentiment remain aligned.')}
+              </small>
             </div>
-            <div className="confidence-bar">
-              <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.82) + 1) * 50)}%` }} />
-            </div>
-            <small>
-              {decisionReport?.divergenceRisk || (language === 'ko' ? '정상: 기술적 지표와 거시 외신 감성이 강력한 상방 동조를 이룹니다.' : language === 'cn' ? '正常：技术面量化指标与宏观机构情绪高度契合。' : 'NORMAL: Technical indicators and macro sentiment remain aligned.')}
-            </small>
-          </div>
 
-          <div className="advisory-briefing">
-            <span className="advisory-title">{copy.personas}</span>
-            <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett)}</span></div>
-            <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons)}</span></div>
-            <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio)}</span></div>
+            <div className="advisory-briefing">
+              <span className="advisory-title">{copy.personas}</span>
+              <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett)}</span></div>
+              <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons)}</span></div>
+              <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio)}</span></div>
+            </div>
           </div>
         </div>
       </section>

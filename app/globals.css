@@ -902,5 +902,68 @@ button { cursor: pointer; }
   color: #cbd5e1;
 }
 
+/* ── Unified Full-Width Workspace Specifications ── */
+.market-panel {
+  margin-top: 24px;
+}
+.market-panel-content {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+}
+@media (max-width: 1024px) {
+  .market-panel-content {
+    grid-template-columns: 1fr;
+  }
+}
+.market-chart-col {
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 1024px) {
+  .market-chart-col {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}
+.market-orderbook-col {
+  display: flex;
+  flex-direction: column;
+  background: #fcfdfe;
+}
+
+.signals-panel {
+  margin-top: 24px;
+}
+.signals-panel-content {
+  display: grid;
+  grid-template-columns: 1.18fr 0.82fr;
+}
+@media (max-width: 1024px) {
+  .signals-panel-content {
+    grid-template-columns: 1fr;
+  }
+}
+.signals-list-col {
+  border-right: 1px solid var(--line);
+  padding: 12px 18px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 16px;
+  max-height: 440px;
+  overflow-y: auto;
+}
+@media (max-width: 768px) {
+  .signals-list-col {
+    grid-template-columns: 1fr;
+  }
+}
+.signals-decision-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #fbfcfe;
+}
+
 
 
