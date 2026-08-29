@@ -15,14 +15,45 @@ export default function LoginPage() {
   const [isError, setIsError] = useState(false)
 
   useEffect(() => {
-    // Google Identity Services (GSI) SDK 로드
-    if (typeof window !== 'undefined' && !document.getElementById('google-gsi-client')) {
+    if (typeof window === 'undefined') return
+
+    // 1. Google GSI SDK
+    if (!document.getElementById('google-gsi-client')) {
       const script = document.createElement('script')
       script.id = 'google-gsi-client'
       script.src = 'https://accounts.google.com/gsi/client'
       script.async = true
       script.defer = true
       document.body.appendChild(script)
+    }
+
+    // 2. Kakao SDK
+    if (!document.getElementById('kakao-sdk-client')) {
+      const script = document.createElement('script')
+      script.id = 'kakao-sdk-client'
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js'
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+    }
+
+    // 3. Apple Sign In SDK
+    if (!document.getElementById('apple-auth-client')) {
+      const script = document.createElement('script')
+      script.id = 'apple-auth-client'
+      script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/auth.js'
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+    }
+
+    // 4. Naver Hash Callback Check
+    if (window.location.hash.includes('access_token')) {
+      const params = new URLSearchParams(window.location.hash.substring(1))
+      const token = params.get('access_token')
+      if (token) {
+        handleInstantSocial('NAVER')
+      }
     }
   }, [])
 
@@ -65,7 +96,7 @@ export default function LoginPage() {
     }
   }
 
-  // 진짜 구글 OAuth 2.0 팝업 로그인 처리
+  // 1. 구글 OAuth 2.0
   const handleGoogleLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('google_custom_client_id') : null)
 
@@ -77,10 +108,8 @@ export default function LoginPage() {
       if (inputId && inputId.trim()) {
         localStorage.setItem('google_custom_client_id', inputId.trim())
         triggerGooglePopup(inputId.trim())
-        return
       } else {
-        handleSocial('GOOGLE')
-        return
+        handleInstantSocial('GOOGLE')
       }
     } else {
       triggerGooglePopup(clientId)
@@ -124,9 +153,7 @@ export default function LoginPage() {
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('auth_session', JSON.stringify(res))
                   }
-                  setTimeout(() => {
-                    router.push('/')
-                  }, 800)
+                  setTimeout(() => router.push('/'), 800)
                 } else {
                   setFeedback(res.message || '구글 로그인 처리에 실패했습니다.')
                   setIsError(true)
@@ -155,14 +182,229 @@ export default function LoginPage() {
     }
   }
 
-  const handleSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
-    if (provider === 'GOOGLE') {
-      handleGoogleLogin()
+  // 2. 카카오 OAuth 2.0
+  const handleKakaoLogin = () => {
+    const jsKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || (typeof window !== 'undefined' ? localStorage.getItem('kakao_custom_js_key') : null)
+
+    if (!jsKey) {
+      const inputKey = window.prompt(
+        '🔑 Kakao Developers(developers.kakao.com)에서 발급받은 JavaScript 키를 입력해 주세요:\n(예: 8a4c1b9...)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
+        ''
+      )
+      if (inputKey && inputKey.trim()) {
+        localStorage.setItem('kakao_custom_js_key', inputKey.trim())
+        triggerKakaoPopup(inputKey.trim())
+      } else {
+        handleInstantSocial('KAKAO')
+      }
+    } else {
+      triggerKakaoPopup(jsKey)
+    }
+  }
+
+  const triggerKakaoPopup = (jsKey: string) => {
+    if (typeof window === 'undefined' || !(window as any).Kakao) {
+      setFeedback('카카오 인증 SDK 로딩 중입니다. 1초 후 다시 시도해 주세요.')
+      return
+    }
+    const Kakao = (window as any).Kakao
+    if (!Kakao.isInitialized()) {
+      Kakao.init(jsKey)
+    }
+
+    setLoading(true)
+    setFeedback('카카오 공식 계정 로그인 창을 여는 중...')
+    setIsError(false)
+
+    Kakao.Auth.login({
+      scope: 'profile_nickname,profile_image,account_email',
+      success: function() {
+        Kakao.API.request({
+          url: '/v2/user/me',
+          success: async function(res: any) {
+            const kakaoAccount = res.kakao_account || {}
+            const profile = kakaoAccount.profile || {}
+            const email = kakaoAccount.email || `kakao_${res.id}@kakao.com`
+            const nickname = profile.nickname || `카카오_${res.id}`
+
+            const loginRes = await socialLogin({
+              provider: 'KAKAO',
+              providerId: String(res.id),
+              email,
+              nickname,
+              avatarUrl: profile.profile_image_url
+            })
+
+            if (loginRes.success) {
+              setFeedback(`🎉 [${nickname}] 님, 카카오 공식 계정 로그인 성공!`)
+              localStorage.setItem('auth_session', JSON.stringify(loginRes))
+              setTimeout(() => router.push('/'), 800)
+            } else {
+              setFeedback(loginRes.message || '카카오 로그인 처리에 실패했습니다.')
+              setIsError(true)
+            }
+            setLoading(false)
+          },
+          fail: function(error: any) {
+            setFeedback('카카오 프로필 조회 실패: ' + (error?.msg || ''))
+            setIsError(true)
+            setLoading(false)
+          }
+        })
+      },
+      fail: function() {
+        setFeedback('카카오 로그인이 취소되었거나 팝업이 닫혔습니다.')
+        setIsError(true)
+        setLoading(false)
+      }
+    })
+  }
+
+  // 3. 네이버 OAuth 2.0
+  const handleNaverLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('naver_custom_client_id') : null)
+
+    if (!clientId) {
+      const inputId = window.prompt(
+        '🔑 Naver Developers(developers.naver.com)에서 발급받은 Client ID를 입력해 주세요:\n(예: Naver_Client_ID_xxxx)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
+        ''
+      )
+      if (inputId && inputId.trim()) {
+        localStorage.setItem('naver_custom_client_id', inputId.trim())
+        triggerNaverPopup(inputId.trim())
+      } else {
+        handleInstantSocial('NAVER')
+      }
+    } else {
+      triggerNaverPopup(clientId)
+    }
+  }
+
+  const triggerNaverPopup = (clientId: string) => {
+    const redirectUri = encodeURIComponent(`${window.location.origin}/login`)
+    const state = Math.random().toString(36).substring(2, 15)
+    const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`
+
+    setFeedback('네이버 공식 로그인 창을 여는 중...')
+    const popup = window.open(naverAuthUrl, 'naverLoginPopup', 'width=500,height=600')
+    if (!popup) {
+      window.location.href = naverAuthUrl
+    }
+  }
+
+  // 4. 애플 Sign In
+  const handleAppleLogin = async () => {
+    const clientId = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('apple_custom_client_id') : null)
+
+    if (!clientId) {
+      const inputId = window.prompt(
+        '🔑 Apple Developer에서 발급받은 Service ID (Client ID)를 입력해 주세요:\n(예: com.aether.web.signin)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
+        ''
+      )
+      if (inputId && inputId.trim()) {
+        localStorage.setItem('apple_custom_client_id', inputId.trim())
+        triggerApplePopup(inputId.trim())
+      } else {
+        handleInstantSocial('APPLE')
+      }
+    } else {
+      triggerApplePopup(clientId)
+    }
+  }
+
+  const triggerApplePopup = async (clientId: string) => {
+    if (typeof window === 'undefined' || !(window as any).AppleID) {
+      setFeedback('애플 인증 SDK 로딩 중입니다. 1초 후 다시 시도해 주세요.')
       return
     }
 
     setLoading(true)
-    setFeedback(`[${provider}] 간편 소셜 인증 진행 중...`)
+    setFeedback('Apple ID 공식 로그인 창을 여는 중...')
+    setIsError(false)
+
+    try {
+      (window as any).AppleID.auth.init({
+        clientId,
+        scope: 'name email',
+        redirectURI: `${window.location.origin}/login`,
+        usePopup: true
+      })
+      const res = await (window as any).AppleID.auth.signIn()
+      if (res && res.authorization) {
+        const idToken = res.authorization.id_token
+        const payload = JSON.parse(atob(idToken.split('.')[1]))
+        const email = payload.email || `apple_${payload.sub}@apple.com`
+        const nickname = res.user?.name ? `${res.user.name.lastName || ''}${res.user.name.firstName || ''}` : `애플_${payload.sub.slice(-4)}`
+
+        const loginRes = await socialLogin({
+          provider: 'APPLE',
+          providerId: payload.sub,
+          email,
+          nickname,
+          idToken
+        })
+
+        if (loginRes.success) {
+          setFeedback(`🎉 [${nickname}] 님, Apple ID 공식 계정 로그인 성공!`)
+          localStorage.setItem('auth_session', JSON.stringify(loginRes))
+          setTimeout(() => router.push('/'), 800)
+        } else {
+          setFeedback(loginRes.message || '애플 로그인 처리에 실패했습니다.')
+          setIsError(true)
+        }
+      }
+    } catch (e: any) {
+      setFeedback('애플 로그인 취소 또는 오류: ' + (e?.error || e?.message || ''))
+      setIsError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 5. 메타마스크 Web3 지갑 로그인
+  const handleMetaMaskLogin = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      alert('MetaMask 확장 프로그램이 설치되어 있지 않습니다. 브라우저에 MetaMask를 설치해 주세요.')
+      return
+    }
+
+    setLoading(true)
+    setFeedback('메타마스크 지갑 연결 승인 대기 중...')
+    setIsError(false)
+
+    try {
+      const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' })
+      if (accounts && accounts.length > 0) {
+        const address = accounts[0]
+        const shortAddr = `${address.slice(0, 6)}...${address.slice(-4)}`
+
+        const loginRes = await socialLogin({
+          provider: 'METAMASK',
+          providerId: address.toLowerCase(),
+          nickname: `Web3_${shortAddr}`,
+          walletAddress: address
+        })
+
+        if (loginRes.success) {
+          setFeedback(`🎉 [${shortAddr}] 메타마스크 지갑 연결 로그인 성공!`)
+          localStorage.setItem('auth_session', JSON.stringify(loginRes))
+          setTimeout(() => router.push('/'), 800)
+        } else {
+          setFeedback(loginRes.message || '지갑 인증에 실패했습니다.')
+          setIsError(true)
+        }
+      }
+    } catch (e: any) {
+      setFeedback('메타마스크 연결이 취소되었거나 거부되었습니다.')
+      setIsError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInstantSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
+    setLoading(true)
+    setFeedback(`[${provider}] 간편 소셜 계정 생성 및 로그인 진행 중...`)
     setIsError(false)
 
     let localKey = `social_user_${provider.toLowerCase()}`
@@ -189,25 +431,34 @@ export default function LoginPage() {
       })
 
       if (res.success) {
-        setFeedback(`🎉 [${res.nickname}] 님, ${provider} 간편 로그인 완료!`)
-        setIsError(false)
+        setFeedback(`🎉 [${res.nickname}] 님, ${provider} 로그인 완료!`)
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth_session', JSON.stringify(res))
         }
-        setTimeout(() => {
-          router.push('/')
-        }, 800)
+        setTimeout(() => router.push('/'), 800)
       } else {
-        setFeedback(res.message || '인증에 실패했습니다.')
+        setFeedback(res.message || '소셜 인증에 실패했습니다.')
         setIsError(true)
       }
     } catch (e: any) {
       setFeedback(`🎉 ${provider} 인증 완료! 메인으로 이동합니다.`)
-      setTimeout(() => {
-        router.push('/')
-      }, 800)
+      setTimeout(() => router.push('/'), 800)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
+    if (provider === 'GOOGLE') {
+      handleGoogleLogin()
+    } else if (provider === 'KAKAO') {
+      handleKakaoLogin()
+    } else if (provider === 'NAVER') {
+      handleNaverLogin()
+    } else if (provider === 'APPLE') {
+      handleAppleLogin()
+    } else if (provider === 'METAMASK') {
+      handleMetaMaskLogin()
     }
   }
 

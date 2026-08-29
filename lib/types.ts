@@ -111,6 +111,7 @@ export interface SocialLoginRequest {
   email?: string;
   walletAddress?: string | null;
   avatarUrl?: string;
+  idToken?: string;
 }
 
 export interface AuthResponse {
