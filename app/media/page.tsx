@@ -29,15 +29,15 @@ type Story = {
 
 const copy = {
   en: {
-    console: 'CONSOLE',
-    wire: 'MEDIA WIRE',
-    live: 'LIVE CURATION',
+    console: 'TERMINAL',
+    wire: 'INTELLIGENCE WIRE',
+    live: 'CURATED FEED',
     official: 'OFFICIAL SOURCES',
-    overline: 'INSTITUTIONAL MEDIA INTELLIGENCE',
+    overline: 'INSTITUTIONAL & CRYPTO MEDIA INTELLIGENCE',
     title: <>Market context,<br /><em>without the noise.</em></>,
-    intro: 'Finance-specialized video intelligence from official institutional channels. Watch inside the terminal, inspect AI takeaways, and jump to critical market moments.',
+    intro: 'Finance & crypto video intelligence from official institutional channels. Watch inside the terminal, inspect AI takeaways, and jump to critical market moments.',
     status: 'WIRE STATUS',
-    indexed: '6 SOURCES INDEXED',
+    indexed: '8 SOURCES INDEXED',
     statusNote: 'Official YouTube embeds · Attribution preserved',
     all: 'ALL',
     updated: 'UPDATED 08:42 UTC',
@@ -46,7 +46,7 @@ const copy = {
     embed: 'OFFICIAL EMBED',
     watch: 'WATCH ORIGINAL',
     brief: 'VIEW BRIEF',
-    footer: 'CONTENT IS DISPLAYED VIA OFFICIAL PUBLISHER LINKS AND EMBEDS.',
+    footer: 'Content displayed via official publisher links and embeds.',
     back: 'BACK TO CONSOLE',
     takeawaysTitle: 'AI 3-POINT KEY TAKEAWAYS',
     timestampsTitle: 'KEY MOMENTS',
@@ -55,41 +55,41 @@ const copy = {
     clickToPlay: 'CLICK TO PLAY IN TERMINAL'
   },
   ko: {
-    console: '콘솔',
-    wire: '미디어 와이어',
+    console: '터미널 콘솔',
+    wire: '인텔리전스 와이어',
     live: '실시간 큐레이션',
-    official: '공식 출처',
-    overline: '기관 금융 미디어 인텔리전스',
-    title: <>소음 없는<br /><em>시장 맥락.</em></>,
-    intro: '공식 기관 채널의 금융 특화 영상 인텔리전스입니다. 터미널 내에서 바로 시청하고, AI 3줄 요약과 핵심 시간대 점프로 빠르게 인사이트를 확보하세요.',
+    official: '공식 기관 출처',
+    overline: '기관 및 가상자산 미디어 인텔리전스',
+    title: <>노이즈 없는<br /><em>시장 콘텍스트.</em></>,
+    intro: '공식 기관 및 크립토 채널의 금융 전문 영상 인텔리전스입니다. 터미널 안에서 바로 시청하고, AI 핵심 요약과 타임스탬프를 확인하여 차트와 즉시 연동하세요.',
     status: '와이어 상태',
-    indexed: '6개 출처 색인됨',
-    statusNote: '공식 YouTube 임베드 · 출처 표시 유지',
+    indexed: '8개 출처 인덱싱',
+    statusNote: '공식 유튜브 임베드 · 출처 명시',
     all: '전체',
     updated: '08:42 UTC 업데이트',
-    signals: '개 신호',
-    featured: '추천',
+    signals: '개 시그널',
+    featured: '주목할 영상',
     embed: '공식 임베드',
-    watch: '원본 시청',
-    brief: '브리프 보기',
-    footer: '콘텐츠는 공식 퍼블리셔 링크와 임베드를 통해 표시됩니다.',
+    watch: '원본 영상 보기',
+    brief: '브리핑 보기',
+    footer: '공식 배포자 링크 및 유튜브 임베드로 제공됩니다.',
     back: '콘솔로 돌아가기',
-    takeawaysTitle: 'AI 핵심 브리프 3포인트',
-    timestampsTitle: '핵심 구간 점프',
+    takeawaysTitle: 'AI 3대 핵심 포인트',
+    timestampsTitle: '주요 구간 바로가기',
     syncChart: '차트 연동',
-    playingNow: '터미널 재생 중',
-    clickToPlay: '터미널에서 즉시 재생'
+    playingNow: '터미널에서 재생 중',
+    clickToPlay: '클릭하여 터미널에서 즉시 재생'
   },
   cn: {
     console: '控制台',
     wire: '媒体快讯',
     live: '实时策展',
     official: '官方来源',
-    overline: '机构金融媒体智能',
+    overline: '机构与加密媒体智能',
     title: <>没有噪音的<br /><em>市场语境。</em></>,
-    intro: '来自官方机构频道的金融专业视频情报。在终端内直接播放，查看AI核心观点与时间戳跳转，将市场语境转化为投资决策。',
+    intro: '来自官方机构与加密频道的专业视频情报。在终端内直接播放，查看AI核心观点与时间戳跳转，将市场语境转化为投资决策。',
     status: '快讯状态',
-    indexed: '已索引 6 个来源',
+    indexed: '已索引 8 个来源',
     statusNote: '官方 YouTube 嵌入 · 保留来源标注',
     all: '全部',
     updated: '08:42 UTC 更新',
@@ -105,13 +105,86 @@ const copy = {
     syncChart: '联动图表',
     playingNow: '正在终端播放',
     clickToPlay: '在终端内即刻播放'
-  },
+  }
 }
 
-const categories = { en: ['ALL', 'MACRO', 'STRATEGY', 'MARKET', 'COMPANY'], ko: ['전체', '거시경제', '전략', '시장', '기업'], cn: ['全部', '宏观', '策略', '市场', '公司'] }
-const categoryKeys = ['ALL', 'MACRO', 'STRATEGY', 'MARKET', 'COMPANY']
+const categories = {
+  en: ['ALL', 'CRYPTO', 'MACRO', 'STRATEGY', 'MARKET', 'COMPANY'],
+  ko: ['전체', '가상자산', '거시경제', '전략', '시장', '기업'],
+  cn: ['全部', '加密资产', '宏观', '策略', '市场', '公司']
+}
+const categoryKeys = ['ALL', 'CRYPTO', 'MACRO', 'STRATEGY', 'MARKET', 'COMPANY']
 
 const initialStories: Story[] = [
+  {
+    source: 'COIN BUREAU',
+    key: 'CRYPTO',
+    embedId: 'aq475kcLU5A',
+    targetSymbol: 'BTC/USD',
+    title: ['Bitcoin Macro: Monetary Debasement & Sovereign Hedge', '비트코인 매크로: 통화 가치 하락과 국가적 헤지 수단', '比特币宏观：法币贬值与主权避险资产'],
+    description: ['Deep macroeconomic analysis on global debt expansion, fiat debasement, and Bitcoin’s emerging role in sovereign reserves.', '글로벌 부채 팽창, 법정화폐 가치 하락, 그리고 각국 준비자산으로서의 비트코인 역할을 다룬 심층 매크로 분석입니다.', '深度解析全球债务扩张、法定货币购买力稀释以及比特币作为主权储备资产的演进逻辑。'],
+    age: ['5 MIN AGO', '5분 전', '5分钟前'],
+    duration: '22:18',
+    tone: 'amber',
+    channel: 'Coin Bureau',
+    link: 'https://www.youtube.com/watch?v=aq475kcLU5A',
+    takeaways: [
+      ['Global central-bank balance sheet expansion creates structural demand for hard digital assets.', '글로벌 중앙은행들의 대차대조표 확장이 디지털 하드 자산(Hard Asset)에 대한 구조적 수요를 촉발합니다.', '全球央行资产负债表扩张为硬通货数字资产创造了长效结构性需求。'],
+      ['Spot ETF infrastructure bridges multi-trillion institutional pension and RIA capital into crypto.', '현물 ETF 인프라가 수조 달러 규모의 연기금 및 기관 투자자 자금을 크립토 시장으로 직접 연결합니다.', '现货ETF通道将数万亿美元规模的养老金与机构配置资金直连加密市场。'],
+      ['Halving supply constraints coincide with record low liquid exchange reserves.', '반감기 공급 감소 효과가 거래소 내 유통 공급량의 역대 최저 수준과 맞물려 상방 압력을 강화합니다.', '减半后供应紧缩与交易所内流动性库存创历史新低形成强烈共振。']
+    ],
+    timestamps: [
+      { time: '02:30', sec: 150, label: ['Monetary Debasement', '통화 가치 하락', '法币贬值机制'] },
+      { time: '09:15', sec: 555, label: ['Institutional ETF Flows', '기관 ETF 자금유입', '机构ETF资金流'] },
+      { time: '16:40', sec: 1000, label: ['Sovereign Reserve Thesis', '국가 준비자산 논거', '主权储备论证'] }
+    ]
+  },
+  {
+    source: 'COIN BUREAU',
+    key: 'CRYPTO',
+    embedId: 'xe8XiN5Zt4Y',
+    targetSymbol: 'ETH/USD',
+    title: ['Ethereum Economics: Layer-2 Settlement & Staking Yield', '이더리움 경제학: 레이어2 정산과 스테이킹 실질 수익률', '以太坊经济学：Layer-2结算与质押真实收益率'],
+    description: ['Examining Ethereum’s fee-burn mechanics, rollup throughput scaling, and the institutional appeal of risk-free staking yields.', '이더리움 수수료 소각 메커니즘, 롤업 확장성과 기관 대상 스테이킹 무위험 수익률의 매력을 분석합니다.', '深入剖析以太坊费用销毁机制、Layer-2扩容吞吐量及质押收益对机构资本的吸引力。'],
+    age: ['25 MIN AGO', '25분 전', '25分钟前'],
+    duration: '19:42',
+    tone: 'blue',
+    channel: 'Coin Bureau',
+    link: 'https://www.youtube.com/watch?v=xe8XiN5Zt4Y',
+    takeaways: [
+      ['Layer-2 settlement volume surpasses legacy payment rails with sub-cent transaction fees.', '레이어2 롤업의 결제 규모가 기존 전통 결제망을 상회하며 센트 단위 수수료를 실현했습니다.', 'Layer-2汇总网络结算规模已超越传统支付通道，交易成本降至分美分级别。'],
+      ['Proof-of-Stake real yields provide benchmark interest rate for decentralized finance.', '지분증명(PoS) 실질 수익률이 탈중앙화 금융(DeFi)의 기준금리(Risk-free Benchmark) 역할을 수행합니다.', '权益证明(PoS)真实收益率正在成为去中心化金融的核心无风险基准利率。'],
+      ['Ecosystem tokenomics maintain deflationary pressure during high-throughput activity bursts.', '네트워크 트랜잭션 급증 구간에서 자동 소각(EIP-1559)이 발행량을 압도하며 디플레이션 효과를 창출합니다.', '在高吞吐量活跃期，自动销毁机制驱动代币经济学持续呈现通缩状态。']
+    ],
+    timestamps: [
+      { time: '01:50', sec: 110, label: ['L2 Throughput Surge', 'L2 처리량 급증', 'Layer-2吞吐量激增'] },
+      { time: '08:40', sec: 520, label: ['Staking Benchmark Rate', '스테이킹 기준금리', '质押基准收益率'] },
+      { time: '14:25', sec: 865, label: ['Deflationary Burn Path', '디플레이션 소각 경로', '通缩销毁路径'] }
+    ]
+  },
+  {
+    source: 'COIN BUREAU',
+    key: 'CRYPTO',
+    embedId: 'aMvrXhLubBU',
+    targetSymbol: 'SOL/USD',
+    title: ['Crypto Liquidity Volatility: Derivatives & Liquidation Maps', '크립토 유동성 변동성: 파생상품 포지셔닝과 청산 맵', '加密流动性与波动率：衍生品持仓与清算热力图'],
+    description: ['On-chain orderflow, futures funding rates, and high-frequency liquidation cascades across perpetual swaps.', '온체인 호가 흐름, 선물 펀딩비율, 무기한 스왑 시장의 연쇄 청산 구조를 짚어봅니다.', '剖析链上订单流、永续合约资金费率及高杠杆清算瀑布效应对价格的冲击。'],
+    age: ['42 MIN AGO', '42분 전', '42分钟前'],
+    duration: '18:05',
+    tone: 'green',
+    channel: 'Coin Bureau',
+    link: 'https://www.youtube.com/watch?v=aMvrXhLubBU',
+    takeaways: [
+      ['Derivatives open interest leverage creates explosive short/long squeeze dynamics.', '파생상품 미결제약정 레버리지가 극단적 숏스퀴즈 및 롱스퀴즈 변동성을 촉발합니다.', '衍生品持仓量过热极易引发剧烈的空头与多头双向挤压行情。'],
+      ['Perpetual funding rate divergences offer high-probability mean-reversion alpha.', '무기한 선물 펀딩비율의 왜곡이 높은 승률의 통계적 평균회귀 차익거래 기회를 제공합니다.', '永续合约资金费率的异常偏离提供了高胜率的统计均值回归套利机会。'],
+      ['Decentralized exchanges capture record share of perpetual trading volume.', '탈중앙화 파생상품 거래소(DEX)가 온체인 거래량 점유율 사상 최고치를 달성했습니다.', '去中心化衍生品交易所(DEX)在全网合约交易量中创下历史新高份额。']
+    ],
+    timestamps: [
+      { time: '02:10', sec: 130, label: ['Liquidation Heatmaps', '청산 히트맵 분석', '清算热力图解析'] },
+      { time: '07:35', sec: 455, label: ['Perp Funding Arbitrage', '펀딩비 차익거래', '资金费率套利'] },
+      { time: '13:00', sec: 780, label: ['DEX Orderflow Dominance', 'DEX 호가 점유율', 'DEX订单流优势'] }
+    ]
+  },
   {
     source: 'BRIDGEWATER',
     key: 'MACRO',
@@ -119,7 +192,7 @@ const initialStories: Story[] = [
     targetSymbol: 'BTC/USD',
     title: ['How The Economic Machine Works by Ray Dalio', '경제 기계가 작동하는 법 (레이 달리오 매크로 특강)', '经济机器是怎样运行的（瑞·达利欧）'],
     description: ['Ray Dalio’s foundational 30-minute breakdown of credit cycles, interest rates, and deleveraging dynamics.', '신용 사이클, 금리 정책, 그리고 디레버리징(부채 축소)의 경제 메커니즘을 설명하는 30분 마스터클래스입니다.', '关于信贷周期、利率政策以及去杠杆经济机制的经典剖析。'],
-    age: ['12 MIN AGO', '12분 전', '12分钟前'],
+    age: ['1 HOUR AGO', '1시간 전', '1小时前'],
     duration: '31:00',
     tone: 'blue',
     channel: 'Principles by Ray Dalio',
@@ -142,7 +215,7 @@ const initialStories: Story[] = [
     targetSymbol: 'NVDA/USD',
     title: ['IMF Chief Economist: Fed Rate Decisions & Market Liquidity', '전 IMF 수석 이코노미스트 라잔: 연준 금리 결정과 시장 유동성', '前IMF首席经济学家：美联储利率决策与市场流动性'],
     description: ['Raghuram Rajan joins CNBC to analyze Fed policy dilemmas, sticky inflation, and cross-asset liquidity risks.', '라구람 라잔 전 IMF 수석 이코노미스트가 연준의 정책 딜레마와 유동성 리스크를 진단합니다.', '拉古拉姆·拉詹分析美联储政策两难、粘性通胀与跨资产流动性风险。'],
-    age: ['1 HOUR AGO', '1시간 전', '1小时前'],
+    age: ['2 HOURS AGO', '2시간 전', '2小时前'],
     duration: '06:45',
     tone: 'green',
     channel: 'CNBC Television',
@@ -165,7 +238,7 @@ const initialStories: Story[] = [
     targetSymbol: 'SOL/USD',
     title: ['Market Close: Wall Street Sentiment & Rate Path Focus', '월가 마감 브리핑: 주식 시장 변동성과 금리 경로 점검', '华尔街收盘简报：股市波动与利率路径聚焦'],
     description: ['CNBC Market Close analysis of equity breadth, tech earnings volatility, and macroeconomic warnings.', 'CNBC 마감 시황: 주식 시장 이익 확산과 기술주 변동성, 거시 지표 경고를 종합 분석합니다.', 'CNBC收盘分析：美股盈利广度、科技股波动性与宏观经济预警。'],
-    age: ['3 HOURS AGO', '3시간 전', '3小时前'],
+    age: ['4 HOURS AGO', '4시간 전', '4小时前'],
     duration: '08:22',
     tone: 'amber',
     channel: 'CNBC Television',
@@ -179,52 +252,6 @@ const initialStories: Story[] = [
       { time: '01:10', sec: 70, label: ['Market Breadth', '시장 이익 확산', '市场广度分析'] },
       { time: '03:40', sec: 220, label: ['Tech Selloff Check', '기술주 차익 실현', '科技股抛压梳理'] },
       { time: '06:15', sec: 375, label: ['Macro Triggers', '거시 트리거 점검', '宏观催化剂跟踪'] }
-    ]
-  },
-  {
-    source: 'CNBC',
-    key: 'MARKET',
-    embedId: 'kdCMqSTQtg8',
-    targetSymbol: 'TSLA/USD',
-    title: ['Mohamed El-Erian: Global Economy Health & Capex Strength', '모하메드 엘-에리언: 글로벌 경제 건전성과 자본지출 동향', '穆罕默德·埃尔-埃利安：全球经济基本面与资本开支态势'],
-    description: ['Allianz chief economic advisor Mohamed El-Erian examines economic resilience, labour data, and tech investment cycle.', '알리안츠 수석 경제 고문 엘-에리언이 경제 회복력, 고용 데이터와 테크 투자 사이클을 진단합니다.', '安联首席经济顾问埃尔-埃利安深入解读经济韧性、劳动力数据及科技投资周期。'],
-    age: ['YESTERDAY', '어제', '昨天'],
-    duration: '07:15',
-    tone: 'navy',
-    channel: 'CNBC Television',
-    link: 'https://www.youtube.com/watch?v=kdCMqSTQtg8',
-    takeaways: [
-      ['US economic resilience continues to outperform global peer benchmarks.', '미국 실물 경제의 회복 탄력성이 글로벌 주요국 대비 여전히 견고한 우위를 유지하고 있습니다.', '美国实体经济韧性表现持续优于全球主要发达经济体。'],
-      ['Corporate capex in AI and industrial automation provides durable GDP support.', 'AI 및 산업 자동화 부문의 기업 설비투자(CAPEX)가 GDP의 강력한 하방 지지력을 제공합니다.', '企业在AI与工业自动化领域的资本开支为GDP增长提供了坚实支撑。'],
-      ['Policy lags warrant agile risk management across equity and credit portfolios.', '통화정책 시차 효과를 고려해 주식 및 크레딧 포트폴리오의 기민한 리스크 관리가 필요합니다.', '考虑到政策传导时滞，股票与信用债投资组合需保持敏捷风险对冲。']
-    ],
-    timestamps: [
-      { time: '00:50', sec: 50, label: ['Resilience Thesis', '경제 회복력 진단', '经济韧性逻辑'] },
-      { time: '03:15', sec: 195, label: ['Capex & Tech Cycle', '설비투자 테크 사이클', '资本开支与科技周期'] },
-      { time: '05:30', sec: 330, label: ['Portfolio Playbook', '포트폴리오 대응전략', '投资组合应对策略'] }
-    ]
-  },
-  {
-    source: 'YAHOO FINANCE',
-    key: 'COMPANY',
-    embedId: 'cTx3ODv5o3I',
-    targetSymbol: 'ETH/USD',
-    title: ['Nobel Laureate Krugman on Monetary Leadership & Market Regimes', '노벨경제학상 크루그먼: 통화 리더십과 시장 국면 진단', '诺贝尔奖得主克鲁格曼谈货币政策领导力与市场周期'],
-    description: ['Paul Krugman joins Yahoo Finance to discuss central-bank leadership, structural productivity, and asset price regimes.', '노벨 경제학상 수상자 폴 크루그먼이 중앙은행 정책과 생산성, 자산 가격 구조를 논의합니다.', '诺贝尔经济学奖得主保罗·克鲁格曼深度解析央行领导力、结构性生产力与资产价格周期。'],
-    age: ['YESTERDAY', '어제', '昨天'],
-    duration: '05:40',
-    tone: 'red',
-    channel: 'Yahoo Finance',
-    link: 'https://www.youtube.com/watch?v=cTx3ODv5o3I',
-    takeaways: [
-      ['Institutional credibility of central-bank communication anchors inflation expectations.', '중앙은행의 일관된 시장 소통과 제도적 신뢰도가 인플레이션 기대 심리를 안정시킵니다.', '中央银行政策沟通的公信力是锚定长期通胀预期的核心支柱。'],
-      ['Technological productivity gains act as structural long-term disinflationary force.', '기술 혁신에 따른 생산성 향상이 구조적인 장기 디스인플레이션 요인으로 작용합니다.', '科技驱动的生产力提升成为中长期结构性去通胀的关键力量。'],
-      ['Macro regime shifts require re-evaluating risk-free discount rate assumptions.', '거시경제 체제 전환기에는 무위험 할인율(Discount Rate)에 대한 재평가가 요구됩니다.', '宏观周期转换期需要重新评估无风险贴现率的核心假设。']
-    ],
-    timestamps: [
-      { time: '01:00', sec: 60, label: ['Central Bank Policy', '중앙은행 통화정책', '央行政策沟通'] },
-      { time: '02:45', sec: 165, label: ['Productivity Drivers', '생산성 견인 요인', '生产力驱动要素'] },
-      { time: '04:20', sec: 260, label: ['Market Regime Shift', '시장 체제 전환 국면', '市场周期切换'] }
     ]
   },
   {
