@@ -7,9 +7,6 @@ import { loginApi, socialLogin } from '../../lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [loginMode, setLoginMode] = useState<'SOCIAL' | 'CREDENTIALS'>('SOCIAL')
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<string>('')
   const [isError, setIsError] = useState(false)
@@ -56,45 +53,6 @@ export default function LoginPage() {
       }
     }
   }, [])
-
-  const handleCredentialsLogin = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!username.trim() || !password.trim()) {
-      setFeedback('아이디와 비밀번호를 모두 입력해 주세요.')
-      setIsError(true)
-      return
-    }
-
-    setLoading(true)
-    setFeedback('로그인 확인 중...')
-    setIsError(false)
-
-    try {
-      const res = await loginApi({
-        username: username.trim(),
-        password: password.trim()
-      })
-
-      if (res.success) {
-        setFeedback(`🎉 [${res.nickname || res.username}] 님, 로그인 성공! 메인으로 이동합니다.`)
-        setIsError(false)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_session', JSON.stringify(res))
-        }
-        setTimeout(() => {
-          router.push('/')
-        }, 800)
-      } else {
-        setFeedback(res.message || '아이디 또는 비밀번호가 일치하지 않습니다.')
-        setIsError(true)
-      }
-    } catch (err: any) {
-      setFeedback('로그인 중 오류가 발생했습니다: ' + (err?.message || ''))
-      setIsError(true)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // 1. 구글 OAuth 2.0
   const handleGoogleLogin = () => {
@@ -479,149 +437,72 @@ export default function LoginPage() {
         <section className="auth-card">
           <div className="auth-card-head">
             <div>
-              <span className="overline">USER ACCESS</span>
+              <span className="overline">ONE-SECOND ACCESS</span>
               <h2>Welcome back.</h2>
-              <p className="auth-subtitle">소셜 원클릭 로그인 또는 아이디/비밀번호로 로그인하세요.</p>
+              <p className="auth-subtitle">복잡한 비밀번호 입력 없이, 소셜 또는 지갑으로 1초 만에 입장하세요.</p>
             </div>
             <span className="status-tag">SECURE</span>
           </div>
 
-          {/* Login Mode Tabs */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div className="social-grid social-grid-wide" style={{ marginTop: '20px' }}>
             <button
+              className="social-button"
               type="button"
-              onClick={() => setLoginMode('SOCIAL')}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                fontSize: '11px',
-                fontWeight: 700,
-                border: loginMode === 'SOCIAL' ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                background: loginMode === 'SOCIAL' ? '#f0f9ff' : '#f8fafc',
-                color: loginMode === 'SOCIAL' ? '#0369a1' : '#64748b',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              onClick={() => handleSocial('GOOGLE')}
+              disabled={loading}
             >
-              1-CLICK SOCIAL LOGIN
+              <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg" alt="Google" />
+              GOOGLE <span>↗</span>
             </button>
+
             <button
+              className="social-button"
               type="button"
-              onClick={() => setLoginMode('CREDENTIALS')}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                fontSize: '11px',
-                fontWeight: 700,
-                border: loginMode === 'CREDENTIALS' ? '2px solid #0284c7' : '1px solid #cbd5e1',
-                background: loginMode === 'CREDENTIALS' ? '#f0f9ff' : '#f8fafc',
-                color: loginMode === 'CREDENTIALS' ? '#0369a1' : '#64748b',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
+              onClick={() => handleSocial('NAVER')}
+              disabled={loading}
             >
-              ID & PASSWORD LOGIN
+              <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/naver/default.svg" alt="Naver" />
+              NAVER <span>↗</span>
+            </button>
+
+            <button
+              className="social-button"
+              type="button"
+              onClick={() => handleSocial('KAKAO')}
+              disabled={loading}
+            >
+              <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/kakao/default.svg" alt="Kakao" />
+              KAKAO <span>↗</span>
+            </button>
+
+            <button
+              className="social-button"
+              type="button"
+              onClick={() => handleSocial('APPLE')}
+              disabled={loading}
+            >
+              <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/apple/default.svg" alt="Apple" />
+              APPLE <span>↗</span>
             </button>
           </div>
 
-          {loginMode === 'SOCIAL' ? (
-            <div>
-              <div className="social-grid social-grid-wide">
-                <button
-                  className="social-button"
-                  type="button"
-                  onClick={() => handleSocial('GOOGLE')}
-                  disabled={loading}
-                >
-                  <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg" alt="Google" />
-                  GOOGLE <span>↗</span>
-                </button>
-
-                <button
-                  className="social-button"
-                  type="button"
-                  onClick={() => handleSocial('NAVER')}
-                  disabled={loading}
-                >
-                  <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/naver/default.svg" alt="Naver" />
-                  NAVER <span>↗</span>
-                </button>
-
-                <button
-                  className="social-button"
-                  type="button"
-                  onClick={() => handleSocial('KAKAO')}
-                  disabled={loading}
-                >
-                  <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/kakao/default.svg" alt="Kakao" />
-                  KAKAO <span>↗</span>
-                </button>
-
-                <button
-                  className="social-button"
-                  type="button"
-                  onClick={() => handleSocial('APPLE')}
-                  disabled={loading}
-                >
-                  <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/apple/default.svg" alt="Apple" />
-                  APPLE <span>↗</span>
-                </button>
-              </div>
-
-              <button
-                className="wallet-button"
-                type="button"
-                onClick={() => handleSocial('METAMASK')}
-                disabled={loading}
-                style={{ marginTop: '12px' }}
-              >
-                <span className="wallet-mark">◇</span>
-                CONNECT METAMASK
-                <small>ANONYMOUS WEB3 ACCESS</small>
-                <span>↗</span>
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleCredentialsLogin} style={{ marginTop: '12px' }}>
-              <label style={{ display: 'block', marginBottom: '10px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>아이디 (Username) *</span>
-                <input
-                  type="text"
-                  required
-                  placeholder="아이디 입력"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
-                />
-              </label>
-
-              <label style={{ display: 'block', marginBottom: '16px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>비밀번호 (Password) *</span>
-                <input
-                  type="password"
-                  required
-                  placeholder="비밀번호 입력"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
-                />
-              </label>
-
-              <button
-                className="primary-button auth-submit"
-                type="submit"
-                disabled={loading}
-                style={{ width: '100%', padding: '12px', background: '#0284c7', color: '#fff', fontSize: '13px', fontWeight: 700, borderRadius: '4px', cursor: 'pointer' }}
-              >
-                {loading ? '로그인 확인 중…' : 'SIGN IN (로그인)'} <span>↗</span>
-              </button>
-            </form>
-          )}
+          <button
+            className="wallet-button"
+            type="button"
+            onClick={() => handleSocial('METAMASK')}
+            disabled={loading}
+            style={{ marginTop: '14px' }}
+          >
+            <span className="wallet-mark">◇</span>
+            CONNECT METAMASK
+            <small>ANONYMOUS WEB3 ACCESS</small>
+            <span>↗</span>
+          </button>
 
           {feedback && (
             <div style={{
               padding: '10px 14px',
-              marginTop: '14px',
+              marginTop: '16px',
               background: isError ? '#fef2f2' : '#f0fdf4',
               border: isError ? '1px solid #f87171' : '1px solid #4ade80',
               color: isError ? '#dc2626' : '#166534',
@@ -634,10 +515,9 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="auth-divider"><span>OR JOIN AETHER QUANT</span></div>
-
-          <p className="auth-footer" style={{ textAlign: 'center', fontSize: '11.5px', color: '#64748b' }}>
-            아직 계정이 없으신가요? <Link href="/signup" style={{ color: '#0284c7', fontWeight: 700 }}>무료 회원가입 (Create Account)</Link>
+          <div className="auth-divider" style={{ marginTop: '24px' }}><span>PRIVACY & SECURITY GUARANTEE</span></div>
+          <p className="privacy-note">
+            본 터미널은 <b>개인정보 최소 수집(Zero-PII) 원칙</b>을 준수합니다. 주민번호, 비밀번호 등 민감한 개인정보를 일체 요구하거나 저장하지 않습니다.
           </p>
         </section>
       </div>

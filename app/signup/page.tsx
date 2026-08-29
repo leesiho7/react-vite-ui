@@ -7,59 +7,9 @@ import { signUpApi, socialLogin } from '../../lib/api'
 
 export default function SignupPage() {
   const router = useRouter()
-  const [username, setUsername] = useState('')
-  const [nickname, setNickname] = useState('')
-  const [password, setPassword] = useState('')
-  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
-
-  const handleSignup = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!username.trim() || !password.trim() || !nickname.trim()) {
-      setFeedback('모든 필수 항목을 입력해 주세요.')
-      setIsError(true)
-      return
-    }
-
-    if (password !== passwordConfirm) {
-      setFeedback('비밀번호가 일치하지 않습니다.')
-      setIsError(true)
-      return
-    }
-
-    setLoading(true)
-    setFeedback('계정 생성 중...')
-    setIsError(false)
-
-    try {
-      const res = await signUpApi({
-        username: username.trim(),
-        password: password.trim(),
-        nickname: nickname.trim()
-      })
-
-      if (res.success) {
-        setFeedback('🎉 회원가입 완료! 자동 로그인 중입니다...')
-        setIsError(false)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_session', JSON.stringify(res))
-        }
-        setTimeout(() => {
-          router.push('/')
-        }, 800)
-      } else {
-        setFeedback(res.message || '회원가입에 실패했습니다.')
-        setIsError(true)
-      }
-    } catch (err: any) {
-      setFeedback('회원가입 중 오류가 발생했습니다: ' + (err?.message || ''))
-      setIsError(true)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -369,6 +319,47 @@ export default function SignupPage() {
     }
   }
 
+  // 5. 메타마스크 Web3 지갑
+  const handleMetaMaskLogin = async () => {
+    if (typeof window === 'undefined' || !(window as any).ethereum) {
+      alert('MetaMask 확장 프로그램이 설치되어 있지 않습니다. 브라우저에 MetaMask를 설치해 주세요.')
+      return
+    }
+
+    setLoading(true)
+    setFeedback('메타마스크 지갑 연결 승인 대기 중...')
+    setIsError(false)
+
+    try {
+      const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' })
+      if (accounts && accounts.length > 0) {
+        const address = accounts[0]
+        const shortAddr = `${address.slice(0, 6)}...${address.slice(-4)}`
+
+        const loginRes = await socialLogin({
+          provider: 'METAMASK',
+          providerId: address.toLowerCase(),
+          nickname: `Web3_${shortAddr}`,
+          walletAddress: address
+        })
+
+        if (loginRes.success) {
+          setFeedback(`🎉 [${shortAddr}] 메타마스크 지갑 연결 계정 연동 성공!`)
+          localStorage.setItem('auth_session', JSON.stringify(loginRes))
+          setTimeout(() => router.push('/'), 800)
+        } else {
+          setFeedback(loginRes.message || '지갑 인증에 실패했습니다.')
+          setIsError(true)
+        }
+      }
+    } catch (e: any) {
+      setFeedback('메타마스크 연결이 취소되었거나 거부되었습니다.')
+      setIsError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleInstantSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
     setLoading(true)
     setFeedback(`[${provider}] 간편 소셜 계정 생성 및 로그인 진행 중...`)
@@ -424,6 +415,8 @@ export default function SignupPage() {
       handleNaverLogin()
     } else if (provider === 'APPLE') {
       handleAppleLogin()
+    } else if (provider === 'METAMASK') {
+      handleMetaMaskLogin()
     }
   }
 
@@ -446,13 +439,13 @@ export default function SignupPage() {
             <div>
               <span className="overline">CREATE ACCOUNT</span>
               <h2>Start with signal.</h2>
-              <p className="auth-subtitle">계정을 생성하고 10-Win League 및 24H 봇 샌드박스를 시작하세요.</p>
+              <p className="auth-subtitle">1초 소셜 연동 또는 지갑 연결로 즉시 워크스페이스를 시작하세요.</p>
             </div>
             <span className="status-tag">SECURE</span>
           </div>
 
           {/* Social 1-Click Access */}
-          <div className="social-grid" style={{ marginBottom: '16px' }}>
+          <div className="social-grid social-grid-wide" style={{ marginTop: '20px' }}>
             <button className="social-button" type="button" onClick={() => handleSocial('GOOGLE')} disabled={loading}>
               <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg" alt="Google" /> GOOGLE <span>↗</span>
             </button>
@@ -462,89 +455,43 @@ export default function SignupPage() {
             <button className="social-button" type="button" onClick={() => handleSocial('KAKAO')} disabled={loading}>
               <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/kakao/default.svg" alt="Kakao" /> KAKAO <span>↗</span>
             </button>
+            <button className="social-button" type="button" onClick={() => handleSocial('APPLE')} disabled={loading}>
+              <img src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/apple/default.svg" alt="Apple" /> APPLE <span>↗</span>
+            </button>
           </div>
 
-          <div className="auth-divider"><span>OR REGISTER WITH ID & PASSWORD</span></div>
+          <button
+            className="wallet-button"
+            type="button"
+            onClick={() => handleSocial('METAMASK')}
+            disabled={loading}
+            style={{ marginTop: '14px' }}
+          >
+            <span className="wallet-mark">◇</span>
+            CONNECT METAMASK
+            <small>ANONYMOUS WEB3 ACCESS</small>
+            <span>↗</span>
+          </button>
 
-          {/* Real Form Submission */}
-          <form onSubmit={handleSignup} style={{ marginTop: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>아이디 (Username / ID) *</span>
-              <input
-                type="text"
-                required
-                placeholder="예: alpha_trader"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
-              />
-            </label>
+          {feedback && (
+            <div style={{
+              padding: '10px 14px',
+              marginTop: '16px',
+              background: isError ? '#fef2f2' : '#f0fdf4',
+              border: isError ? '1px solid #f87171' : '1px solid #4ade80',
+              color: isError ? '#dc2626' : '#166534',
+              fontSize: '11px',
+              fontWeight: 600,
+              borderRadius: '4px',
+              textAlign: 'center'
+            }}>
+              {feedback}
+            </div>
+          )}
 
-            <label style={{ display: 'block', marginBottom: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>활동 닉네임 (Nickname) *</span>
-              <input
-                type="text"
-                required
-                placeholder="예: 퀀트마스터"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
-              />
-            </label>
-
-            <label style={{ display: 'block', marginBottom: '10px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>비밀번호 (Password) *</span>
-              <input
-                type="password"
-                required
-                minLength={4}
-                placeholder="비밀번호 입력"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
-              />
-            </label>
-
-            <label style={{ display: 'block', marginBottom: '16px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>비밀번호 확인 (Confirm Password) *</span>
-              <input
-                type="password"
-                required
-                minLength={4}
-                placeholder="비밀번호 재입력"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
-              />
-            </label>
-
-            {feedback && (
-              <div style={{
-                padding: '10px 14px',
-                marginBottom: '14px',
-                background: isError ? '#fef2f2' : '#f0fdf4',
-                border: isError ? '1px solid #f87171' : '1px solid #4ade80',
-                color: isError ? '#dc2626' : '#166534',
-                fontSize: '11px',
-                fontWeight: 600,
-                borderRadius: '4px'
-              }}>
-                {feedback}
-              </div>
-            )}
-
-            <button
-              className="primary-button auth-submit"
-              type="submit"
-              disabled={loading}
-              style={{ width: '100%', padding: '12px', background: '#0284c7', color: '#fff', fontSize: '13px', fontWeight: 700, borderRadius: '4px', cursor: 'pointer' }}
-            >
-              {loading ? '계정 생성 중…' : 'CREATE ACCOUNT (회원가입 완료)'} <span>↗</span>
-            </button>
-          </form>
-
-          <p className="auth-footer" style={{ marginTop: '16px', textAlign: 'center', fontSize: '11.5px', color: '#64748b' }}>
-            이미 계정이 있으신가요? <Link href="/login" style={{ color: '#0284c7', fontWeight: 700 }}>로그인하기 (Sign in)</Link>
+          <div className="auth-divider" style={{ marginTop: '24px' }}><span>PRIVACY COMPLIANCE POLICY</span></div>
+          <p className="privacy-note">
+            본 서비스는 개인정보 최소수집 원칙(Zero-PII)을 준수하며, 비밀번호나 민감정보를 절대 저장하지 않습니다.
           </p>
         </section>
       </div>

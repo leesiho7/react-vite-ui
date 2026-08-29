@@ -1511,9 +1511,9 @@ export default function Page() {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <a className="member-icon" href="/login" aria-label="Open member profile"><UserRound size={15} strokeWidth={1.5} /></a>
-              <a href="/login" style={{ fontSize: '10.5px', fontWeight: 600, color: '#18334a' }}>LOGIN</a>
-              <span style={{ color: '#cbd5e1' }}>|</span>
-              <a href="/signup" style={{ fontSize: '10.5px', background: '#0284c7', color: '#fff', padding: '3px 8px', borderRadius: '3px', fontWeight: 700, textDecoration: 'none' }}>SIGN UP</a>
+              <a href="/login" style={{ fontSize: '10.5px', background: '#0284c7', color: '#fff', padding: '4px 10px', borderRadius: '3px', fontWeight: 700, textDecoration: 'none', letterSpacing: '.02em' }}>
+                1-SEC SOCIAL ACCESS ↗
+              </a>
             </div>
           )}
         </div>
