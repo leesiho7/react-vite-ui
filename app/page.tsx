@@ -34,11 +34,15 @@ const defaultAssets = [
   { symbol: 'BTC', name: 'Bitcoin', price: '$67,842.10', change: '+2.84%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/bitcoin/default.svg' },
   { symbol: 'ETH', name: 'Ethereum', price: '$3,482.66', change: '+1.17%', signal: 'HOLD', tone: 'neutral', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/ethereum/default.svg' },
   { symbol: 'SOL', name: 'Solana', price: '$184.28', change: '-0.42%', signal: 'WATCH', tone: 'negative', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/solana/default.svg' },
+  { symbol: 'BNB', name: 'Binance Coin', price: '$648.20', change: '+1.85%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/binance/default.svg' },
+  { symbol: 'ADA', name: 'Cardano', price: '$0.742', change: '+3.45%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/cardano/default.svg' },
+  { symbol: 'SUI', name: 'Sui Network', price: '$3.28', change: '+5.62%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/sui/default.svg' },
+  { symbol: 'DOGE', name: 'Dogecoin', price: '$0.264', change: '+4.12%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/dogecoin/default.svg' },
+  { symbol: 'XRP', name: 'Ripple', price: '$2.41', change: '+2.18%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/ripple/default.svg' },
   { symbol: 'NVDA', name: 'NVIDIA', price: '$142.61', change: '+3.18%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/nvidia/default.svg' },
   { symbol: '005930', name: 'Samsung Electronics', price: '₩71,800', change: '+1.42%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/samsung/default.svg' },
   { symbol: 'AMZN', name: 'Amazon', price: '$228.84', change: '+0.86%', signal: 'HOLD', tone: 'neutral', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/amazon/default.svg' },
   { symbol: 'TSLA', name: 'Tesla', price: '$342.67', change: '-1.24%', signal: 'WATCH', tone: 'negative', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/tesla/default.svg' },
-  { symbol: 'XRP', name: 'Ripple', price: '$2.41', change: '+2.18%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/ripple/default.svg' },
   { symbol: 'GOLD', name: 'Gold', price: '$2,945.30', change: '+0.38%', signal: 'HOLD', tone: 'neutral' },
   { symbol: 'OIL', name: 'Crude Oil', price: '$71.84', change: '-0.67%', signal: 'WATCH', tone: 'negative' },
 ]
@@ -542,7 +546,11 @@ const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'T
 const assetAliases: Record<string, string> = {
   '리플': 'XRP/USD', '리플코인': 'XRP/USD', '엑스알피': 'XRP/USD',
   '비트코인': 'BTC/USD', '비트': 'BTC/USD', '이더리움': 'ETH/USD', '이더': 'ETH/USD',
-  '솔라나': 'SOL/USD', '솔라': 'SOL/USD', '수이': 'SUI/USD', '도지': 'DOGE/USD',
+  '솔라나': 'SOL/USD', '솔라': 'SOL/USD',
+  '바이낸스코인': 'BNB/USD', '바이낸스': 'BNB/USD', '비앤비': 'BNB/USD', 'BNB': 'BNB/USD',
+  '에이다': 'ADA/USD', '카르다노': 'ADA/USD', 'ADA': 'ADA/USD',
+  '수이': 'SUI/USD', 'SUI': 'SUI/USD',
+  '도지코인': 'DOGE/USD', '도지': 'DOGE/USD', 'DOGE': 'DOGE/USD',
   '엔비디아': 'NVDA/USD', '테슬라': 'TSLA/USD', '애플': 'AAPL/USD',
   '마이크로소프트': 'MSFT/USD', '마소': 'MSFT/USD', '구글': 'GOOGL/USD',
   '삼성전자': '005930.KS', '삼전': '005930.KS', '삼성': '005930.KS',
@@ -554,9 +562,11 @@ export const SUPPORTED_ASSETS_REGISTRY = [
   { symbol: 'BTC/USD', raw: 'BTCUSDT', name: '비트코인 (Bitcoin)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'ETH/USD', raw: 'ETHUSDT', name: '이더리움 (Ethereum)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'SOL/USD', raw: 'SOLUSDT', name: '솔라나 (Solana)', category: '가상자산 (Major Crypto)', flag: '🪙' },
-  { symbol: 'XRP/USD', raw: 'XRPUSDT', name: '리플 (XRP)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'BNB/USD', raw: 'BNBUSDT', name: '바이낸스코인 (BNB)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'ADA/USD', raw: 'ADAUSDT', name: '에이다 (Cardano)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'SUI/USD', raw: 'SUIUSDT', name: '수이 (Sui)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'DOGE/USD', raw: 'DOGEUSDT', name: '도지코인 (Dogecoin)', category: '가상자산 (Major Crypto)', flag: '🪙' },
+  { symbol: 'XRP/USD', raw: 'XRPUSDT', name: '리플 (XRP)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'NVDA/USD', raw: 'NVDA', name: '엔비디아 (NVIDIA)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
   { symbol: 'TSLA/USD', raw: 'TSLA', name: '테슬라 (Tesla)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
   { symbol: 'AAPL/USD', raw: 'AAPL', name: '애플 (Apple)', category: '미국 주식 (NASDAQ)', flag: '🇺🇸' },
@@ -653,6 +663,54 @@ function getAssetTelemetry(symbol: string) {
       supp: '$136.40',
       res: '$145.20',
       news: '빅테크 2026 AI 데이터센터 인프라 CAPEX 상향 및 마진율 방어'
+    }
+  }
+  if (sym.includes('BNB') || sym.includes('바이낸스')) {
+    return {
+      name: 'Binance Coin (BNB/USD)',
+      price: '$648.20',
+      rsi: '55.8',
+      rsiStatus: 'BULLISH',
+      score: '+0.68',
+      supp: '$628.00',
+      res: '$680.00',
+      news: 'BNB 체인 런치풀 참여 자금 유입 및 온체인 일일 활성 지갑 수 급증'
+    }
+  }
+  if (sym.includes('ADA') || sym.includes('에이다') || sym.includes('카르다노')) {
+    return {
+      name: 'Cardano (ADA/USD)',
+      price: '$0.742',
+      rsi: '61.4',
+      rsiStatus: 'BULLISH',
+      score: '+0.62',
+      supp: '$0.710',
+      res: '$0.820',
+      news: '카르다노 창립자 하이드라 레이어2 확장성 테스트넷 발표'
+    }
+  }
+  if (sym.includes('SUI') || sym.includes('수이')) {
+    return {
+      name: 'Sui Network (SUI/USD)',
+      price: '$3.28',
+      rsi: '66.8',
+      rsiStatus: 'BULLISH',
+      score: '+0.86',
+      supp: '$3.05',
+      res: '$3.60',
+      news: '수이 온체인 TVL 15억 달러 돌파 및 글로벌 디파이 자금 유입 가속'
+    }
+  }
+  if (sym.includes('DOGE') || sym.includes('도지')) {
+    return {
+      name: 'Dogecoin (DOGE/USD)',
+      price: '$0.264',
+      rsi: '59.2',
+      rsiStatus: 'BULLISH',
+      score: '+0.58',
+      supp: '$0.245',
+      res: '$0.310',
+      news: '도지코인 선물 미결제약정 사상 최고치 경신 및 커뮤니티 결제 기대감'
     }
   }
   if (sym.includes('SOL') || sym.includes('솔라나')) {
