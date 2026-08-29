@@ -709,6 +709,15 @@ export default function Page() {
   const [currentUser, setCurrentUser] = useState<AuthResponse | null>(null)
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
 
+  // 1-Hour Prediction League Interactive State & Real Strike Price
+  const [round, setRound] = useState(1)
+  const [humanWins, setHumanWins] = useState(0)
+  const [aiWins, setAiWins] = useState(0)
+  const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [hourlyRemainingSec, setHourlyRemainingSec] = useState(2430)
+  const [lockedBasePrice, setLockedBasePrice] = useState<string | null>(null)
+
   // AI Agent Studio (Multi-turn Sessions & Copilot) State
   const [agentSessions, setAgentSessions] = useState<AgentSession[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string>('')
@@ -879,16 +888,40 @@ export default function Page() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setAgentSessions(parsed)
           setActiveSessionId(parsed[0].id)
-          return
+        } else {
+          const initial = getDefaultUserSessions(user)
+          setAgentSessions(initial)
+          setActiveSessionId(initial[0].id)
         }
+      } else {
+        const initial = getDefaultUserSessions(user)
+        setAgentSessions(initial)
+        setActiveSessionId(initial[0].id)
       }
-      const initial = getDefaultUserSessions(user)
-      setAgentSessions(initial)
-      setActiveSessionId(initial[0].id)
+
+      // Load user-isolated streak
+      const streakKey = `aether_streak_${user?.username ? user.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
+      const storedStreak = localStorage.getItem(streakKey)
+      if (storedStreak) {
+        const parsed = JSON.parse(storedStreak)
+        setHumanWins(parsed.humanWins || 0)
+        setRound(parsed.round || 1)
+        setSubmitted(parsed.submitted || false)
+        setPrediction(parsed.prediction || null)
+      } else {
+        setHumanWins(0)
+        setRound(1)
+        setSubmitted(false)
+        setPrediction(null)
+      }
     } catch (e) {
       const initial = getDefaultUserSessions(null)
       setAgentSessions(initial)
       setActiveSessionId(initial[0].id)
+      setHumanWins(0)
+      setRound(1)
+      setSubmitted(false)
+      setPrediction(null)
     }
   }, [])
 
@@ -902,12 +935,31 @@ export default function Page() {
     }
   }, [agentSessions, currentUser])
 
+  // 3. Auto-save Streak state per user
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
+        localStorage.setItem(streakKey, JSON.stringify({
+          humanWins,
+          round,
+          submitted,
+          prediction
+        }))
+      } catch (e) {}
+    }
+  }, [humanWins, round, submitted, prediction, currentUser])
+
   const handleLogout = () => {
     localStorage.removeItem('auth_session')
     setCurrentUser(null)
     const guestSessions = getDefaultUserSessions(null)
     setAgentSessions(guestSessions)
     setActiveSessionId(guestSessions[0].id)
+    setHumanWins(0)
+    setRound(1)
+    setSubmitted(false)
+    setPrediction(null)
     window.location.reload()
   }
   const [candles, setCandles] = useState<CandleData[]>([])
@@ -1019,14 +1071,6 @@ export default function Page() {
     }
   }
 
-  // 1-Hour Prediction League Interactive State & Real Strike Price
-  const [round, setRound] = useState(1)
-  const [humanWins, setHumanWins] = useState(0)
-  const [aiWins, setAiWins] = useState(0)
-  const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
-  const [submitted, setSubmitted] = useState(false)
-  const [hourlyRemainingSec, setHourlyRemainingSec] = useState(2430)
-  const [lockedBasePrice, setLockedBasePrice] = useState<string | null>(null)
 
   useEffect(() => {
     const updateHourlyTimer = () => {
@@ -1144,14 +1188,16 @@ export default function Page() {
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
     fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
 
-    // Fetch user real DB prediction streak
-    fetchUserPredictionStats(1).then((stats) => {
-      if (stats) {
-        const streak = stats.currentStreak || 0
-        setHumanWins(streak)
-        setRound(Math.min(streak + 1, 10))
-      }
-    }).catch((e) => console.log('User streak fetch fallback:', e))
+    // Fetch user real DB prediction streak if authenticated
+    if (currentUser?.userId) {
+      fetchUserPredictionStats(Number(currentUser.userId)).then((stats) => {
+        if (stats && typeof stats.currentStreak === 'number') {
+          const streak = stats.currentStreak
+          setHumanWins(streak)
+          setRound(Math.min(streak + 1, 10))
+        }
+      }).catch((e) => console.log('User streak fetch fallback:', e))
+    }
 
     // Fetch official on-chain deposit wallets
     fetchDepositWallets().then((res) => {
@@ -1594,25 +1640,42 @@ export default function Page() {
                 const stepNum = idx + 1;
                 const isWon = stepNum <= humanWins;
                 const isCurrent = stepNum === round && !isWon;
+                const isPending = isCurrent && submitted;
                 const isFinal = stepNum === 10;
 
                 return (
                   <div
                     key={idx}
                     style={{
-                      border: isCurrent ? '2px solid #0284c7' : isWon ? '1px solid #10b981' : isFinal ? '1px dashed #f59e0b' : '1px solid #e2e8f0',
-                      background: isWon ? '#ecfdf5' : isCurrent ? '#f0f9ff' : isFinal ? '#fffbeb' : '#f8fafb',
+                      border: isPending
+                        ? '2px solid #f59e0b'
+                        : isCurrent
+                        ? '2px solid #0284c7'
+                        : isWon
+                        ? '1px solid #10b981'
+                        : isFinal
+                        ? '1px dashed #f59e0b'
+                        : '1px solid #e2e8f0',
+                      background: isWon
+                        ? '#ecfdf5'
+                        : isPending
+                        ? '#fffbeb'
+                        : isCurrent
+                        ? '#f0f9ff'
+                        : isFinal
+                        ? '#fffbeb'
+                        : '#f8fafb',
                       padding: '8px 4px',
                       borderRadius: '4px',
                       textAlign: 'center',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <div style={{ fontSize: '8px', color: isWon ? '#059669' : isCurrent ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
+                    <div style={{ fontSize: '8px', color: isWon ? '#059669' : isPending ? '#b45309' : isCurrent ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
                       {isFinal ? '🏆 FINAL' : `R${stepNum}`}
                     </div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: isWon ? '#059669' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#94a3b8', marginTop: '2px' }}>
-                      {isWon ? 'WIN' : isCurrent ? 'ACTIVE' : isFinal ? '$10' : '—'}
+                    <div style={{ fontSize: '10.5px', fontWeight: 700, color: isWon ? '#059669' : isPending ? '#d97706' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#94a3b8', marginTop: '2px' }}>
+                      {isWon ? 'WIN' : isPending ? `${prediction || 'PENDING'} ⏳` : isCurrent ? 'READY' : isFinal ? '$10' : '—'}
                     </div>
                   </div>
                 );
@@ -1992,8 +2055,9 @@ export default function Page() {
                   setSubmitted(true)
                   const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
                   try {
+                    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
                     await submitPredictionApi({
-                      userId: 1,
+                      userId: uId,
                       symbol: rawSymbol,
                       predictionType: 'DIRECTION_1H',
                       predictedDirection: prediction
@@ -2001,8 +2065,6 @@ export default function Page() {
                   } catch (e) {
                     console.warn('submit prediction error:', e)
                   }
-                  setHumanWins((v) => Math.min(v + 1, 10))
-                  setRound((v) => Math.min(v + 1, 10))
                 }}
               >
                 {submitted
