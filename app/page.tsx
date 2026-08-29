@@ -438,6 +438,7 @@ export default function Page() {
     '# Strategy runs in an isolated 24/7 Docker Sandbox\n# Connect signals through Spring Boot API\ndef on_market_tick(tick):\n    rsi = tick.get("rsi", 50.0)\n    if rsi < 30.0:\n        return {"action": "BUY", "risk": 0.35, "reason": "RSI Oversold"}\n    elif rsi > 70.0:\n        return {"action": "SELL", "risk": 0.35, "reason": "RSI Overbought"}\n    return {"action": "HOLD", "risk": 0.35}'
   )
   const [sandboxLog, setSandboxLog] = useState<string | null>(null)
+  const [sandboxIsError, setSandboxIsError] = useState(false)
   const [sandboxLoading, setSandboxLoading] = useState(false)
 
   // Pure On-Chain Deposit Modal State (Non-Custodial P2P)
@@ -578,6 +579,7 @@ export default function Page() {
   // 4. 파이썬 코드 샌드박스 백테스트 & 검증
   const handleTestSandbox = async () => {
     setSandboxLoading(true)
+    setSandboxIsError(false)
     setSandboxLog('Running Python 3.12 isolated sandbox container...\nScanning AST tree & Executing strategy ticks...')
     try {
       const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
@@ -587,10 +589,13 @@ export default function Page() {
         timeFrame: period
       })
       if (res) {
+        const isErr = res.valid === false || res.status === 'SYNTAX_ERROR' || res.status === 'SECURITY_VIOLATION' || res.status === 'MISSING_FUNCTION' || res.status === 'EMPTY_CODE' || res.status === 'TIMEOUT' || res.status?.includes('ERROR')
+        setSandboxIsError(isErr)
         setSandboxLog(res.simulatedOutput || res.stdoutLogs || res.message || 'Validation finished.')
       }
     } catch (e) {
-      setSandboxLog('⚠️ Sandbox execution failed to connect to backend.')
+      setSandboxIsError(true)
+      setSandboxLog('❌ [CONNECTION ERROR] Sandbox execution failed to connect to backend runner.')
     } finally {
       setSandboxLoading(false)
     }
@@ -1396,9 +1401,38 @@ export default function Page() {
               </button>
             </div>
             {sandboxLog && (
-              <pre style={{ background: '#0f172a', color: '#38bdf8', padding: '8px', fontSize: '10px', borderRadius: '4px', marginTop: '6px', whiteSpace: 'pre-wrap' }}>
-                {sandboxLog}
-              </pre>
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{
+                    fontSize: '9px',
+                    fontWeight: 'bold',
+                    padding: '2px 6px',
+                    borderRadius: '2px',
+                    background: sandboxIsError ? '#ef4444' : '#10b981',
+                    color: '#ffffff',
+                    letterSpacing: '0.05em'
+                  }}>
+                    {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
+                  </span>
+                  <span style={{ fontSize: '9px', color: sandboxIsError ? '#fca5a5' : '#a7f3d0' }}>
+                    {sandboxIsError ? 'Python 3.12 AST Compiler raised an exception' : 'Sandbox AST validation & Backtest completed'}
+                  </span>
+                </div>
+                <pre style={{
+                  background: sandboxIsError ? '#180707' : '#041710',
+                  border: sandboxIsError ? '1px solid #ef4444' : '1px solid #10b981',
+                  color: sandboxIsError ? '#fca5a5' : '#6ee7b7',
+                  padding: '12px 14px',
+                  fontSize: '11px',
+                  lineHeight: '1.6',
+                  borderRadius: '4px',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  boxShadow: sandboxIsError ? '0 0 12px rgba(239, 68, 68, 0.2)' : '0 0 12px rgba(16, 185, 129, 0.15)'
+                }}>
+                  {sandboxLog}
+                </pre>
+              </div>
             )}
           </div>
         )}
