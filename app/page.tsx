@@ -436,114 +436,33 @@ function extractTopicTitle(prompt: string, symbol: string): string {
   return preview.length > 20 ? preview.slice(0, 18) + '…' : preview
 }
 
-const initialAgentSessions: AgentSession[] = [
-  {
-    id: 'sess-btc-1',
-    title: 'BTC 77K 지지선 및 하방 청산 리스크 분석',
-    symbol: 'BTC/USD',
-    persona: 'alex',
-    mode: 'INSIGHT',
-    updatedAt: '10분 전',
-    messages: [
-      {
-        id: 'm1',
-        role: 'user',
-        content: 'BTC 77K 지지선 깨지면 다음 어디서 받아야 해? 온체인 고래랑 청산 맵 기준으로 봐줘.',
-        timestamp: '23:18'
-      },
-      {
-        id: 'm2',
-        role: 'agent',
-        persona: 'alex',
-        timestamp: '23:18',
-        toolCalls: [
-          { name: 'ta4j.calculateSignals', detail: 'BTCUSDT (4H) · RSI 43.8 · SMA20 $76,245', status: 'DONE' },
-          { name: 'brightdata.scrapeNews', detail: '3 hits · Spot ETF net inflow $320M', status: 'DONE' },
-          { name: 'qwen2.5.synthesize', detail: 'Institutional 4-Engine Fusion memo generated', status: 'DONE' }
-        ],
-        content: `### 🏛️ [INSTITUTIONAL QUANT BRIEF: BTC/USD]
-**분석 엔진:** Bloomberg Desk & ta4j 4-Engine Fusion
+const getDefaultUserSessions = (user?: AuthResponse | null): AgentSession[] => {
+  const name = user?.nickname || user?.username || '트레이더'
+  const isGuest = !user?.username
+  return [
+    {
+      id: 'sess-user-' + Date.now(),
+      title: isGuest ? 'BTC 실시간 AI 퀀트 리서치' : `${name} 님의 AI 퀀트 리서치 토픽`,
+      symbol: 'BTC/USD',
+      persona: 'alex',
+      mode: 'INSIGHT',
+      updatedAt: '방금 전',
+      messages: [
+        {
+          id: 'welcome-' + Date.now(),
+          role: 'agent',
+          persona: 'alex',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          content: `안녕하세요, **${name}** 님! **AETHER AI 리서치 데스크 (Bloomberg Desk & ta4j Multi-Fractal)**입니다.\n\n${isGuest ? '현재 **BTC/USD**의 실시간 시장 미시구조와 온체인 지표를 분석 중입니다.' : '회원님의 전용 퀀트 워크스페이스가 활성화되었습니다.'}\n\n궁금하신 종목 티커(예: BTC, ETH, NVDA, 삼전 등)나 가격대, 청산 리스크, 자본 배분 전략을 질문해 주세요.`
+        }
+      ]
+    }
+  ]
+}
 
----
-
-#### 📊 1. 청산 맵 & 핵심 지지선 진단
-• **1차 지지선:** \`$76,245\` (20일 이동평균선 & 숏 레버리지 청산 클러스터)
-• **2차 핵심 지지선:** \`$74,382\` (피보나치 0.618 & 기관 고래 누적 평단가)
-• **하방 리스크:** $74,382 이탈 시 $72,100까지 롱 스퀴즈(Long Squeeze) 연쇄 청산 위험이 열립니다.
-
-#### 🎯 2. 실전 분할 매수 액션 플랜
-1. **1차 정찰 (30%):** $76,245 도달 시 지지력 확인 후 진입
-2. **2차 주력 (40%):** $74,382 피보나치 0.618 눌림목에서 가중 진입
-3. **손절(SL):** $73,600 (-5.2% 하방 이탈 시 즉시 비중 축소)`
-      }
-    ]
-  },
-  {
-    id: 'sess-nvda-2',
-    title: 'NVDA 빅테크 AI CAPEX 및 밸류에이션 점검',
-    symbol: 'NVDA',
-    persona: 'mina',
-    mode: 'INSIGHT',
-    updatedAt: '2시간 전',
-    messages: [
-      {
-        id: 'm3',
-        role: 'user',
-        content: 'NVDA 다음 분기 실적 서프라이즈 가능성이랑 데이터센터 CAPEX 전망 어때?',
-        timestamp: '21:04'
-      },
-      {
-        id: 'm4',
-        role: 'agent',
-        persona: 'mina',
-        timestamp: '21:04',
-        toolCalls: [
-          { name: 'brightdata.scrapeNews', detail: 'TheStreet: 5-star analyst price target upgrade', status: 'DONE' },
-          { name: 'ta4j.calculateSignals', detail: 'NVDA · RSI 62.4 · Bullish Momentum', status: 'DONE' }
-        ],
-        content: `### 🏛️ [GLOBAL MACRO BRIEF: NVDA]
-**분석 엔진:** Bloomberg Desk & ta4j 4-Engine Fusion
-
----
-
-• **빅테크 CAPEX 사이클:** 마이크로소프트/구글/메타의 2026 AI 인프라 투자액이 전년 대비 +24% 증가 추세를 유지하고 있습니다.
-• **밸류에이션:** 선행 P/E 32.4배로 역사적 밴드 중간값에 안착, $138 지지선 상회 시 1차 목표가 $165가 유효합니다.`
-      }
-    ]
-  },
-  {
-    id: 'sess-sol-3',
-    title: 'SOL 변동성 밴드 기반 자본 배분 전략',
-    symbol: 'SOL/USD',
-    persona: 'jhan',
-    mode: 'GUIDE',
-    updatedAt: '어제',
-    messages: [
-      {
-        id: 'm5',
-        role: 'user',
-        content: 'SOL 지금 비중 얼마나 실어야 해? 초보자 입장에서 쉽게 가이드해줘.',
-        timestamp: '어제 16:40'
-      },
-      {
-        id: 'm6',
-        role: 'agent',
-        persona: 'jhan',
-        timestamp: '어제 16:40',
-        toolCalls: [
-          { name: 'ta4j.calculateSignals', detail: 'SOLUSDT · Volatility Band 0.38', status: 'DONE' }
-        ],
-        content: `### 💡 [PLAIN-LANGUAGE RISK GUIDE: SOL]
-**분석 엔진:** Bloomberg Desk & ta4j 4-Engine Fusion
-
----
-
-• **핵심 위험 요인:** 솔라나는 비트코인 대비 변동성이 1.8배 높습니다.
-• **추천 비중:** 전체 자산의 **10~15% 이내**로 제한하시고, $178 지지선에서 1차 매수(50%), $165에서 2차 매수(50%)로 분할 접근하세요.`
-      }
-    ]
-  }
-]
+const getUserSessionKey = (user?: AuthResponse | null) => {
+  return user?.username ? `aether_agent_sessions_${user.username.replace(/[^a-zA-Z0-9_]/g, '_')}` : 'aether_agent_sessions_guest'
+}
 
 const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET'])
 const assetAliases: Record<string, string> = {
@@ -786,17 +705,21 @@ export default function Page() {
   const [researchLoading, setResearchLoading] = useState(false)
   const [researchError, setResearchError] = useState<string | null>(null)
 
+  // Real Backend User State
+  const [currentUser, setCurrentUser] = useState<AuthResponse | null>(null)
+  const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
+
   // AI Agent Studio (Multi-turn Sessions & Copilot) State
-  const [agentSessions, setAgentSessions] = useState<AgentSession[]>(initialAgentSessions)
-  const [activeSessionId, setActiveSessionId] = useState<string>('sess-btc-1')
+  const [agentSessions, setAgentSessions] = useState<AgentSession[]>([])
+  const [activeSessionId, setActiveSessionId] = useState<string>('')
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('alex')
   const [agentInputPrompt, setAgentInputPrompt] = useState<string>('')
   const [agentThinking, setAgentThinking] = useState<boolean>(false)
   const [agentThinkingStep, setAgentThinkingStep] = useState<string>('ta4j 퀀트 지표 & 20/50 SMA 계산 중...')
 
   const currentSession = useMemo(() => {
-    return agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || initialAgentSessions[0]
-  }, [agentSessions, activeSessionId])
+    return agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || getDefaultUserSessions(currentUser)[0]
+  }, [agentSessions, activeSessionId, currentUser])
 
   const handleCreateNewSession = (symbolOverride?: string) => {
     const sym = symbolOverride || searched
@@ -849,7 +772,7 @@ export default function Page() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 
-    const curSess = agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || initialAgentSessions[0]
+    const curSess = agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || getDefaultUserSessions(currentUser)[0]
     const updatedMessages = [...curSess.messages, userMsg]
     
     // Dynamically update topic title based on user question
@@ -942,22 +865,49 @@ export default function Page() {
   const [claimLoading, setClaimLoading] = useState(false)
   const [claimSuccessData, setClaimSuccessData] = useState<any>(null)
 
-  // Real Backend Data State
-  const [currentUser, setCurrentUser] = useState<AuthResponse | null>(null)
-  const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
-
+  // 1. Mount: Load User Auth & That Specific User's Private Chat History
   useEffect(() => {
     try {
       const stored = localStorage.getItem('auth_session')
-      if (stored) {
-        setCurrentUser(JSON.parse(stored))
+      const user: AuthResponse | null = stored ? JSON.parse(stored) : null
+      setCurrentUser(user)
+
+      const sessionKey = getUserSessionKey(user)
+      const userStoredSessions = localStorage.getItem(sessionKey)
+      if (userStoredSessions) {
+        const parsed = JSON.parse(userStoredSessions)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAgentSessions(parsed)
+          setActiveSessionId(parsed[0].id)
+          return
+        }
       }
-    } catch (e) {}
+      const initial = getDefaultUserSessions(user)
+      setAgentSessions(initial)
+      setActiveSessionId(initial[0].id)
+    } catch (e) {
+      const initial = getDefaultUserSessions(null)
+      setAgentSessions(initial)
+      setActiveSessionId(initial[0].id)
+    }
   }, [])
+
+  // 2. Auto-save Agent Sessions strictly into current user's isolated storage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && agentSessions.length > 0) {
+      try {
+        const sessionKey = getUserSessionKey(currentUser)
+        localStorage.setItem(sessionKey, JSON.stringify(agentSessions))
+      } catch (e) {}
+    }
+  }, [agentSessions, currentUser])
 
   const handleLogout = () => {
     localStorage.removeItem('auth_session')
     setCurrentUser(null)
+    const guestSessions = getDefaultUserSessions(null)
+    setAgentSessions(guestSessions)
+    setActiveSessionId(guestSessions[0].id)
     window.location.reload()
   }
   const [candles, setCandles] = useState<CandleData[]>([])
