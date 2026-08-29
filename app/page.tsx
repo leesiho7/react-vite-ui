@@ -375,7 +375,7 @@ export default function Page() {
     },
     cn: {
       eyebrow: 'AI 事实核查与开源量化终端',
-      title: <>迈出下一步<br /><em>明智之选。</em></>,
+      title: <>迈出下一步<br /><em>明之选。</em></>,
       description: <>为重视客观事实而非噪音的团队提供<br className="desktop-only" /> 企业级市场情报与可验证策略。</>,
       search: '搜索资产、市场或量化策略...',
       run: '运行分析',
@@ -472,6 +472,9 @@ export default function Page() {
           <button className={`league-link ${newsOpen ? 'active' : ''}`} onClick={() => setNewsOpen(!newsOpen)}>
             <Diamond /> LIVE NEWSWIRE
           </button>
+          <a className="league-link" href="/media" style={{ textDecoration: 'none' }}>
+            <Diamond /> NEWS
+          </a>
           <a className="league-link" href="/orderbook" style={{ textDecoration: 'none' }}>
             <Diamond /> L2 ORDERBOOK
           </a>
