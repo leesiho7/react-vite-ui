@@ -70,11 +70,12 @@ export function OkxLogo({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
       <rect width="32" height="32" rx="6" fill="#000000" />
-      <rect x="6.5" y="6.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
-      <rect x="19.5" y="6.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
-      <rect x="13" y="13" width="6" height="6" rx="1.2" fill="#FFFFFF" />
-      <rect x="6.5" y="19.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
-      <rect x="19.5" y="19.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
+      {/* O */}
+      <path d="M4.5 11C4.5 9.3 5.8 8 7.5 8H9.5C11.2 8 12.5 9.3 12.5 11V21C12.5 22.7 11.2 24 9.5 24H7.5C5.8 24 4.5 22.7 4.5 21V11ZM7.5 10.8V21.2H9.5V10.8H7.5Z" fill="#FFFFFF" />
+      {/* K */}
+      <path d="M14 8H16.8V13.8L19.8 8H23L19.2 15L23.4 24H20.2L16.8 16.8V24H14V8Z" fill="#FFFFFF" />
+      {/* X */}
+      <path d="M24 8H26.8L28.6 13.5L30.4 8H33.2L30.2 15.8L33.4 24H30.6L28.6 18.2L26.6 24H23.8L27 15.8L24 8Z" fill="#FFFFFF" />
     </svg>
   );
 }
