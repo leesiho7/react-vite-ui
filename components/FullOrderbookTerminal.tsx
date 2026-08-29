@@ -43,11 +43,83 @@ interface FundingRateItem {
 
 export type ExchangeId = 'BINANCE' | 'BYBIT' | 'OKX' | 'UPBIT' | 'BITUNIX';
 
+export function BinanceLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
+      <rect width="32" height="32" rx="6" fill="#F3BA2F" />
+      <path d="M16 6L12.5 9.5L16 13L19.5 9.5L16 6Z" fill="#181A20" />
+      <path d="M8 12.5L4.5 16L8 19.5L11.5 16L8 12.5Z" fill="#181A20" />
+      <path d="M24 12.5L20.5 16L24 19.5L27.5 16L24 12.5Z" fill="#181A20" />
+      <path d="M16 14L14 16L16 18L18 16L16 14Z" fill="#181A20" />
+      <path d="M16 20L12.5 23.5L16 27L19.5 23.5L16 20Z" fill="#181A20" />
+    </svg>
+  );
+}
+
+export function BybitLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
+      <rect width="32" height="32" rx="6" fill="#17181E" />
+      <path d="M7.5 8H14.2C17.2 8 19.2 9.6 19.2 12.2C19.2 13.9 18.2 15.2 16.6 15.8C18.6 16.3 19.9 17.8 19.9 20C19.9 22.8 17.6 24.6 14.3 24.6H7.5V8ZM10.8 14H13.1C14.3 14 15.2 13.3 15.2 12.2C15.2 11.1 14.3 10.4 13.1 10.4H10.8V14ZM10.8 22.2H13.3C14.7 22.2 15.7 21.4 15.7 20.1C15.7 18.9 14.7 18.1 13.3 18.1H10.8V22.2Z" fill="#F7A600" />
+      <path d="M21.2 19.5L23.5 17.2L26.2 20V13.2H28.5V24.2H26.2V22.9L23.5 20L21.2 22.4V19.5Z" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
+export function OkxLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
+      <rect width="32" height="32" rx="6" fill="#000000" />
+      <rect x="6.5" y="6.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
+      <rect x="19.5" y="6.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
+      <rect x="13" y="13" width="6" height="6" rx="1.2" fill="#FFFFFF" />
+      <rect x="6.5" y="19.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
+      <rect x="19.5" y="19.5" width="6" height="6" rx="1.2" fill="#FFFFFF" />
+    </svg>
+  );
+}
+
+export function UpbitLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
+      <rect width="32" height="32" rx="6" fill="#093687" />
+      <path d="M8 8.5H12.5V17C12.5 19 14 20.5 16 20.5C18 20.5 19.5 19 19.5 17V8.5H24V17C24 21.4 20.4 25 16 25C11.6 25 8 21.4 8 17V8.5Z" fill="#00E5FF" />
+      <path d="M18.5 12L22 8.5L25.5 12" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function BitunixLogo({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
+      <rect width="32" height="32" rx="6" fill="#6C28D9" />
+      <path d="M8.5 8H15.2C18 8 20 9.4 20 11.7C20 13.2 19 14.3 17.6 14.9C19.4 15.4 20.6 16.8 20.6 18.8C20.6 21.4 18.5 23.2 15.3 23.2H8.5V8ZM11.8 13.6H14.9C16 13.6 16.8 13 16.8 12C16.8 11 16 10.4 14.9 10.4H11.8V13.6ZM11.8 20.8H15.1C16.3 20.8 17.2 20.1 17.2 19C17.2 17.9 16.3 17.2 15.1 17.2H11.8V20.8Z" fill="#FFFFFF" />
+      <path d="M23 7L26.5 10.5L23 14L19.5 10.5L23 7Z" fill="#00F0FF" />
+    </svg>
+  );
+}
+
+export function ExchangeLogo({ exchange, size = 16 }: { exchange: ExchangeId; size?: number }) {
+  switch (exchange) {
+    case 'BINANCE':
+      return <BinanceLogo size={size} />;
+    case 'BYBIT':
+      return <BybitLogo size={size} />;
+    case 'OKX':
+      return <OkxLogo size={size} />;
+    case 'UPBIT':
+      return <UpbitLogo size={size} />;
+    case 'BITUNIX':
+      return <BitunixLogo size={size} />;
+    default:
+      return null;
+  }
+}
+
 export interface ExchangeInfo {
   id: ExchangeId;
   name: string;
   tag: string;
-  logo: string;
   color: string;
   badgeBg: string;
   marketType: string;
@@ -58,7 +130,6 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     id: 'BINANCE',
     name: 'Binance',
     tag: 'BINANCE SPOT DIRECT',
-    logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/binance/default.svg',
     color: '#f59e0b',
     badgeBg: '#fef3c7',
     marketType: 'Global Spot L2'
@@ -67,7 +138,6 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     id: 'BYBIT',
     name: 'Bybit',
     tag: 'BYBIT V5 DIRECT',
-    logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/bybit/default.svg',
     color: '#0284c7',
     badgeBg: '#e0f2fe',
     marketType: 'Global Derivatives/Spot'
@@ -76,7 +146,6 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     id: 'OKX',
     name: 'OKX',
     tag: 'OKX V5 FAST-STREAM',
-    logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/okx/default.svg',
     color: '#10b981',
     badgeBg: '#d1fae5',
     marketType: 'Institutional Web3/Spot'
@@ -85,7 +154,6 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     id: 'UPBIT',
     name: 'Upbit (KRW)',
     tag: 'UPBIT SPOT (김프 연동)',
-    logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/upbit/default.svg',
     color: '#004fff',
     badgeBg: '#e0e7ff',
     marketType: 'KRW Orderbook (USD 환산)'
@@ -94,7 +162,6 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     id: 'BITUNIX',
     name: 'Bitunix',
     tag: 'BITUNIX PERP FEED',
-    logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/bitcoin/default.svg',
     color: '#8b5cf6',
     badgeBg: '#ede9fe',
     marketType: 'Emerging High-Beta Venue'
@@ -594,14 +661,16 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                 <Flame size={13} />
                 👑 GLOBAL BEST ARBITRAGE ROUTE
               </div>
-              <div style={{ color: '#f8fafc', fontSize: '12.5px' }}>
+              <div style={{ color: '#f8fafc', fontSize: '12.5px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                 <span style={{ color: '#cbd5e1' }}>최적 매수: </span>
-                <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.buyEx].color }}>
+                <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.buyEx].color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <ExchangeLogo exchange={heatmapMatrix.bestRoute.buyEx} size={14} />
                   {EXCHANGES[heatmapMatrix.bestRoute.buyEx].name} (${heatmapMatrix.bestRoute.buyPrice.toFixed(precision)})
                 </strong>
                 <ArrowRight size={13} style={{ display: 'inline', margin: '0 6px', color: '#94a3b8' }} />
                 <span style={{ color: '#cbd5e1' }}>최적 매도: </span>
-                <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.sellEx].color }}>
+                <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.sellEx].color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <ExchangeLogo exchange={heatmapMatrix.bestRoute.sellEx} size={14} />
                   {EXCHANGES[heatmapMatrix.bestRoute.sellEx].name} (${heatmapMatrix.bestRoute.sellPrice.toFixed(precision)})
                 </strong>
               </div>
@@ -661,7 +730,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                     {exchangeList.map((ex) => (
                       <th key={ex} style={{ padding: '8px 10px', color: EXCHANGES[ex].color }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                          <img src={EXCHANGES[ex].logo} alt={ex} style={{ width: '13px', height: '13px', objectFit: 'contain' }} />
+                          <ExchangeLogo exchange={ex} size={14} />
                           {EXCHANGES[ex].name}
                         </div>
                       </th>
@@ -673,7 +742,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                     <tr key={buyEx} style={{ borderBottom: '1px solid #1e293b' }}>
                       <td style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: EXCHANGES[buyEx].color, background: '#0d1724' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <img src={EXCHANGES[buyEx].logo} alt={buyEx} style={{ width: '13px', height: '13px', objectFit: 'contain' }} />
+                          <ExchangeLogo exchange={buyEx} size={14} />
                           {EXCHANGES[buyEx].name} 매수
                         </div>
                       </td>
@@ -795,7 +864,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
             <div style={{ borderRight: '1px solid #e2e8f0', padding: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '2px solid #e2e8f0' }}>
                 <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <img src={EXCHANGES[exchangeA].logo} alt={exchangeA} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                  <ExchangeLogo exchange={exchangeA} size={18} />
                   {EXCHANGES[exchangeA].tag}
                   <span style={{ fontSize: '8px', color: bookA.status === 'CONNECTED' ? '#10b981' : '#ef4444', padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
                     ● {bookA.status}
@@ -851,7 +920,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
             <div style={{ borderRight: '1px solid #e2e8f0', padding: '14px', background: '#fafbfc' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '2px solid #e2e8f0' }}>
                 <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <img src={EXCHANGES[exchangeB].logo} alt={exchangeB} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+                  <ExchangeLogo exchange={exchangeB} size={18} />
                   {EXCHANGES[exchangeB].tag}
                   <span style={{ fontSize: '8px', color: bookB.status === 'CONNECTED' ? '#0369a1' : '#ef4444', padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
                     ● {bookB.status}
