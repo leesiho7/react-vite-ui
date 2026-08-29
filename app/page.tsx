@@ -859,7 +859,7 @@ export default function Page() {
   const [depositWallets, setDepositWallets] = useState<Record<string, string>>({
     polygon: '0xb0390a087488E304cA32996532Ab9f40028511fE',
     bsc: '0xb0390a087488E304cA32996532Ab9f40028511fE',
-    trc20: 'TYDzsYUE282QJ84qjxoKqT5wD3ZgK8ZABC',
+    trc20: 'TLZuz8MAZ34w8i4fejUJ7qaF8PkgF8W4UE',
     solana: '8cEVKX4SzUUADEkkp9X62eWrgXRuU9zZiWBTgQfupqKA'
   })
   const [userTxHash, setUserTxHash] = useState('')
