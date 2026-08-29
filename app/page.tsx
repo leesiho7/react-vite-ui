@@ -1702,7 +1702,7 @@ export default function Page() {
               <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.82) + 1) * 50)}%` }} />
             </div>
             <small>
-              {decisionReport?.divergenceRisk || 'NORMAL: Technical indicators and macro sentiment remain aligned.'}
+              {decisionReport?.divergenceRisk || (language === 'ko' ? '정상: 기술적 지표와 거시 외신 감성이 강력한 상방 동조를 이룹니다.' : language === 'cn' ? '正常：技术面量化指标与宏观机构情绪高度契合。' : 'NORMAL: Technical indicators and macro sentiment remain aligned.')}
             </small>
           </div>
 

@@ -184,9 +184,9 @@ export async function fetchIntegratedDecision(
     },
     agentReflection: '과거 복기: 지표-뉴스 동조 국면에서 추세 추종 시 승률 83% 달성 (분할 매수 유효)',
     personaAdvice: {
-      warrenBuffett: 'Do not be distracted by short-term noise while durable fundamentals and network effects remain intact.',
-      jimSimons: 'RSI at 62 and rising moving averages indicate a statistical edge. Target a 1:2.4 risk-reward ratio.',
-      rayDalio: 'Liquidity conditions are supportive, but maintain a 20% cash buffer to diversify risk.'
+      warrenBuffett: '네트워크 효과와 내재 가치가 견고하다면 시장의 단기 소음과 가격 변동에 일희일비하지 마라.',
+      jimSimons: 'RSI 62 및 20/50 SMA 정배열은 통계적으로 유의미한 상방 우위(Edge)를 제공함. 손익비 1:2.5 타겟 설정 권고.',
+      rayDalio: '글로벌 거시 유동성 환경은 우호적이나, 테일 리스크에 대비해 20%의 현금 안전 버퍼를 항시 확보하라.'
     },
     generatedAt: new Date().toISOString()
   };
