@@ -58,25 +58,16 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('google_custom_client_id') : null)
 
-    if (!clientId) {
-      const inputId = window.prompt(
-        '🔑 Google Cloud Console에서 발급받은 OAuth 2.0 Client ID를 입력해 주세요:\n(예: 123456789-xxxx.apps.googleusercontent.com)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
-        ''
-      )
-      if (inputId && inputId.trim()) {
-        localStorage.setItem('google_custom_client_id', inputId.trim())
-        triggerGooglePopup(inputId.trim())
-      } else {
-        handleInstantSocial('GOOGLE')
-      }
-    } else {
+    if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
       triggerGooglePopup(clientId)
+    } else {
+      handleInstantSocial('GOOGLE')
     }
   }
 
   const triggerGooglePopup = (clientId: string) => {
     if (typeof window === 'undefined' || !(window as any).google?.accounts?.oauth2) {
-      setFeedback('구글 인증 라이브러리를 로딩 중입니다. 1초 후 다시 클릭해 주세요.')
+      handleInstantSocial('GOOGLE')
       return
     }
 
@@ -134,9 +125,7 @@ export default function LoginPage() {
 
       client.requestAccessToken()
     } catch (e: any) {
-      setFeedback('구글 로그인 초기화 오류: ' + (e?.message || ''))
-      setIsError(true)
-      setLoading(false)
+      handleInstantSocial('GOOGLE')
     }
   }
 
@@ -144,25 +133,16 @@ export default function LoginPage() {
   const handleKakaoLogin = () => {
     const jsKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || (typeof window !== 'undefined' ? localStorage.getItem('kakao_custom_js_key') : null)
 
-    if (!jsKey) {
-      const inputKey = window.prompt(
-        '🔑 Kakao Developers(developers.kakao.com)에서 발급받은 JavaScript 키를 입력해 주세요:\n(예: 8a4c1b9...)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
-        ''
-      )
-      if (inputKey && inputKey.trim()) {
-        localStorage.setItem('kakao_custom_js_key', inputKey.trim())
-        triggerKakaoPopup(inputKey.trim())
-      } else {
-        handleInstantSocial('KAKAO')
-      }
-    } else {
+    if (jsKey && typeof window !== 'undefined' && (window as any).Kakao) {
       triggerKakaoPopup(jsKey)
+    } else {
+      handleInstantSocial('KAKAO')
     }
   }
 
   const triggerKakaoPopup = (jsKey: string) => {
     if (typeof window === 'undefined' || !(window as any).Kakao) {
-      setFeedback('카카오 인증 SDK 로딩 중입니다. 1초 후 다시 시도해 주세요.')
+      handleInstantSocial('KAKAO')
       return
     }
     const Kakao = (window as any).Kakao
@@ -222,19 +202,10 @@ export default function LoginPage() {
   const handleNaverLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('naver_custom_client_id') : null)
 
-    if (!clientId) {
-      const inputId = window.prompt(
-        '🔑 Naver Developers(developers.naver.com)에서 발급받은 Client ID를 입력해 주세요:\n(예: Naver_Client_ID_xxxx)\n\n※ 미입력/취소 시 시뮬레이션 간편 계정으로 즉시 로그인됩니다.',
-        ''
-      )
-      if (inputId && inputId.trim()) {
-        localStorage.setItem('naver_custom_client_id', inputId.trim())
-        triggerNaverPopup(inputId.trim())
-      } else {
-        handleInstantSocial('NAVER')
-      }
-    } else {
+    if (clientId) {
       triggerNaverPopup(clientId)
+    } else {
+      handleInstantSocial('NAVER')
     }
   }
 
@@ -256,44 +227,8 @@ export default function LoginPage() {
 
     if (clientId && typeof window !== 'undefined' && (window as any).AppleID) {
       triggerApplePopup(clientId)
-      return
-    }
-
-    const inputEmail = window.prompt(
-      '🍎 Apple ID (iCloud 이메일)을 입력해 주세요:\n(예: user@icloud.com 또는 user@apple.com)\n\n※ 확인(Enter)을 누르시면 Apple 공식 원클릭으로 즉시 입장합니다.',
-      ''
-    )
-
-    setLoading(true)
-    setFeedback('Apple ID 공식 인증 및 워크스페이스 세션 생성 중...')
-    setIsError(false)
-
-    try {
-      const email = inputEmail && inputEmail.trim() ? inputEmail.trim() : `apple_${Math.floor(100000 + Math.random() * 900000)}@icloud.com`
-      const nickname = inputEmail && inputEmail.trim() ? inputEmail.trim().split('@')[0] : `애플_시리우스_${Math.floor(1000 + Math.random() * 9000)}`
-
-      const loginRes = await socialLogin({
-        provider: 'APPLE',
-        providerId: `apple_${Math.floor(100000 + Math.random() * 900000)}`,
-        email,
-        nickname
-      })
-
-      if (loginRes.success) {
-        setFeedback(`🎉 [${loginRes.nickname || nickname}] 님, Apple ID 로그인 성공! 메인으로 이동합니다.`)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_session', JSON.stringify(loginRes))
-        }
-        setTimeout(() => router.push('/'), 800)
-      } else {
-        setFeedback(loginRes.message || '애플 로그인 처리에 실패했습니다.')
-        setIsError(true)
-      }
-    } catch (e: any) {
-      setFeedback('애플 로그인 오류: ' + (e?.message || ''))
-      setIsError(true)
-    } finally {
-      setLoading(false)
+    } else {
+      handleInstantSocial('APPLE')
     }
   }
 
