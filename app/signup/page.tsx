@@ -542,12 +542,37 @@ export default function SignupPage() {
             type="button"
             onClick={() => handleSocial('METAMASK')}
             disabled={loading}
-            style={{ marginTop: '14px' }}
+            style={{
+              marginTop: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 14px',
+              background: '#fff7ed',
+              border: '1px solid #fdba74',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
           >
-            <span className="wallet-mark">◇</span>
-            CONNECT METAMASK
-            <small>ANONYMOUS WEB3 ACCESS</small>
-            <span>↗</span>
+            {/* Official MetaMask 3D Fox SVG */}
+            <svg width="22" height="22" viewBox="0 0 318.6 318.6" style={{ flexShrink: 0 }}>
+              <path fill="#E2761B" stroke="#E2761B" strokeLinecap="round" strokeLinejoin="round" d="M274.1 35.5l-99.5 73.9L194 65.4z"/>
+              <path fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" d="M44.4 35.5l98.7 74.6-18.5-44.7zM238.3 206.8l-28.5 42.2 55.4 15.3 16-56.8zM37.3 207.5l15.9 56.8 55.4-15.3-28.4-42.2z"/>
+              <path fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" d="M103.6 138.2l-15.8 23.9 56.3 2.5-2-60.5zM214.9 138.2l-39-34.8-1.3 61.2 56.2-2.5zM106.8 249l33.8-16.5-29.3-22.8zM178 232.5l33.8 16.5-4.5-39.3z"/>
+              <path fill="#D7C1B3" stroke="#D7C1B3" strokeLinecap="round" strokeLinejoin="round" d="M211.8 249l-33.8-16.5 2.6 21.1-.3 9.4 39.4-14zM80.8 263l39.6 14-.3-9.4 2.6-21.1z"/>
+              <path fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" d="M138.8 193.5l-28.2-8.3 19.9-9.1zM179.7 193.5l8.3-17.4 20 9.1z"/>
+              <path fill="#CD6116" stroke="#CD6116" strokeLinecap="round" strokeLinejoin="round" d="M106.8 249l4.7-39.3-30.7 2.1zM180.6 209.7l4.8 39.3 26-37.2zM236.4 162.1l-56.2 2.5 5.2 30.2 22.8-9.7 28.2 16.9zM82.1 162.1l28.2 22.4 22.8 9.7 5.2-30.2z"/>
+              <path fill="#E4751F" stroke="#E4751F" strokeLinecap="round" strokeLinejoin="round" d="M82.1 162.1l-28 39.9 29.5 2.1-4.7 39.3 23.5-32.6zM236.4 162.1l-20.3 48.7 23.5 32.6-4.7-39.3 29.5-2.1zM174.6 103.4l3.9-38-4.5-3.1-39.8 29.6 40.4 11.5zM144.1 62.3l-3.9 38 40.4-11.5-39.8-29.6z"/>
+              <path fill="#F6851B" stroke="#F6851B" strokeLinecap="round" strokeLinejoin="round" d="M268.4 109.4l7-34-101.4 3.4 39 34.8 48.7 14.5zM43.1 75.4l7 34 6.7 18.7 48.7-14.5 39-34.8zM245.9 161.4l-48.7-14.5 5.2 30.2 29.5 2.1 48.7-14.5zM72.7 161.4l-34.7 3.3 48.7 14.5 29.5-2.1 5.2-30.2zM120.4 277l38.9 17.5 38.9-17.5-38.9-10.7z"/>
+              <path fill="#C0AD9E" stroke="#C0AD9E" strokeLinecap="round" strokeLinejoin="round" d="M198.2 294.5l-38.9-17.5-38.9 17.5 38.9 24.1z"/>
+              <path fill="#161616" stroke="#161616" strokeLinecap="round" strokeLinejoin="round" d="M120.4 277l-39.6-14 30.7-2.1zM198.2 277l8.9-16.1 30.7 2.1z"/>
+              <path fill="#763D16" stroke="#763D16" strokeLinecap="round" strokeLinejoin="round" d="M159.3 226.8l-18.7-13.8 2.6 21.1 16.1 1.9zM159.3 226.8l16.1 9.2 2.6-21.1-18.7 11.9z"/>
+            </svg>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <strong style={{ fontSize: '11px', color: '#c2410c', display: 'block' }}>CONNECT METAMASK</strong>
+              <small style={{ fontSize: '8.5px', color: '#9a3412', display: 'block', marginTop: '1px' }}>ANONYMOUS WEB3 WALLET ACCESS</small>
+            </div>
+            <span style={{ color: '#c2410c', fontWeight: 700 }}>↗</span>
           </button>
 
           {feedback && (
