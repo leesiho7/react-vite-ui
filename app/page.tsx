@@ -1333,11 +1333,6 @@ export default function Page() {
         </div>
 
         <div className="top-meta">
-          <span className="live-dot" /> LIVE WEBSOCKET
-          <span style={{ color: latencyMs < 30 ? '#2b866d' : '#b9812c', fontWeight: 600, fontSize: '9px' }}>
-            ({latencyMs}ms)
-          </span>
-          <span className="top-divider" />
           <button className={`league-link ${eventOpen ? 'active' : ''}`} onClick={() => setEventOpen(!eventOpen)}>
             <Diamond /> 10-WIN LEAGUE
           </button>
