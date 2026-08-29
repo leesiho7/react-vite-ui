@@ -553,19 +553,20 @@ export default function LoginPage() {
               cursor: 'pointer'
             }}
           >
-            {/* Official MetaMask 3D Fox SVG */}
-            <svg width="22" height="22" viewBox="0 0 318.6 318.6" style={{ flexShrink: 0 }}>
-              <path fill="#E2761B" stroke="#E2761B" strokeLinecap="round" strokeLinejoin="round" d="M274.1 35.5l-99.5 73.9L194 65.4z"/>
-              <path fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" d="M44.4 35.5l98.7 74.6-18.5-44.7zM238.3 206.8l-28.5 42.2 55.4 15.3 16-56.8zM37.3 207.5l15.9 56.8 55.4-15.3-28.4-42.2z"/>
-              <path fill="#E4761B" stroke="#E4761B" strokeLinecap="round" strokeLinejoin="round" d="M103.6 138.2l-15.8 23.9 56.3 2.5-2-60.5zM214.9 138.2l-39-34.8-1.3 61.2 56.2-2.5zM106.8 249l33.8-16.5-29.3-22.8zM178 232.5l33.8 16.5-4.5-39.3z"/>
-              <path fill="#D7C1B3" stroke="#D7C1B3" strokeLinecap="round" strokeLinejoin="round" d="M211.8 249l-33.8-16.5 2.6 21.1-.3 9.4 39.4-14zM80.8 263l39.6 14-.3-9.4 2.6-21.1z"/>
-              <path fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" d="M138.8 193.5l-28.2-8.3 19.9-9.1zM179.7 193.5l8.3-17.4 20 9.1z"/>
-              <path fill="#CD6116" stroke="#CD6116" strokeLinecap="round" strokeLinejoin="round" d="M106.8 249l4.7-39.3-30.7 2.1zM180.6 209.7l4.8 39.3 26-37.2zM236.4 162.1l-56.2 2.5 5.2 30.2 22.8-9.7 28.2 16.9zM82.1 162.1l28.2 22.4 22.8 9.7 5.2-30.2z"/>
-              <path fill="#E4751F" stroke="#E4751F" strokeLinecap="round" strokeLinejoin="round" d="M82.1 162.1l-28 39.9 29.5 2.1-4.7 39.3 23.5-32.6zM236.4 162.1l-20.3 48.7 23.5 32.6-4.7-39.3 29.5-2.1zM174.6 103.4l3.9-38-4.5-3.1-39.8 29.6 40.4 11.5zM144.1 62.3l-3.9 38 40.4-11.5-39.8-29.6z"/>
-              <path fill="#F6851B" stroke="#F6851B" strokeLinecap="round" strokeLinejoin="round" d="M268.4 109.4l7-34-101.4 3.4 39 34.8 48.7 14.5zM43.1 75.4l7 34 6.7 18.7 48.7-14.5 39-34.8zM245.9 161.4l-48.7-14.5 5.2 30.2 29.5 2.1 48.7-14.5zM72.7 161.4l-34.7 3.3 48.7 14.5 29.5-2.1 5.2-30.2zM120.4 277l38.9 17.5 38.9-17.5-38.9-10.7z"/>
-              <path fill="#C0AD9E" stroke="#C0AD9E" strokeLinecap="round" strokeLinejoin="round" d="M198.2 294.5l-38.9-17.5-38.9 17.5 38.9 24.1z"/>
-              <path fill="#161616" stroke="#161616" strokeLinecap="round" strokeLinejoin="round" d="M120.4 277l-39.6-14 30.7-2.1zM198.2 277l8.9-16.1 30.7 2.1z"/>
-              <path fill="#763D16" stroke="#763D16" strokeLinecap="round" strokeLinejoin="round" d="M159.3 226.8l-18.7-13.8 2.6 21.1 16.1 1.9zM159.3 226.8l16.1 9.2 2.6-21.1-18.7 11.9z"/>
+            {/* Authentic Official MetaMask Geometric Fox SVG */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 318.6 318.6" style={{ flexShrink: 0 }}>
+              <path fill="#e2761b" stroke="#e2761b" strokeLinecap="round" strokeLinejoin="round" d="m274.1 35.5-99.5 73.9L193 65.8z"/>
+              <path fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" d="m44.4 35.5 98.7 74.6-17.5-44.3zm193.9 171.3-26.5 40.6 56.7 15.6 16.3-55.3zm-204.4.9L50.1 263l56.7-15.6-26.5-40.6z"/>
+              <path fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" d="m103.6 138.2-15.8 23.9 56.3 2.5-2-60.5zm111.3 0-39-34.8-1.3 61.2 56.2-2.5zM106.8 247.4l33.8-16.5-29.2-22.8zm71.1-16.5 33.9 16.5-4.7-39.3z"/>
+              <path fill="#d7c1b3" stroke="#d7c1b3" strokeLinecap="round" strokeLinejoin="round" d="m211.8 247.4-33.9-16.5 2.7 22.1-.3 9.3zm-105 0 31.5 14.9-.2-9.3 2.5-22.1z"/>
+              <path fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" d="m138.8 193.5-28.2-8.3 19.9-9.1zm40.9 0 8.3-17.4 20 9.1z"/>
+              <path fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" d="m106.8 247.4 4.8-40.6-31.3.9zM207 206.8l4.8 40.6 26.5-39.7zm23.8-44.7-56.2 2.5 5.2 28.9 8.3-17.4 20 9.1zm-120.2 23.1 20-9.1 8.2 17.4 5.3-28.9-56.3-2.5z"/>
+              <path fill="#e4751f" stroke="#e4751f" strokeLinecap="round" strokeLinejoin="round" d="m87.8 162.1 23.6 46-.8-22.9zm120.3 23.1-1 22.9 23.7-46zm-64-20.6-5.3 28.9 6.6 34.1 1.5-44.9zm30.5 0-2.7 18 1.2 45 6.7-34.1z"/>
+              <path fill="#f6851b" stroke="#f6851b" strokeLinecap="round" strokeLinejoin="round" d="m179.8 193.5-6.7 34.1 4.8 3.3 29.2-22.8 1-22.9zm-69.2-8.3.8 22.9 29.2 22.8 4.8-3.3-6.6-34.1z"/>
+              <path fill="#c0ad9e" stroke="#c0ad9e" strokeLinecap="round" strokeLinejoin="round" d="m180.3 262.3.3-9.3-2.5-2.2h-37.7l-2.3 2.2.2 9.3-31.5-14.9 11 9 22.3 15.5h38.3l22.4-15.5 11-9z"/>
+              <path fill="#161616" stroke="#161616" strokeLinecap="round" strokeLinejoin="round" d="m177.9 230.9-4.8-3.3h-27.7l-4.8 3.3-2.5 22.1 2.3-2.2h37.7l2.5 2.2z"/>
+              <path fill="#763d16" stroke="#763d16" strokeLinecap="round" strokeLinejoin="round" d="m278.3 114.2 8.5-40.8-12.7-37.9-96.2 71.4 37 31.3 52.3 15.3 11.6-13.5-5-3.6 8-7.3-6.2-4.8 8-6.1zM31.8 73.4l8.5 40.8-5.4 4 8 6.1-6.1 4.8 8 7.3-5 3.6 11.5 13.5 52.3-15.3 37-31.3-96.2-71.4z"/>
+              <path fill="#f6851b" stroke="#f6851b" strokeLinecap="round" strokeLinejoin="round" d="m267.2 153.5-52.3-15.3 15.9 23.9-23.7 46 31.2-.4h46.5zm-163.6-15.3-52.3 15.3-17.4 54.2h46.4l31.1.4-23.6-46zm71 26.4 3.3-57.7 15.2-41.1h-67.5l15 41.1 3.5 57.7 1.2 18.2.1 44.8h27.7l.2-44.8z"/>
             </svg>
             <div style={{ flex: 1, textAlign: 'left' }}>
               <strong style={{ fontSize: '11px', color: '#c2410c', display: 'block' }}>CONNECT METAMASK</strong>
