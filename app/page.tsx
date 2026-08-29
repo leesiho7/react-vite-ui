@@ -1175,44 +1175,54 @@ export default function Page() {
   const isUpWinning = priceDelta >= 0
 
   // Real-time Live Financial News Feed (Dynamic Web Scraped from Spring Boot + Yahoo / Bloomberg)
-  const [liveNewsFeed, setLiveNewsFeed] = useState<NewsItem[]>([])
+  const [rawLiveItems, setRawLiveItems] = useState<any[]>([])
 
   useEffect(() => {
     fetchLiveFinancialNewsFeed('ALL')
       .then((items) => {
         if (Array.isArray(items) && items.length > 0) {
-          const mapped: NewsItem[] = items.map((item: any) => {
-            let cat: NewsCategoryKey = 'ALL'
-            if (item.category === 'CRYPTO') cat = 'CRYPTO'
-            else if (item.category === 'US_TECH' || item.category === 'TECH') cat = 'TECH'
-            else if (item.category === 'MACRO') cat = 'MACRO'
-            else if (item.category === 'KOREA' || item.category === 'ONCHAIN') cat = 'ONCHAIN'
-
-            return {
-              category: cat,
-              source: item.source || 'BLOOMBERG',
-              tag: item.symbol || 'MARKET',
-              title: item.title,
-              impact: String(item.impactPercent ? (item.impactPercent / 10).toFixed(1) : '8.5'),
-              sentiment: item.sentiment || 'BULLISH',
-              tone: item.sentiment === 'BEARISH' ? 'negative' : (item.sentiment === 'NEUTRAL' ? 'neutral' : 'positive'),
-              thumb: item.symbol?.slice(0, 4) || 'NEWS',
-              imageUrl: item.imageUrl || undefined
-            }
-          })
-          setLiveNewsFeed(mapped)
+          setRawLiveItems(items)
         }
       })
       .catch((err) => console.warn('[v0] Live news feed fallback:', err))
   }, [])
 
-  // Language and Category-bound News List (Dynamic real-time scraped feed with fallback)
+  // Language and Category-bound News List (Dynamic real-time scraped feed with multilingual translation)
   const [newsCategory, setNewsCategory] = useState<NewsCategoryKey>('ALL')
   const currentNewsList = useMemo(() => {
-    const list = liveNewsFeed.length > 0 ? liveNewsFeed : newsItemsByLang[language]
+    let list: NewsItem[] = []
+    if (rawLiveItems.length > 0) {
+      list = rawLiveItems.map((item: any) => {
+        let cat: NewsCategoryKey = 'ALL'
+        if (item.category === 'CRYPTO') cat = 'CRYPTO'
+        else if (item.category === 'US_TECH' || item.category === 'TECH') cat = 'TECH'
+        else if (item.category === 'MACRO') cat = 'MACRO'
+        else if (item.category === 'KOREA' || item.category === 'ONCHAIN') cat = 'ONCHAIN'
+
+        // Select language localized title and snippet
+        let displayTitle = item.title
+        if (language === 'ko' && item.titleKo) displayTitle = item.titleKo
+        else if (language === 'cn' && item.titleCn) displayTitle = item.titleCn
+
+        return {
+          category: cat,
+          source: item.source || 'BLOOMBERG',
+          tag: item.symbol || 'MARKET',
+          title: displayTitle,
+          impact: String(item.impactPercent ? (item.impactPercent / 10).toFixed(1) : '8.5'),
+          sentiment: item.sentiment || 'BULLISH',
+          tone: item.sentiment === 'BEARISH' ? 'negative' : (item.sentiment === 'NEUTRAL' ? 'neutral' : 'positive'),
+          thumb: item.symbol?.slice(0, 4) || 'NEWS',
+          imageUrl: item.imageUrl || undefined
+        }
+      })
+    } else {
+      list = newsItemsByLang[language]
+    }
+
     if (newsCategory === 'ALL') return list
     return list.filter((item) => item.category === newsCategory)
-  }, [liveNewsFeed, language, newsCategory])
+  }, [rawLiveItems, language, newsCategory])
   const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
 
   useEffect(() => {
