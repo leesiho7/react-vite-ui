@@ -1371,90 +1371,263 @@ export default function Page() {
 
       {/* ── 10-Win Prediction League Modal / Drawer ── */}
       {eventOpen && (
-        <section className="league-section">
-          <div className="league-header">
+        <section className="league-section" style={{ background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
+          {/* Header Bar */}
+          <div className="league-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #edf0f2', paddingBottom: '20px' }}>
             <div>
-              <div className="eyebrow"><Diamond /> 24H PREDICTION LEAGUE <span>AI vs HUMAN BATTLE</span></div>
-              <h2>10 wins.<br /><em>One claim.</em></h2>
-              <p>Compete against the AI quant model on the next 24H market direction.<br className="desktop-only" /> Claim the $10.00 USDT reward instantly after ten consecutive wins.</p>
+              <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '10px', letterSpacing: '.1em', fontWeight: 600 }}>
+                <Diamond /> 24H PREDICTION LEAGUE <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '3px' }}>AI vs HUMAN BATTLE</span>
+              </div>
+              <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: 'Georgia, serif', fontWeight: 400 }}>
+                10 wins. <em style={{ color: '#0f766e', fontStyle: 'italic' }}>One claim.</em>
+              </h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
+                AI 퀀트 모델과 다음 24시간 캔들 종가의 상승(UP) / 하락(DOWN) 방향을 예측하고 대결하세요.<br className="desktop-only" />
+                배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 <strong>$10.00 USDT</strong>가 즉시 지급됩니다.
+              </p>
             </div>
-            <div className="pool-readout">
-              <span>RESERVED POOL</span>
-              <strong>10,000.00 <small>USDT</small></strong>
-              <span className="status-tag">NON-CUSTODIAL ESCROW</span>
+
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <div className="pool-readout" style={{ minWidth: '170px', padding: '10px 14px', background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, display: 'block' }}>RESERVED ESCROW POOL</span>
+                <strong style={{ fontSize: '20px', color: '#0f766e', display: 'block', margin: '4px 0 2px' }}>
+                  10,000.00 <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
+                </strong>
+                <span style={{ fontSize: '8.5px', color: '#0284c7', background: '#e0f2fe', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
+                  ● NON-CUSTODIAL
+                </span>
+              </div>
+
+              <div style={{ minWidth: '160px', padding: '10px 14px', background: '#0b131e', border: '1px solid #1e293b', borderRadius: '4px', color: '#ffffff' }}>
+                <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 600, display: 'block' }}>ROUND #{String(round).padStart(2, '0')} CLOSES IN</span>
+                <strong style={{ fontSize: '20px', color: '#f59e0b', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                  03:42:15
+                </strong>
+                <span style={{ fontSize: '8.5px', color: '#34d399', display: 'block' }}>
+                  ● 24H CANDLE SETTLEMENT
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="versus-board">
-            <div className="versus-side">
-              <span className="overline">AI QUANT MODEL</span>
-              <strong>{battle?.aiDecision || 'BULLISH'}</strong>
-              <small>CONFIDENCE: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%</small>
+          {/* Polymarket-Style Live Consensus Ratio & AI Prediction Meter */}
+          <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '18px 20px', margin: '20px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#18334a' }}>
+                  📊 실시간 군중 합의율 (Human Market Consensus)
+                </span>
+                <span style={{ fontSize: '9px', color: '#64748b' }}>
+                  총 {battle?.totalHumanVotes || 1842}명 투표 참여 중
+                </span>
+              </div>
+              <div style={{ fontSize: '10px', color: '#475569' }}>
+                👑 AI 퀀트 모델 예측: <strong style={{ color: '#0f766e' }}>{battle?.aiDecision || 'BULLISH'}</strong> (신뢰도: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
+              </div>
             </div>
-            <div className="versus-mark">VS</div>
-            <div className="versus-side human">
-              <span className="overline">HUMAN CONSENSUS</span>
-              <strong>{battle?.humanBullPercentage || 74.2}% BULL</strong>
-              <small>{battle?.totalHumanVotes || 1840} VOTERS PARTICIPATING</small>
-            </div>
-            <div className="scoreline">
-              <span>HUMAN WINS <strong>{humanWins}</strong></span>
-              <span>AI WINS <strong>{aiWins}</strong></span>
+
+            {/* Split Progress Bar */}
+            <div style={{ height: '36px', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
+              <div
+                style={{
+                  width: `${battle?.humanBullPercentage || 68.4}%`,
+                  background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '14px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  transition: 'width 0.4s ease'
+                }}
+              >
+                🟢 UP {battle?.humanBullPercentage || 68.4}% (상승 예측)
+              </div>
+              <div
+                style={{
+                  width: `${100 - (battle?.humanBullPercentage || 68.4)}%`,
+                  background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  paddingRight: '14px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  transition: 'width 0.4s ease'
+                }}
+              >
+                DOWN {(100 - (battle?.humanBullPercentage || 68.4)).toFixed(1)}% (하락 예측) 🔴
+              </div>
             </div>
           </div>
 
-          <div className="league-progress">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span>BEAT AI <strong>{humanWins} / 10 WINS</strong></span>
+          {/* 10-Win Streak Dot Matrix Tracker */}
+          <div style={{ margin: '22px 0', padding: '16px 20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <strong style={{ fontSize: '11.5px', color: '#18334a' }}>🎯 10연승 연승 트래커 (Streak Milestone)</strong>
+                <span style={{ fontSize: '9.5px', color: '#64748b', marginLeft: '8px' }}>
+                  현재 {humanWins} / 10 승 달성 ({10 - humanWins}승 남음)
+                </span>
+              </div>
               {humanWins >= 10 ? (
                 <button
                   className="primary-button"
-                  style={{ background: '#2b866d', color: '#fff', padding: '4px 12px', fontSize: '11px' }}
+                  style={{ background: '#0f766e', color: '#fff', padding: '5px 14px', fontSize: '10.5px', fontWeight: 700, borderRadius: '3px' }}
                   onClick={() => setClaimModalOpen(true)}
                 >
-                  <Award size={13} style={{ display: 'inline', marginRight: '4px' }} />
-                  CLAIM $10.00 USDT ↗
+                  <Award size={13} style={{ display: 'inline', marginRight: '5px' }} />
+                  🎉 $10.00 USDT 즉시 수령하기 ↗
                 </button>
               ) : (
-                <span>ROUND <strong>{round} / 10</strong></span>
+                <span style={{ fontSize: '10px', color: '#0369a1', fontWeight: 600 }}>
+                  ROUND #{round} 진행 중
+                </span>
               )}
             </div>
-            <div className="progress-track">
-              <i style={{ width: `${Math.min(humanWins * 10, 100)}%`, background: humanWins >= 10 ? '#2b866d' : '#18334a' }} />
+
+            {/* 10 Step Badge Circles */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '8px' }}>
+              {Array.from({ length: 10 }).map((_, idx) => {
+                const stepNum = idx + 1;
+                const isWon = stepNum <= humanWins;
+                const isCurrent = stepNum === round && !isWon;
+                const isFinal = stepNum === 10;
+
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      border: isCurrent ? '2px solid #0284c7' : isWon ? '1px solid #10b981' : isFinal ? '1px dashed #f59e0b' : '1px solid #e2e8f0',
+                      background: isWon ? '#ecfdf5' : isCurrent ? '#f0f9ff' : isFinal ? '#fffbeb' : '#f8fafb',
+                      padding: '8px 4px',
+                      borderRadius: '4px',
+                      textAlign: 'center',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ fontSize: '8px', color: isWon ? '#059669' : isCurrent ? '#0284c7' : '#94a3b8', fontWeight: 700 }}>
+                      {isFinal ? '🏆 FINAL' : `R${stepNum}`}
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: isWon ? '#059669' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#64748b', marginTop: '2px' }}>
+                      {isWon ? '✓' : isCurrent ? '●' : isFinal ? '$10' : '○'}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="prediction-card panel">
-            <div className="panel-heading">
-              <span><Diamond /> ROUND {String(round).padStart(2, '0')} · {searched}</span>
-              <span className="muted">LIVE PRICE TICK</span>
-            </div>
-            <div className="prediction-body">
-              <div>
-                <span className="overline">REALTIME PRICE</span>
-                <strong>{priceFormatted}</strong>
-                <p>Select the expected direction of the next 24-hour candle close.</p>
-              </div>
-              <div className="prediction-actions">
-                <button
-                  className={prediction === 'UP' ? 'prediction selected up' : 'prediction up'}
-                  onClick={() => setPrediction('UP')}
-                >
-                  ↑ <span>UP</span><small>상승 예측</small>
-                </button>
-                <button
-                  className={prediction === 'DOWN' ? 'prediction selected down' : 'prediction down'}
-                  onClick={() => setPrediction('DOWN')}
-                >
-                  ↓ <span>DOWN</span><small>하락 예측</small>
-                </button>
-              </div>
+          {/* Polymarket-Style Interactive Binary Choice Cards */}
+          <div style={{ marginTop: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#18334a' }}>
+                ⚡ ROUND #{round} 24H 마켓 방향 선택 ({searched}) · 기준가: <strong style={{ color: '#0f766e' }}>{priceFormatted}</strong>
+              </span>
+              <span style={{ fontSize: '9px', color: '#64748b' }}>
+                선택 후 제출 시 24시간 캔들 마감 시점에 정산됩니다.
+              </span>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {/* UP Card */}
               <button
-                className="primary-button submit-prediction"
-                style={{ flex: 1 }}
+                type="button"
+                onClick={() => setPrediction('UP')}
+                style={{
+                  border: prediction === 'UP' ? '2px solid #059669' : '1px solid #cbd5e1',
+                  background: prediction === 'UP' ? '#f0fdf4' : '#ffffff',
+                  boxShadow: prediction === 'UP' ? '0 0 0 1px #059669, 0 4px 12px rgba(5, 150, 105, 0.12)' : 'none',
+                  padding: '20px 24px',
+                  borderRadius: '6px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '20px', color: '#059669' }}>↑</span>
+                    <strong style={{ fontSize: '16px', color: '#059669' }}>PREDICT UP (상승)</strong>
+                    {prediction === 'UP' && (
+                      <span style={{ fontSize: '9px', background: '#059669', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
+                        선택됨 ✓
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: '10.5px', color: '#475569' }}>
+                    24시간 뒤 캔들 종가가 현재가(<strong>{priceFormatted}</strong>)보다 <strong>상승</strong>할 것으로 예측
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
+                  <strong style={{ fontSize: '18px', color: '#059669' }}>
+                    {battle?.humanBullPercentage || 68.4}%
+                  </strong>
+                </div>
+              </button>
+
+              {/* DOWN Card */}
+              <button
+                type="button"
+                onClick={() => setPrediction('DOWN')}
+                style={{
+                  border: prediction === 'DOWN' ? '2px solid #dc2626' : '1px solid #cbd5e1',
+                  background: prediction === 'DOWN' ? '#fef2f2' : '#ffffff',
+                  boxShadow: prediction === 'DOWN' ? '0 0 0 1px #dc2626, 0 4px 12px rgba(220, 38, 38, 0.12)' : 'none',
+                  padding: '20px 24px',
+                  borderRadius: '6px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '20px', color: '#dc2626' }}>↓</span>
+                    <strong style={{ fontSize: '16px', color: '#dc2626' }}>PREDICT DOWN (하락)</strong>
+                    {prediction === 'DOWN' && (
+                      <span style={{ fontSize: '9px', background: '#dc2626', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
+                        선택됨 ✓
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: '6px 0 0', fontSize: '10.5px', color: '#475569' }}>
+                    24시간 뒤 캔들 종가가 현재가(<strong>{priceFormatted}</strong>)보다 <strong>하락</strong>할 것으로 예측
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
+                  <strong style={{ fontSize: '18px', color: '#dc2626' }}>
+                    {(100 - (battle?.humanBullPercentage || 68.4)).toFixed(1)}%
+                  </strong>
+                </div>
+              </button>
+            </div>
+
+            {/* Submit Action */}
+            <div style={{ marginTop: '16px' }}>
+              <button
+                className="primary-button"
+                style={{
+                  width: '100%',
+                  height: '46px',
+                  background: submitted ? '#1e293b' : prediction ? (prediction === 'UP' ? '#059669' : '#dc2626') : '#94a3b8',
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  letterSpacing: '.06em',
+                  cursor: (!prediction || submitted) ? 'not-allowed' : 'pointer',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s ease'
+                }}
                 disabled={!prediction || submitted}
                 onClick={() => {
                   setSubmitted(true)
@@ -1462,18 +1635,12 @@ export default function Page() {
                   setRound((v) => Math.min(v + 1, 10))
                 }}
               >
-                {submitted ? 'PREDICTION RECORDED (+0.5 AETHER)' : prediction ? 'SUBMIT PREDICTION ↗' : 'SELECT DIRECTION'}
+                {submitted
+                  ? `✓ ROUND #${round} ${prediction} 예측 제출 완료 (+0.5 AETHER 참여 보너스 지급)`
+                  : prediction
+                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출하기 ↗`
+                  : '위 카드에서 예측 방향(UP 또는 DOWN)을 먼저 선택해주세요'}
               </button>
-
-              {humanWins >= 10 && (
-                <button
-                  className="primary-button"
-                  style={{ background: '#2b866d', color: '#fff', fontWeight: 'bold' }}
-                  onClick={() => setClaimModalOpen(true)}
-                >
-                  CLAIM $10 USDT 🏆
-                </button>
-              )}
             </div>
           </div>
         </section>
