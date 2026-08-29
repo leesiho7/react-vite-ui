@@ -271,6 +271,18 @@ export async function submitPredictionApi(payload: SubmitPredictionPayload) {
   return null;
 }
 
+export async function fetchUserPredictionStats(userId = 1): Promise<PredictionLeaderboardItem | null> {
+  try {
+    const res = await fetch(`${API_BASE}/prediction/user-stats/${userId}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchUserPredictionStats fallback error:', err);
+  }
+  return null;
+}
+
 /**
  * 4. AI vs Human 배틀 현황 조회
  */

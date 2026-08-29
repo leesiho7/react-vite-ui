@@ -18,7 +18,8 @@ import {
   claimStreakReward,
   fetchUserLicenseToken,
   testPythonCode,
-  submitPredictionApi
+  submitPredictionApi,
+  fetchUserPredictionStats
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -1052,9 +1053,9 @@ export default function Page() {
   }
 
   // 1-Hour Prediction League Interactive State & Real Strike Price
-  const [round, setRound] = useState(3)
-  const [humanWins, setHumanWins] = useState(2)
-  const [aiWins, setAiWins] = useState(1)
+  const [round, setRound] = useState(1)
+  const [humanWins, setHumanWins] = useState(0)
+  const [aiWins, setAiWins] = useState(0)
   const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [hourlyRemainingSec, setHourlyRemainingSec] = useState(2430)
@@ -1110,6 +1111,15 @@ export default function Page() {
     fetchPredictionLeaderboard(10).then(setLeaderboard).catch((error) => console.error('[v0] Leaderboard backend unavailable:', error))
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
     fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
+
+    // Fetch user real DB prediction streak
+    fetchUserPredictionStats(1).then((stats) => {
+      if (stats) {
+        const streak = stats.currentStreak || 0
+        setHumanWins(streak)
+        setRound(Math.min(streak + 1, 10))
+      }
+    }).catch((e) => console.log('User streak fetch fallback:', e))
 
     // Fetch official on-chain deposit wallets
     fetchDepositWallets().then((res) => {
