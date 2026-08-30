@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera } from 'lucide-react'
 import Navbar from './components/Navbar'
+import Hero from './components/Hero'
 import {
   fetchIntegratedDecision,
   fetchHistoricalCandles,
@@ -3967,32 +3968,13 @@ export default function Page() {
         </section>
       )}
 
-      {/* ── Hero Search Section ── */}
-      <section className="hero-section">
-        <div className="eyebrow"><Diamond /> {copy.eyebrow}</div>
-        <h1>{copy.title}</h1>
-        <p className="hero-copy">{copy.description}</p>
-        <div className="search-row">
-          <label className="search-box">
-            <span>/</span>
-            <input
-              aria-label="Search market"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handlePerformSearch(query)
-                }
-              }}
-              placeholder={copy.search}
-            />
-            <kbd>⌘ K</kbd>
-          </label>
-          <button className="primary-button" onClick={() => handlePerformSearch(query)}>
-            {copy.run} <span>↗</span>
-          </button>
-        </div>
-      </section>
+      {/* ── Hero Search Section (Interactive AI Line Art & Responsive Layout) ── */}
+      <Hero
+        query={query}
+        onQueryChange={setQuery}
+        onSearch={handlePerformSearch}
+        language={language}
+      />
 
       {/* ── 1. Real-Time Market Pulse & Interactive Chart (Unified Full-Width Panel) ── */}
       <section className="market-panel panel" id="market-panel">
