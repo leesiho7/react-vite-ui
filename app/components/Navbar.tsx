@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import Link from 'next/link'
-import { UserRound } from 'lucide-react'
+import { UserRound, Globe } from 'lucide-react'
 
 interface NavbarProps {
   onSelectSymbol?: (symbol: string) => void;
@@ -43,18 +43,72 @@ export default function Navbar({
     { symbol: '000660.KS', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS' }
   ];
 
-  const languageLabels: Record<'ko' | 'en' | 'cn', string> = {
-    ko: 'KR',
-    en: 'EN',
-    cn: 'CN'
+  const menuText = {
+    ko: {
+      league: '10연승 리그',
+      commons: '전략 커먼즈',
+      newswire: '실시간 속보',
+      bot: '24H 자동봇',
+      research: 'AI 퀀트 리서치',
+      media: '미디어 데스크',
+      orderbook: 'L2 실시간 호가 ↗',
+      login: '로그인',
+      signup: '1초 소셜 시작 ↗',
+      logout: '로그아웃',
+      pulse: '실시간 시장 펄스'
+    },
+    en: {
+      league: '10-WIN LEAGUE',
+      commons: 'STRATEGY COMMONS',
+      newswire: 'LIVE NEWSWIRE',
+      bot: '24H BOT',
+      research: 'AI RESEARCH',
+      media: 'MEDIA DESK',
+      orderbook: 'L2 ORDERBOOK ↗',
+      login: 'LOGIN',
+      signup: '1-SEC ACCESS ↗',
+      logout: 'LOGOUT',
+      pulse: 'LIVE PULSE'
+    },
+    cn: {
+      league: '10连胜联赛',
+      commons: '策略社区',
+      newswire: '实时快讯',
+      bot: '24H 机器人',
+      research: 'AI 量化研报',
+      media: '媒体中心',
+      orderbook: 'L2 深度盘口 ↗',
+      login: '登录',
+      signup: '1秒快捷进入 ↗',
+      logout: '退出登录',
+      pulse: '实时行情'
+    }
+  }[language] || {
+    league: '10연승 리그',
+    commons: '전략 커먼즈',
+    newswire: '실시간 속보',
+    bot: '24H 자동봇',
+    research: 'AI 퀀트 리서치',
+    media: '미디어 데스크',
+    orderbook: 'L2 실시간 호가 ↗',
+    login: '로그인',
+    signup: '1초 소셜 시작 ↗',
+    logout: '로그아웃',
+    pulse: '실시간 시장 펄스'
   }
+
+  const langOptions = [
+    { code: 'ko' as const, label: '한국어' },
+    { code: 'en' as const, label: 'English' },
+    { code: 'cn' as const, label: '中文' }
+  ];
 
   return (
     <header className="w-full bg-[#121212] text-white border-b border-[#222222] select-none sticky top-0 z-50 shadow-lg font-sans">
       {/* ── 1단 글로벌 네비게이션: 2-Block justify-between 1줄 칼각 정렬 ── */}
       <nav className="w-full max-w-[1440px] mx-auto flex items-center justify-between h-[64px] px-6 sm:px-8 gap-4 bg-[#121212]">
         
-        {/* [왼쪽 블록: AETHER 로고 + 텍스트 링크 메뉴] */}
+        {/* [왼쪽 블록: AETHER 로고 + 다국어 텍스트 링크 메뉴] */}
         <div className="flex items-center gap-6 lg:gap-8 min-w-0 flex-1 overflow-hidden">
           {/* A 네모상자 + AETHER 브랜드 락업 (고정 크기) */}
           <Link href="/" className="flex items-center gap-3 text-white no-underline group flex-shrink-0">
@@ -74,16 +128,16 @@ export default function Navbar({
           {/* 세로 구분선 */}
           <div className="hidden lg:block h-4 w-[1px] bg-[#27272a] flex-shrink-0" />
 
-          {/* 메뉴 리스트: 흰색 박스 제거, 깔끔한 텍스트 링크 스타일 */}
+          {/* 다국어 동기화 메뉴 리스트 (클릭 시 언어에 맞춰 한국어/영어/중국어로 즉시 전환) */}
           <ul className="hidden md:flex items-center gap-x-5 lg:gap-x-7 text-[12px] font-medium text-[#a1a1aa] list-none p-0 m-0 whitespace-nowrap overflow-x-auto scrollbar-none">
             <li>
               <button
                 type="button"
                 style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] ${eventOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
+                className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${eventOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
                 onClick={onToggleEvent}
               >
-                <span>10-WIN LEAGUE</span>
+                <span>{menuText.league}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
               </button>
             </li>
@@ -91,58 +145,60 @@ export default function Navbar({
               <button
                 type="button"
                 style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                className={`transition-colors cursor-pointer p-0 text-[12px] ${communityOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
+                className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${communityOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
                 onClick={onToggleCommunity}
               >
-                STRATEGY COMMONS
+                {menuText.commons}
               </button>
             </li>
             <li>
               <button
                 type="button"
                 style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                className={`transition-colors cursor-pointer p-0 text-[12px] ${newsOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
+                className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${newsOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
                 onClick={onToggleNews}
               >
-                LIVE NEWSWIRE
+                {menuText.newswire}
               </button>
             </li>
             <li>
-              <a href="#trading-console" className="hover:text-white transition-colors no-underline text-[#a1a1aa]">
-                24H BOT
+              <a href="#trading-console" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
+                {menuText.bot}
               </a>
             </li>
             <li>
-              <a href="#research-terminal" className="hover:text-white transition-colors no-underline text-[#a1a1aa]">
-                AI RESEARCH
+              <a href="#research-terminal" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
+                {menuText.research}
               </a>
             </li>
             <li>
-              <a href="#media-wire" className="hover:text-white transition-colors no-underline text-[#a1a1aa]">
-                MEDIA DESK
+              <a href="#media-wire" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
+                {menuText.media}
               </a>
             </li>
             <li>
               <a href="/orderbook" className="hover:text-[#38bdf8] transition-colors no-underline text-[#71717a] font-mono text-[11px]">
-                L2 ORDERBOOK ↗
+                {menuText.orderbook}
               </a>
             </li>
           </ul>
         </div>
 
-        {/* [오른쪽 블록: 언어 + 계정 유틸리티] */}
-        <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
-          {/* 언어 전환 버튼 */}
-          <div className="flex items-center border border-[#27272a] rounded-[3px] p-[2px] bg-[#18181b]">
-            {(['ko', 'en', 'cn'] as const).map((item) => (
+        {/* [오른쪽 블록: 한국어·English·中文 선택기 + 계정 유틸리티] */}
+        <div className="flex items-center gap-3.5 flex-shrink-0 ml-auto">
+          {/* 3대 언어 명시적 선택 탭 (한국어 / English / 中文) */}
+          <div className="flex items-center border border-[#27272a] rounded-[4px] p-[2px] bg-[#18181b]">
+            <Globe size={11} className="text-[#71717a] ml-1.5 mr-1" />
+            {langOptions.map((item) => (
               <button
-                key={item}
+                key={item.code}
                 type="button"
                 style={{ border: 'none', boxShadow: 'none' }}
-                className={`px-2 py-0.5 text-[9.5px] font-mono font-semibold rounded-[2px] cursor-pointer transition-colors ${language === item ? 'bg-[#38bdf8] text-[#090e17] font-bold' : 'bg-transparent text-[#a1a1aa] hover:text-white'}`}
-                onClick={() => onLanguageChange && onLanguageChange(item)}
+                className={`px-2 py-1 text-[10px] font-medium rounded-[3px] cursor-pointer transition-all ${language === item.code ? 'bg-[#38bdf8] text-[#090e17] font-bold shadow-sm' : 'bg-transparent text-[#a1a1aa] hover:text-white'}`}
+                onClick={() => onLanguageChange && onLanguageChange(item.code)}
+                title={`${item.label}로 언어 설정`}
               >
-                {languageLabels[item]}
+                {item.label}
               </button>
             ))}
           </div>
@@ -157,9 +213,9 @@ export default function Navbar({
                 type="button"
                 style={{ background: 'transparent', boxShadow: 'none' }}
                 onClick={onLogout}
-                className="px-2 py-0.5 text-[9px] font-mono text-[#a1a1aa] hover:text-white border border-[#27272a] rounded-[2px] cursor-pointer whitespace-nowrap"
+                className="px-2 py-1 text-[9.5px] font-mono text-[#a1a1aa] hover:text-white border border-[#27272a] rounded-[2px] cursor-pointer whitespace-nowrap"
               >
-                LOGOUT
+                {menuText.logout}
               </button>
             </div>
           ) : (
@@ -168,7 +224,7 @@ export default function Navbar({
                 href="/login"
                 className="px-3 py-1.5 text-[11px] font-semibold text-[#d4d4d8] hover:text-white no-underline whitespace-nowrap"
               >
-                로그인
+                {menuText.login}
               </Link>
               <button
                 type="button"
@@ -176,19 +232,19 @@ export default function Navbar({
                 onClick={onOpenDeposit}
                 className="px-3.5 py-1.5 text-[11px] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-[3px] cursor-pointer transition-colors shadow-[0_0_12px_rgba(2,132,199,0.35)] whitespace-nowrap"
               >
-                1-SEC SOCIAL ACCESS ↗
+                {menuText.signup}
               </button>
             </div>
           )}
         </div>
       </nav>
 
-      {/* ── 2단 실시간 펄스 티커 바: 완전 다크(#161616) 배경 & 흰색 박스 원천 박멸 ── */}
+      {/* ── 2단 실시간 펄스 티커 바: 다크(#161616) 배경 & 다국어 동기화 ── */}
       <div className="w-full bg-[#161616] text-white h-[36px] px-6 sm:px-8 border-t border-[#222222] flex items-center overflow-x-auto whitespace-nowrap scrollbar-none">
         <div className="w-full max-w-[1440px] mx-auto flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
           {/* LIVE PULSE 라벨 */}
           <div className="flex items-center gap-2 pr-3 border-r border-[#27272a] font-bold text-[#38bdf8] flex-shrink-0">
-            <span className="text-[9.5px] text-[#71717a] font-mono tracking-wider">LIVE PULSE</span>
+            <span className="text-[9.5px] text-[#71717a] font-mono tracking-wider">{menuText.pulse}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
           </div>
 
