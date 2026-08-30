@@ -1201,3 +1201,43 @@ export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]
   return [];
 }
 
+/**
+ * 22. AI Vision 차트 사진 시각 판독 & FastDTW 프랙탈 분석 API
+ */
+export interface VisionChartAnalysisRequest {
+  symbol: string;
+  imageBase64: string;
+  prompt?: string;
+  timeframe?: string;
+}
+
+export interface VisionChartAnalysisResponse {
+  success: boolean;
+  symbol: string;
+  analysisMarkdown: string;
+  identifiedPatterns: string[];
+  technicalVerdict: string;
+  supportPrice: number;
+  resistancePrice: number;
+  currentPrice: number;
+  modelUsed: string;
+  processingTimeMs: number;
+  analyzedAt: string;
+}
+
+export async function fetchVisionChartAnalysis(req: VisionChartAnalysisRequest): Promise<VisionChartAnalysisResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/ai/vision-analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for fetchVisionChartAnalysis:', e);
+  }
+  return null;
+}
+
