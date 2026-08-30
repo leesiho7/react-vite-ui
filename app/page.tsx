@@ -100,7 +100,7 @@ const newsItemsByLang = {
     { category: 'TECH', source: '财新网 科技前沿', tag: 'NVDA', title: '英伟达下一代企业级AI集群订单激增，半导体供应链全面提振', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
     { category: 'CRYPTO', source: '彭博商业周刊', tag: 'SOL', title: 'Solana链上DEX单日交易量创历史新高，机构流动性加速涌入', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
     { category: 'TECH', source: '路透社 汽车科技', tag: 'TSLA', title: '特斯拉FSD v13全自动驾驶全球审批加速，无人出租车量产提速', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: '8BTC 深度报道', tag: 'ETH', title: '以太坊质押总量创季度新高，交易所流通量持续净流出', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
+    { category: 'CRYPTO', source: '8BTC 深报道', tag: 'ETH', title: '以太坊质押总量创季度新高，交易所流通量持续净流出', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
     { category: 'MACRO', source: 'CNN 商业频道', tag: 'MACRO', title: '美联储暗示利率政策保持稳健，全球宏观流动性周期回暖', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
     { category: 'TECH', source: 'CNBC 独家', tag: 'AAPL', title: '苹果AI大模型生态全面落地，供应链迎来超级换机周期', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
     { category: 'MACRO', source: '华尔街见闻 宏观', tag: 'MACRO', title: '全球主要权益市场全线上扬，企业盈利超华尔街机构普遍预期', impact: '8.1', sentiment: 'BULLISH', tone: 'positive', thumb: '宏观', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
@@ -503,14 +503,15 @@ export interface BotInstanceItem {
   id: string
   name: string
   strategy: string
-  symbol: string
-  status: 'RUNNING' | 'PAUSED' | 'STOPPED'
-  uptime: string
-  pnl: string
-  isPositive: boolean
+  status: 'RUNNING' | 'PAUSED' | 'STOPPED' | string
   region: string
-  specs: string
-  ip: string
+  heartbeat?: string
+  symbol?: string
+  uptime?: string
+  pnl?: string
+  isPositive?: boolean
+  specs?: string
+  ip?: string
 }
 
 export const SUPPORTED_ASSETS_REGISTRY = [
@@ -531,6 +532,55 @@ export const SUPPORTED_ASSETS_REGISTRY = [
   { symbol: '000660.KS', raw: '000660.KS', name: 'SK하이닉스 (000660.KS)', category: '국내 주식 (KOSPI)', flag: '🇰🇷' },
   { symbol: '005380.KS', raw: '005380.KS', name: '현대자동차 (005380.KS)', category: '국내 주식 (KOSPI)', flag: '🇰🇷' }
 ]
+
+function highlightDraculaPythonCode(code: string) {
+  const lines = code.split('\n')
+  return lines.map((line, lineIdx) => {
+    const trimmed = line.trim()
+    if (trimmed.startsWith('#')) {
+      return (
+        <div key={lineIdx} style={{ minHeight: '1.6em' }}>
+          <span style={{ color: '#6272a4', fontStyle: 'italic' }}>{line}</span>
+        </div>
+      )
+    }
+
+    const tokenRegex = /(#.*$)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b(?:def|if|elif|else|return|import|from|as|in|for|while|and|or|not|is|None|True|False)\b)|(\b(?:on_market_tick|get|append|print|len|range|dict|list)\b)|(\b\d+(?:\.\d+)?\b)|(\b[a-zA-Z_]\w*\b)|([{}():=<>+\-*\/,%]+)|(\s+)/g
+
+    const tokens: React.ReactNode[] = []
+    let match: RegExpExecArray | null
+    let keyIdx = 0
+
+    while ((match = tokenRegex.exec(line)) !== null) {
+      const [full, comment, str, kw, fn, num, id, sym, space] = match
+      if (comment) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#6272a4', fontStyle: 'italic' }}>{comment}</span>)
+      } else if (str) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#f1fa8c' }}>{str}</span>)
+      } else if (kw) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#ff79c6', fontWeight: 'bold' }}>{kw}</span>)
+      } else if (fn) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#50fa7b' }}>{fn}</span>)
+      } else if (num) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#bd93f9' }}>{num}</span>)
+      } else if (id) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#8be9fd' }}>{id}</span>)
+      } else if (sym) {
+        tokens.push(<span key={keyIdx++} style={{ color: '#f8f8f2' }}>{sym}</span>)
+      } else if (space) {
+        tokens.push(<span key={keyIdx++}>{space}</span>)
+      } else {
+        tokens.push(<span key={keyIdx++}>{full}</span>)
+      }
+    }
+
+    return (
+      <div key={lineIdx} style={{ minHeight: '1.6em', whiteSpace: 'pre' }}>
+        {tokens.length > 0 ? tokens : ' '}
+      </div>
+    )
+  })
+}
 
 function checkAssetSupport(input: string): { isSupported: boolean; resolvedSymbol?: string } {
   if (!input || !input.trim()) return { isSupported: true, resolvedSymbol: 'BTC/USD' }
@@ -1122,51 +1172,35 @@ export default function Page() {
   } = useMarketWebSocket(searched)
 
   // AWS / Hetzner Cloud Virtual Instance Sandbox State
-  const [instanceList, setInstanceList] = useState<BotInstanceItem[]>([
-    {
-      id: 'i-7d8e4a91',
-      name: 'BTC Trend Breakout Scalper',
-      strategy: 'FastDTW 8,000 Fractal + ta4j SMA20',
-      symbol: 'BTC/USD',
-      status: 'RUNNING',
-      uptime: '24h 15m',
-      pnl: '+8.4%',
-      isPositive: true,
-      region: 'Frankfurt, DE (nbg1-dc3)',
-      specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
-      ip: '49.12.240.118'
-    },
-    {
-      id: 'i-9c2b1e4f',
-      name: 'ETH Volatility Arbitrage',
-      strategy: 'Bollinger Band Reversion',
-      symbol: 'ETH/USD',
-      status: 'RUNNING',
-      uptime: '12h 40m',
-      pnl: '+4.2%',
-      isPositive: true,
-      region: 'Frankfurt, DE (nbg1-dc3)',
-      specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
-      ip: '49.12.240.119'
-    },
-    {
-      id: 'i-3a8f5c7d',
-      name: 'NVDA AI Momentum Swing',
-      strategy: 'Qwen-VL Vision + RSI Squeeze',
-      symbol: 'NVDA/USD',
-      status: 'PAUSED',
-      uptime: '06h 10m',
-      pnl: '+1.8%',
-      isPositive: true,
-      region: 'Nuremberg, DE (fsn1-dc14)',
-      specs: '2 vCPU · 2.0 GB RAM · 20 GB NVMe',
-      ip: '49.12.240.120'
-    }
+  const [botInstances, setBotInstances] = useState<BotInstanceItem[]>([
+    { id: 'qnt-7f3a2c', name: 'BTC momentum alpha', status: 'RUNNING', strategy: 'RSI + Bollinger', region: 'HEL1', heartbeat: '12s ago', symbol: 'BTC/USD', uptime: '24h 15m', pnl: '+8.4%', isPositive: true, specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe', ip: '49.12.240.118' },
+    { id: 'qnt-19b8e1', name: 'ETH mean reversion', status: 'STOPPED', strategy: 'SMA crossover', region: 'HEL1', heartbeat: '2h ago', symbol: 'ETH/USD', uptime: '12h 40m', pnl: '+4.2%', isPositive: true, specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe', ip: '49.12.240.119' },
   ])
-  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('i-7d8e4a91')
-  const [showCreateInstanceForm, setShowCreateInstanceForm] = useState<boolean>(false)
-  const [newInstanceName, setNewInstanceName] = useState<string>('')
+  const [selectedInstanceId, setSelectedInstanceId] = useState('qnt-7f3a2c')
+  const [instanceName, setInstanceName] = useState('')
+  const [instanceCreating, setInstanceCreating] = useState(false)
   const [newInstanceSymbol, setNewInstanceSymbol] = useState<string>('BTC/USD')
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('aether_bot_instances')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setBotInstances(parsed)
+          setSelectedInstanceId(parsed[0].id)
+        }
+      }
+    } catch (e) {}
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && botInstances.length > 0) {
+        localStorage.setItem('aether_bot_instances', JSON.stringify(botInstances))
+      }
+    } catch (e) {}
+  }, [botInstances])
 
   const [instanceStatus, setInstanceStatus] = useState<'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED'>('RUNNING')
   const [instanceUptime, setInstanceUptime] = useState<number>(52140)
@@ -3907,198 +3941,57 @@ export default function Page() {
       {/* ── 24H Trading Operations Console ── */}
       <section className="trading-console panel" id="trading-console">
         <div className="instance-console-head">
-          <div>
-            <h2>24H Trading Operations Console</h2>
-            <p>ISOLATED DOCKER SANDBOX · PYTHON ALGO RUNNER · TA4J QUANT AUTOMATION</p>
-          </div>
-          <button
-            className="primary-button instance-create-button"
-            onClick={() => setShowCreateInstanceForm(!showCreateInstanceForm)}
-          >
-            {showCreateInstanceForm ? '✕ CLOSE FORM' : '+ CREATE NEW INSTANCE'}
-          </button>
+          <div><span className="overline">BOT INSTANCES</span><h2>Instances</h2><p>24-hour quant workers running on dedicated execution capacity.</p></div>
+          <button className="primary-button instance-create-button" onClick={() => setInstanceCreating(true)}>＋ CREATE INSTANCE</button>
         </div>
+        <div className="instance-toolbar"><span><i className="live-dot" /> {botInstances.length} instances · {botInstances.filter((instance) => instance.status === 'RUNNING').length} running</span><button className="text-button" onClick={() => setBotInstances((items) => [...items])}>↻ REFRESH</button></div>
+        <div className="instance-table-wrap"><table className="instance-table"><thead><tr><th>STATUS</th><th>INSTANCE ID</th><th>NAME</th><th>STRATEGY</th><th>REGION</th><th>HEARTBEAT</th><th /></tr></thead><tbody>{botInstances.map((instance) => <tr key={instance.id} className={selectedInstanceId === instance.id ? 'selected' : ''} onClick={() => setSelectedInstanceId(instance.id)}><td><span className={`instance-status ${instance.status.toLowerCase()}`}><i />{instance.status}</span></td><td className="mono-cell">{instance.id}</td><td><strong>{instance.name}</strong></td><td>{instance.strategy}</td><td>{instance.region}</td><td>{instance.heartbeat}</td><td><button className="row-action" aria-label={`Manage ${instance.name}`} onClick={(event) => { event.stopPropagation(); setSelectedInstanceId(instance.id) }}>⋯</button></td></tr>)}</tbody></table></div>
+        {instanceCreating && <div className="instance-create-form"><label>INSTANCE NAME<input autoFocus value={instanceName} onChange={(event) => setInstanceName(event.target.value)} placeholder="e.g. SOL breakout beta" /></label><span>Provisioned in HEL1 · subscriber execution quota applies.</span><div><button className="secondary-button" onClick={() => setInstanceCreating(false)}>CANCEL</button><button className="primary-button" disabled={!instanceName.trim()} onClick={() => { setBotInstances((items) => [...items, { id: `qnt-${Math.random().toString(16).slice(2, 8)}`, name: instanceName.trim(), status: 'STOPPED', strategy: 'New strategy', region: 'HEL1', heartbeat: 'never' }]); setInstanceName(''); setInstanceCreating(false) }}>CREATE</button></div></div>}
+        <div className="instance-detail"><span className="overline">SELECTED INSTANCE</span><strong>{botInstances.find((instance) => instance.id === selectedInstanceId)?.name}</strong><span>{selectedInstanceId} · Hetzner HEL1 · Docker isolated runtime</span></div>
 
-        <div className="instance-toolbar">
-          <div>
-            <i className="live-dot" />
-            <span>{instanceList.filter(i => i.status === 'RUNNING').length} ACTIVE CONTAINERS · 24H AUTONOMOUS EXECUTION</span>
+        {/* AWS / Hetzner Cloud Virtual Instance Control Box (PowerShell CLI Style) */}
+        <div className="powershell-terminal-box" style={{ margin: '16px 24px' }}>
+          <div className="powershell-titlebar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="powershell-dots">
+                <span className="dot-red" />
+                <span className="dot-yellow" />
+                <span className="dot-green" />
+              </div>
+              <span>PS C:\TradingEngine\Docker\instances\{selectedInstanceId}&gt; node --runtime=ta4j-v0.15</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ color: '#10b981' }}>● HEL1_ISOLATED_CONTAINER</span>
+              <span style={{ color: '#64748b' }}>49.12.240.118</span>
+            </div>
           </div>
-          <div>
-            <span>PROVIDER: HETZNER CLOUD (FRANKFURT DC) · ISOLATED IP MAPPING</span>
-          </div>
-        </div>
 
-        {showCreateInstanceForm && (
-          <div className="instance-create-form">
-            <label>
-              BOT CONTAINER NAME & STRATEGY
-              <input
-                type="text"
-                placeholder="e.g. SOL Dynamic Scalper v2"
-                value={newInstanceName}
-                onChange={(e) => setNewInstanceName(e.target.value)}
-              />
-            </label>
-            <label>
-              TARGET ASSET
-              <select
-                value={newInstanceSymbol}
-                onChange={(e) => setNewInstanceSymbol(e.target.value)}
-              >
-                <option value="BTC/USD">BTC/USD (Bitcoin)</option>
-                <option value="ETH/USD">ETH/USD (Ethereum)</option>
-                <option value="SOL/USD">SOL/USD (Solana)</option>
-                <option value="NVDA/USD">NVDA/USD (NVIDIA)</option>
-                <option value="005930.KS">005930.KS (삼성전자)</option>
-              </select>
-            </label>
-            <div>
+          <div className="powershell-target-bar">
+            <span style={{ fontSize: '8px', color: '#94a3b8', fontFamily: "'IBM Plex Mono', monospace", marginRight: '4px' }}>
+              TARGET_SYMBOL_FLAGS:
+            </span>
+            {[
+              { label: '--target=BTC/USD', sym: 'BTC/USD' },
+              { label: '--target=ETH/USD', sym: 'ETH/USD' },
+              { label: '--target=SOL/USD', sym: 'SOL/USD' },
+              { label: '--target=NVDA/USD', sym: 'NVDA/USD' },
+              { label: '--target=005930.KS', sym: '005930.KS' }
+            ].map(chip => (
               <button
-                className="primary-button"
+                key={chip.sym}
+                className={`powershell-chip ${searched === chip.sym ? 'active' : ''}`}
                 onClick={() => {
-                  if (!newInstanceName.trim()) return
-                  const newId = 'i-' + Math.random().toString(36).substring(2, 10)
-                  const newItem: BotInstanceItem = {
-                    id: newId,
-                    name: newInstanceName,
-                    strategy: 'FastDTW Fractal + ta4j Auto',
-                    symbol: newInstanceSymbol,
-                    status: 'RUNNING',
-                    uptime: '00h 01m',
-                    pnl: '+0.0%',
-                    isPositive: true,
-                    region: 'Frankfurt, DE (nbg1-dc3)',
-                    specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
-                    ip: `49.12.240.${Math.floor(Math.random() * 100) + 130}`
-                  }
-                  setInstanceList(prev => [newItem, ...prev])
-                  setSelectedInstanceId(newId)
-                  setSearched(newInstanceSymbol)
-                  setNewInstanceName('')
-                  setShowCreateInstanceForm(false)
+                  setSearched(chip.sym)
+                  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                  setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'ROUTING', text: `Target asset re-routed to ${chip.sym}. Container process PID: 4104 attached.` }])
                 }}
               >
-                DEPLOY INSTANCE ↗
+                {chip.label}
               </button>
-              <button
-                className="secondary-button"
-                onClick={() => setShowCreateInstanceForm(false)}
-              >
-                CANCEL
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="instance-table-wrap">
-          <table className="instance-table">
-            <thead>
-              <tr>
-                <th>CONTAINER ID</th>
-                <th>BOT NAME & STRATEGY</th>
-                <th>TARGET ASSET</th>
-                <th>STATUS</th>
-                <th>UPTIME</th>
-                <th>PROFIT (PNL)</th>
-                <th style={{ textAlign: 'right' }}>ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {instanceList.map(inst => (
-                <tr
-                  key={inst.id}
-                  className={selectedInstanceId === inst.id ? 'selected' : ''}
-                  onClick={() => {
-                    setSelectedInstanceId(inst.id)
-                    setSearched(inst.symbol)
-                  }}
-                >
-                  <td className="mono-cell">{inst.id}</td>
-                  <td>
-                    <strong>{inst.name}</strong>
-                    <div style={{ fontSize: '8px', color: 'var(--muted)' }}>{inst.strategy}</div>
-                  </td>
-                  <td><strong style={{ color: '#38bdf8' }}>{inst.symbol}</strong></td>
-                  <td>
-                    <span className={`instance-status ${inst.status.toLowerCase()}`}>
-                      <i /> {inst.status}
-                    </span>
-                  </td>
-                  <td className="mono-cell">{inst.uptime}</td>
-                  <td className="mono-cell" style={{ color: inst.isPositive ? 'var(--green)' : 'var(--red)', fontWeight: 'bold' }}>
-                    {inst.pnl}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button
-                      className="row-action"
-                      title="Toggle / Options"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setInstanceList(prev => prev.map(item => item.id === inst.id ? { ...item, status: item.status === 'RUNNING' ? 'PAUSED' : 'RUNNING' } : item))
-                      }}
-                    >
-                      ⋮
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {(() => {
-          const selectedInst = instanceList.find(i => i.id === selectedInstanceId) || instanceList[0]
-          return selectedInst ? (
-            <div className="instance-detail">
-              <span>SELECTED CONTAINER: <strong>{selectedInst.id} ({selectedInst.name})</strong></span>
-              <span>REGION: <strong>{selectedInst.region}</strong></span>
-              <span>SPECS: <strong>{selectedInst.specs}</strong></span>
-              <span>ISOLATED IP: <strong>{selectedInst.ip}</strong></span>
-            </div>
-          ) : null
-        })()}
-
-        {/* AWS / Hetzner Cloud Virtual Instance Control Box */}
-        <div className="virtual-instance-box" style={{ borderTop: '1px solid var(--line)', margin: '0' }}>
-          <div className="instance-specs-grid" style={{ padding: '16px 24px', borderBottom: '1px solid var(--line)' }}>
-            <div className="instance-spec-cell">
-              <span>ACTIVE TARGET ASSET (실시간 봇 타겟)</span>
-              <strong style={{ color: '#38bdf8' }}>{searched} (ta4j Loop)</strong>
-              <div style={{ display: 'flex', gap: '4px', marginTop: '5px', flexWrap: 'wrap' }}>
-                {[
-                  { label: 'BTC', sym: 'BTC/USD' },
-                  { label: 'ETH', sym: 'ETH/USD' },
-                  { label: 'SOL', sym: 'SOL/USD' },
-                  { label: 'NVDA', sym: 'NVDA/USD' },
-                  { label: '삼성전자', sym: '005930.KS' }
-                ].map(chip => (
-                  <button
-                    key={chip.sym}
-                    style={{
-                      fontSize: '7.5px',
-                      padding: '2px 5px',
-                      borderRadius: '2px',
-                      border: searched === chip.sym ? '1px solid #38bdf8' : '1px solid #334155',
-                      background: searched === chip.sym ? '#0369a1' : '#1e293b',
-                      color: searched === chip.sym ? '#ffffff' : '#94a3b8',
-                      cursor: 'pointer',
-                      fontFamily: "'IBM Plex Mono', monospace"
-                    }}
-                    onClick={() => {
-                      setSearched(chip.sym)
-                      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                      setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'ROUTING', text: `Target asset switched to ${chip.sym}. Docker container re-anchored.` }])
-                    }}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="instance-controls-bar">
+          <div className="instance-controls-bar" style={{ background: '#060a12', borderBottom: '1px solid #1e293b', padding: '8px 14px' }}>
             <button
               className="instance-ctrl-btn primary"
               onClick={handleStartInstance}
@@ -4129,12 +4022,12 @@ export default function Page() {
             </button>
           </div>
 
-          <div className="instance-live-terminal">
+          <div className="instance-live-terminal" style={{ background: '#000000', border: 'none', borderRadius: '0', padding: '12px 14px', height: '110px' }}>
             {instanceLogs.map((log, idx) => (
               <div key={idx} className="terminal-log-line">
-                <span className="t-time">[{log.time}]</span>
-                <span className="t-tag">[{log.tag}]</span>
-                <span className="t-text">{log.text}</span>
+                <span className="t-time" style={{ color: '#475569' }}>[{log.time}]</span>
+                <span className="t-tag" style={{ color: '#10b981', fontWeight: 'bold' }}>[{log.tag}]</span>
+                <span className="t-text" style={{ color: '#e2e8f0' }}>{log.text}</span>
               </div>
             ))}
           </div>
@@ -4167,56 +4060,105 @@ export default function Page() {
             </label>
           </div>
         ) : (
-          <div className="python-terminal">
-            <div className="terminal-line">
-              <span>root@quant-sandbox:~$</span> python3 -m quant.runner --symbol {searched}
-            </div>
-            <textarea
-              aria-label="Python strategy code"
-              value={pythonCode}
-              onChange={(e) => setPythonCode(e.target.value)}
-              rows={6}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-              <small>Restricted: Isolated non-root Docker Sandbox · No OS injection.</small>
-              <button className="text-button" style={{ fontSize: '10px', color: '#2b866d', fontWeight: 'bold' }} onClick={handleTestSandbox} disabled={sandboxLoading}>
-                {sandboxLoading ? 'SANDBOX RUNNING…' : 'TEST CODE (SANDBOX) ↗'}
-              </button>
-            </div>
-            {sandboxLog && (
-              <div style={{ marginTop: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{
-                    fontSize: '9px',
-                    fontWeight: 'bold',
-                    padding: '2px 6px',
-                    borderRadius: '2px',
-                    background: sandboxIsError ? '#ef4444' : '#10b981',
-                    color: '#ffffff',
-                    letterSpacing: '0.05em'
-                  }}>
-                    {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
-                  </span>
-                  <span style={{ fontSize: '9px', color: sandboxIsError ? '#fca5a5' : '#a7f3d0' }}>
-                    {sandboxIsError ? 'Python 3.12 AST Compiler raised an exception' : 'Sandbox AST validation & Backtest completed'}
-                  </span>
+          <div className="powershell-terminal-box" style={{ margin: '16px 24px' }}>
+            <div className="powershell-titlebar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="powershell-dots">
+                  <span className="dot-red" />
+                  <span className="dot-yellow" />
+                  <span className="dot-green" />
                 </div>
-                <pre style={{
-                  background: sandboxIsError ? '#180707' : '#041710',
-                  border: sandboxIsError ? '1px solid #ef4444' : '1px solid #10b981',
-                  color: sandboxIsError ? '#fca5a5' : '#6ee7b7',
-                  padding: '12px 14px',
-                  fontSize: '11px',
-                  lineHeight: '1.6',
-                  borderRadius: '4px',
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  boxShadow: sandboxIsError ? '0 0 12px rgba(239, 68, 68, 0.2)' : '0 0 12px rgba(16, 185, 129, 0.15)'
-                }}>
-                  {sandboxLog}
-                </pre>
+                <span>Windows PowerShell (x64) - [Python 3.12.10 - Sandbox Execution Environment]</span>
               </div>
-            )}
+              <span style={{ color: '#38bdf8' }}>AST_SANDBOX_ACTIVE</span>
+            </div>
+
+            <div className="powershell-body">
+              <div className="powershell-prompt">
+                <span className="path">PS C:\Quant\sandbox\bots\live_worker&gt;</span>
+                <span className="cmd">python -u strategy_runner.py --symbol {searched}</span>
+              </div>
+
+              {/* Dracula Syntax-Highlighted Interactive Code Editor */}
+              <div className="dracula-editor-wrap">
+                <div className="dracula-line-numbers">
+                  {pythonCode.split('\n').map((_, idx) => (
+                    <div key={idx}>{idx + 1}</div>
+                  ))}
+                </div>
+                <pre className="dracula-code-display">
+                  {highlightDraculaPythonCode(pythonCode)}
+                </pre>
+                <textarea
+                  className="dracula-code-textarea"
+                  aria-label="Python strategy code"
+                  value={pythonCode}
+                  onChange={(e) => setPythonCode(e.target.value)}
+                  rows={8}
+                  placeholder="# Python strategy code runs in isolated sandbox..."
+                  spellCheck={false}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                <small style={{ color: '#64748b', fontSize: '8px' }}>
+                  SECURITY: Isolated non-root Docker Sandbox · Dracula AST syntax parser active.
+                </small>
+                <button
+                  className="primary-button"
+                  style={{
+                    fontSize: '9px',
+                    padding: '8px 16px',
+                    height: 'auto',
+                    background: '#0f766e',
+                    border: '1px solid #14b8a6',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    fontFamily: "'IBM Plex Mono', monospace"
+                  }}
+                  onClick={handleTestSandbox}
+                  disabled={sandboxLoading}
+                >
+                  {sandboxLoading ? 'COMPILING AST…' : '▶ EXECUTE AST SANDBOX'}
+                </button>
+              </div>
+
+              {sandboxLog && (
+                <div style={{ marginTop: '14px', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{
+                      fontSize: '8px',
+                      fontWeight: 'bold',
+                      padding: '2px 7px',
+                      borderRadius: '2px',
+                      background: sandboxIsError ? '#ef4444' : '#10b981',
+                      color: '#ffffff',
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      letterSpacing: '0.05em'
+                    }}>
+                      {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
+                    </span>
+                    <span style={{ fontSize: '8.5px', color: sandboxIsError ? '#fca5a5' : '#a7f3d0' }}>
+                      {sandboxIsError ? 'Python 3.12 AST Compiler raised an exception' : 'Sandbox AST validation & Backtest completed successfully'}
+                    </span>
+                  </div>
+                  <pre style={{
+                    background: sandboxIsError ? '#180707' : '#010f08',
+                    border: sandboxIsError ? '1px solid #ef4444' : '1px solid #10b981',
+                    color: sandboxIsError ? '#fca5a5' : '#50fa7b',
+                    padding: '12px 14px',
+                    fontSize: '10.5px',
+                    lineHeight: '1.6',
+                    borderRadius: '3px',
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    boxShadow: sandboxIsError ? '0 0 16px rgba(239, 68, 68, 0.25)' : '0 0 16px rgba(16, 185, 129, 0.2)'
+                  }}>
+                    {sandboxLog}
+                  </pre>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

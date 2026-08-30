@@ -52,6 +52,15 @@ button { cursor: pointer; }
 .instance-create-form > div { display: flex; gap: 8px; }
 .instance-create-form button { margin: 0; min-height: 38px; }
 
+@media (max-width: 768px) {
+  .instance-console-head { align-items: flex-start; flex-direction: column; padding: 20px 16px 16px; }
+  .instance-create-button { width: 100%; }
+  .instance-toolbar { padding-left: 16px; padding-right: 16px; }
+  .instance-detail { align-items: flex-start; flex-direction: column; gap: 5px; padding: 14px 16px; }
+  .instance-create-form { grid-template-columns: 1fr; padding: 16px; }
+  .instance-create-form > div { justify-content: flex-end; }
+}
+
 .bot-mode-switch { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
 .bot-mode-switch button { border: 0; background: #f8fafb; color: var(--muted); padding: 16px 20px; text-align: left; }
 .bot-mode-switch button.selected { background: var(--navy); color: white; }
@@ -63,11 +72,208 @@ button { cursor: pointer; }
 .quant-controls label span { display: flex; justify-content: space-between; }
 .quant-controls b { color: var(--navy); font-weight: 500; }
 .quant-controls input { accent-color: var(--blue); }
-.python-terminal { margin: 20px 24px; background: var(--navy); color: #b7d5dc; padding: 15px; }
+.powershell-terminal-box {
+  background: #030508;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  margin: 16px 24px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+
+.powershell-titlebar {
+  background: #090e17;
+  border-bottom: 1px solid #1e293b;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.powershell-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.powershell-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.powershell-dots span.dot-red { background: #ef4444; }
+.powershell-dots span.dot-yellow { background: #f59e0b; }
+.powershell-dots span.dot-green { background: #10b981; }
+
+.powershell-body {
+  padding: 14px 16px;
+  background: #020408;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.powershell-prompt {
+  font-size: 9.5px;
+  color: #38bdf8;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.powershell-prompt span.path {
+  color: #10b981;
+}
+
+.powershell-prompt span.cmd {
+  color: #f1f5f9;
+}
+
+.powershell-editor {
+  width: 100%;
+  min-height: 140px;
+  background: #020408;
+  border: 1px solid #1e293b;
+  color: #f8f8f2;
+  caret-color: #ff79c6;
+  padding: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  border-radius: 3px;
+  outline: none;
+  resize: vertical;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.powershell-editor:focus {
+  border-color: #bd93f9;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 12px rgba(189, 147, 249, 0.35);
+}
+
+.dracula-editor-wrap {
+  position: relative;
+  background: #020408;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  min-height: 165px;
+  overflow: hidden;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+}
+
+.dracula-editor-wrap:focus-within {
+  border-color: #bd93f9;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 0 12px rgba(189, 147, 249, 0.25);
+}
+
+.dracula-line-numbers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 100%;
+  padding: 12px 6px 12px 0;
+  background: #05080e;
+  border-right: 1px solid #1e293b;
+  color: #475569;
+  text-align: right;
+  user-select: none;
+  font-family: inherit;
+  font-size: 9.5px;
+  line-height: 1.6;
+  z-index: 1;
+}
+
+.dracula-code-display {
+  padding: 12px 14px 12px 44px;
+  margin: 0;
+  pointer-events: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.6;
+  color: #f8f8f2;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 140px;
+}
+
+.dracula-code-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 12px 14px 12px 44px;
+  margin: 0;
+  background: transparent;
+  border: none;
+  color: transparent;
+  caret-color: #ff79c6;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 2;
+  overflow: auto;
+}
+
+.dracula-code-textarea::selection {
+  background: rgba(68, 71, 90, 0.6);
+  color: transparent;
+}
+
+.powershell-target-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: #060a12;
+  border-bottom: 1px solid #1e293b;
+}
+
+.powershell-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  padding: 4px 9px;
+  border-radius: 2px;
+  border: 1px solid #1e293b;
+  background: #090e17;
+  color: #64748b;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+}
+
+.powershell-chip:hover {
+  border-color: #38bdf8;
+  color: #e2e8f0;
+  background: #0f172a;
+}
+
+.powershell-chip.active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.python-terminal { margin: 16px 24px; background: #020408; border: 1px solid #1e293b; color: #b7d5dc; padding: 16px; border-radius: 4px; }
 .terminal-line { font: 10px 'IBM Plex Mono', monospace; color: #b7d5dc; }
 .terminal-line span { color: #8fc5a7; }
-.python-terminal textarea { display: block; width: 100%; min-height: 130px; margin-top: 12px; padding: 12px; resize: vertical; border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.18); color: white; font: 11px/1.6 'IBM Plex Mono', monospace; outline: none; }
-.python-terminal small { display: block; margin-top: 10px; color: rgba(255,255,255,.55); font-size: 8px; }
+.python-terminal textarea { display: block; width: 100%; min-height: 130px; margin-top: 12px; padding: 12px; resize: vertical; border: 1px solid #1e293b; background: #000000; color: #00ff66; font: 11px/1.6 'IBM Plex Mono', monospace; outline: none; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+.python-terminal textarea:focus { border-color: #38bdf8; }
+.python-terminal small { display: block; margin-top: 10px; color: #64748b; font-size: 8px; font-family: 'IBM Plex Mono', monospace; }
 .bot-actions { display: flex; align-items: center; gap: 10px; padding: 0 24px 20px; flex-wrap: wrap; }
 .bot-actions .primary-button, .bot-actions .danger-button, .bot-actions .secondary-button, .bot-actions .linked-button { margin: 0; min-height: 40px; }
 .danger-button { border: 1px solid var(--red); background: var(--red); color: white; padding: 10px 14px; font-size: 9px; }
