@@ -1111,3 +1111,93 @@ export async function fetchEscrowPoolStatus(): Promise<EscrowPoolStatus | null> 
   }
   return null;
 }
+
+/**
+ * 19. [관리자] 에스크로 풀 설정(예치금/상태) 변경 API
+ */
+export interface AdminEscrowConfigRequest {
+  initialCapacity: number;
+  status?: string;
+  escrowAddress?: string;
+  network?: string;
+}
+
+export async function updateAdminEscrowConfig(req: AdminEscrowConfigRequest): Promise<EscrowPoolStatus | null> {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/admin/escrow-config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for updateAdminEscrowConfig:', e);
+  }
+  return null;
+}
+
+/**
+ * 20. [관리자] 에스크로 잔액 대표님 지갑으로 전액/일부 긴급 회수(Sweep) API
+ */
+export interface AdminEscrowSweepRequest {
+  destinationAddress: string;
+  amount?: number | null;
+  network?: string;
+  adminUserId?: number;
+}
+
+export interface AdminEscrowSweepResponse {
+  success: boolean;
+  message: string;
+  sweptAmount: number;
+  remainingBalance: number;
+  destinationAddress: string;
+  network: string;
+  txHash: string;
+  sweptAt: string;
+}
+
+export async function sweepAdminEscrowFunds(req: AdminEscrowSweepRequest): Promise<AdminEscrowSweepResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/admin/escrow-sweep`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for sweepAdminEscrowFunds:', e);
+  }
+  return null;
+}
+
+/**
+ * 21. [관리자] 에스크로 감사 원장 및 트랜잭션 내역 조회 API
+ */
+export interface AdminEscrowAuditLog {
+  type: string;
+  description: string;
+  amount: number;
+  destinationAddress: string;
+  network: string;
+  txHash: string;
+  status: string;
+  timestamp: string;
+}
+
+export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]> {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/admin/escrow-logs`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for fetchAdminEscrowAuditLogs:', e);
+  }
+  return [];
+}
+
