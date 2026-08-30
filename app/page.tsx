@@ -499,6 +499,20 @@ const assetAliases: Record<string, string> = {
   '현대차': '005380.KS', '현대자동차': '005380.KS'
 }
 
+export interface BotInstanceItem {
+  id: string
+  name: string
+  strategy: string
+  symbol: string
+  status: 'RUNNING' | 'PAUSED' | 'STOPPED'
+  uptime: string
+  pnl: string
+  isPositive: boolean
+  region: string
+  specs: string
+  ip: string
+}
+
 export const SUPPORTED_ASSETS_REGISTRY = [
   { symbol: 'BTC/USD', raw: 'BTCUSDT', name: '비트코인 (Bitcoin)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'ETH/USD', raw: 'ETHUSDT', name: '이더리움 (Ethereum)', category: '가상자산 (Major Crypto)', flag: '🪙' },
@@ -1108,6 +1122,52 @@ export default function Page() {
   } = useMarketWebSocket(searched)
 
   // AWS / Hetzner Cloud Virtual Instance Sandbox State
+  const [instanceList, setInstanceList] = useState<BotInstanceItem[]>([
+    {
+      id: 'i-7d8e4a91',
+      name: 'BTC Trend Breakout Scalper',
+      strategy: 'FastDTW 8,000 Fractal + ta4j SMA20',
+      symbol: 'BTC/USD',
+      status: 'RUNNING',
+      uptime: '24h 15m',
+      pnl: '+8.4%',
+      isPositive: true,
+      region: 'Frankfurt, DE (nbg1-dc3)',
+      specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
+      ip: '49.12.240.118'
+    },
+    {
+      id: 'i-9c2b1e4f',
+      name: 'ETH Volatility Arbitrage',
+      strategy: 'Bollinger Band Reversion',
+      symbol: 'ETH/USD',
+      status: 'RUNNING',
+      uptime: '12h 40m',
+      pnl: '+4.2%',
+      isPositive: true,
+      region: 'Frankfurt, DE (nbg1-dc3)',
+      specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
+      ip: '49.12.240.119'
+    },
+    {
+      id: 'i-3a8f5c7d',
+      name: 'NVDA AI Momentum Swing',
+      strategy: 'Qwen-VL Vision + RSI Squeeze',
+      symbol: 'NVDA/USD',
+      status: 'PAUSED',
+      uptime: '06h 10m',
+      pnl: '+1.8%',
+      isPositive: true,
+      region: 'Nuremberg, DE (fsn1-dc14)',
+      specs: '2 vCPU · 2.0 GB RAM · 20 GB NVMe',
+      ip: '49.12.240.120'
+    }
+  ])
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('i-7d8e4a91')
+  const [showCreateInstanceForm, setShowCreateInstanceForm] = useState<boolean>(false)
+  const [newInstanceName, setNewInstanceName] = useState<string>('')
+  const [newInstanceSymbol, setNewInstanceSymbol] = useState<string>('BTC/USD')
+
   const [instanceStatus, setInstanceStatus] = useState<'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED'>('RUNNING')
   const [instanceUptime, setInstanceUptime] = useState<number>(52140)
   const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([
@@ -3846,55 +3906,172 @@ export default function Page() {
 
       {/* ── 24H Trading Operations Console ── */}
       <section className="trading-console panel" id="trading-console">
-        <div className="panel-heading">
-          <span><Diamond /> 24H TRADING OPERATIONS · CLOUD INSTANCE</span>
-          <span className="status-tag">HETZNER / DOCKER BOT PLANE</span>
+        <div className="instance-console-head">
+          <div>
+            <h2>24H Trading Operations Console</h2>
+            <p>ISOLATED DOCKER SANDBOX · PYTHON ALGO RUNNER · TA4J QUANT AUTOMATION</p>
+          </div>
+          <button
+            className="primary-button instance-create-button"
+            onClick={() => setShowCreateInstanceForm(!showCreateInstanceForm)}
+          >
+            {showCreateInstanceForm ? '✕ CLOSE FORM' : '+ CREATE NEW INSTANCE'}
+          </button>
         </div>
 
-        {/* AWS / Hetzner Cloud Virtual Instance Control Box */}
-        <div className="virtual-instance-box">
-          <div className="instance-head-row">
-            <div className="instance-identity">
-              <Diamond />
-              <strong>HETZNER CLOUD VIRTUAL INSTANCE</strong>
-              <span>i-{licenseToken ? licenseToken.slice(-8) : '7d8e4a91'}</span>
-              <span>DOCKER SANDBOX</span>
-            </div>
+        <div className="instance-toolbar">
+          <div>
+            <i className="live-dot" />
+            <span>{instanceList.filter(i => i.status === 'RUNNING').length} ACTIVE CONTAINERS · 24H AUTONOMOUS EXECUTION</span>
+          </div>
+          <div>
+            <span>PROVIDER: HETZNER CLOUD (FRANKFURT DC) · ISOLATED IP MAPPING</span>
+          </div>
+        </div>
 
-            <div className={`instance-status-pill ${instanceStatus.toLowerCase()}`}>
-              <div className="instance-status-dot" />
-              <span>
-                {instanceStatus === 'RUNNING' && `RUNNING · UPTIME ${formatUptimeStr(instanceUptime)}`}
-                {instanceStatus === 'PAUSED' && 'PAUSED · EXECUTION FROZEN'}
-                {instanceStatus === 'REBOOTING' && 'REBOOTING CONTAINER...'}
-                {instanceStatus === 'STOPPED' && 'STOPPED · STANDBY'}
-              </span>
+        {showCreateInstanceForm && (
+          <div className="instance-create-form">
+            <label>
+              BOT CONTAINER NAME & STRATEGY
+              <input
+                type="text"
+                placeholder="e.g. SOL Dynamic Scalper v2"
+                value={newInstanceName}
+                onChange={(e) => setNewInstanceName(e.target.value)}
+              />
+            </label>
+            <label>
+              TARGET ASSET
+              <select
+                value={newInstanceSymbol}
+                onChange={(e) => setNewInstanceSymbol(e.target.value)}
+              >
+                <option value="BTC/USD">BTC/USD (Bitcoin)</option>
+                <option value="ETH/USD">ETH/USD (Ethereum)</option>
+                <option value="SOL/USD">SOL/USD (Solana)</option>
+                <option value="NVDA/USD">NVDA/USD (NVIDIA)</option>
+                <option value="005930.KS">005930.KS (삼성전자)</option>
+              </select>
+            </label>
+            <div>
+              <button
+                className="primary-button"
+                onClick={() => {
+                  if (!newInstanceName.trim()) return
+                  const newId = 'i-' + Math.random().toString(36).substring(2, 10)
+                  const newItem: BotInstanceItem = {
+                    id: newId,
+                    name: newInstanceName,
+                    strategy: 'FastDTW Fractal + ta4j Auto',
+                    symbol: newInstanceSymbol,
+                    status: 'RUNNING',
+                    uptime: '00h 01m',
+                    pnl: '+0.0%',
+                    isPositive: true,
+                    region: 'Frankfurt, DE (nbg1-dc3)',
+                    specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
+                    ip: `49.12.240.${Math.floor(Math.random() * 100) + 130}`
+                  }
+                  setInstanceList(prev => [newItem, ...prev])
+                  setSelectedInstanceId(newId)
+                  setSearched(newInstanceSymbol)
+                  setNewInstanceName('')
+                  setShowCreateInstanceForm(false)
+                }}
+              >
+                DEPLOY INSTANCE ↗
+              </button>
+              <button
+                className="secondary-button"
+                onClick={() => setShowCreateInstanceForm(false)}
+              >
+                CANCEL
+              </button>
             </div>
           </div>
+        )}
 
-          <div className="instance-specs-grid">
-            <div className="instance-spec-cell">
-              <span>CLOUD REGION</span>
-              <strong>Frankfurt, DE (nbg1-dc3)</strong>
+        <div className="instance-table-wrap">
+          <table className="instance-table">
+            <thead>
+              <tr>
+                <th>CONTAINER ID</th>
+                <th>BOT NAME & STRATEGY</th>
+                <th>TARGET ASSET</th>
+                <th>STATUS</th>
+                <th>UPTIME</th>
+                <th>PROFIT (PNL)</th>
+                <th style={{ textAlign: 'right' }}>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {instanceList.map(inst => (
+                <tr
+                  key={inst.id}
+                  className={selectedInstanceId === inst.id ? 'selected' : ''}
+                  onClick={() => {
+                    setSelectedInstanceId(inst.id)
+                    setSearched(inst.symbol)
+                  }}
+                >
+                  <td className="mono-cell">{inst.id}</td>
+                  <td>
+                    <strong>{inst.name}</strong>
+                    <div style={{ fontSize: '8px', color: 'var(--muted)' }}>{inst.strategy}</div>
+                  </td>
+                  <td><strong style={{ color: '#38bdf8' }}>{inst.symbol}</strong></td>
+                  <td>
+                    <span className={`instance-status ${inst.status.toLowerCase()}`}>
+                      <i /> {inst.status}
+                    </span>
+                  </td>
+                  <td className="mono-cell">{inst.uptime}</td>
+                  <td className="mono-cell" style={{ color: inst.isPositive ? 'var(--green)' : 'var(--red)', fontWeight: 'bold' }}>
+                    {inst.pnl}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      className="row-action"
+                      title="Toggle / Options"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setInstanceList(prev => prev.map(item => item.id === inst.id ? { ...item, status: item.status === 'RUNNING' ? 'PAUSED' : 'RUNNING' } : item))
+                      }}
+                    >
+                      ⋮
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {(() => {
+          const selectedInst = instanceList.find(i => i.id === selectedInstanceId) || instanceList[0]
+          return selectedInst ? (
+            <div className="instance-detail">
+              <span>SELECTED CONTAINER: <strong>{selectedInst.id} ({selectedInst.name})</strong></span>
+              <span>REGION: <strong>{selectedInst.region}</strong></span>
+              <span>SPECS: <strong>{selectedInst.specs}</strong></span>
+              <span>ISOLATED IP: <strong>{selectedInst.ip}</strong></span>
             </div>
+          ) : null
+        })()}
+
+        {/* AWS / Hetzner Cloud Virtual Instance Control Box */}
+        <div className="virtual-instance-box" style={{ borderTop: '1px solid var(--line)', margin: '0' }}>
+          <div className="instance-specs-grid" style={{ padding: '16px 24px', borderBottom: '1px solid var(--line)' }}>
             <div className="instance-spec-cell">
-              <span>COMPUTE SPECS</span>
-              <strong>1 vCPU · 1.0 GB RAM · 10 GB NVMe</strong>
-            </div>
-            <div className="instance-spec-cell">
-              <span>ISOLATED IP</span>
-              <strong>49.12.240.118 (IPv4 Active)</strong>
-            </div>
-            <div className="instance-spec-cell">
-              <span>TARGET ASSET (실시간 봇 타겟)</span>
+              <span>ACTIVE TARGET ASSET (실시간 봇 타겟)</span>
               <strong style={{ color: '#38bdf8' }}>{searched} (ta4j Loop)</strong>
               <div style={{ display: 'flex', gap: '4px', marginTop: '5px', flexWrap: 'wrap' }}>
                 {[
-                  { label: '🪙 BTC', sym: 'BTC/USD' },
-                  { label: '🪙 ETH', sym: 'ETH/USD' },
-                  { label: '🪙 SOL', sym: 'SOL/USD' },
-                  { label: '🇺🇸 NVDA', sym: 'NVDA/USD' },
-                  { label: '🇰🇷 삼성전자', sym: '005930.KS' }
+                  { label: 'BTC', sym: 'BTC/USD' },
+                  { label: 'ETH', sym: 'ETH/USD' },
+                  { label: 'SOL', sym: 'SOL/USD' },
+                  { label: 'NVDA', sym: 'NVDA/USD' },
+                  { label: '삼성전자', sym: '005930.KS' }
                 ].map(chip => (
                   <button
                     key={chip.sym}

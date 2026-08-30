@@ -19,6 +19,39 @@ button { cursor: pointer; }
 .advisory-briefing { margin: 14px 18px; padding: 14px 16px; background: #f8fafb; border: 1px solid var(--line); font-size: 9px; display: flex; flex-direction: column; gap: 8px; color: var(--muted); }.advisory-title { color: var(--navy); font-size: 9px; letter-spacing: .08em; padding-bottom: 8px; border-bottom: 1px solid var(--line); }.advisory-briefing > div { display: grid; grid-template-columns: 78px 1fr; gap: 10px; line-height: 1.55; }.advisory-briefing b { color: var(--navy); font-size: 8px; font-weight: 500; letter-spacing: .08em; }.advisory-briefing span:not(.advisory-title) { color: var(--muted); }
 /* ── 24H Trading Operations Console & Python Terminal ── */
 .trading-console { margin-top: 24px; }
+.instance-console-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 25px 24px 18px; border-bottom: 1px solid var(--line); }
+.instance-console-head h2 { margin: 8px 0 5px; color: var(--navy); font: 400 30px/1 Georgia, serif; }
+.instance-console-head p { margin: 0; color: var(--muted); font-size: 10px; }
+.instance-create-button { margin: 0; white-space: nowrap; }
+.instance-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; color: var(--muted); font-size: 9px; border-bottom: 1px solid var(--line); }
+.instance-toolbar .live-dot { display: inline-block; width: 6px; height: 6px; margin-right: 6px; }
+.instance-table-wrap { overflow-x: auto; }
+.instance-table { width: 100%; border-collapse: collapse; min-width: 790px; color: var(--muted); font-size: 10px; }
+.instance-table th { padding: 11px 14px; color: var(--muted); background: #f7fafb; font-size: 8px; font-weight: 500; letter-spacing: .08em; text-align: left; }
+.instance-table td { padding: 15px 14px; border-top: 1px solid var(--line); }
+.instance-table tbody tr { cursor: pointer; }
+.instance-table tbody tr:hover, .instance-table tbody tr.selected { background: #f5fafb; }
+.instance-table td strong { color: var(--navy); font-weight: 500; }
+.mono-cell { color: var(--navy); font: 10px 'IBM Plex Mono', monospace; }
+.instance-status { display: inline-flex; align-items: center; gap: 6px; font-size: 8px; letter-spacing: .06em; }
+.instance-status i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.instance-status.running { color: var(--green); }
+.instance-status.running i { background: var(--green); }
+.instance-status.paused { color: var(--amber); }
+.instance-status.paused i { background: var(--amber); }
+.instance-status.stopped { color: var(--red); }
+.instance-status.stopped i { background: var(--red); }
+.row-action { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
+.row-action:hover { color: var(--navy); }
+.instance-detail { display: flex; align-items: center; gap: 14px; padding: 16px 24px; color: var(--muted); font-size: 9px; background: #f8fbfc; flex-wrap: wrap; }
+.instance-detail strong { color: var(--navy); font-size: 11px; }
+.instance-create-form { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 15px; padding: 18px 24px; background: #eef7f8; border-top: 1px solid var(--line); }
+.instance-create-form label { display: grid; gap: 7px; color: var(--navy); font-size: 8px; letter-spacing: .08em; }
+.instance-create-form input, .instance-create-form select { min-height: 38px; border: 1px solid var(--line); padding: 0 10px; color: var(--navy); background: white; font: 11px 'IBM Plex Mono', monospace; }
+.instance-create-form > span { color: var(--muted); font-size: 8px; }
+.instance-create-form > div { display: flex; gap: 8px; }
+.instance-create-form button { margin: 0; min-height: 38px; }
+
 .bot-mode-switch { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
 .bot-mode-switch button { border: 0; background: #f8fafb; color: var(--muted); padding: 16px 20px; text-align: left; }
 .bot-mode-switch button.selected { background: var(--navy); color: white; }
