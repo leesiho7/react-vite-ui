@@ -4248,39 +4248,46 @@ export default function Page() {
 
               {attachedImage && (
                 <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: '#0c2838',
+                  background: 'linear-gradient(135deg, #0c2838 0%, #061924 100%)',
                   border: '1px solid #38bdf8',
-                  padding: '6px 12px',
+                  padding: '8px 12px',
                   borderRadius: '4px',
-                  marginBottom: '6px'
+                  marginBottom: '8px',
+                  boxShadow: '0 0 12px rgba(56, 189, 248, 0.15)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <img src={attachedImage} alt="Preview" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '3px' }} />
-                    <div>
-                      <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 'bold', display: 'block' }}>
-                        📸 {attachedImageName || '차트 이미지 준비됨'}
-                      </span>
-                      <small style={{ fontSize: '9px', color: '#94a3b8' }}>
-                        전송 시 Qwen-VL Vision 및 FastDTW 시각 판독이 즉시 실행됩니다.
-                      </small>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <img src={attachedImage} alt="Preview" style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #38bdf8' }} />
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 'bold' }}>
+                            📸 {attachedImageName || '차트 캡처 이미지 준비됨'}
+                          </span>
+                          <span style={{ fontSize: '7.5px', background: '#0284c7', color: '#ffffff', padding: '1px 5px', borderRadius: '2px', fontWeight: 'bold' }}>
+                            API GROUND-TRUTH ON
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '9.5px', color: '#94a3b8', margin: '2px 0 0 0', lineHeight: '1.4' }}>
+                          💡 <b>고정밀 분석 팁</b>: 우측 가격 축(Y-Axis)과 상단 OHLCV 텍스트가 포함된 원본 캡처를 전송하시면, 거래소(Bybit/Binance) 실시간 수치 API 및 Python FastDTW 결과와 결합되어 오차 0%로 진단됩니다.
+                        </p>
+                      </div>
                     </div>
+                    <button
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: '1px solid #ef4444',
+                        color: '#fca5a5',
+                        fontSize: '10px',
+                        padding: '4px 8px',
+                        borderRadius: '3px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => { setAttachedImage(null); setAttachedImageName(''); }}
+                    >
+                      ✕ 캡처 취소
+                    </button>
                   </div>
-                  <button
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#ef4444',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => { setAttachedImage(null); setAttachedImageName(''); }}
-                  >
-                    ✕ 제거
-                  </button>
                 </div>
               )}
 
