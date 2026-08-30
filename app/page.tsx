@@ -4158,11 +4158,15 @@ export default function Page() {
                         <span>{msg.timestamp}</span>
                       </div>
                       {msg.imageUrl && (
-                        <div style={{ marginTop: '6px', marginBottom: '8px' }}>
+                        <div style={{ marginTop: '6px', marginBottom: '8px', background: '#0a0f18', padding: '5px', border: '1px solid #1e293b', borderRadius: '3px', display: 'inline-block' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 4px', borderBottom: '1px solid #1e293b', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '7.5px', color: '#38bdf8', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.05em' }}>[ATTACHED_CHART_BUFFER]</span>
+                            <span style={{ fontSize: '7.5px', color: '#64748b', fontFamily: "'IBM Plex Mono', monospace" }}>GROUND_TRUTH_SYNCED</span>
+                          </div>
                           <img
                             src={msg.imageUrl}
                             alt="Uploaded Chart"
-                            style={{ maxHeight: '200px', maxWidth: '100%', borderRadius: '4px', border: '1px solid #38bdf8' }}
+                            style={{ maxHeight: '180px', maxWidth: '100%', borderRadius: '2px', display: 'block' }}
                           />
                         </div>
                       )}
@@ -4229,10 +4233,16 @@ export default function Page() {
                 <div className="quick-prompt-chips-bar">
                   <button
                     className="quick-chip"
-                    style={{ background: '#0284c7', color: '#ffffff', borderColor: '#38bdf8', fontWeight: 'bold' }}
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.08)',
+                      color: '#38bdf8',
+                      borderColor: 'rgba(56, 189, 248, 0.35)',
+                      fontWeight: 'bold',
+                      fontFamily: "'IBM Plex Mono', monospace"
+                    }}
                     onClick={() => chatFileInputRef.current?.click()}
                   >
-                    📷 차트 사진/캡처 첨부
+                    + ATTACH CHART CAPTURE
                   </button>
                   <button className="quick-chip" onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
                     🎯 지지선 & 숏스퀴즈 진단
@@ -4248,44 +4258,48 @@ export default function Page() {
 
               {attachedImage && (
                 <div style={{
-                  background: 'linear-gradient(135deg, #0c2838 0%, #061924 100%)',
-                  border: '1px solid #38bdf8',
+                  background: '#090e17',
+                  border: '1px solid #1e293b',
+                  borderLeft: '3px solid #38bdf8',
                   padding: '8px 12px',
-                  borderRadius: '4px',
+                  borderRadius: '3px',
                   marginBottom: '8px',
-                  boxShadow: '0 0 12px rgba(56, 189, 248, 0.15)'
+                  fontFamily: "'IBM Plex Mono', monospace"
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img src={attachedImage} alt="Preview" style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #38bdf8' }} />
+                      <div style={{ border: '1px solid #334155', padding: '2px', background: '#05080e', borderRadius: '2px' }}>
+                        <img src={attachedImage} alt="Preview" style={{ width: '38px', height: '38px', objectFit: 'cover', display: 'block' }} />
+                      </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 'bold' }}>
-                            📸 {attachedImageName || '차트 캡처 이미지 준비됨'}
+                          <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 'bold', letterSpacing: '0.04em' }}>
+                            [IMAGE_BUFFER] {attachedImageName ? attachedImageName.toUpperCase() : 'CHART_CAPTURE.PNG'}
                           </span>
-                          <span style={{ fontSize: '7.5px', background: '#0284c7', color: '#ffffff', padding: '1px 5px', borderRadius: '2px', fontWeight: 'bold' }}>
-                            API GROUND-TRUTH ON
+                          <span style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '1px 4px', borderRadius: '2px' }}>
+                            BYBIT/BINANCE API SYNC
                           </span>
                         </div>
-                        <p style={{ fontSize: '9.5px', color: '#94a3b8', margin: '2px 0 0 0', lineHeight: '1.4' }}>
-                          💡 <b>고정밀 분석 팁</b>: 우측 가격 축(Y-Axis)과 상단 OHLCV 텍스트가 포함된 원본 캡처를 전송하시면, 거래소(Bybit/Binance) 실시간 수치 API 및 Python FastDTW 결과와 결합되어 오차 0%로 진단됩니다.
+                        <p style={{ fontSize: '8.5px', color: '#64748b', margin: '2px 0 0 0', letterSpacing: '0.02em', lineHeight: '1.4' }}>
+                          Y-Axis 가격 축 & 상단 OHLCV 캔들이 거래소 실시간 수치 API 및 Python FastDTW와 동기화됩니다.
                         </p>
                       </div>
                     </div>
                     <button
                       style={{
-                        background: 'rgba(239, 68, 68, 0.15)',
+                        background: '#180707',
                         border: '1px solid #ef4444',
                         color: '#fca5a5',
-                        fontSize: '10px',
+                        fontSize: '8px',
                         padding: '4px 8px',
-                        borderRadius: '3px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
+                        borderRadius: '2px',
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        cursor: 'pointer',
+                        letterSpacing: '0.05em'
                       }}
                       onClick={() => { setAttachedImage(null); setAttachedImageName(''); }}
                     >
-                      ✕ 캡처 취소
+                      [DISCARD / ✕]
                     </button>
                   </div>
                 </div>
@@ -4310,18 +4324,18 @@ export default function Page() {
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <small style={{ fontSize: '8px', color: 'var(--muted)' }}>
-                  Active Engine: Qwen-VL Vision + FastDTW 12-Thread Fractal + ta4j Loop
+                <small style={{ fontSize: '8px', color: 'var(--muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
+                  ACTIVE ENGINES: Python FastDTW + Exchange API + ta4j Loop
                 </small>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button
                     type="button"
                     className="secondary-button"
                     onClick={() => chatFileInputRef.current?.click()}
-                    style={{ padding: '6px 10px', fontSize: '9px' }}
+                    style={{ padding: '6px 10px', fontSize: '8px', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.04em' }}
                     title="차트 캡처 사진 첨부"
                   >
-                    📷 사진 첨부
+                    + ATTACH IMAGE
                   </button>
                   <button
                     className="primary-button"
