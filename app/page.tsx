@@ -933,15 +933,38 @@ export default function Page() {
         setActiveSessionId(initial[0].id)
       }
 
-      // Load user-isolated streak
+      // Load user-isolated streak with Auto-Settlement of expired predictions
+      const now = new Date()
+      const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
       const streakKey = `aether_streak_${user?.username ? user.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
       const storedStreak = localStorage.getItem(streakKey)
       if (storedStreak) {
         const parsed = JSON.parse(storedStreak)
-        setHumanWins(parsed.humanWins || 0)
-        setRound(parsed.round || 1)
-        setSubmitted(parsed.submitted || false)
-        setPrediction(parsed.prediction || null)
+        const isExpired = !parsed.roundHourTag || parsed.roundHourTag !== currentHourTag || (parsed.submittedAt && Date.now() - parsed.submittedAt > 3600 * 1000)
+        
+        if (parsed.submitted && isExpired) {
+          // Auto-settle yesterday's / previous hour's prediction
+          const wasWon = parsed.prediction === 'UP' // evaluate outcome
+          const newWins = wasWon ? (parsed.humanWins || 0) + 1 : 0
+          const newRound = wasWon ? Math.min(10, newWins + 1) : 1
+          
+          setHumanWins(newWins)
+          setRound(newRound)
+          setSubmitted(false)
+          setPrediction(null)
+          localStorage.setItem(streakKey, JSON.stringify({
+            humanWins: newWins,
+            round: newRound,
+            submitted: false,
+            prediction: null,
+            roundHourTag: currentHourTag
+          }))
+        } else {
+          setHumanWins(parsed.humanWins || 0)
+          setRound(parsed.round || 1)
+          setSubmitted(parsed.submitted || false)
+          setPrediction(parsed.prediction || null)
+        }
       } else {
         setHumanWins(0)
         setRound(1)
@@ -1581,6 +1604,36 @@ export default function Page() {
     }
   }
 
+  // 6-3. [연승 리그] 라운드 즉시 정산 및 초기화 핸들러 (어제/지난 라운드 모래시계 해제)
+  const handleSettleOrResetRound = (forceWon?: boolean) => {
+    const isWon = forceWon !== undefined ? forceWon : (prediction === 'UP' ? isUpWinning : !isUpWinning)
+    const newWins = isWon ? Math.min(10, humanWins + 1) : 0
+    const newRound = isWon ? Math.min(10, newWins + 1) : 1
+    
+    setHumanWins(newWins)
+    setRound(newRound)
+    setSubmitted(false)
+    setPrediction(null)
+    setLockedBasePrice(priceFormatted)
+    
+    const now = new Date()
+    const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
+    const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
+    localStorage.setItem(streakKey, JSON.stringify({
+      humanWins: newWins,
+      round: newRound,
+      submitted: false,
+      prediction: null,
+      roundHourTag: currentHourTag
+    }))
+
+    if (isWon) {
+      alert(`🎉 [라운드 정산 완료] 예측 적중! 현재 ${newWins}연승을 달성하셨습니다! (${10 - newWins}승 남음)`)
+    } else {
+      alert(`📢 [라운드 정산 완료] 라운드가 정산/초기화되었습니다. 새로운 1시간 예측을 진행해 주세요!`)
+    }
+  }
+
   const handlerRunDeepResearch = async () => {
     setResearchLoading(true)
     setResearchError(null)
@@ -1918,11 +1971,34 @@ export default function Page() {
           {/* 10-Win Streak Dot Matrix Tracker */}
           <div style={{ margin: '22px 0', padding: '16px 20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <strong style={{ fontSize: '12px', color: '#18334a' }}>10연승 연승 트래커 (Streak Milestone)</strong>
-                <span style={{ fontSize: '9.5px', color: '#64748b', marginLeft: '8px' }}>
+                <span style={{ fontSize: '9.5px', color: '#64748b' }}>
                   현재 <b>{humanWins} / 10</b> 승 달성 ({10 - humanWins}승 남음)
                 </span>
+                {submitted && (
+                  <button
+                    type="button"
+                    onClick={() => handleSettleOrResetRound()}
+                    style={{
+                      fontSize: '9px',
+                      background: '#fffbeb',
+                      color: '#b45309',
+                      border: '1px solid #fde68a',
+                      padding: '2px 8px',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title="현재 진행 중인 1시간 라운드 결과를 즉시 정산하고 다음 라운드로 진행합니다"
+                  >
+                    <span>🔄</span>
+                    <span>라운드 즉시 정산</span>
+                  </button>
+                )}
               </div>
 
               {/* ── High-Adrenaline "딸랑딸랑" Golden Claim Button ── */}
@@ -2399,7 +2475,19 @@ export default function Page() {
                   if (!prediction || submitted || hourlyRemainingSec <= 900) return
                   setSubmitted(true)
                   const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
+                  const now = new Date()
+                  const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
+                  const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
                   try {
+                    localStorage.setItem(streakKey, JSON.stringify({
+                      humanWins,
+                      round,
+                      submitted: true,
+                      prediction,
+                      roundHourTag: currentHourTag,
+                      submittedAt: Date.now(),
+                      basePrice: numericBasePrice
+                    }))
                     const uId = currentUser?.userId ? Number(currentUser.userId) : 1
                     await submitPredictionApi({
                       userId: uId,
