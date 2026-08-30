@@ -1,7 +1,8 @@
-'use client'
+﻿'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { UserRound, Globe } from 'lucide-react'
+import { UserRound, Globe, ChevronDown, Check } from 'lucide-react'
 
 interface NavbarProps {
   onSelectSymbol?: (symbol: string) => void;
@@ -32,6 +33,19 @@ export default function Navbar({
   newsOpen = false,
   onToggleNews
 }: NavbarProps) {
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false)
+  const langDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const tickers = [
     { symbol: 'BTC', price: '$78,891.12', change: '+2.41%', isUp: true, target: 'BTC/USD' },
     { symbol: 'ETH', price: '$2,340.50', change: '+1.85%', isUp: true, target: 'ETH/USD' },
@@ -105,7 +119,7 @@ export default function Navbar({
     { code: 'cn' as const, label: '中文' }
   ];
 
-  // 무한 롤링 티커용 중복 배열 (끊김 없는 연속 루프)
+  // 끊김 없는 무한 루프 롤링 테이프용 배열
   const infiniteTickers = [...tickers, ...tickers];
 
   return (
@@ -133,7 +147,7 @@ export default function Navbar({
           {/* 세로 구분선 */}
           <div className="hidden lg:block h-4 w-[1px] bg-[#27272a] flex-shrink-0" />
 
-          {/* 다국어 동기화 메뉴 리스트 (호가 -> 아비트라지로 변경 완료) */}
+          {/* 다국어 동기화 메뉴 리스트 (호가 -> 아비트라지 일체화) */}
           <ul className="hidden md:flex items-center gap-x-5 lg:gap-x-7 text-[12px] font-medium text-[#a1a1aa] list-none p-0 m-0 whitespace-nowrap overflow-x-auto scrollbar-none">
             <li>
               <button
@@ -189,23 +203,51 @@ export default function Navbar({
           </ul>
         </div>
 
-        {/* [오른쪽 블록: 한국어·English·中文 선택기 + 계정 유틸리티] */}
+        {/* [오른쪽 블록: 세련된 랭귀지 드롭다운 셀렉터 + 계정 유틸리티] */}
         <div className="flex items-center gap-3.5 flex-shrink-0 ml-auto">
-          {/* 3대 언어 명시적 선택 탭 (한국어 / English / 中文) */}
-          <div className="flex items-center border border-[#27272a] rounded-[4px] p-[2px] bg-[#18181b]">
-            <Globe size={11} className="text-[#71717a] ml-1.5 mr-1" />
-            {langOptions.map((item) => (
-              <button
-                key={item.code}
-                type="button"
-                style={{ border: 'none', boxShadow: 'none' }}
-                className={`px-2 py-1 text-[10px] font-medium rounded-[3px] cursor-pointer transition-all ${language === item.code ? 'bg-[#38bdf8] text-[#090e17] font-bold shadow-sm' : 'bg-transparent text-[#a1a1aa] hover:text-white'}`}
-                onClick={() => onLanguageChange && onLanguageChange(item.code)}
-                title={`${item.label}로 언어 설정`}
-              >
-                {item.label}
-              </button>
-            ))}
+          {/* ── 랭귀지 드롭다운 셀렉터 ── */}
+          <div className="relative" ref={langDropdownRef}>
+            <button
+              type="button"
+              style={{ border: 'none', boxShadow: 'none' }}
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#18181b] hover:bg-[#27272a] text-[#d4d4d8] hover:text-white border border-[#27272a] hover:border-[#38bdf8]/50 rounded-[4px] text-[11px] font-medium transition-colors cursor-pointer"
+              title="언어 선택 (Language)"
+            >
+              <Globe size={13} className="text-[#38bdf8]" />
+              <span>{langOptions.find(o => o.code === language)?.label || '한국어'}</span>
+              <ChevronDown size={11} className={`text-[#71717a] transition-transform duration-200 ${langDropdownOpen ? 'rotate-180 text-white' : ''}`} />
+            </button>
+
+            {/* 드롭다운 메뉴 팝오버 */}
+            {langDropdownOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-[130px] bg-[#18181b] border border-[#27272a] rounded-[6px] shadow-2xl py-1 z-50">
+                <div className="px-2.5 py-1 text-[9px] font-mono text-[#71717a] uppercase border-b border-[#27272a]/60">
+                  Select Language
+                </div>
+                {langOptions.map((item) => {
+                  const isSelected = language === item.code
+                  return (
+                    <button
+                      key={item.code}
+                      type="button"
+                      style={{ border: 'none', boxShadow: 'none' }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-[11px] text-left cursor-pointer transition-colors ${isSelected ? 'bg-[#38bdf8]/10 text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:bg-[#27272a] hover:text-white'}`}
+                      onClick={() => {
+                        onLanguageChange && onLanguageChange(item.code)
+                        setLangDropdownOpen(false)
+                      }}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-mono text-[9.5px] opacity-60">[{item.code.toUpperCase()}]</span>
+                        <span>{item.label}</span>
+                      </span>
+                      {isSelected && <Check size={12} className="text-[#38bdf8]" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {currentUser ? (
@@ -247,7 +289,7 @@ export default function Navbar({
       {/* ── 2단 실시간 펄스 티커 바: 좌측 고정 배지 + 사이드로 끊김없이 슥슥 흐르는 무한 롤링 테이프 ── */}
       <div className="w-full bg-[#161616] text-white h-[36px] border-t border-[#222222] flex items-center overflow-hidden">
         <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center overflow-hidden">
-          {/* LIVE PULSE 고정 라벨 (왼쪽 고정 및 그림자 마스크) */}
+          {/* LIVE PULSE 고정 라벨 */}
           <div className="flex items-center gap-2 pr-4 mr-2 border-r border-[#27272a] font-bold text-[#38bdf8] flex-shrink-0 z-10 bg-[#161616]">
             <span className="text-[9.5px] text-[#38bdf8] font-mono tracking-wider font-bold">{menuText.pulse}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
