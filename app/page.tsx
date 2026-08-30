@@ -4188,12 +4188,12 @@ export default function Page() {
                       {msg.toolCalls && msg.toolCalls.length > 0 && (
                         <div className="agent-tool-accordion">
                           <div className="tool-summary-row">
-                            <span>🧠 AGENT TOOL CALLS ({msg.toolCalls.length} EXECUTED)</span>
-                            <span style={{ color: '#10b981' }}>SUCCESS ✓</span>
+                            <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>[EXECUTED AGENT TOOL CALLS: {msg.toolCalls.length}]</span>
+                            <span style={{ color: '#10b981', fontFamily: "'IBM Plex Mono', monospace" }}>SUCCESS ✓</span>
                           </div>
                           <div className="tool-items-list">
                             {msg.toolCalls.map((tc, idx) => (
-                              <div key={idx} className="tool-item-line">
+                              <div key={idx} className="tool-item-line" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
                                 <b>↳ {tc.name}:</b> {tc.detail}
                               </div>
                             ))}
@@ -4213,8 +4213,10 @@ export default function Page() {
 
               {agentThinking && (
                 <div className="chat-thinking-box">
-                  <span className="animate-spin">⚡</span>
-                  <span><strong>AI AGENT REASONING:</strong> {agentThinkingStep}</span>
+                  <Sparkles size={12} className="animate-spin" style={{ color: '#38bdf8' }} />
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px' }}>
+                    <strong>[AI AGENT REASONING]</strong> {agentThinkingStep}
+                  </span>
                 </div>
               )}
             </div>
@@ -4244,14 +4246,14 @@ export default function Page() {
                   >
                     + ATTACH CHART CAPTURE
                   </button>
-                  <button className="quick-chip" onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
-                    🎯 지지선 & 숏스퀴즈 진단
+                  <button className="quick-chip" style={{ fontFamily: "'IBM Plex Mono', monospace" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
+                    SUPPORT & SQUEEZE ANALYSIS
                   </button>
-                  <button className="quick-chip" onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 3단계 분할 매수 비중 어떻게 조절해?`)}>
-                    📊 3단계 분할 매수 비중
+                  <button className="quick-chip" style={{ fontFamily: "'IBM Plex Mono', monospace" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 3단계 분할 매수 비중 어떻게 조절해?`)}>
+                    POSITION SIZING LADDER
                   </button>
-                  <button className="quick-chip" onClick={() => handleSendAgentMessage(`만약 50일 이동평균선 이탈 시 손절 및 헷징 플랜은?`)}>
-                    🛡️ 손절 & 헷징 시나리오
+                  <button className="quick-chip" style={{ fontFamily: "'IBM Plex Mono', monospace" }} onClick={() => handleSendAgentMessage(`만약 50일 이동평균선 이탈 시 손절 및 헷징 플랜은?`)}>
+                    STOP-LOSS & HEDGING RISK
                   </button>
                 </div>
               </div>
