@@ -951,18 +951,15 @@ export default function Page() {
         const isExpired = !parsed.roundHourTag || parsed.roundHourTag !== currentHourTag || (parsed.submittedAt && Date.now() - parsed.submittedAt > 3600 * 1000)
         
         if (parsed.submitted && isExpired) {
-          // Auto-settle yesterday's / previous hour's prediction
-          const wasWon = parsed.prediction === 'UP' // evaluate outcome
-          const newWins = wasWon ? (parsed.humanWins || 0) + 1 : 0
-          const newRound = wasWon ? Math.min(10, newWins + 1) : 1
-          
-          setHumanWins(newWins)
-          setRound(newRound)
+          // If previous round expired, clear the pending state cleanly without fake premature win
+          const prevWins = parsed.humanWins || 0
+          setHumanWins(prevWins)
+          setRound(Math.min(10, prevWins + 1))
           setSubmitted(false)
           setPrediction(null)
           localStorage.setItem(streakKey, JSON.stringify({
-            humanWins: newWins,
-            round: newRound,
+            humanWins: prevWins,
+            round: Math.min(10, prevWins + 1),
             submitted: false,
             prediction: null,
             roundHourTag: currentHourTag
@@ -3560,20 +3557,38 @@ export default function Page() {
               );
             })}
           </div>
-          <div className="news-layout">
-            <button className="news-lead" onClick={() => selectNews(activeNews)}>
-              <div className="news-thumb hero-thumb">{activeNews.imageUrl ? <img src={activeNews.imageUrl} alt={activeNews.title} className="news-photo-hero" /> : activeNews.thumb}</div>
-              <div className="news-lead-copy">
-                <span className="overline">{activeNews.source} · {activeNews.tag}</span>
-                <h2>{activeNews.title}</h2>
-                <div className="news-meta">
-                  <span className={`sentiment ${activeNews.tone}`}>{activeNews.sentiment}</span>
-                  <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
-                  <span>{copy.newsLeadFact}</span>
+          <div className="news-layout" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '18px', alignItems: 'stretch' }}>
+            <button className="news-lead" onClick={() => selectNews(activeNews)} style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '145px 1fr', gap: '16px', width: '100%' }}>
+                <div className="news-thumb hero-thumb" style={{ width: '100%', height: '120px' }}>
+                  {activeNews.imageUrl ? <img src={activeNews.imageUrl} alt={activeNews.title} className="news-photo-hero" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : activeNews.thumb}
+                </div>
+                <div className="news-lead-copy">
+                  <span className="overline">{activeNews.source} · {activeNews.tag}</span>
+                  <h2 style={{ fontSize: '18px', margin: '8px 0 10px', lineHeight: 1.35 }}>{activeNews.title}</h2>
+                  <p style={{ fontSize: '10.5px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {(activeNews as any).snippet || '기관 투자자 수급 및 온체인 지표 실시간 분석.'}
+                  </p>
                 </div>
               </div>
+              <div className="news-meta" style={{ borderTop: '1px solid #edf0f2', paddingTop: '10px', marginTop: '10px', width: '100%' }}>
+                <span className={`sentiment ${activeNews.tone}`}>{activeNews.sentiment}</span>
+                <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
+                <span>{copy.newsLeadFact}</span>
+              </div>
             </button>
-            <div className="media-feed">
+
+            {/* Bloomberg-Style Fixed Height Scroll Container */}
+            <div
+              className="media-feed"
+              style={{
+                maxHeight: '440px',
+                overflowY: 'auto',
+                border: '1px solid var(--line)',
+                background: 'white',
+                scrollbarWidth: 'thin'
+              }}
+            >
               {currentNewsList.map((item) => (
                 <button
                   className={`feed-item ${item.title === activeNews.title ? 'active' : ''}`}
