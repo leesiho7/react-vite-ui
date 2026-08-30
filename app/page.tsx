@@ -2114,7 +2114,7 @@ export default function Page() {
 
   return (
     <>
-      {/* ── TradingKey Style 2-Tier Modern Top Navigation Bar ── */}
+      {/* ── AETHER 2-Tier Modern Top Navigation Bar ── */}
       <Navbar
         onSelectSymbol={(sym) => {
           setSearched(sym)
@@ -2125,108 +2125,39 @@ export default function Page() {
         currentUser={currentUser}
         onLogout={handleLogout}
         onOpenDeposit={() => setDepositModalOpen(true)}
+        eventOpen={eventOpen}
+        onToggleEvent={() => {
+          const next = !eventOpen
+          setEventOpen(next)
+          if (next) {
+            setTimeout(() => {
+              document.getElementById('ten-win-league')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 60)
+          }
+        }}
+        communityOpen={communityOpen}
+        onToggleCommunity={() => {
+          const next = !communityOpen
+          setCommunityOpen(next)
+          if (next) {
+            setTimeout(() => {
+              document.getElementById('strategy-commons')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 60)
+          }
+        }}
+        newsOpen={newsOpen}
+        onToggleNews={() => {
+          const next = !newsOpen
+          setNewsOpen(next)
+          if (next) {
+            setTimeout(() => {
+              document.getElementById('live-newswire')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 60)
+          }
+        }}
       />
 
       <main className="terminal-shell">
-      {/* ── Topbar ── */}
-      <header className="topbar">
-        <div className="brand-lockup">
-          <div className="brand-mark">A</div>
-          <div>
-            <strong>AETHER</strong>
-            <span>AI FACT-CHECK & QUANT</span>
-          </div>
-        </div>
-
-        <div className="top-meta">
-          <button className={`league-link ${eventOpen ? 'active' : ''}`} onClick={() => {
-            const next = !eventOpen
-            setEventOpen(next)
-            if (next) {
-              setTimeout(() => {
-                document.getElementById('ten-win-league')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }, 60)
-            }
-          }}>
-            <Diamond /> 10-WIN LEAGUE
-          </button>
-          <button className={`league-link ${communityOpen ? 'active' : ''}`} onClick={() => {
-            const next = !communityOpen
-            setCommunityOpen(next)
-            if (next) {
-              setTimeout(() => {
-                document.getElementById('strategy-commons')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }, 60)
-            }
-          }}>
-            <Diamond /> STRATEGY COMMONS
-          </button>
-          <button className={`league-link ${newsOpen ? 'active' : ''}`} onClick={() => {
-            const next = !newsOpen
-            setNewsOpen(next)
-            if (next) {
-              setTimeout(() => {
-                document.getElementById('live-newswire')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }, 60)
-            }
-          }}>
-            <Diamond /> LIVE NEWSWIRE
-          </button>
-          <a className="league-link" href="#trading-console" style={{ textDecoration: 'none' }}>
-            <Diamond /> 24H BOT
-          </a>
-          <a className="league-link" href="#research-terminal" style={{ textDecoration: 'none' }}>
-            <Diamond /> AI RESEARCH
-          </a>
-          <a className="league-link" href="#media-wire" style={{ textDecoration: 'none' }}>
-            <Diamond /> MEDIA DESK
-          </a>
-          <a className="league-link" href="/orderbook" style={{ textDecoration: 'none' }}>
-            <Diamond /> L2 ORDERBOOK
-          </a>
-          <span className="language-switcher" aria-label="Language selector">
-            {(Object.keys(languageLabels) as Language[]).map((item) => (
-              <button key={item} className={language === item ? 'selected' : ''} onClick={() => setLanguage(item)}>
-                {languageLabels[item]}
-              </button>
-            ))}
-          </span>
-        </div>
-
-        <div className="account-toggle" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {currentUser ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <a className="member-icon" href="/profile" aria-label="Open member profile" title="내 프로필"><UserRound size={15} strokeWidth={1.5} /></a>
-              <span style={{ fontSize: '11px', color: '#0f766e', fontWeight: 700 }}>
-                {currentUser.nickname || currentUser.username}
-              </span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                style={{
-                  fontSize: '9.5px',
-                  background: '#f1f5f9',
-                  color: '#64748b',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '3px',
-                  padding: '3px 7px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                LOGOUT
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <a className="member-icon" href="/login" aria-label="Open member profile"><UserRound size={15} strokeWidth={1.5} /></a>
-              <a href="/login" style={{ fontSize: '10.5px', background: '#0284c7', color: '#fff', padding: '4px 10px', borderRadius: '3px', fontWeight: 700, textDecoration: 'none', letterSpacing: '.02em' }}>
-                1-SEC SOCIAL ACCESS ↗
-              </a>
-            </div>
-          )}
-        </div>
-      </header>
 
       {/* ── 1-Hour Quick-Strike Prediction League Modal / Drawer ── */}
       {eventOpen && (
