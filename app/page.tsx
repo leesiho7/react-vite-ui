@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera } from 'lucide-react'
+import Navbar from './components/Navbar'
 import {
   fetchIntegratedDecision,
   fetchHistoricalCandles,
@@ -2112,7 +2113,21 @@ export default function Page() {
   ), [query])
 
   return (
-    <main className="terminal-shell">
+    <>
+      {/* ── TradingKey Style 2-Tier Modern Top Navigation Bar ── */}
+      <Navbar
+        onSelectSymbol={(sym) => {
+          setSearched(sym)
+          handleSyncChart(sym)
+        }}
+        language={language}
+        onLanguageChange={(lang) => setLanguage(lang)}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onOpenDeposit={() => setDepositModalOpen(true)}
+      />
+
+      <main className="terminal-shell">
       {/* ── Topbar ── */}
       <header className="topbar">
         <div className="brand-lockup">
@@ -5491,5 +5506,6 @@ export default function Page() {
         <span>STATUS: OPERATIONAL (WEBSOCKET LIVE)</span>
       </footer>
     </main>
+    </>
   )
 }
