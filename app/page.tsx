@@ -2994,35 +2994,48 @@ export default function Page() {
               </div>
             ) : (
               <div>
-                <p style={{ fontSize: '12px', color: '#555', marginBottom: '16px' }}>
+                <p style={{ fontSize: '12px', color: '#555', marginBottom: '12px' }}>
                   10연승 미션 달성을 축하합니다! $10.00 USDT를 수신할 지갑 주소를 입력해 주세요. (가스비 상점 전액 지원)
                 </p>
+
+                {/* Bybit / Binance Exchange Friendly Notice */}
+                <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '4px', padding: '10px 12px', marginBottom: '14px', fontSize: '10.5px', color: '#0369a1', lineHeight: 1.5 }}>
+                  💡 <b>메타마스크가 없으셔도 괜찮습니다!</b><br />
+                  <b>바이비트(Bybit)</b>, <b>바이낸스(Binance)</b>, <b>업비트/빗썸</b> 앱에서 복사한 <code>USDT 입금 주소 (Polygon / BSC / TRC20)</code>를 붙여넣으시면 거래소 계좌로 $10.00 USDT가 즉시 입금됩니다.
+                </div>
+
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>출금 네트워크 선택</label>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    {['polygon', 'bsc', 'tron', 'solana'].map((net) => (
+                    {[
+                      { key: 'polygon', label: 'POLYGON (수수료 10원)' },
+                      { key: 'bsc', label: 'BSC (바이낸스/바이비트)' },
+                      { key: 'tron', label: 'TRON (업비트/빗썸)' },
+                      { key: 'solana', label: 'SOLANA' }
+                    ].map((item) => (
                       <button
-                        key={net}
-                        style={{ flex: 1, padding: '6px', fontSize: '11px', border: claimNetwork === net ? '2px solid #18334a' : '1px solid #ddd', background: claimNetwork === net ? '#18334a' : '#f9f9f9', color: claimNetwork === net ? '#fff' : '#333' }}
-                        onClick={() => setClaimNetwork(net)}
+                        key={item.key}
+                        type="button"
+                        style={{ flex: 1, padding: '7px 4px', fontSize: '10px', fontWeight: claimNetwork === item.key ? 700 : 500, border: claimNetwork === item.key ? '2px solid #18334a' : '1px solid #ddd', background: claimNetwork === item.key ? '#18334a' : '#f9f9f9', color: claimNetwork === item.key ? '#fff' : '#333', borderRadius: '3px' }}
+                        onClick={() => setClaimNetwork(item.key)}
                       >
-                        {net.toUpperCase()}
+                        {item.label}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>수신 지갑 주소</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>수신 지갑 / 거래소 USDT 입금 주소</label>
                   <input
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ccc', fontSize: '12px' }}
-                    placeholder="0x... 또는 TRX/SOL 주소 입력"
+                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '11px', fontFamily: "'IBM Plex Mono', monospace" }}
+                    placeholder="0x... (메타마스크 또는 바이비트/바이낸스 USDT 입금 주소)"
                     value={claimAddress}
                     onChange={(e) => setClaimAddress(e.target.value)}
                   />
                 </div>
                 <button
                   className="primary-button"
-                  style={{ width: '100%', padding: '10px' }}
+                  style={{ width: '100%', padding: '10px', fontSize: '12px', fontWeight: 700, borderRadius: '4px' }}
                   disabled={claimLoading}
                   onClick={handleClaimStreakPayout}
                 >
