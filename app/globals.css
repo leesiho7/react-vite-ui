@@ -1,11 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
-:root { --background: #f3f5f7; --foreground: #17202a; --ink: #17202a; --muted: #74808c; --line: #d8dee4; --navy: #18334a; --blue: #367ca4; --green: #2b866d; --amber: #b9812c; --red: #ac5d59; }
-@theme inline { --color-background: var(--background); --color-foreground: var(--foreground); --font-sans: 'Geist', Arial, sans-serif; --font-mono: 'IBM Plex Mono', 'Courier New', monospace; --radius-sm: 0.2rem; --radius-md: 0.35rem; --radius-lg: 0.45rem; }
+:root { 
+  --background: #f3f5f7; 
+  --foreground: #17202a; 
+  --ink: #17202a; 
+  --muted: #74808c; 
+  --line: #d8dee4; 
+  --navy: #18334a; 
+  --blue: #367ca4; 
+  --green: #2b866d; 
+  --amber: #b9812c; 
+  --red: #ac5d59; 
+  --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+}
+@theme inline { 
+  --color-background: var(--background); 
+  --color-foreground: var(--foreground); 
+  --font-sans: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace; 
+  --radius-sm: 0.2rem; 
+  --radius-md: 0.35rem; 
+  --radius-lg: 0.45rem; 
+}
 * { box-sizing: border-box; }
 html { background: var(--background); }
-body { margin: 0; background: var(--background); color: var(--ink); font-family: 'Noto Sans KR', 'Noto Sans SC', Arial, sans-serif; }
+body, button, input, select, textarea { 
+  margin: 0; 
+  background: var(--background); 
+  color: var(--ink); 
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Noto Sans SC', sans-serif; 
+  -webkit-font-smoothing: antialiased; 
+  -moz-osx-font-smoothing: grayscale; 
+  text-rendering: optimizeLegibility; 
+  letter-spacing: -0.018em; 
+}
 button, input { font: inherit; }
 button { cursor: pointer; }
 .terminal-shell { max-width: 1440px; margin: 0 auto; padding: 0 56px; min-height: 100vh; }
