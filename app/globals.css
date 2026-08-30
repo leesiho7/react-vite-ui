@@ -1423,6 +1423,26 @@ button {
   .media-footer { gap: 12px; flex-direction: column; }
 }
 
+/* ── Infinite Live Pulse Ticker Tape Marquee ── */
+@keyframes liveTickerTape {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker-tape {
+  display: flex;
+  width: max-content;
+  animation: liveTickerTape 35s linear infinite;
+}
+
+.animate-ticker-tape:hover {
+  animation-play-state: paused;
+}
+
 
 
 

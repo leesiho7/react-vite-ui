@@ -40,7 +40,9 @@ export default function Navbar({
     { symbol: 'TSLA', price: '$218.40', change: '-1.71%', isUp: false, target: 'TSLA' },
     { symbol: 'AAPL', price: '$224.20', change: '+1.63%', isUp: true, target: 'AAPL' },
     { symbol: '005930.KS', price: '₩56,200', change: '+0.89%', isUp: true, target: '005930.KS' },
-    { symbol: '000660.KS', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS' }
+    { symbol: '000660.KS', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS' },
+    { symbol: 'XRP', price: '$2.15', change: '+5.12%', isUp: true, target: 'XRP/USD' },
+    { symbol: 'BNB', price: '$648.20', change: '+0.95%', isUp: true, target: 'BNB/USD' }
   ];
 
   const menuText = {
@@ -51,11 +53,11 @@ export default function Navbar({
       bot: '24H 자동봇',
       research: 'AI 퀀트 리서치',
       media: '미디어 데스크',
-      orderbook: 'L2 실시간 호가 ↗',
+      arbitrage: '아비트라지 ↗',
       login: '로그인',
       signup: '1초 소셜 시작 ↗',
       logout: '로그아웃',
-      pulse: '실시간 시장 펄스'
+      pulse: '실시간 펄스'
     },
     en: {
       league: '10-WIN LEAGUE',
@@ -64,7 +66,7 @@ export default function Navbar({
       bot: '24H BOT',
       research: 'AI RESEARCH',
       media: 'MEDIA DESK',
-      orderbook: 'L2 ORDERBOOK ↗',
+      arbitrage: 'ARBITRAGE ↗',
       login: 'LOGIN',
       signup: '1-SEC ACCESS ↗',
       logout: 'LOGOUT',
@@ -77,7 +79,7 @@ export default function Navbar({
       bot: '24H 机器人',
       research: 'AI 量化研报',
       media: '媒体中心',
-      orderbook: 'L2 深度盘口 ↗',
+      arbitrage: '跨期套利 ↗',
       login: '登录',
       signup: '1秒快捷进入 ↗',
       logout: '退出登录',
@@ -90,11 +92,11 @@ export default function Navbar({
     bot: '24H 자동봇',
     research: 'AI 퀀트 리서치',
     media: '미디어 데스크',
-    orderbook: 'L2 실시간 호가 ↗',
+    arbitrage: '아비트라지 ↗',
     login: '로그인',
     signup: '1초 소셜 시작 ↗',
     logout: '로그아웃',
-    pulse: '실시간 시장 펄스'
+    pulse: '실시간 펄스'
   }
 
   const langOptions = [
@@ -103,14 +105,17 @@ export default function Navbar({
     { code: 'cn' as const, label: '中文' }
   ];
 
+  // 무한 롤링 티커용 중복 배열 (끊김 없는 연속 루프)
+  const infiniteTickers = [...tickers, ...tickers];
+
   return (
     <header className="w-full bg-[#121212] text-white border-b border-[#222222] select-none sticky top-0 z-50 shadow-lg font-sans">
-      {/* ── 1단 글로벌 네비게이션: 하단 terminal-shell과 완벽한 56px 수평 여백 일치 ── */}
+      {/* ── 1단 글로벌 네비게이션: 2-Block justify-between 1줄 칼각 정렬 (56px 여백 일치) ── */}
       <nav className="w-full max-w-[1440px] mx-auto flex items-center justify-between h-[64px] px-4 sm:px-8 md:px-[56px] gap-4 bg-[#121212]">
         
         {/* [왼쪽 블록: AETHER 로고 + 다국어 텍스트 링크 메뉴] */}
         <div className="flex items-center gap-6 lg:gap-8 min-w-0 flex-1 overflow-hidden">
-          {/* A 네모상자 + AETHER 브랜드 락업 (하단 바와 수직선 완벽 일치) */}
+          {/* A 네모상자 + AETHER 브랜드 락업 (고정 크기) */}
           <Link href="/" className="flex items-center gap-3 text-white no-underline group flex-shrink-0">
             <div className="w-[30px] h-[30px] border border-[#38bdf8] bg-[#090e17] text-[#38bdf8] font-serif font-bold text-[18px] grid place-items-center rounded-[2px] shadow-[0_0_12px_rgba(56,189,248,0.3)] group-hover:border-white transition-colors">
               A
@@ -128,7 +133,7 @@ export default function Navbar({
           {/* 세로 구분선 */}
           <div className="hidden lg:block h-4 w-[1px] bg-[#27272a] flex-shrink-0" />
 
-          {/* 다국어 동기화 메뉴 리스트 */}
+          {/* 다국어 동기화 메뉴 리스트 (호가 -> 아비트라지로 변경 완료) */}
           <ul className="hidden md:flex items-center gap-x-5 lg:gap-x-7 text-[12px] font-medium text-[#a1a1aa] list-none p-0 m-0 whitespace-nowrap overflow-x-auto scrollbar-none">
             <li>
               <button
@@ -177,9 +182,9 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <a href="/orderbook" className="hover:text-[#38bdf8] transition-colors no-underline text-[#71717a] font-mono text-[11px]">
-                {menuText.orderbook}
-              </a>
+              <Link href="/orderbook" className="hover:text-[#38bdf8] transition-colors no-underline text-[#38bdf8] font-mono text-[11px] font-semibold flex items-center gap-1 bg-[#38bdf8]/10 px-2 py-0.5 rounded border border-[#38bdf8]/30">
+                {menuText.arbitrage}
+              </Link>
             </li>
           </ul>
         </div>
@@ -239,32 +244,34 @@ export default function Navbar({
         </div>
       </nav>
 
-      {/* ── 2단 실시간 펄스 티커 바: 56px 수평 여백 일치 ── */}
-      <div className="w-full bg-[#161616] text-white h-[36px] border-t border-[#222222] flex items-center overflow-x-auto whitespace-nowrap scrollbar-none">
-        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
-          {/* LIVE PULSE 라벨 */}
-          <div className="flex items-center gap-2 pr-3 border-r border-[#27272a] font-bold text-[#38bdf8] flex-shrink-0">
-            <span className="text-[9.5px] text-[#71717a] font-mono tracking-wider">{menuText.pulse}</span>
+      {/* ── 2단 실시간 펄스 티커 바: 좌측 고정 배지 + 사이드로 끊김없이 슥슥 흐르는 무한 롤링 테이프 ── */}
+      <div className="w-full bg-[#161616] text-white h-[36px] border-t border-[#222222] flex items-center overflow-hidden">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center overflow-hidden">
+          {/* LIVE PULSE 고정 라벨 (왼쪽 고정 및 그림자 마스크) */}
+          <div className="flex items-center gap-2 pr-4 mr-2 border-r border-[#27272a] font-bold text-[#38bdf8] flex-shrink-0 z-10 bg-[#161616]">
+            <span className="text-[9.5px] text-[#38bdf8] font-mono tracking-wider font-bold">{menuText.pulse}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
           </div>
 
-          {/* 8대 종목 실시간 흐름 */}
-          <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
-            {tickers.map((item, index) => (
-              <button
-                key={index}
-                type="button"
-                style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 p-0 text-[11px]"
-                onClick={() => onSelectSymbol && onSelectSymbol(item.target)}
-                title={`클릭하여 ${item.symbol} 차트 및 퀀트 지표 동기화`}
-              >
-                <span className="text-[#e4e4e7] font-bold font-mono">{item.symbol}</span>
-                <span className={`font-mono font-semibold ${item.isUp ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
-                  {item.price} {item.change}
-                </span>
-              </button>
-            ))}
+          {/* 사이드로 유려하게 슥슥 무한 이동하는 동적 마키 테이프 (마우스 호버 시 일시정지) */}
+          <div className="flex-1 overflow-hidden relative">
+            <div className="animate-ticker-tape flex items-center gap-8 whitespace-nowrap">
+              {infiniteTickers.map((item, index) => (
+                <button
+                  key={`${item.symbol}-${index}`}
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 p-0 text-[11px]"
+                  onClick={() => onSelectSymbol && onSelectSymbol(item.target)}
+                  title={`클릭하여 ${item.symbol} 차트 및 퀀트 지표 동기화`}
+                >
+                  <span className="text-[#e4e4e7] font-bold font-mono">{item.symbol}</span>
+                  <span className={`font-mono font-semibold ${item.isUp ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
+                    {item.price} {item.change}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
