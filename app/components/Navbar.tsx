@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { UserRound, Globe } from 'lucide-react'
@@ -53,7 +53,7 @@ export default function Navbar({
       bot: '24H 자동봇',
       research: 'AI 퀀트 리서치',
       media: '미디어 데스크',
-      arbitrage: '아비트라지 ↗',
+      arbitrage: '아비트라지',
       login: '로그인',
       signup: '1초 소셜 시작 ↗',
       logout: '로그아웃',
@@ -66,7 +66,7 @@ export default function Navbar({
       bot: '24H BOT',
       research: 'AI RESEARCH',
       media: 'MEDIA DESK',
-      arbitrage: 'ARBITRAGE ↗',
+      arbitrage: 'ARBITRAGE',
       login: 'LOGIN',
       signup: '1-SEC ACCESS ↗',
       logout: 'LOGOUT',
@@ -79,7 +79,7 @@ export default function Navbar({
       bot: '24H 机器人',
       research: 'AI 量化研报',
       media: '媒体中心',
-      arbitrage: '跨期套利 ↗',
+      arbitrage: '跨期套利',
       login: '登录',
       signup: '1秒快捷进入 ↗',
       logout: '退出登录',
@@ -92,7 +92,7 @@ export default function Navbar({
     bot: '24H 자동봇',
     research: 'AI 퀀트 리서치',
     media: '미디어 데스크',
-    arbitrage: '아비트라지 ↗',
+    arbitrage: '아비트라지',
     login: '로그인',
     signup: '1초 소셜 시작 ↗',
     logout: '로그아웃',
@@ -182,7 +182,7 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <Link href="/orderbook" className="hover:text-[#38bdf8] transition-colors no-underline text-[#38bdf8] font-mono text-[11px] font-semibold flex items-center gap-1 bg-[#38bdf8]/10 px-2 py-0.5 rounded border border-[#38bdf8]/30">
+              <Link href="/orderbook" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
                 {menuText.arbitrage}
               </Link>
             </li>
