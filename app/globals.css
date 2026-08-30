@@ -1258,6 +1258,137 @@ button { cursor: pointer; }
   animation: claimReadyFire 1.2s infinite;
 }
 
+/* ── Crypto Arbitrage Dashboard Styles (Clean White Institutional Theme) ── */
+.trading-console { margin-top: 24px; }
+.arb-page { --arb-bg:#ffffff; --arb-panel:#f8fafc; --arb-line:#e2e8f0; --arb-text:#18334a; --arb-muted:#64748b; --arb-cyan:#0f766e; --arb-green:#10b981; --arb-red:#ef4444; min-height:100vh; background:var(--arb-bg); color:var(--arb-text); padding:0 4vw 50px; font-family:var(--font-mono),monospace; }
+.arb-topbar,.arb-toolbar,.arb-section-heading,.arb-footer,.arb-best-route{display:flex;align-items:center}
+.arb-topbar{min-height:68px;gap:28px;border-bottom:1px solid var(--arb-line)}
+.arb-brand{display:flex;align-items:baseline;gap:10px}
+.arb-brand a{color:var(--arb-text);font:600 16px Georgia,serif;text-decoration:none;letter-spacing:.08em}
+.arb-brand span,.arb-kicker{color:var(--arb-cyan);font-size:8px;letter-spacing:.13em;font-weight:600}
+.arb-topbar nav{display:flex;gap:4px;margin-left:auto}
+.arb-topbar nav a{padding:26px 10px;color:var(--arb-muted);font-size:8px;text-decoration:none;border-bottom:2px solid transparent}
+.arb-topbar nav a.active,.arb-topbar nav a:hover{color:var(--arb-text);border-color:var(--arb-cyan);font-weight:600}
+.arb-top-status{display:flex;align-items:center;gap:7px;color:var(--arb-muted);font-size:8px;white-space:nowrap}
+.arb-top-status svg{color:var(--arb-green)}
+.arb-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--arb-green);box-shadow:0 0 6px rgba(16,185,129,0.4)}
+.arb-divider{height:16px;width:1px;background:var(--arb-line)}
+.arb-hero{display:grid;grid-template-columns:1fr 220px;gap:40px;padding:36px 0 30px;border-bottom:1px solid var(--arb-line)}
+.arb-hero h1,.arb-section-heading h2{margin:10px 0 8px;color:var(--arb-text);font:400 clamp(30px,4vw,48px)/1.1 Georgia,serif;letter-spacing:-.04em}
+.arb-hero h1 em,.arb-section-heading h2 em{color:var(--arb-cyan);font-style:normal}
+.arb-hero p{max-width:680px;color:var(--arb-muted);font:12px/1.75 var(--font-sans),sans-serif}
+.arb-hero-readout{align-self:end;display:grid;gap:8px;padding:14px 16px;border:1px solid var(--arb-line);border-left:3px solid var(--arb-cyan);background:var(--arb-panel);color:var(--arb-muted);font-size:8px}
+.arb-hero-readout strong{display:flex;gap:8px;color:var(--arb-green);font-size:10px}
+.arb-toolbar{justify-content:space-between;gap:15px;padding:17px 0}
+.arb-pair-tabs,.arb-actions,.arb-filter{display:flex;gap:4px;flex-wrap:wrap}
+.arb-page button{border:1px solid var(--arb-line);background:#ffffff;color:var(--arb-muted);padding:9px 11px;font:8px var(--font-mono),monospace;letter-spacing:.08em;cursor:pointer}
+.arb-page button:hover,.arb-page button.selected{border-color:var(--navy);color:#ffffff;background:var(--navy)}
+.arb-actions button{display:inline-flex;align-items:center;gap:6px}
+.arb-section{padding:28px 0 35px}
+.arb-section-heading{justify-content:space-between;align-items:end;gap:20px;margin-bottom:20px}
+.arb-section-heading h2{font-size:30px;margin-bottom:0}
+.arb-table{border:1px solid var(--arb-line);background:#ffffff}
+.arb-table-row{display:grid;grid-template-columns:1.25fr 1fr repeat(4,.7fr) 25px;align-items:center;gap:12px;min-height:54px;padding:0 18px;border-top:1px solid var(--arb-line);color:var(--arb-muted);font-size:10px}
+.arb-table-row:first-child{border-top:0}
+.arb-table-head{min-height:38px;background:#f8fafc;color:var(--arb-muted);font-size:8px;letter-spacing:.08em}
+.arb-exchange{display:flex;align-items:center;gap:9px;color:var(--arb-text)}
+.arb-exchange b{display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--arb-line);color:var(--arb-cyan);font-size:8px;background:#f1f5f9}
+.arb-connection{display:flex;align-items:center;gap:6px;font-size:8px}
+.arb-connection i{width:5px;height:5px;border-radius:50%;background:var(--arb-green)}
+.arb-connection.degraded{color:#d97706}
+.arb-connection.degraded i{background:#d97706}
+.positive{color:var(--arb-green);font-weight:bold}
+.negative{color:var(--arb-red);font-weight:bold}
+.arb-best-route{justify-content:space-between;gap:28px;padding:22px 26px;border:1px solid var(--arb-line);background:#f1f5f9}
+.arb-best-route h2{margin:8px 0 4px;color:var(--arb-text);font:400 24px Georgia,serif}
+.arb-best-route p,.arb-route-meta{color:var(--arb-muted);font-size:9px}
+.arb-best-route>strong{color:var(--arb-green);font-size:29px}
+.arb-route-meta{display:flex;gap:16px}
+.arb-route-meta b{display:block;margin-top:6px;color:var(--arb-text)}
+.arb-best-route button{color:#ffffff;background:#0f766e;border:1px solid #14b8a6}
+.arb-terminal{display:grid;grid-template-columns:1fr 150px 1fr 230px;border:1px solid var(--arb-line);background:#ffffff}
+.arb-book-column,.arb-mid-price,.arb-tape{padding:15px;border-right:1px solid var(--arb-line);background:#ffffff}
+.arb-column-title{display:grid;grid-template-columns:1fr 1fr 1fr;padding-bottom:10px;color:var(--arb-muted);border-bottom:1px solid var(--arb-line);font-size:8px}
+.arb-column-title span:not(:first-child),.arb-level span:not(:first-child),.arb-tape-row span:not(:first-child){text-align:right}
+.arb-column-title.ask{color:var(--arb-red)}
+.arb-column-title.bid{color:var(--arb-green)}
+.arb-level,.arb-tape-row{display:grid;grid-template-columns:1fr 1fr 1fr;position:relative;padding:7px 0;color:var(--arb-muted);font-size:9px}
+.arb-level span:first-child{color:var(--arb-text)}
+.arb-level i{position:absolute;right:0;bottom:0;height:2px;background:var(--arb-cyan);opacity:.2}
+.arb-mid-price{display:grid;align-content:center;justify-items:center;gap:10px;text-align:center;background:#f8fafc}
+.arb-mid-price small{color:var(--arb-muted);font-size:8px}
+.arb-mid-price strong{color:var(--arb-text);font:600 19px var(--font-mono),monospace}
+.arb-mid-price span{color:var(--arb-green);font-size:10px}
+.arb-mid-price b{color:var(--arb-cyan);font-size:9px}
+.arb-mid-price hr{width:100%;border:0;border-top:1px solid var(--arb-line)}
+.arb-tape-row{font-size:8px}
+.arb-tape-row b{text-align:right}
+.arb-footer{justify-content:space-between;gap:20px;padding-top:20px;color:var(--arb-muted);font-size:8px}
+.arb-footer a{color:var(--arb-cyan);text-decoration:none}
+.arb-live-label{color:var(--arb-green);font-size:8px}
+.arb-live-label .arb-dot{margin-right:6px}
+
+@media (max-width: 760px) {
+  .arb-page{padding:0 16px 30px}
+  .arb-topbar{gap:10px;flex-wrap:wrap;padding:12px 0}
+  .arb-brand span,.arb-topbar nav{display:none}
+  .arb-top-status{margin-left:auto}
+  .arb-hero{grid-template-columns:1fr;padding:30px 0 24px}
+  .arb-hero-readout{display:none}
+  .arb-toolbar{display:block}
+  .arb-pair-tabs{overflow-x:auto;flex-wrap:nowrap;margin-bottom:10px}
+  .arb-section-heading{display:block}
+  .arb-filter{margin-top:15px}
+  .arb-table{overflow-x:auto}
+  .arb-table-row{min-width:790px}
+  .arb-best-route{display:grid;grid-template-columns:1fr auto;gap:14px}
+  .arb-route-meta{grid-column:1/-1}
+  .arb-best-route button{justify-self:start}
+  .arb-terminal{min-width:780px}
+  .arb-terminal-section{overflow-x:auto}
+  .arb-footer{display:block;line-height:1.8}
+}
+
+/* ── Polymarket Event Dark Theme Styles ── */
+.polymarket-event { background:#07131d; color:#d6e7ea; border:1px solid #1b3a4a; box-shadow:0 18px 45px rgba(7,19,29,.18); }
+.polymarket-event .league-header,.polymarket-event .prediction-card,.polymarket-event .versus-board { background:#0d202d; border-color:#1b3a4a; }
+.polymarket-event .league-header h2,.polymarket-event .prediction-body strong { color:#d6e7ea; }
+.polymarket-event .league-header p,.polymarket-event .prediction-body p,.polymarket-event .scoreline { color:#7895a0; }
+.polymarket-event .eyebrow,.polymarket-event .overline { color:#56d4da; }
+.event-countdown { display:grid; gap:5px; padding:14px 18px; border-left:2px solid #d6ae62; background:#102b3a; }
+.event-countdown span { color:#d6ae62; font-size:8px; }
+.event-countdown strong { color:#d6e7ea; font:600 25px 'IBM Plex Mono',monospace; }
+.event-countdown small { color:#7895a0; font-size:8px; }
+.prediction-market-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; margin-bottom:18px; background:#1b3a4a; }
+.prediction-market-strip span { padding:12px 15px; background:#102b3a; color:#7895a0; font-size:8px; }
+.prediction-market-strip strong { display:block; margin-top:6px; color:#d6e7ea; font-size:12px; }
+.prediction-market-strip .live-text { color:#59c995; }
+.polymarket-event .prediction { background:#102b3a; border-color:#1b3a4a; }
+.polymarket-event .prediction.up { color:#59c995; }
+.polymarket-event .prediction.down { color:#e77e83; }
+.polymarket-event .prediction.selected { border-color:currentColor; box-shadow:inset 0 -3px 0 currentColor; }
+.polymarket-event .primary-button { background:#56d4da; color:#07131d; }
+
+@media (max-width: 760px) {
+  .event-countdown { display:none; }
+  .prediction-market-strip { grid-template-columns:1fr; }
+  .prediction-market-strip span { display:flex; justify-content:space-between; align-items:center; }
+  .prediction-market-strip strong { margin-top:0; }
+  .polymarket-event .league-header { padding:20px 16px; }
+  .media-hero { grid-template-columns: 1fr; gap: 25px; padding: 42px 0 32px; }
+  .media-hero h1 { font-size: 54px; }
+  .media-toolbar { display: block; }
+  .media-filters { overflow-x: auto; padding-bottom: 12px; }
+  .media-updated { display: block; }
+  .media-feature { grid-template-columns: 1fr; }
+  .media-feature-visual { min-height: 180px; }
+  .media-feature-copy { padding: 24px; }
+  .media-feature-copy h2 { font-size: 28px; }
+  .media-grid { grid-template-columns: 1fr; }
+  .media-breadcrumb, .media-topbar .top-meta { display: none; }
+  .media-footer { gap: 12px; flex-direction: column; }
+}
+
 
 
 

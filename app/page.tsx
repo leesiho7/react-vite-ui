@@ -110,6 +110,7 @@ const newsItemsByLang = {
 
 const mediaStories = [
   {
+    track: 'DAILY_LIVE',
     source: 'COIN BUREAU',
     key: 'CRYPTO',
     embedId: 'aq475kcLU5A',
@@ -133,98 +134,7 @@ const mediaStories = [
     ]
   },
   {
-    source: 'COIN BUREAU',
-    key: 'CRYPTO',
-    embedId: 'xe8XiN5Zt4Y',
-    targetSymbol: 'ETH/USD',
-    title: ['Ethereum Economics: Layer-2 Settlement & Staking Yield', '이더리움 경제학: 레이어2 정산과 스테이킹 실질 수익률', '以太坊经济学：Layer-2结算与质押真实收益率'],
-    description: ['Examining Ethereum’s fee-burn mechanics, rollup throughput scaling, and the institutional appeal of risk-free staking yields.', '이더리움 수수료 소각 메커니즘, 롤업 확장성과 기관 대상 스테이킹 무위험 수익률의 매력을 분석합니다.', '深入剖析以太坊费用销毁机制、Layer-2扩容吞吐量及质押收益对机构资本的吸引力。'],
-    age: ['25 MIN AGO', '25분 전', '25分钟前'],
-    duration: '19:42',
-    tone: 'blue',
-    channel: 'Coin Bureau',
-    link: 'https://www.youtube.com/watch?v=xe8XiN5Zt4Y',
-    takeaways: [
-      ['Layer-2 settlement volume surpasses legacy payment rails with sub-cent transaction fees.', '레이어2 롤업의 결제 규모가 기존 전통 결제망을 상회하며 센트 단위 수수료를 실현했습니다.', 'Layer-2汇总网络结算规模已超越传统支付通道，交易成本降至分美分级别。'],
-      ['Proof-of-Stake real yields provide benchmark interest rate for decentralized finance.', '지분증명(PoS) 실질 수익률이 탈중앙화 금융(DeFi)의 기준금리(Risk-free Benchmark) 역할을 수행합니다.', '权益证明(PoS)真实收益率正在成为去中心化金融的核心无风险基准利率。'],
-      ['Ecosystem tokenomics maintain deflationary pressure during high-throughput activity bursts.', '네트워크 트랜잭션 급증 구간에서 자동 소각(EIP-1559)이 발행량을 압도하며 디플레이션 효과를 창출합니다.', '在高吞吐量活跃期，自动销毁机制驱动代币经济学持续呈现通缩状态。']
-    ],
-    timestamps: [
-      { time: '01:50', sec: 110, label: ['L2 Throughput Surge', 'L2 처리량 급증', 'Layer-2吞吐量激增'] },
-      { time: '08:40', sec: 520, label: ['Staking Benchmark Rate', '스테이킹 기준금리', '质押基准收益率'] },
-      { time: '14:25', sec: 865, label: ['Deflationary Burn Path', '디플레이션 소각 경로', '通缩销毁路径'] }
-    ]
-  },
-  {
-    source: 'COIN BUREAU',
-    key: 'CRYPTO',
-    embedId: 'aMvrXhLubBU',
-    targetSymbol: 'SOL/USD',
-    title: ['Crypto Liquidity Volatility: Derivatives & Liquidation Maps', '크립토 유동성 변동성: 파생상품 포지셔닝과 청산 맵', '加密流动性与波动率：衍生品持仓与清算热力图'],
-    description: ['On-chain orderflow, futures funding rates, and high-frequency liquidation cascades across perpetual swaps.', '온체인 호가 흐름, 선물 펀딩비율, 무기한 스왑 시장의 연쇄 청산 구조를 짚어봅니다.', '剖析链上订单流、永续合约资金费率及高杠杆清算瀑布效应对价格的冲击。'],
-    age: ['42 MIN AGO', '42분 전', '42分钟前'],
-    duration: '18:05',
-    tone: 'green',
-    channel: 'Coin Bureau',
-    link: 'https://www.youtube.com/watch?v=aMvrXhLubBU',
-    takeaways: [
-      ['Derivatives open interest leverage creates explosive short/long squeeze dynamics.', '파생상품 미결제약정 레버리지가 극단적 숏스퀴즈 및 롱스퀴즈 변동성을 촉발합니다.', '衍生品持仓量过热极易引发剧烈的空头与多头双向挤压行情。'],
-      ['Perpetual funding rate divergences offer high-probability mean-reversion alpha.', '무기한 선물 펀딩비율의 왜곡이 높은 승률의 통계적 평균회귀 차익거래 기회를 제공합니다.', '永续合约资金费率的异常偏离提供了高胜率的统计均值回归套利机会。'],
-      ['Decentralized exchanges capture record share of perpetual trading volume.', '탈중앙화 파생상품 거래소(DEX)가 온체인 거래량 점유율 사상 최고치를 달성했습니다.', '去中心化衍生品交易所(DEX)在全网合约交易量中创下历史新高份额。']
-    ],
-    timestamps: [
-      { time: '02:10', sec: 130, label: ['Liquidation Heatmaps', '청산 히트맵 분석', '清算热力图解析'] },
-      { time: '07:35', sec: 455, label: ['Perp Funding Arbitrage', '펀딩비 차익거래', '资金费率套利'] },
-      { time: '13:00', sec: 780, label: ['DEX Orderflow Dominance', 'DEX 호가 점유율', 'DEX订单流优势'] }
-    ]
-  },
-  {
-    source: 'BRIDGEWATER',
-    key: 'MACRO',
-    embedId: 'PHe0bXAIuk0',
-    targetSymbol: 'BTC/USD',
-    title: ['How The Economic Machine Works by Ray Dalio', '경제 기계가 작동하는 법 (레이 달리오 매크로 특강)', '经济机器是怎样运行的（瑞·达利欧）'],
-    description: ['Ray Dalio’s foundational 30-minute breakdown of credit cycles, interest rates, and deleveraging dynamics.', '신용 사이클, 금리 정책, 그리고 디레버리징(부채 축소)의 경제 메커니즘을 설명하는 30분 마스터클래스입니다.', '关于信贷周期、利率政策以及去杠杆经济机制的经典剖析。'],
-    age: ['1 HOUR AGO', '1시간 전', '1小时前'],
-    duration: '31:00',
-    tone: 'blue',
-    channel: 'Principles by Ray Dalio',
-    link: 'https://www.youtube.com/watch?v=PHe0bXAIuk0',
-    takeaways: [
-      ['Credit creates buying power and short-term debt cycles that oscillate every 5-8 years.', '신용(Credit) 창출이 단기 구매력과 5~8년 주기의 단기 부채 사이클을 형성합니다.', '信贷扩张创造购买力，驱动5至8年的短期债务周期循环。'],
-      ['Central banks manipulate short-term interest rates to stabilize inflation and productivity.', '중앙은행은 단기 기준금리를 조절하여 인플레이션과 실물 생산성을 통제합니다.', '中央银行通过调节短期基准利率来平抑通胀并调控实体生产力。'],
-      ['Long-term debt cycle tops require beautiful deleveraging: austerity, debt restructuring and money printing.', '장기 부채 사이클 정점에서는 긴축, 채무 재조정, 화폐 발행의 조화로운 디레버리징이 필수적입니다.', '长期债务周期见顶时，需要兼顾紧缩、债务重组与量化宽松的“和谐去杠杆”。']
-    ],
-    timestamps: [
-      { time: '03:15', sec: 195, label: ['Credit & Transactions', '신용과 거래 원리', '信贷与交易机制'] },
-      { time: '12:40', sec: 760, label: ['Short-Term Debt Cycle', '단기 부채 사이클', '短期债务周期'] },
-      { time: '21:10', sec: 1270, label: ['Beautiful Deleveraging', '조화로운 디레버리징', '和谐去杠杆'] }
-    ]
-  },
-  {
-    source: 'CNBC',
-    key: 'STRATEGY',
-    embedId: 'oPtsG0v08N0',
-    targetSymbol: 'NVDA/USD',
-    title: ['IMF Chief Economist: Fed Rate Decisions & Market Liquidity', '전 IMF 수석 이코노미스트 라잔: 연준 금리 결정과 시장 유동성', '前IMF首席经济学家：美联储利率决策与市场流动性'],
-    description: ['Raghuram Rajan joins CNBC to analyze Fed policy dilemmas, sticky inflation, and cross-asset liquidity risks.', '라구람 라잔 전 IMF 수석 이코노미스트가 연준의 정책 딜레마와 유동성 리스크를 진단합니다.', '拉古拉姆·拉詹分析美联储政策两难、粘性通胀与跨资产流动性风险。'],
-    age: ['2 HOURS AGO', '2시간 전', '2小时前'],
-    duration: '06:45',
-    tone: 'green',
-    channel: 'CNBC Television',
-    link: 'https://www.youtube.com/watch?v=oPtsG0v08N0',
-    takeaways: [
-      ['Fed faces complex policy balancing between growth momentum and sticky core services inflation.', '연준은 경기 성장 모멘텀과 끈적한 서비스 인플레이션 사이에서 까다로운 균형을 요구받습니다.', '美联储在维持经济增长势头与应对粘性核心服务通胀之间面临艰难平衡。'],
-      ['Premature aggressive easing risks re-igniting speculative asset bubbles.', '성급한 금리 인하는 자산 시장의 투기적 유동성 버블을 재점화할 위험이 있습니다.', '过早过快的激进降息可能重新点燃资产市场的投机性流动性泡沫。'],
-      ['Global central banks are navigating asynchronous monetary policy divergence.', '글로벌 중앙은행들이 국가별 거시 여건에 따라 각기 다른 통화정책 경로를 걷고 있습니다.', '全球央行正在经历分化的非同步货币政策周期。']
-    ],
-    timestamps: [
-      { time: '00:45', sec: 45, label: ['Fed Policy Dilemma', '연준 정책 딜레마', '美联储政策困境'] },
-      { time: '02:30', sec: 150, label: ['Sticky Inflation Risk', '끈적한 인플레 위험', '粘性通胀风险'] },
-      { time: '04:50', sec: 290, label: ['Cross-Asset Impact', '자산별 파급효과', '跨资产传导影响'] }
-    ]
-  },
-  {
+    track: 'DAILY_LIVE',
     source: 'CNBC',
     key: 'STRATEGY',
     embedId: 'tCYeltnWdL0',
@@ -248,13 +158,14 @@ const mediaStories = [
     ]
   },
   {
+    track: 'DAILY_LIVE',
     source: 'CNBC',
     key: 'MARKET',
     embedId: 'kdCMqSTQtg8',
     targetSymbol: 'TSLA/USD',
     title: ['Mohamed El-Erian: Global Economy Health & Capex Strength', '모하메드 엘-에리언: 글로벌 경제 건전성과 자본지출 동향', '穆罕默德·埃尔-埃利安：全球经济基本面与资本开支态势'],
     description: ['Allianz chief economic advisor Mohamed El-Erian examines economic resilience, labour data, and tech investment cycle.', '알리안츠 수석 경제 고문 엘-에리언이 경제 회복력, 고용 데이터와 테크 투자 사이클을 진단합니다.', '安联首席经济顾问埃尔-埃利安深入解读经济韧性、劳动力数据及科技投资周期。'],
-    age: ['YESTERDAY', '어제', '昨天'],
+    age: ['TODAY', '오늘', '今天'],
     duration: '07:15',
     tone: 'navy',
     channel: 'CNBC Television',
@@ -271,36 +182,14 @@ const mediaStories = [
     ]
   },
   {
-    source: 'YAHOO FINANCE',
-    key: 'COMPANY',
-    embedId: 'cTx3ODv5o3I',
-    targetSymbol: 'ETH/USD',
-    title: ['Nobel Laureate Krugman on Monetary Leadership & Market Regimes', '노벨경제학상 크루그먼: 통화 리더십과 시장 국면 진단', '诺贝尔奖得主克鲁格曼谈货币政策领导力与市场周期'],
-    description: ['Paul Krugman joins Yahoo Finance to discuss central-bank leadership, structural productivity, and asset price regimes.', '노벨 경제학상 수상자 폴 크루그먼이 중앙은행 정책과 생산성, 자산 가격 구조를 논의합니다.', '诺贝尔经济学奖得主保罗·克鲁格曼深度解析央行领导力、结构性生产力与资产价格周期。'],
-    age: ['YESTERDAY', '어제', '昨天'],
-    duration: '05:40',
-    tone: 'red',
-    channel: 'Yahoo Finance',
-    link: 'https://www.youtube.com/watch?v=cTx3ODv5o3I',
-    takeaways: [
-      ['Institutional credibility of central-bank communication anchors inflation expectations.', '중앙은행의 일관된 시장 소통과 제도적 신뢰도가 인플레이션 기대 심리를 안정시킵니다.', '中央银行政策沟通的公信力是锚定长期通胀预期的核心支柱。'],
-      ['Technological productivity gains act as structural long-term disinflationary force.', '기술 혁신에 따른 생산성 향상이 구조적인 장기 디스인플레이션 요인으로 작용합니다.', '科技驱动的生产力提升成为中长期结构性去通胀的关键力量。'],
-      ['Macro regime shifts require re-evaluating risk-free discount rate assumptions.', '거시경제 체제 전환기에는 무위험 할인율(Discount Rate)에 대한 재평가가 요구됩니다.', '宏观周期转换期需要重新评估无风险贴现率的核心假设。']
-    ],
-    timestamps: [
-      { time: '01:00', sec: 60, label: ['Central Bank Policy', '중앙은행 통화정책', '央行政策沟通'] },
-      { time: '02:45', sec: 165, label: ['Productivity Drivers', '생산성 견인 요인', '生产力驱动要素'] },
-      { time: '04:20', sec: 260, label: ['Market Regime Shift', '시장 체제 전환 국면', '市场周期切换'] }
-    ]
-  },
-  {
+    track: 'DAILY_LIVE',
     source: 'BLOOMBERG',
     key: 'MACRO',
     embedId: '2qGajiA2J5k',
     targetSymbol: 'GOLD/USD',
     title: ['Warsh on Sticky Inflation & Global Commodity Geopolitics', '케빈 워시: 지속적 인플레이션과 글로벌 원자재 지정학', '凯文·沃什谈粘性通胀与全球大宗商品地缘政治'],
     description: ['Bloomberg This Weekend analysis on inflation dynamics, oil markets, and emerging market currency pressures.', '블룸버그 주간 스페셜: 인플레이션 추세, 원유 시장 및 신흥국 통화 리스크를 집중 조명합니다.', '彭博周末特刊：聚焦通胀粘性、原油地缘政治与新兴市场汇率压力。'],
-    age: ['2 DAYS AGO', '2일 전', '2天前'],
+    age: ['TODAY', '오늘', '今天'],
     duration: '12:15',
     tone: 'blue',
     channel: 'Bloomberg Television',
@@ -314,6 +203,126 @@ const mediaStories = [
       { time: '01:30', sec: 90, label: ['Commodity Shocks', '원자재 충격 분석', '大宗商品冲击'] },
       { time: '05:20', sec: 320, label: ['De-Dollarization Flow', '탈달러화 자금흐름', '去美元化资金流'] },
       { time: '09:45', sec: 585, label: ['EM Risk Assessment', '신흥국 리스크 진단', '新兴市场风险评估'] }
+    ]
+  },
+  {
+    track: 'MASTERCLASS',
+    source: 'BRIDGEWATER',
+    key: 'MACRO',
+    embedId: 'PHe0bXAIuk0',
+    targetSymbol: 'BTC/USD',
+    title: ['How The Economic Machine Works by Ray Dalio', '경제 기계가 작동하는 법 (레이 달리오 매크로 특강)', '经济机器是怎样运行的（瑞·达利欧）'],
+    description: ['Ray Dalio’s foundational 30-minute breakdown of credit cycles, interest rates, and deleveraging dynamics.', '신용 사이클, 금리 정책, 그리고 디레버리징(부채 축소)의 경제 메커니즘을 설명하는 30분 마스터클래스입니다.', '关于信贷周期、利率政策以及去杠杆经济机制的经典剖析。'],
+    age: ['MASTERCLASS', '불멸의 마스터클래스', '不朽经典大师课'],
+    duration: '31:00',
+    tone: 'blue',
+    channel: 'Principles by Ray Dalio',
+    link: 'https://www.youtube.com/watch?v=PHe0bXAIuk0',
+    takeaways: [
+      ['Credit creates buying power and short-term debt cycles that oscillate every 5-8 years.', '신용(Credit) 창출이 단기 구매력과 5~8년 주기의 단기 부채 사이클을 형성합니다.', '信贷扩张创造购买力，驱动5至8年的短期债务周期循环。'],
+      ['Central banks manipulate short-term interest rates to stabilize inflation and productivity.', '중앙은행은 단기 기준금리를 조절하여 인플레이션과 실물 생산성을 통제합니다.', '中央银行通过调节短期基准利率来平抑通胀并调控实体生产力。'],
+      ['Long-term debt cycle tops require beautiful deleveraging: austerity, debt restructuring and money printing.', '장기 부채 사이클 정점에서는 긴축, 채무 재조정, 화폐 발행의 조화로운 디레버리징이 필수적입니다.', '长期债务周期见顶时，需要兼顾紧缩、债务重组与量化宽松的“和谐去杠杆”。']
+    ],
+    timestamps: [
+      { time: '03:15', sec: 195, label: ['Credit & Transactions', '신용과 거래 원리', '信贷与交易机制'] },
+      { time: '12:40', sec: 760, label: ['Short-Term Debt Cycle', '단기 부채 사이클', '短期债务周期'] },
+      { time: '21:10', sec: 1270, label: ['Beautiful Deleveraging', '조화로운 디레버리징', '和谐去杠杆'] }
+    ]
+  },
+  {
+    track: 'MASTERCLASS',
+    source: 'COIN BUREAU',
+    key: 'CRYPTO',
+    embedId: 'aMvrXhLubBU',
+    targetSymbol: 'SOL/USD',
+    title: ['Crypto Liquidity Volatility: Derivatives & Liquidation Maps', '크립토 유동성 변동성: 파생상품 포지셔닝과 청산 맵', '加密流动性与波动率：衍生品持仓与清算热力图'],
+    description: ['On-chain orderflow, futures funding rates, and high-frequency liquidation cascades across perpetual swaps.', '온체인 호가 흐름, 선물 펀딩비율, 무기한 스왑 시장의 연쇄 청산 구조를 짚어봅니다.', '剖析链上订单流、永续合约资金费率及高杠杆清算瀑布效应对价格的冲击。'],
+    age: ['MASTERCLASS', '마스터클래스', '大师课'],
+    duration: '18:05',
+    tone: 'green',
+    channel: 'Coin Bureau',
+    link: 'https://www.youtube.com/watch?v=aMvrXhLubBU',
+    takeaways: [
+      ['Derivatives open interest leverage creates explosive short/long squeeze dynamics.', '파생상품 미결제약정 레버리지가 극단적 숏스퀴즈 및 롱스퀴즈 변동성을 촉발합니다.', '衍生品持仓量过热极易引发剧烈的空头与多头双向挤压行情。'],
+      ['Perpetual funding rate divergences offer high-probability mean-reversion alpha.', '무기한 선물 펀딩비율의 왜곡이 높은 승률의 통계적 평균회귀 차익거래 기회를 제공합니다.', '永续合约资金费率的异常偏离提供了高胜率的统计均值回归套利机会。'],
+      ['Decentralized exchanges capture record share of perpetual trading volume.', '탈중앙화 파생상품 거래소(DEX)가 온체인 거래량 점유율 사상 최고치를 달성했습니다.', '去中心化衍生品交易所(DEX)在全网合约交易量中创下历史新高份额。']
+    ],
+    timestamps: [
+      { time: '02:10', sec: 130, label: ['Liquidation Heatmaps', '청산 히트맵 분석', '清算热力图解析'] },
+      { time: '07:35', sec: 455, label: ['Perp Funding Arbitrage', '펀딩비 차익거래', '资金费率套利'] },
+      { time: '13:00', sec: 780, label: ['DEX Orderflow Dominance', 'DEX 호가 점유율', 'DEX订单流优势'] }
+    ]
+  },
+  {
+    track: 'MASTERCLASS',
+    source: 'COIN BUREAU',
+    key: 'CRYPTO',
+    embedId: 'xe8XiN5Zt4Y',
+    targetSymbol: 'ETH/USD',
+    title: ['Ethereum Economics: Layer-2 Settlement & Staking Yield', '이더리움 경제학: 레이어2 정산과 스테이킹 실질 수익률', '以太坊经济学：Layer-2结算与质押真实收益率'],
+    description: ['Examining Ethereum’s fee-burn mechanics, rollup throughput scaling, and the institutional appeal of risk-free staking yields.', '이더리움 수수료 소각 메커니즘, 롤업 확장성과 기관 대상 스테이킹 무위험 수익률의 매력을 분석합니다.', '深入剖析以太坊费用销毁机制、Layer-2扩容吞吐量及质押收益对机构资本的吸引力。'],
+    age: ['MASTERCLASS', '마스터클래스', '大师课'],
+    duration: '19:42',
+    tone: 'blue',
+    channel: 'Coin Bureau',
+    link: 'https://www.youtube.com/watch?v=xe8XiN5Zt4Y',
+    takeaways: [
+      ['Layer-2 settlement volume surpasses legacy payment rails with sub-cent transaction fees.', '레이어2 롤업의 결제 규모가 기존 전통 결제망을 상회하며 센트 단위 수수료를 실현했습니다.', 'Layer-2汇总网络结算规模已超越传统支付通道，交易成本降至分美分级别。'],
+      ['Proof-of-Stake real yields provide benchmark interest rate for decentralized finance.', '지분증명(PoS) 실질 수익률이 탈중앙화 금융(DeFi)의 기준금리(Risk-free Benchmark) 역할을 수행합니다.', '权益证明(PoS)真实收益率正在成为去中心化金融的核心无风险基准利率。'],
+      ['Ecosystem tokenomics maintain deflationary pressure during high-throughput activity bursts.', '네트워크 트랜잭션 급증 구간에서 자동 소각(EIP-1559)이 발행량을 압도하며 디플레이션 효과를 창출합니다.', '在高吞吐量活跃期，自动销毁机制驱动代币经济学持续呈现通缩状态。']
+    ],
+    timestamps: [
+      { time: '01:50', sec: 110, label: ['L2 Throughput Surge', 'L2 처리량 급증', 'Layer-2吞吐量激增'] },
+      { time: '08:40', sec: 520, label: ['Staking Benchmark Rate', '스테이킹 기준금리', '质押基准收益率'] },
+      { time: '14:25', sec: 865, label: ['Deflationary Burn Path', '디플레이션 소각 경로', '通缩销毁路径'] }
+    ]
+  },
+  {
+    track: 'MASTERCLASS',
+    source: 'CNBC',
+    key: 'STRATEGY',
+    embedId: 'oPtsG0v08N0',
+    targetSymbol: 'NVDA/USD',
+    title: ['IMF Chief Economist: Fed Rate Decisions & Market Liquidity', '전 IMF 수석 이코노미스트 라잔: 연준 금리 결정과 시장 유동성', '前IMF首席经济学家：美联储利率决策与市场流动性'],
+    description: ['Raghuram Rajan joins CNBC to analyze Fed policy dilemmas, sticky inflation, and cross-asset liquidity risks.', '라구람 라잔 전 IMF 수석 이코노미스트가 연준의 정책 딜레마와 유동성 리스크를 진단합니다.', '拉古拉姆·拉詹分析美联储政策两难、粘性通胀与跨资产流动性风险。'],
+    age: ['MASTERCLASS', '마스터클래스', '大师课'],
+    duration: '06:45',
+    tone: 'green',
+    channel: 'CNBC Television',
+    link: 'https://www.youtube.com/watch?v=oPtsG0v08N0',
+    takeaways: [
+      ['Fed faces complex policy balancing between growth momentum and sticky core services inflation.', '연준은 경기 성장 모멘텀과 끈적한 서비스 인플레이션 사이에서 까다로운 균형을 요구받습니다.', '美联储在维持经济增长势头与应对粘性核心服务通胀之间面临艰难平衡。'],
+      ['Premature aggressive easing risks re-igniting speculative asset bubbles.', '성급한 금리 인하는 자산 시장의 투기적 유동성 버블을 재점화할 위험이 있습니다.', '过早过快的激进降息可能重新点燃资产市场的投机性流动性泡沫。'],
+      ['Global central banks are navigating asynchronous monetary policy divergence.', '글로벌 중앙은행들이 국가별 거시 여건에 따라 각기 다른 통화정책 경로를 걷고 있습니다.', '全球央行正在经历分化的非同步货币政策周期。']
+    ],
+    timestamps: [
+      { time: '00:45', sec: 45, label: ['Fed Policy Dilemma', '연준 정책 딜레마', '美联储政策困境'] },
+      { time: '02:30', sec: 150, label: ['Sticky Inflation Risk', '끈적한 인플레 위험', '粘性通胀风险'] },
+      { time: '04:50', sec: 290, label: ['Cross-Asset Impact', '자산별 파급효과', '跨资产传导影响'] }
+    ]
+  },
+  {
+    track: 'MASTERCLASS',
+    source: 'YAHOO FINANCE',
+    key: 'COMPANY',
+    embedId: 'cTx3ODv5o3I',
+    targetSymbol: 'ETH/USD',
+    title: ['Nobel Laureate Krugman on Monetary Leadership & Market Regimes', '노벨경제학상 크루그먼: 통화 리더십과 시장 국면 진단', '诺贝尔奖得主克鲁格曼谈货币政策领导力与市场周期'],
+    description: ['Paul Krugman joins Yahoo Finance to discuss central-bank leadership, structural productivity, and asset price regimes.', '노벨 경제학상 수상자 폴 크루그먼이 중앙은행 정책과 생산성, 자산 가격 구조를 논의합니다.', '诺贝尔经济学奖得主保罗·克鲁格曼深度解析央行领导力、结构性生产力与资产价格周期。'],
+    age: ['MASTERCLASS', '마스터클래스', '大师课'],
+    duration: '05:40',
+    tone: 'red',
+    channel: 'Yahoo Finance',
+    link: 'https://www.youtube.com/watch?v=cTx3ODv5o3I',
+    takeaways: [
+      ['Institutional credibility of central-bank communication anchors inflation expectations.', '중앙은행의 일관된 시장 소통과 제도적 신뢰도가 인플레이션 기대 심리를 안정시킵니다.', '中央银行政策沟通的公信力是锚定长期通胀预期的核心支柱。'],
+      ['Technological productivity gains act as structural long-term disinflationary force.', '기술 혁신에 따른 생산성 향상이 구조적인 장기 디스인플레이션 요인으로 작용합니다.', '科技驱动的生产力提升成为中长期结构性去通胀的关键力量。'],
+      ['Macro regime shifts require re-evaluating risk-free discount rate assumptions.', '거시경제 체제 전환기에는 무위험 할인율(Discount Rate)에 대한 재평가가 요구됩니다.', '宏观周期转换期需要重新评估无风险贴现率的核心假设。']
+    ],
+    timestamps: [
+      { time: '01:00', sec: 60, label: ['Central Bank Policy', '중앙은행 통화정책', '央行政策沟通'] },
+      { time: '02:45', sec: 165, label: ['Productivity Drivers', '생산성 견인 요인', '生产力驱动要素'] },
+      { time: '04:20', sec: 260, label: ['Market Regime Shift', '시장 체제 전환 국면', '市场周期切换'] }
     ]
   }
 ]
@@ -505,6 +514,9 @@ export interface BotInstanceItem {
   strategy: string
   status: 'RUNNING' | 'PAUSED' | 'STOPPED' | string
   region: string
+  exchange?: string
+  apiKeyMasked?: string
+  licenseToken?: string
   heartbeat?: string
   symbol?: string
   uptime?: string
@@ -756,10 +768,14 @@ export default function Page() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
   const [mediaFilter, setMediaFilter] = useState('ALL')
+  const [mediaTrack, setMediaTrack] = useState<'DAILY_LIVE' | 'MASTERCLASS'>('DAILY_LIVE')
   const [selectedMediaStory, setSelectedMediaStory] = useState(mediaStories[0])
   const [mediaIsPlaying, setMediaIsPlaying] = useState(false)
   const [mediaStartSecond, setMediaStartSecond] = useState(0)
-  const visibleMediaStories = useMemo(() => mediaFilter === 'ALL' ? mediaStories : mediaStories.filter((s) => s.key === mediaFilter), [mediaFilter])
+  const visibleMediaStories = useMemo(() =>
+    mediaStories.filter((s) => (s as any).track === mediaTrack && (mediaFilter === 'ALL' || s.key === mediaFilter)),
+    [mediaTrack, mediaFilter]
+  )
   const mediaText = (value: string[]) => value[language === 'en' ? 0 : language === 'ko' ? 1 : 2]
 
   const handleSelectMediaStory = (story: typeof mediaStories[0]) => {
@@ -1168,27 +1184,35 @@ export default function Page() {
     latencyMs,
     connectionStatus,
     orderbook,
-    latestKline
+    latestKline,
+    hourlyOpenPrice,
+    hourlyKline
   } = useMarketWebSocket(searched)
 
-  // AWS / Hetzner Cloud Virtual Instance Sandbox State
-  const [botInstances, setBotInstances] = useState<BotInstanceItem[]>([
-    { id: 'qnt-7f3a2c', name: 'BTC momentum alpha', status: 'RUNNING', strategy: 'RSI + Bollinger', region: 'HEL1', heartbeat: '12s ago', symbol: 'BTC/USD', uptime: '24h 15m', pnl: '+8.4%', isPositive: true, specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe', ip: '49.12.240.118' },
-    { id: 'qnt-19b8e1', name: 'ETH mean reversion', status: 'STOPPED', strategy: 'SMA crossover', region: 'HEL1', heartbeat: '2h ago', symbol: 'ETH/USD', uptime: '12h 40m', pnl: '+4.2%', isPositive: true, specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe', ip: '49.12.240.119' },
-  ])
-  const [selectedInstanceId, setSelectedInstanceId] = useState('qnt-7f3a2c')
+  // AWS / Hetzner Cloud Virtual Instance Sandbox State (Clean Real State)
+  const [botInstances, setBotInstances] = useState<BotInstanceItem[]>([])
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('')
   const [instanceName, setInstanceName] = useState('')
   const [instanceCreating, setInstanceCreating] = useState(false)
   const [newInstanceSymbol, setNewInstanceSymbol] = useState<string>('BTC/USD')
+  const [newInstanceExchange, setNewInstanceExchange] = useState<string>('Binance')
+  const [newInstanceApiKey, setNewInstanceApiKey] = useState<string>('')
+  const [newInstanceApiSecret, setNewInstanceApiSecret] = useState<string>('')
+  const [newInstanceLicenseKey, setNewInstanceLicenseKey] = useState<string>('')
+  const [newInstanceStrategy, setNewInstanceStrategy] = useState<string>('RSI + Bollinger Multi-Fractal')
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem('aether_bot_instances')
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setBotInstances(parsed)
-          setSelectedInstanceId(parsed[0].id)
+        if (Array.isArray(parsed)) {
+          // Filter out legacy demo mock instances
+          const validInstances = parsed.filter((inst: any) => inst.id !== 'qnt-7f3a2c' && inst.id !== 'qnt-19b8e1' && inst.apiKeyMasked)
+          setBotInstances(validInstances)
+          if (validInstances.length > 0) {
+            setSelectedInstanceId(validInstances[0].id)
+          }
         }
       }
     } catch (e) {}
@@ -1196,7 +1220,7 @@ export default function Page() {
 
   useEffect(() => {
     try {
-      if (typeof window !== 'undefined' && botInstances.length > 0) {
+      if (typeof window !== 'undefined') {
         localStorage.setItem('aether_bot_instances', JSON.stringify(botInstances))
       }
     } catch (e) {}
@@ -1237,25 +1261,42 @@ export default function Page() {
     return () => clearInterval(logTimer)
   }, [instanceStatus, searched, priceFormatted])
 
+  const updateInstanceStatusInList = (id: string, newStatus: 'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED') => {
+    setBotInstances(prev => prev.map(inst => {
+      if (inst.id === id) {
+        return {
+          ...inst,
+          status: newStatus,
+          heartbeat: newStatus === 'RUNNING' ? '1s ago' : newStatus === 'PAUSED' ? 'paused' : 'standby'
+        }
+      }
+      return inst
+    }))
+  }
+
   const handleStartInstance = () => {
     setInstanceStatus('RUNNING')
     setBotRunning(true)
+    updateInstanceStatusInList(selectedInstanceId, 'RUNNING')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[RESUME] Virtual Cloud Container resumed execution loop.' }])
   }
 
   const handlePauseInstance = () => {
     setInstanceStatus('PAUSED')
+    updateInstanceStatusInList(selectedInstanceId, 'PAUSED')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[PAUSE] Trading execution loop paused by user. Open positions are guarded.' }])
   }
 
   const handleRebootInstance = () => {
     setInstanceStatus('REBOOTING')
+    updateInstanceStatusInList(selectedInstanceId, 'REBOOTING')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'DOCKER', text: '[REBOOT] Rebooting container sandbox (Graceful SIGTERM)...' }])
     setTimeout(() => {
       setInstanceStatus('RUNNING')
+      updateInstanceStatusInList(selectedInstanceId, 'RUNNING')
       const restartTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       setInstanceLogs(prev => [...prev, { time: restartTime, tag: 'DOCKER', text: '[READY] Container sandbox rebooted successfully (PID: 3419, Python 3.12 active).' }])
     }, 1500)
@@ -1264,6 +1305,7 @@ export default function Page() {
   const handleStopInstance = () => {
     setInstanceStatus('STOPPED')
     setBotRunning(false)
+    updateInstanceStatusInList(selectedInstanceId, 'STOPPED')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[STOP] Container stopped. Cold-standby ready.' }])
   }
@@ -1306,12 +1348,14 @@ export default function Page() {
     return () => clearInterval(interval)
   }, [])
 
-  // Lock base strike price for the active round from real WebSocket feed
+  // Lock base strike price for the active round from real 1-Hour candle Open price
   useEffect(() => {
-    if (priceFormatted && priceFormatted !== '—' && !lockedBasePrice) {
-      setLockedBasePrice(priceFormatted)
+    if (hourlyOpenPrice > 0) {
+      setLockedBasePrice(`$${hourlyOpenPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+    } else if (price > 0 && (!lockedBasePrice || lockedBasePrice === '—')) {
+      setLockedBasePrice(`$${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
     }
-  }, [priceFormatted, lockedBasePrice])
+  }, [hourlyOpenPrice, price])
 
   const format1HCountdown = (sec: number) => {
     const m = String(Math.floor(sec / 60)).padStart(2, '0')
@@ -1326,16 +1370,17 @@ export default function Page() {
       const parsed = parseFloat(priceFormatted.replace(/[^0-9.]/g, ''))
       if (!isNaN(parsed) && parsed > 0) return parsed
     }
-    return 67840.0
-  }, [price, priceFormatted])
+    return hourlyOpenPrice > 0 ? hourlyOpenPrice : 0
+  }, [price, priceFormatted, hourlyOpenPrice])
 
   const numericBasePrice = useMemo(() => {
+    if (hourlyOpenPrice > 0) return hourlyOpenPrice
     if (lockedBasePrice && lockedBasePrice !== '—') {
       const parsed = parseFloat(lockedBasePrice.replace(/[^0-9.]/g, ''))
       if (!isNaN(parsed) && parsed > 0) return parsed
     }
     return numericCurrentPrice
-  }, [lockedBasePrice, numericCurrentPrice])
+  }, [hourlyOpenPrice, lockedBasePrice, numericCurrentPrice])
 
   const [strikePriceHistory, setStrikePriceHistory] = useState<number[]>([])
 
@@ -1383,6 +1428,62 @@ export default function Page() {
   const priceDelta = latestHistoryPrice - numericBasePrice
   const priceDeltaPct = (priceDelta / (numericBasePrice || 1)) * 100
   const isUpWinning = priceDelta >= 0
+
+  // Dynamic Consensus Calculation for Layer 1
+  const effectiveBullPct = useMemo(() => {
+    if (battle && (battle.totalHumanVotes || 0) > 0) {
+      return battle.humanBullPercentage
+    }
+    if (prediction === 'UP') return 100
+    if (prediction === 'DOWN') return 0
+    return 50
+  }, [battle, prediction])
+
+  const effectiveBearPct = useMemo(() => {
+    return 100 - effectiveBullPct
+  }, [effectiveBullPct])
+
+  const effectiveTotalVotes = useMemo(() => {
+    const serverVotes = battle?.totalHumanVotes || 0
+    if (serverVotes > 0) return serverVotes
+    if (prediction || submitted) return 1
+    return 0
+  }, [battle, prediction, submitted])
+
+  const handleSelectPredictionDirection = (dir: 'UP' | 'DOWN') => {
+    if (hourlyRemainingSec <= 900 && !submitted) return
+    setPrediction(dir)
+
+    // Immediate optimistic consensus update so the user instantly sees their vote shift the bar
+    setBattle((prev) => {
+      const prevTotal = prev?.totalHumanVotes || 0
+      const prevBull = prev?.humanBullPercentage || 50
+      const prevBear = prev?.humanBearPercentage || 50
+
+      const newTotal = prevTotal > 0 ? prevTotal + 1 : 1
+      let newBull = 50
+      let newBear = 50
+
+      if (dir === 'DOWN') {
+        newBear = prevTotal > 0 ? Math.min(99, Math.round(((prevBear * prevTotal / 100 + 1) / newTotal) * 100)) : 100
+        newBull = 100 - newBear
+      } else {
+        newBull = prevTotal > 0 ? Math.min(99, Math.round(((prevBull * prevTotal / 100 + 1) / newTotal) * 100)) : 100
+        newBear = 100 - newBull
+      }
+
+      return {
+        symbol: searched,
+        aiConfidenceScore: prev?.aiConfidenceScore || 0.82,
+        aiDecision: prev?.aiDecision || 'BULLISH',
+        humanBullPercentage: newBull,
+        humanBearPercentage: newBear,
+        totalHumanVotes: newTotal,
+        winningSide: newBull >= 50 ? 'BULL_DOMINANT' : 'BEAR_DOMINANT',
+        battleCommentary: `실시간 참여자 ${newTotal}명 집계 중 (내 선택: ${dir === 'DOWN' ? '하락(DOWN)' : '상승(UP)'})`
+      }
+    })
+  }
 
   // Real-time Live Financial News Feed (Dynamic Web Scraped from Spring Boot + Yahoo / Bloomberg)
   const [rawLiveItems, setRawLiveItems] = useState<any[]>([])
@@ -1943,13 +2044,37 @@ export default function Page() {
         </div>
 
         <div className="top-meta">
-          <button className={`league-link ${eventOpen ? 'active' : ''}`} onClick={() => setEventOpen(!eventOpen)}>
+          <button className={`league-link ${eventOpen ? 'active' : ''}`} onClick={() => {
+            const next = !eventOpen
+            setEventOpen(next)
+            if (next) {
+              setTimeout(() => {
+                document.getElementById('ten-win-league')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }, 60)
+            }
+          }}>
             <Diamond /> 10-WIN LEAGUE
           </button>
-          <button className={`league-link ${communityOpen ? 'active' : ''}`} onClick={() => setCommunityOpen(!communityOpen)}>
+          <button className={`league-link ${communityOpen ? 'active' : ''}`} onClick={() => {
+            const next = !communityOpen
+            setCommunityOpen(next)
+            if (next) {
+              setTimeout(() => {
+                document.getElementById('strategy-commons')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }, 60)
+            }
+          }}>
             <Diamond /> STRATEGY COMMONS
           </button>
-          <button className={`league-link ${newsOpen ? 'active' : ''}`} onClick={() => setNewsOpen(!newsOpen)}>
+          <button className={`league-link ${newsOpen ? 'active' : ''}`} onClick={() => {
+            const next = !newsOpen
+            setNewsOpen(next)
+            if (next) {
+              setTimeout(() => {
+                document.getElementById('live-newswire')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }, 60)
+            }
+          }}>
             <Diamond /> LIVE NEWSWIRE
           </button>
           <a className="league-link" href="#trading-console" style={{ textDecoration: 'none' }}>
@@ -1959,7 +2084,7 @@ export default function Page() {
             <Diamond /> AI RESEARCH
           </a>
           <a className="league-link" href="#media-wire" style={{ textDecoration: 'none' }}>
-            <Diamond /> NEWS
+            <Diamond /> MEDIA DESK
           </a>
           <a className="league-link" href="/orderbook" style={{ textDecoration: 'none' }}>
             <Diamond /> L2 ORDERBOOK
@@ -2010,7 +2135,7 @@ export default function Page() {
 
       {/* ── 1-Hour Quick-Strike Prediction League Modal / Drawer ── */}
       {eventOpen && (
-        <section className="league-section" style={{ background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
+        <section className="league-section" id="ten-win-league" style={{ background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
           {/* Header Bar */}
           <div className="league-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #edf0f2', paddingBottom: '20px' }}>
             <div>
@@ -2098,7 +2223,9 @@ export default function Page() {
                   [LAYER 1] 실시간 군중 합의율 (Human Market Consensus)
                 </span>
                 <span style={{ fontSize: '9px', color: '#64748b' }}>
-                  {(battle?.totalHumanVotes ?? 0) > 0 ? `총 ${battle?.totalHumanVotes}명 실시간 참여 중` : '현재 라운드 첫 번째 예측자를 기다리는 중입니다'}
+                  {effectiveTotalVotes > 0
+                    ? `총 ${effectiveTotalVotes}명 실시간 참여 중 ${prediction ? `(내 예측: ${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'} 반영)` : ''}`
+                    : '현재 라운드 첫 번째 예측자를 기다리는 중입니다'}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#475569' }}>
@@ -2110,7 +2237,7 @@ export default function Page() {
             <div style={{ height: '36px', display: 'flex', borderRadius: '4px', overflow: 'hidden', border: '1px solid #cbd5e1' }}>
               <div
                 style={{
-                  width: `${(battle?.totalHumanVotes ?? 0) > 0 ? (battle?.humanBullPercentage ?? 50.0) : 50}%`,
+                  width: `${effectiveBullPct}%`,
                   background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
                   color: '#ffffff',
                   display: 'flex',
@@ -2121,11 +2248,11 @@ export default function Page() {
                   transition: 'width 0.4s ease'
                 }}
               >
-                UP {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBullPercentage}%` : '50% (대기)'} (상승 예측)
+                UP {effectiveBullPct}% {prediction === 'UP' && '★ (내 투표)'} (상승 예측)
               </div>
               <div
                 style={{
-                  width: `${(battle?.totalHumanVotes ?? 0) > 0 ? (battle?.humanBearPercentage ?? 50.0) : 50}%`,
+                  width: `${effectiveBearPct}%`,
                   background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
                   color: '#ffffff',
                   display: 'flex',
@@ -2137,7 +2264,7 @@ export default function Page() {
                   transition: 'width 0.4s ease'
                 }}
               >
-                DOWN {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBearPercentage}%` : '50% (대기)'} (하락 예측)
+                DOWN {effectiveBearPct}% {prediction === 'DOWN' && '★ (내 투표)'} (하락 예측)
               </div>
             </div>
           </div>
@@ -2286,7 +2413,7 @@ export default function Page() {
                   [LAYER 2] ROUND #{round} 1H 기준 고정가 업&다운 ({searched})
                 </span>
                 <span style={{ fontSize: '10px', background: '#0b131e', color: '#f59e0b', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
-                  1H 기준 고정가: ${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  1H 캔들 시작가(기준점): ${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
                 <span style={{ fontSize: '10px', color: '#64748b' }}>
                   (실시간 현재가: <strong style={{ color: isUpWinning ? '#059669' : '#dc2626' }}>${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>)
@@ -2327,7 +2454,7 @@ export default function Page() {
                   </span>
                 </div>
                 <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: "'IBM Plex Mono', monospace" }}>
-                  LOCKED STRIKE: <strong style={{ color: '#f59e0b' }}>${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  1H OPEN STRIKE: <strong style={{ color: '#f59e0b' }}>${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                   <span style={{ margin: '0 8px', color: '#475569' }}>|</span>
                   CURRENT TICK: <strong style={{ color: isUpWinning ? '#34d399' : '#f87171' }}>${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                 </div>
@@ -2540,10 +2667,7 @@ export default function Page() {
               {/* UP Card */}
               <button
                 type="button"
-                onClick={() => {
-                  if (hourlyRemainingSec <= 900 && !submitted) return
-                  setPrediction('UP')
-                }}
+                onClick={() => handleSelectPredictionDirection('UP')}
                 disabled={(hourlyRemainingSec <= 900 && !submitted) || submitted}
                 style={{
                   border: prediction === 'UP' ? '2px solid #059669' : '1px solid #cbd5e1',
@@ -2577,7 +2701,7 @@ export default function Page() {
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
                   <strong style={{ fontSize: '18px', color: '#059669' }}>
-                    {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBullPercentage}%` : '50%'}
+                    {effectiveBullPct}%
                   </strong>
                 </div>
               </button>
@@ -2585,10 +2709,7 @@ export default function Page() {
               {/* DOWN Card */}
               <button
                 type="button"
-                onClick={() => {
-                  if (hourlyRemainingSec <= 900 && !submitted) return
-                  setPrediction('DOWN')
-                }}
+                onClick={() => handleSelectPredictionDirection('DOWN')}
                 disabled={(hourlyRemainingSec <= 900 && !submitted) || submitted}
                 style={{
                   border: prediction === 'DOWN' ? '2px solid #dc2626' : '1px solid #cbd5e1',
@@ -2622,7 +2743,7 @@ export default function Page() {
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
                   <strong style={{ fontSize: '18px', color: '#dc2626' }}>
-                    {(battle?.totalHumanVotes ?? 0) > 0 ? `${battle?.humanBearPercentage}%` : '50%'}
+                    {effectiveBearPct}%
                   </strong>
                 </div>
               </button>
@@ -3217,26 +3338,63 @@ export default function Page() {
 
             {depositSuccessResult ? (
               <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <CheckCircle2 size={42} color="#2b866d" style={{ margin: '0 auto 12px' }} />
-                <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>24시간 퀀트 봇이 성공적으로 활성화되었습니다!</h3>
-                <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-                  SHA-256 라이선스 토큰이 발급되었으며 30일간 24시간 실시간 트레이딩 봇이 가동됩니다.
+                <CheckCircle2 size={42} color="#0f766e" style={{ margin: '0 auto 12px' }} />
+                <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#18334a' }}>
+                  {language === 'ko' ? '결제가 성공적으로 승인되었습니다.' : 'Payment Approved Successfully.'}
+                </h3>
+                <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', lineHeight: 1.5 }}>
+                  {language === 'ko'
+                    ? '대표님의 텔레그램(@AetherQuantOfficialBot)으로 봇 구동 라이선스 키가 즉시 발송되었습니다. 아래 발급된 키로 거래소 API를 연동하여 24시간 봇을 가동하세요.'
+                    : 'Your bot license key has been transmitted to your Telegram. Use this key to provision your 24/7 cloud quant worker.'}
                 </p>
 
-                <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', marginBottom: '16px', textAlign: 'left', fontSize: '11px', wordBreak: 'break-all' }}>
-                  <div><b>발급된 SHA-256 토큰:</b> <code>{depositSuccessResult.licenseToken}</code></div>
-                  <div style={{ marginTop: '4px' }}><b>트랜잭션 해시:</b> {depositSuccessResult.txHash}</div>
-                  <div style={{ marginTop: '4px' }}><b>상태:</b> RUNNING 🟢 (유효기간: 30일)</div>
+                <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '14px', borderRadius: '4px', marginBottom: '16px', textAlign: 'left', fontSize: '11px', wordBreak: 'break-all' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ color: '#0f766e', fontWeight: 700 }}>
+                      {language === 'ko' ? '텔레그램 전송 라이선스 키:' : 'Telegram Transmitted License Key:'}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      style={{ fontSize: '9px', color: '#0284c7' }}
+                      onClick={() => {
+                        if (depositSuccessResult.licenseToken) {
+                          navigator.clipboard.writeText(depositSuccessResult.licenseToken)
+                          alert('라이선스 키가 클립보드에 복사되었습니다.')
+                        }
+                      }}
+                    >
+                      [복사]
+                    </button>
+                  </div>
+                  <code style={{ background: '#0b131e', color: '#38bdf8', padding: '4px 8px', borderRadius: '3px', display: 'block', fontSize: '11.5px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                    {depositSuccessResult.licenseToken}
+                  </code>
+                  <div style={{ marginTop: '8px', color: '#64748b' }}><b>트랜잭션 해시:</b> {depositSuccessResult.txHash}</div>
+                  <div style={{ marginTop: '4px', color: '#059669', fontWeight: 600 }}><b>상태:</b> ACTIVE (30일 무중단 가동 라이선스 유효)</div>
                 </div>
 
-                <button
-                  className="primary-button"
-                  style={{ width: '100%', padding: '12px', background: '#2b866d', color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
-                  onClick={handleConnectTelegram}
-                >
-                  <ExternalLink size={14} style={{ display: 'inline', marginRight: '6px' }} />
-                  공식 텔레그램 봇 1:1 연결하기 ↗
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button
+                    className="primary-button"
+                    style={{ width: '100%', padding: '12px', background: '#0f766e', color: '#fff', fontSize: '12.5px', fontWeight: 'bold' }}
+                    onClick={() => {
+                      setNewInstanceLicenseKey(depositSuccessResult.licenseToken)
+                      setDepositModalOpen(false)
+                      setInstanceCreating(true)
+                    }}
+                  >
+                    발급된 키로 24/7 봇 인스턴스 생성하기 ↗
+                  </button>
+                  <button
+                    className="secondary-button"
+                    style={{ width: '100%', padding: '10px', fontSize: '11.5px' }}
+                    onClick={handleConnectTelegram}
+                  >
+                    <ExternalLink size={13} style={{ display: 'inline', marginRight: '6px' }} />
+                    텔레그램(@AetherQuantOfficialBot)에서 키 & 알림 확인하기 ↗
+                  </button>
+                </div>
               </div>
             ) : (
               <div>
@@ -3653,7 +3811,7 @@ export default function Page() {
 
       {/* ── Strategy Commons (Public Quant) ── */}
       {communityOpen && (
-        <section className="commons-section">
+        <section className="commons-section" id="strategy-commons">
           <div className="commons-header">
             <div>
               <div className="eyebrow"><Diamond /> STRATEGY COMMONS <span>100% OPEN SOURCE & VERIFIED</span></div>
@@ -3703,7 +3861,7 @@ export default function Page() {
 
       {/* ── Live Newswire (Language Localized) ── */}
       {newsOpen && (
-        <section className="news-section">
+        <section className="news-section" id="live-newswire">
           <div className="news-live-bar">
             <span className="live-dot pulse" /> LIVE NEWSWIRE ({languageLabels[language]})
             <span className="news-timer">{copy.rollingTag}</span>
@@ -3941,13 +4099,301 @@ export default function Page() {
       {/* ── 24H Trading Operations Console ── */}
       <section className="trading-console panel" id="trading-console">
         <div className="instance-console-head">
-          <div><span className="overline">BOT INSTANCES</span><h2>Instances</h2><p>24-hour quant workers running on dedicated execution capacity.</p></div>
-          <button className="primary-button instance-create-button" onClick={() => setInstanceCreating(true)}>＋ CREATE INSTANCE</button>
+          <div>
+            <span className="overline">{language === 'ko' ? '24/7 IDC 봇 인스턴스' : 'BOT INSTANCES'}</span>
+            <h2>{language === 'ko' ? '24시간 자동매매 봇 센터' : 'Instances'}</h2>
+            <p>{language === 'ko' ? '실시간 알고리즘 배포 & 호스팅' : '24-hour quant workers running on dedicated execution capacity.'}</p>
+          </div>
+          <button
+            className="primary-button instance-create-button"
+            onClick={() => {
+              if (!licenseToken && botInstances.length === 0) {
+                setDepositModalOpen(true)
+              } else {
+                setInstanceCreating(true)
+              }
+            }}
+          >
+            {!licenseToken && botInstances.length === 0
+              ? (language === 'ko' ? '라이선스 결제 및 봇 가동' : 'SUBSCRIBE & DEPLOY')
+              : (language === 'ko' ? '＋ 봇 인스턴스 생성' : '＋ CREATE INSTANCE')}
+          </button>
         </div>
-        <div className="instance-toolbar"><span><i className="live-dot" /> {botInstances.length} instances · {botInstances.filter((instance) => instance.status === 'RUNNING').length} running</span><button className="text-button" onClick={() => setBotInstances((items) => [...items])}>↻ REFRESH</button></div>
-        <div className="instance-table-wrap"><table className="instance-table"><thead><tr><th>STATUS</th><th>INSTANCE ID</th><th>NAME</th><th>STRATEGY</th><th>REGION</th><th>HEARTBEAT</th><th /></tr></thead><tbody>{botInstances.map((instance) => <tr key={instance.id} className={selectedInstanceId === instance.id ? 'selected' : ''} onClick={() => setSelectedInstanceId(instance.id)}><td><span className={`instance-status ${instance.status.toLowerCase()}`}><i />{instance.status}</span></td><td className="mono-cell">{instance.id}</td><td><strong>{instance.name}</strong></td><td>{instance.strategy}</td><td>{instance.region}</td><td>{instance.heartbeat}</td><td><button className="row-action" aria-label={`Manage ${instance.name}`} onClick={(event) => { event.stopPropagation(); setSelectedInstanceId(instance.id) }}>⋯</button></td></tr>)}</tbody></table></div>
-        {instanceCreating && <div className="instance-create-form"><label>INSTANCE NAME<input autoFocus value={instanceName} onChange={(event) => setInstanceName(event.target.value)} placeholder="e.g. SOL breakout beta" /></label><span>Provisioned in HEL1 · subscriber execution quota applies.</span><div><button className="secondary-button" onClick={() => setInstanceCreating(false)}>CANCEL</button><button className="primary-button" disabled={!instanceName.trim()} onClick={() => { setBotInstances((items) => [...items, { id: `qnt-${Math.random().toString(16).slice(2, 8)}`, name: instanceName.trim(), status: 'STOPPED', strategy: 'New strategy', region: 'HEL1', heartbeat: 'never' }]); setInstanceName(''); setInstanceCreating(false) }}>CREATE</button></div></div>}
-        <div className="instance-detail"><span className="overline">SELECTED INSTANCE</span><strong>{botInstances.find((instance) => instance.id === selectedInstanceId)?.name}</strong><span>{selectedInstanceId} · Hetzner HEL1 · Docker isolated runtime</span></div>
+        <div className="instance-toolbar">
+          <span><i className="live-dot" /> {botInstances.length} {language === 'ko' ? '개 인스턴스' : 'instances'} · {botInstances.filter((instance) => instance.status === 'RUNNING').length} {language === 'ko' ? '가동 중' : 'running'}</span>
+          <button className="text-button" onClick={() => setBotInstances((items) => [...items])}>↻ {language === 'ko' ? '새로고침' : 'REFRESH'}</button>
+        </div>
+        <div className="instance-table-wrap">
+          {botInstances.length === 0 ? (
+            <div style={{ padding: '36px 20px', textAlign: 'center', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '4px', margin: '4px 0 16px' }}>
+              <div style={{ color: '#0f766e', marginBottom: '8px' }}>
+                <Diamond />
+              </div>
+              <strong style={{ fontSize: '13px', color: '#18334a', display: 'block', marginBottom: '6px' }}>
+                {language === 'ko' ? '등록된 24/7 IDC 봇 인스턴스가 없습니다' : 'No Active Bot Instances Registered'}
+              </strong>
+              <p style={{ fontSize: '11px', color: '#64748b', maxWidth: '520px', margin: '0 auto 16px', lineHeight: 1.6 }}>
+                {language === 'ko'
+                  ? '24시간 무중단 클라우드 자동매매는 유료 구독 서비스입니다. 라이선스 결제 승인 시 텔레그램(@AetherQuantOfficialBot)으로 발급된 고유 라이선스 키를 통해 거래소(Binance / Bybit / Upbit / OKX) API를 안전하게 연동할 수 있습니다.'
+                  : '24/7 cloud automated execution is a premium service. Upon license payment, your unique key is sent to Telegram (@AetherQuantOfficialBot) to connect your exchange API.'}
+              </p>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {licenseToken ? (
+                  <>
+                    <button
+                      className="primary-button"
+                      style={{ fontSize: '11px', padding: '8px 18px', background: '#0f766e', borderColor: '#14b8a6' }}
+                      onClick={() => setInstanceCreating(true)}
+                    >
+                      {language === 'ko' ? '＋ 거래소 API Key 연동 & 인스턴스 생성' : '＋ CONNECT API KEY & CREATE BOT'}
+                    </button>
+                    <button
+                      className="secondary-button"
+                      style={{ fontSize: '11px', padding: '8px 18px' }}
+                      onClick={handleConnectTelegram}
+                    >
+                      {language === 'ko' ? '텔레그램에서 발급된 키 확인' : 'Check Telegram License'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="primary-button"
+                    style={{ fontSize: '11.5px', padding: '9px 24px', background: '#0f766e', borderColor: '#14b8a6' }}
+                    onClick={() => setDepositModalOpen(true)}
+                  >
+                    {language === 'ko' ? '라이선스 결제 및 텔레그램 키 발급 ($7 USDT)' : 'Subscribe & Get Telegram Key ($7 USDT)'}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <table className="instance-table">
+              <thead>
+                <tr>
+                  <th>{language === 'ko' ? '상태' : 'STATUS'}</th>
+                  <th>{language === 'ko' ? '인스턴스 ID' : 'INSTANCE ID'}</th>
+                  <th>{language === 'ko' ? '봇 이름' : 'NAME'}</th>
+                  <th>{language === 'ko' ? '거래소' : 'EXCHANGE'}</th>
+                  <th>{language === 'ko' ? '연동 API KEY' : 'API KEY'}</th>
+                  <th>{language === 'ko' ? '리전' : 'REGION'}</th>
+                  <th>{language === 'ko' ? '하트비트' : 'HEARTBEAT'}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {botInstances.map((instance) => (
+                  <tr key={instance.id} className={selectedInstanceId === instance.id ? 'selected' : ''} onClick={() => {
+                    setSelectedInstanceId(instance.id)
+                    setInstanceStatus(instance.status as any)
+                  }}>
+                    <td>
+                      <span className={`instance-status ${instance.status.toLowerCase()}`}>
+                        <i />
+                        {language === 'ko'
+                          ? (instance.status === 'RUNNING' ? '가동 중' : instance.status === 'STOPPED' ? '중지됨' : instance.status === 'PAUSED' ? '일시정지' : '재부팅 중')
+                          : instance.status}
+                      </span>
+                    </td>
+                    <td className="mono-cell">{instance.id}</td>
+                    <td><strong>{instance.name}</strong></td>
+                    <td><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#0f766e', background: '#e6f4ea', padding: '1px 6px', borderRadius: '3px' }}>{instance.exchange || 'Binance'}</span></td>
+                    <td className="mono-cell" style={{ fontSize: '9.5px', color: '#64748b' }}>{instance.apiKeyMasked || '••••••••'}</td>
+                    <td>{instance.region}</td>
+                    <td>
+                      {language === 'ko'
+                        ? (instance.status === 'RUNNING' ? '방금 전 (실시간)' : instance.status === 'PAUSED' ? '일시정지 중' : '대기 상태')
+                        : instance.heartbeat}
+                    </td>
+                    <td><button className="row-action" aria-label={`Manage ${instance.name}`} onClick={(event) => { event.stopPropagation(); setSelectedInstanceId(instance.id); setInstanceStatus(instance.status as any) }}>⋯</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* ── Enhanced Exchange API Key & Telegram License Bot Creation Modal / Form ── */}
+        {instanceCreating && (
+          <div className="instance-create-form" style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '20px 24px', borderRadius: '6px', margin: '14px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+              <strong style={{ fontSize: '13px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Diamond /> {language === 'ko' ? '24/7 클라우드 봇 인스턴스 생성 & 거래소 API 연동' : 'Create 24/7 Bot Instance & Connect Exchange API'}
+              </strong>
+              <span style={{ fontSize: '9px', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
+                Hetzner HEL1 IDC · Docker Sandbox
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <label style={{ margin: 0 }}>
+                {language === 'ko' ? '봇 이름 (인스턴스 식별명)' : 'BOT INSTANCE NAME'}
+                <input
+                  autoFocus
+                  value={instanceName}
+                  onChange={(event) => setInstanceName(event.target.value)}
+                  placeholder={language === 'ko' ? '예: 바이낸스 비트코인 모멘텀 1호기' : 'e.g. Binance BTC Breakout Bot'}
+                  style={{ marginTop: '4px' }}
+                />
+              </label>
+
+              <label style={{ margin: 0 }}>
+                {language === 'ko' ? '연동 거래소 (Exchange)' : 'EXCHANGE'}
+                <select
+                  value={newInstanceExchange}
+                  onChange={(e) => setNewInstanceExchange(e.target.value)}
+                  style={{ width: '100%', height: '34px', marginTop: '4px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '0 8px', fontSize: '11px', color: '#18334a' }}
+                >
+                  <option value="Binance">Binance (바이낸스 Core WebSocket)</option>
+                  <option value="Bybit">Bybit (바이비트 V5 API)</option>
+                  <option value="Upbit">Upbit (업비트 Open API)</option>
+                  <option value="OKX">OKX (오케이엑스 V5)</option>
+                </select>
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <label style={{ margin: 0 }}>
+                {language === 'ko' ? '타겟 거래 종목 (Target Symbol)' : 'TARGET SYMBOL'}
+                <select
+                  value={newInstanceSymbol}
+                  onChange={(e) => setNewInstanceSymbol(e.target.value)}
+                  style={{ width: '100%', height: '34px', marginTop: '4px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '0 8px', fontSize: '11px', color: '#18334a' }}
+                >
+                  <option value="BTC/USD">BTC/USD (Bitcoin)</option>
+                  <option value="ETH/USD">ETH/USD (Ethereum)</option>
+                  <option value="SOL/USD">SOL/USD (Solana)</option>
+                  <option value="XRP/USD">XRP/USD (Ripple)</option>
+                  <option value="NVDA/USD">NVDA/USD (NVIDIA)</option>
+                </select>
+              </label>
+
+              <label style={{ margin: 0 }}>
+                {language === 'ko' ? '전략 템플릿 (Strategy)' : 'STRATEGY TEMPLATE'}
+                <select
+                  value={newInstanceStrategy}
+                  onChange={(e) => setNewInstanceStrategy(e.target.value)}
+                  style={{ width: '100%', height: '34px', marginTop: '4px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '0 8px', fontSize: '11px', color: '#18334a' }}
+                >
+                  <option value="RSI + Bollinger Multi-Fractal">RSI + Bollinger Multi-Fractal (추세추종)</option>
+                  <option value="SMA 20/50 Dual Crossover">SMA 20/50 Dual Crossover (골든크로스)</option>
+                  <option value="FastDTW 8000 Pattern Match">FastDTW 8000 Pattern Match (프랙탈 반등)</option>
+                  <option value="Custom Python Script">Custom Python Script (개발자 모드 코드)</option>
+                </select>
+              </label>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <label style={{ margin: 0 }}>
+                {language === 'ko' ? '거래소 API Key (Trade 권한)' : 'EXCHANGE API KEY'}
+                <input
+                  value={newInstanceApiKey}
+                  onChange={(e) => setNewInstanceApiKey(e.target.value)}
+                  placeholder={language === 'ko' ? '거래소에서 발급받은 API Key 입력' : 'Enter Exchange API Key'}
+                  style={{ marginTop: '4px', fontFamily: "'IBM Plex Mono', monospace" }}
+                />
+              </label>
+
+              <label style={{ margin: 0 }}>
+                {language === 'ko' ? '거래소 Secret Key' : 'EXCHANGE SECRET KEY'}
+                <input
+                  type="password"
+                  value={newInstanceApiSecret}
+                  onChange={(e) => setNewInstanceApiSecret(e.target.value)}
+                  placeholder={language === 'ko' ? '거래소 Secret Key 입력' : 'Enter Exchange Secret Key'}
+                  style={{ marginTop: '4px', fontFamily: "'IBM Plex Mono', monospace" }}
+                />
+              </label>
+            </div>
+
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ margin: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>{language === 'ko' ? '텔레그램 발급 봇 라이선스 키 (Telegram License Key)' : 'TELEGRAM BOT LICENSE KEY'}</span>
+                  <button
+                    type="button"
+                    className="text-button"
+                    style={{ fontSize: '8.5px', color: '#0284c7' }}
+                    onClick={() => {
+                      if (!licenseToken) setDepositModalOpen(true)
+                      else handleConnectTelegram()
+                    }}
+                  >
+                    {language === 'ko' ? '텔레그램에서 라이선스 키 확인/발급 ↗' : 'Get Key from Telegram ↗'}
+                  </button>
+                </div>
+                <input
+                  value={newInstanceLicenseKey || licenseToken || ''}
+                  onChange={(e) => setNewInstanceLicenseKey(e.target.value)}
+                  placeholder={language === 'ko' ? '예: AETH-7F3A-88B1-NODE (결제 후 텔레그램으로 전송된 키)' : 'e.g. AETH-7F3A-88B1-NODE'}
+                  style={{ marginTop: '4px', fontFamily: "'IBM Plex Mono', monospace" }}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+              <small style={{ fontSize: '9px', color: '#64748b' }}>
+                {language === 'ko' ? 'API Key 및 Secret은 비공개 메모리에 안전하게 암호화되어 전송됩니다.' : 'API credentials are securely encrypted in memory.'}
+              </small>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="secondary-button" onClick={() => setInstanceCreating(false)}>
+                  {language === 'ko' ? '취소' : 'CANCEL'}
+                </button>
+                <button
+                  className="primary-button"
+                  disabled={!instanceName.trim()}
+                  onClick={() => {
+                    const newId = `qnt-${Math.random().toString(16).slice(2, 8)}`
+                    const maskedKey = newInstanceApiKey.trim() ? `${newInstanceApiKey.trim().slice(0, 4)}••••••••${newInstanceApiKey.trim().slice(-4)}` : 'API-MASKED'
+                    const activeToken = newInstanceLicenseKey || licenseToken || 'AETH-ACTIVE-NODE'
+                    const newInst: BotInstanceItem = {
+                      id: newId,
+                      name: instanceName.trim(),
+                      status: 'RUNNING',
+                      strategy: newInstanceStrategy,
+                      exchange: newInstanceExchange,
+                      apiKeyMasked: maskedKey,
+                      licenseToken: activeToken,
+                      region: 'HEL1',
+                      heartbeat: '1s ago',
+                      symbol: newInstanceSymbol,
+                      uptime: '0h 01m',
+                      specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
+                      ip: '49.12.240.118'
+                    }
+                    setBotInstances(prev => [newInst, ...prev])
+                    setSelectedInstanceId(newId)
+                    setInstanceStatus('RUNNING')
+                    setBotRunning(true)
+                    setInstanceName('')
+                    setNewInstanceApiKey('')
+                    setNewInstanceApiSecret('')
+                    setInstanceCreating(false)
+                    
+                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                    setInstanceLogs(prev => [
+                      ...prev,
+                      { time: timeStr, tag: 'DOCKER', text: `[PROVISION] New container ${newId} initialized for ${newInstanceExchange} (${newInstanceSymbol})` },
+                      { time: timeStr, tag: 'NET-IO', text: `[API-AUTH] Authenticated with ${newInstanceExchange} Key (${maskedKey})` },
+                      { time: timeStr, tag: 'LICENSE', text: `[TELEGRAM] License key verified: ${activeToken}` },
+                      { time: timeStr, tag: 'RUNNER', text: `[ACTIVE] ${newInstanceStrategy} automated execution loop started.` }
+                    ])
+                  }}
+                  style={{ background: '#0f766e', borderColor: '#14b8a6' }}
+                >
+                  {language === 'ko' ? '봇 인스턴스 배포 & 클라우드 가동' : 'DEPLOY INSTANCE & START BOT'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {botInstances.length > 0 && (
+          <div className="instance-detail">
+            <span className="overline">{language === 'ko' ? '선택된 봇 인스턴스' : 'SELECTED INSTANCE'}</span>
+            <strong>{botInstances.find((instance) => instance.id === selectedInstanceId)?.name || '선택된 인스턴스 없음'}</strong>
+            <span>{selectedInstanceId || 'N/A'} · Hetzner HEL1 · Docker {language === 'ko' ? '격리 샌드박스' : 'isolated runtime'} · {botInstances.find((instance) => instance.id === selectedInstanceId)?.exchange || 'Binance'} ({botInstances.find((instance) => instance.id === selectedInstanceId)?.apiKeyMasked || 'API-CONNECTED'})</span>
+          </div>
+        )}
 
         {/* AWS / Hetzner Cloud Virtual Instance Control Box (PowerShell CLI Style) */}
         <div className="powershell-terminal-box" style={{ margin: '16px 24px' }}>
@@ -4739,6 +5185,66 @@ export default function Page() {
           </div>
         </div>
 
+        {/* ── 2-Track Dual Selector (Institutional Aether Design System) ── */}
+        <div style={{ display: 'inline-flex', border: '1px solid var(--line)', background: '#f8fafb', padding: '3px', gap: '3px', margin: '0 0 20px', flexWrap: 'wrap' }}>
+          <button
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '7px 16px',
+              fontSize: '10px',
+              letterSpacing: '.08em',
+              fontWeight: mediaTrack === 'DAILY_LIVE' ? 600 : 400,
+              cursor: 'pointer',
+              border: '0',
+              background: mediaTrack === 'DAILY_LIVE' ? 'var(--navy)' : 'transparent',
+              color: mediaTrack === 'DAILY_LIVE' ? '#ffffff' : 'var(--muted)',
+              transition: 'all 0.15s ease'
+            }}
+            onClick={() => {
+              setMediaTrack('DAILY_LIVE')
+              const liveFirst = mediaStories.find(s => (s as any).track === 'DAILY_LIVE')
+              if (liveFirst) handleSelectMediaStory(liveFirst)
+            }}
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: mediaTrack === 'DAILY_LIVE' ? '#10b981' : 'var(--muted)',
+                animation: mediaTrack === 'DAILY_LIVE' ? 'newsPulse 1.2s infinite' : 'none'
+              }}
+            />
+            {language === 'ko' ? "TODAY'S LIVE BRIEFING (실시간 데일리 시황)" : (language === 'cn' ? "今日实时行情精要" : "TODAY'S LIVE BRIEFING")}
+          </button>
+          <button
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '7px 16px',
+              fontSize: '10px',
+              letterSpacing: '.08em',
+              fontWeight: mediaTrack === 'MASTERCLASS' ? 600 : 400,
+              cursor: 'pointer',
+              border: '0',
+              background: mediaTrack === 'MASTERCLASS' ? 'var(--navy)' : 'transparent',
+              color: mediaTrack === 'MASTERCLASS' ? '#ffffff' : 'var(--muted)',
+              transition: 'all 0.15s ease'
+            }}
+            onClick={() => {
+              setMediaTrack('MASTERCLASS')
+              const masterFirst = mediaStories.find(s => (s as any).track === 'MASTERCLASS')
+              if (masterFirst) handleSelectMediaStory(masterFirst)
+            }}
+          >
+            <Diamond />
+            {language === 'ko' ? "MASTERCLASS (기관급 명작 아카이브)" : (language === 'cn' ? "机构级经典大师课归档" : "INSTITUTIONAL MASTERCLASS")}
+          </button>
+        </div>
+
         <div className="media-toolbar">
           <div className="media-filters">
             <SlidersHorizontal size={13} />
@@ -4753,7 +5259,9 @@ export default function Page() {
             ))}
           </div>
           <span className="media-updated">
-            {mediaCopy[language].updated} · {visibleMediaStories.length} {mediaCopy[language].signals}
+            {mediaTrack === 'DAILY_LIVE'
+              ? (language === 'ko' ? '실시간 외신 유튜브 동기화' : 'LIVE YOUTUBE STREAM')
+              : (language === 'ko' ? '기관급 불멸의 아카이브' : 'IMMORTAL ARCHIVE')} · {visibleMediaStories.length} {mediaCopy[language].signals}
           </span>
         </div>
 

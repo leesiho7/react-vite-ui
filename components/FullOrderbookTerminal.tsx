@@ -478,7 +478,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
   const isCurrentProfitable = currentPairSpreadPct > 0.015;
 
   return (
-    <div style={{ background: '#ffffff', border: '1px solid #d8dee4', fontFamily: "'IBM Plex Mono', monospace" }}>
+    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden', fontFamily: "'IBM Plex Mono', monospace" }}>
       {/* ── Top Bar with Tab Switchers & Latency Readout ── */}
       <div style={{ background: '#0b131e', borderBottom: '1px solid #1e293b', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>

@@ -1,38 +1,60 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
+import { ShieldCheck } from 'lucide-react'
 import { FullOrderbookTerminal } from '../../components/FullOrderbookTerminal'
 
 export default function OrderbookPage() {
   return (
-    <main className="terminal-shell" style={{ padding: '24px 56px 60px' }}>
-      <header className="topbar" style={{ marginBottom: '24px' }}>
-        <div className="brand-lockup">
-          <Link href="/" className="auth-back" style={{ color: '#18334a', textDecoration: 'none', fontWeight: 600 }}>
-            ← AETHER TERMINAL
-          </Link>
+    <main className="arb-page">
+      {/* ── Top Bar ── */}
+      <header className="arb-topbar">
+        <div className="arb-brand">
+          <Link href="/">AETHER</Link>
+          <span>MARKET INTELLIGENCE</span>
         </div>
-        <div className="top-meta">
-          <span>CROSS-EXCHANGE ARBITRAGE MATRIX</span>
-          <span className="top-divider" />
-          <span>DELTA-NEUTRAL HEDGE ENGINE</span>
-        </div>
-        <div className="account-toggle">
-          <Link href="/profile" className="member-icon" aria-label="Open member profile">♙</Link>
-          <Link href="/login">SIGN IN / ACCESS</Link>
+        <nav>
+          <Link href="/">OVERVIEW</Link>
+          <Link className="active" href="/orderbook">MARKETS</Link>
+          <Link href="/media">MEDIA</Link>
+          <Link href="/#trading-console">ENGINES</Link>
+        </nav>
+        <div className="arb-top-status">
+          <span className="arb-dot" /> FEEDS <b>5/5</b>
+          <span className="arb-divider" /> <ShieldCheck size={13} /> PAPER-SAFE
         </div>
       </header>
 
-      <div style={{ marginBottom: '20px' }}>
-        <h1 style={{ color: '#18334a', font: '400 clamp(32px, 4vw, 48px)/1.1 Georgia, serif', margin: '0 0 8px' }}>
-          Cross-Exchange <em>Arbitrage & L2 Depth</em>
-        </h1>
-        <p style={{ color: '#74808c', fontSize: '12px', margin: 0 }}>
-          바이낸스 vs 바이비트 실시간 호가 스프레드(%) 차익거래 스캐너 및 8시간 무위험 델타 뉴트럴 펀딩비(Funding APY) 수익 매트릭스
-        </p>
+      {/* ── Hero Section ── */}
+      <section className="arb-hero" style={{ padding: '36px 0 30px' }}>
+        <div>
+          <div className="arb-kicker">CROSS-EXCHANGE EXECUTION MONITOR</div>
+          <h1 style={{ margin: '10px 0 8px', fontSize: 'clamp(30px, 4vw, 48px)' }}>
+            Crypto <em>Arbitrage</em><br />& Orderbook Intelligence
+          </h1>
+          <p>
+            바이낸스, 바이비트, OKX, 업비트 등 글로벌 5대 거래소 간 실시간 L2 호가 스프레드(%) 차익거래 스캐너 및 8시간 무위험 델타 뉴트럴 펀딩비(Funding APY) 수익 매트릭스
+          </p>
+        </div>
+        <div className="arb-hero-readout">
+          <span>NETWORK STATUS</span>
+          <strong><i className="arb-dot" /> NOMINAL</strong>
+          <small>Dual WebSocket Stream · L2 Depth 20<br />Median latency ~14ms</small>
+        </div>
+      </section>
+
+      {/* ── High-Density Real-time Institutional Arbitrage Terminal ── */}
+      <div style={{ marginTop: '24px' }}>
+        <FullOrderbookTerminal defaultSymbol="BTCUSDT" />
       </div>
 
-      <FullOrderbookTerminal defaultSymbol="BTCUSDT" />
+      {/* ── Footer ── */}
+      <footer className="arb-footer" style={{ marginTop: '30px' }}>
+        <span>DATA IS FOR RESEARCH ONLY · DUAL WEBSOCKET STREAMING ACTIVE</span>
+        <span>INSTITUTIONAL L2 DEPTH · <Link href="/login">SIGN IN FOR PRIVATE ENGINES</Link></span>
+      </footer>
     </main>
   )
 }
+
