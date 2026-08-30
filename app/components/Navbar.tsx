@@ -105,12 +105,12 @@ export default function Navbar({
 
   return (
     <header className="w-full bg-[#121212] text-white border-b border-[#222222] select-none sticky top-0 z-50 shadow-lg font-sans">
-      {/* ── 1단 글로벌 네비게이션: 2-Block justify-between 1줄 칼각 정렬 ── */}
-      <nav className="w-full max-w-[1440px] mx-auto flex items-center justify-between h-[64px] px-6 sm:px-8 gap-4 bg-[#121212]">
+      {/* ── 1단 글로벌 네비게이션: 하단 terminal-shell과 완벽한 56px 수평 여백 일치 ── */}
+      <nav className="w-full max-w-[1440px] mx-auto flex items-center justify-between h-[64px] px-4 sm:px-8 md:px-[56px] gap-4 bg-[#121212]">
         
         {/* [왼쪽 블록: AETHER 로고 + 다국어 텍스트 링크 메뉴] */}
         <div className="flex items-center gap-6 lg:gap-8 min-w-0 flex-1 overflow-hidden">
-          {/* A 네모상자 + AETHER 브랜드 락업 (고정 크기) */}
+          {/* A 네모상자 + AETHER 브랜드 락업 (하단 바와 수직선 완벽 일치) */}
           <Link href="/" className="flex items-center gap-3 text-white no-underline group flex-shrink-0">
             <div className="w-[30px] h-[30px] border border-[#38bdf8] bg-[#090e17] text-[#38bdf8] font-serif font-bold text-[18px] grid place-items-center rounded-[2px] shadow-[0_0_12px_rgba(56,189,248,0.3)] group-hover:border-white transition-colors">
               A
@@ -128,7 +128,7 @@ export default function Navbar({
           {/* 세로 구분선 */}
           <div className="hidden lg:block h-4 w-[1px] bg-[#27272a] flex-shrink-0" />
 
-          {/* 다국어 동기화 메뉴 리스트 (클릭 시 언어에 맞춰 한국어/영어/중국어로 즉시 전환) */}
+          {/* 다국어 동기화 메뉴 리스트 */}
           <ul className="hidden md:flex items-center gap-x-5 lg:gap-x-7 text-[12px] font-medium text-[#a1a1aa] list-none p-0 m-0 whitespace-nowrap overflow-x-auto scrollbar-none">
             <li>
               <button
@@ -239,9 +239,9 @@ export default function Navbar({
         </div>
       </nav>
 
-      {/* ── 2단 실시간 펄스 티커 바: 다크(#161616) 배경 & 다국어 동기화 ── */}
-      <div className="w-full bg-[#161616] text-white h-[36px] px-6 sm:px-8 border-t border-[#222222] flex items-center overflow-x-auto whitespace-nowrap scrollbar-none">
-        <div className="w-full max-w-[1440px] mx-auto flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+      {/* ── 2단 실시간 펄스 티커 바: 56px 수평 여백 일치 ── */}
+      <div className="w-full bg-[#161616] text-white h-[36px] border-t border-[#222222] flex items-center overflow-x-auto whitespace-nowrap scrollbar-none">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
           {/* LIVE PULSE 라벨 */}
           <div className="flex items-center gap-2 pr-3 border-r border-[#27272a] font-bold text-[#38bdf8] flex-shrink-0">
             <span className="text-[9.5px] text-[#71717a] font-mono tracking-wider">{menuText.pulse}</span>
