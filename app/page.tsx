@@ -111,6 +111,78 @@ const newsItemsByLang = {
 const mediaStories = [
   {
     track: 'DAILY_LIVE',
+    source: 'BLOOMBERG',
+    key: 'COMPANY',
+    embedId: 'DZ5mz2UjLN4',
+    targetSymbol: 'NVDA/USD',
+    title: ['Bloomberg Tech: AI Datacenter Demand & Enterprise Infrastructure', '블룸버그 테크: AI 데이터센터 수요와 엔터프라이즈 인프라 진단', '彭博科技：AI数据中心激增需求与企业级基础设施'],
+    description: ['Bloomberg Technology daily breakdown covering AI model scaling, semiconductor orders, and cloud hyperscaler capex.', 'AI 모델 확장, 반도체 주문량, 클라우드 하이퍼스케일러들의 설비투자를 심층 분석하는 블룸버그 테크 데일리입니다.', '深度解析AI大模型算力扩张、半导体订单排期以及云巨头资本开支走势。'],
+    age: ['JUST NOW', '방금 전', '刚刚'],
+    duration: '24:15',
+    tone: 'blue',
+    channel: 'Bloomberg Tech',
+    link: 'https://www.youtube.com/watch?v=DZ5mz2UjLN4',
+    takeaways: [
+      ['Enterprise AI capex expansion provides long-term revenue visibility across chipmakers.', '엔터프라이즈 AI 설비투자 확대가 반도체 밸류체인 전반의 장기 매출 가시성을 뒷받침합니다.', '企业级AI资本开支扩张为半导体全产业链提供了长效营收可见度。'],
+      ['Next-gen datacenter power and liquid cooling infrastructure emerge as key bottlenecks.', '차세대 데이터센터 전력망과 액체 냉각 인프라가 공급망의 핵심 병목으로 부상했습니다.', '下一代数据中心电力供应与液冷散热基础设施成为当前关键产能瓶颈。'],
+      ['Sovereign AI initiatives drive global diversification of compute cluster demand.', '국가별 자체 AI(Sovereign AI) 구축 프로젝트가 글로벌 컴퓨팅 수요의 다변화를 견인합니다.', '主权AI战略部署正在推动全球算力集群需求呈现多极化发展态势。']
+    ],
+    timestamps: [
+      { time: '01:30', sec: 90, label: ['AI Capex Ramp', 'AI CAPEX 가속화', 'AI资本开支加速'] },
+      { time: '08:15', sec: 495, label: ['Datacenter Power', '전력 인프라 분석', '电力基础设施'] },
+      { time: '16:40', sec: 1000, label: ['Sovereign AI Flow', '국가 AI 수요 다변화', '主权AI算力需求'] }
+    ]
+  },
+  {
+    track: 'DAILY_LIVE',
+    source: 'CNBC',
+    key: 'CRYPTO',
+    embedId: 'VHGVaKVTqzU',
+    targetSymbol: 'BTC/USD',
+    title: ['CNBC Squawk Box: Coinbase CEO on Institutional Crypto Bull Market', 'CNBC 스쿼크 박스: 코인베이스 CEO 브라이언 암스트롱 기관 강세장 전망', 'CNBC Squawk Box：Coinbase CEO谈机构加密现货牛市'],
+    description: ['Coinbase CEO Brian Armstrong breaks down institutional spot ETF inflows, regulatory clarity, and cross-border payment rails on CNBC Squawk Box.', '코인베이스 CEO 브라이언 암스트롱이 기관 현물 ETF 자금 유입, 규제 명확성 및 국경 간 결제 인프라를 진단합니다.', 'Coinbase CEO深度解析机构现货ETF资金流入、监管框架明朗化及跨境支付结算通道。'],
+    age: ['15 MIN AGO', '15분 전', '15分钟前'],
+    duration: '09:12',
+    tone: 'amber',
+    channel: 'CNBC Television',
+    link: 'https://www.youtube.com/watch?v=VHGVaKVTqzU',
+    takeaways: [
+      ['Spot ETF regulatory greenlight unlocked direct balance-sheet allocations from sovereign wealth funds.', '현물 ETF 승인으로 글로벌 국부펀드 및 기관의 대차대조표 직접 편입 경로가 열렸습니다.', '现货ETF合规通道打开了主权财富基金与大型机构资产负债表直接配置路径。'],
+      ['Stablecoin settlement volume growth demonstrates accelerating mainstream financial utility.', '스테이블코인 결제액의 폭발적 성장이 전통 금융 인프라 대체 가능성을 실증하고 있습니다.', '稳定币结算规模的爆发式增长展现出其加速渗透主流金融结算的实用价值。'],
+      ['Derivatives trading volume on institutional venues reflects deepening market liquidity.', '기관 전용 플랫폼의 파생상품 거래량 증가는 크립토 유동성의 구조적 성숙을 반영합니다.', '机构专属通道的衍生品交易量激增反映出加密资产流动性正在发生质的飞跃。']
+    ],
+    timestamps: [
+      { time: '00:45', sec: 45, label: ['Institutional Inflows', '기관 자금 유입', '机构资金流入'] },
+      { time: '03:30', sec: 210, label: ['Regulatory Clarity', '규제 명확성 진단', '监管环境进展'] },
+      { time: '06:15', sec: 375, label: ['Stablecoin Settlement', '스테이블코인 결제', '稳定币结算网络'] }
+    ]
+  },
+  {
+    track: 'DAILY_LIVE',
+    source: 'COIN BUREAU',
+    key: 'CRYPTO',
+    embedId: '5lg5_SAWheU',
+    targetSymbol: 'BTC/USD',
+    title: ['Coin Bureau: The Real Catalyst Behind Bitcoin Market Explosion', '코인뷰로: 비트코인 급등세의 숨겨진 거시 트리거와 쇼트 스퀴즈', 'Coin Bureau：比特币暴涨背后的核心宏观催化剂与空头挤压'],
+    description: ['Deep breakdown of US Treasury liquidity operations, spot ETF accumulation velocity, and massive short liquidations.', '미국 재무부 유동성 조작, 현물 ETF 매집 속도, 대규모 쇼트 포지션 강제 청산을 종합 분석합니다.', '深度复盘美财政部流动性操作、现货ETF吸筹速率及全网空头大额连环清算。'],
+    age: ['30 MIN AGO', '30분 전', '30分钟前'],
+    duration: '17:40',
+    tone: 'amber',
+    channel: 'Coin Bureau',
+    link: 'https://www.youtube.com/watch?v=5lg5_SAWheU',
+    takeaways: [
+      ['Treasury buyback operations injected unexpected net dollar liquidity into risk assets.', '미국 재무부의 국채 바이백 정책이 위험자산 시장에 예상 밖의 달러 유동성을 주입했습니다.', '美国财政部的国债回购操作向风险资产市场注入了超预期的净美元流动性。'],
+      ['Cluster of short liquidation cascades triggered violent upward convexity.', '상단 숏 포지션 청산 클러스터가 맞물리며 폭발적인 상방 볼록성(Convexity)을 촉발했습니다.', '空头密集清算区间的连续触发引发了剧烈的向上凸性暴涨行情。'],
+      ['On-chain exchange reserves dropped to multi-year lows amidst persistent whale custody transfer.', '고래 지갑들의 지속적인 콜드월렛 이체로 거래소 내부 유통 잔고가 수년래 최저치로 하락했습니다.', '随着巨鲸持续向冷钱包提现，交易所内可流通库存跌至多年新低。']
+    ],
+    timestamps: [
+      { time: '01:20', sec: 80, label: ['Treasury Liquidity', '재무부 유동성 주입', '财政部流动性'] },
+      { time: '06:40', sec: 400, label: ['Short Squeeze Check', '쇼트 스퀴즈 분석', '空头清算链'] },
+      { time: '12:10', sec: 730, label: ['Whale Cold Storage', '고래 콜드월렛 매집', '巨鲸提现冷钱包'] }
+    ]
+  },
+  {
+    track: 'DAILY_LIVE',
     source: 'COIN BUREAU',
     key: 'CRYPTO',
     embedId: 'aq475kcLU5A',
@@ -1600,10 +1672,16 @@ export default function Page() {
       }
     }).catch((e) => console.log('Wallets fetch fallback:', e))
 
-    // Fetch 100 USDT Escrow Pool Real Status
+    // Fetch 100 USDT Escrow Pool Real Status & Start 10s Live On-Chain Polling (Route B)
     fetchEscrowPoolStatus().then((pool) => {
       if (pool) setEscrowPool(pool)
     }).catch((e) => console.log('Escrow pool fetch fallback:', e))
+
+    const escrowPollTimer = setInterval(() => {
+      fetchEscrowPoolStatus().then((pool) => {
+        if (pool) setEscrowPool(pool)
+      }).catch(() => {})
+    }, 10000)
 
     // Check user license token & telegram linkage
     fetchUserLicenseToken(1).then((lic) => {
@@ -1613,6 +1691,8 @@ export default function Page() {
         setTelegramLinked(lic.telegramLinked || false)
       }
     }).catch((e) => console.log('License fetch fallback:', e))
+
+    return () => clearInterval(escrowPollTimer)
   }, [searched, period, language])
 
   // 1. 순수 온체인 지갑 주소 복사 핸들러
