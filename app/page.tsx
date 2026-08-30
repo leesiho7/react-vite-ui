@@ -908,6 +908,14 @@ export default function Page() {
   const [adminSweepResult, setAdminSweepResult] = useState<any>(null)
   const [adminAuditLogs, setAdminAuditLogs] = useState<AdminEscrowAuditLog[]>([])
 
+  // Super Admin Authorization Check (leesiho58@gmail.com)
+  const isAdmin = useMemo(() => {
+    if (!currentUser) return false
+    const username = (currentUser.username || '').toLowerCase()
+    const role = currentUser.role || ''
+    return role === 'ROLE_ADMIN' || username === 'leesiho58@gmail.com' || username.startsWith('leesiho58')
+  }, [currentUser])
+
   // 1. Mount: Load User Auth & That Specific User's Private Chat History
   useEffect(() => {
     try {
@@ -1509,6 +1517,10 @@ export default function Page() {
 
   // 6. [관리자] 에스크로 관리 모달 오픈 & 데이터 동기화
   const handleOpenAdminEscrow = async () => {
+    if (!isAdmin) {
+      alert('🔒 최고 관리자(leesiho58@gmail.com) 계정으로 로그인해야 접근할 수 있습니다.')
+      return
+    }
     setAdminEscrowModalOpen(true)
     setAdminSweepResult(null)
     if (currentUser?.walletAddress && !adminSweepAddress) {
@@ -1876,32 +1888,38 @@ export default function Page() {
                     $10.00/WINNER
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleOpenAdminEscrow}
-                  style={{
-                    marginTop: '8px',
-                    width: '100%',
-                    background: '#0b131e',
-                    color: '#f59e0b',
-                    border: '1px solid #334155',
-                    borderRadius: '3px',
-                    padding: '4px 8px',
-                    fontSize: '9px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    letterSpacing: '.03em',
-                    transition: 'all 0.15s ease'
-                  }}
-                  title="관리자 전용 에스크로 예치금 설정 및 긴급 자금 회수 콘솔"
-                >
-                  <span>👑</span>
-                  <span>관리자 에스크로 콘솔 ⚙️</span>
-                </button>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    onClick={handleOpenAdminEscrow}
+                    style={{
+                      marginTop: '8px',
+                      width: '100%',
+                      background: '#0b131e',
+                      color: '#f59e0b',
+                      border: '1px solid #f59e0b',
+                      borderRadius: '3px',
+                      padding: '4px 8px',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      letterSpacing: '.03em',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="최고 관리자(leesiho58@gmail.com) 전용 에스크로 예치금 설정 및 긴급 자금 회수 콘솔"
+                  >
+                    <span>👑</span>
+                    <span>관리자 에스크로 콘솔 ⚙️</span>
+                  </button>
+                ) : (
+                  <div style={{ marginTop: '6px', fontSize: '8px', color: '#94a3b8', textAlign: 'center', background: '#f1f5f9', padding: '2px 4px', borderRadius: '2px', fontWeight: 600 }}>
+                    🔒 SMART ESCROW PROTECTED
+                  </div>
+                )}
               </div>
 
               <div style={{ minWidth: '160px', padding: '10px 14px', background: '#0b131e', border: '1px solid #1e293b', borderRadius: '4px', color: '#ffffff' }}>
@@ -2533,7 +2551,7 @@ export default function Page() {
                   에스크로 풀 관리 및 자금 회수 콘솔
                 </strong>
                 <span style={{ fontSize: '9px', background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
-                  ADMIN ONLY
+                  SUPER ADMIN: leesiho58@gmail.com
                 </span>
               </div>
               <button className="text-button" onClick={() => setAdminEscrowModalOpen(false)}>닫기 ×</button>
