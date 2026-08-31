@@ -1,5 +1,5 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 :root { 
@@ -13,13 +13,16 @@
   --green: #2b866d; 
   --amber: #b9812c; 
   --red: #ac5d59; 
-  --font-pretendard: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-ai-chat: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace;
+  --font-code: 'Consolas', 'Menlo', 'JetBrains Mono', 'Monaco', 'Courier New', monospace;
 }
 @theme inline { 
   --color-background: var(--background); 
   --color-foreground: var(--foreground); 
-  --font-sans: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace; 
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace; 
   --radius-sm: 0.2rem; 
   --radius-md: 0.35rem; 
   --radius-lg: 0.45rem; 
@@ -29,11 +32,11 @@ body {
   margin: 0; 
   background: var(--background); 
   color: var(--ink); 
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Noto Sans SC', sans-serif; 
+  font-family: var(--font-sans); 
   -webkit-font-smoothing: antialiased; 
   -moz-osx-font-smoothing: grayscale; 
   text-rendering: optimizeLegibility; 
-  letter-spacing: -0.018em; 
+  letter-spacing: -0.015em; 
 }
 button, input, select, textarea { 
   font-family: inherit;
@@ -66,7 +69,7 @@ button {
 .instance-table tbody tr { cursor: pointer; }
 .instance-table tbody tr:hover, .instance-table tbody tr.selected { background: #f5fafb; }
 .instance-table td strong { color: var(--navy); font-weight: 500; }
-.mono-cell { color: var(--navy); font: 10px 'IBM Plex Mono', monospace; }
+.mono-cell { color: var(--navy); font: 10px var(--font-mono); }
 .instance-status { display: inline-flex; align-items: center; gap: 6px; font-size: 8px; letter-spacing: .06em; }
 .instance-status i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .instance-status.running { color: var(--green); }
@@ -81,7 +84,7 @@ button {
 .instance-detail strong { color: var(--navy); font-size: 11px; }
 .instance-create-form { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 15px; padding: 18px 24px; background: #eef7f8; border-top: 1px solid var(--line); }
 .instance-create-form label { display: grid; gap: 7px; color: var(--navy); font-size: 8px; letter-spacing: .08em; }
-.instance-create-form input, .instance-create-form select { min-height: 38px; border: 1px solid var(--line); padding: 0 10px; color: var(--navy); background: white; font: 11px 'IBM Plex Mono', monospace; }
+.instance-create-form input, .instance-create-form select { min-height: 38px; border: 1px solid var(--line); padding: 0 10px; color: var(--navy); background: white; font: 11px var(--font-mono); }
 .instance-create-form > span { color: var(--muted); font-size: 8px; }
 .instance-create-form > div { display: flex; gap: 8px; }
 .instance-create-form button { margin: 0; min-height: 38px; }
@@ -122,7 +125,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 8.5px;
   color: #94a3b8;
   letter-spacing: 0.05em;
@@ -146,7 +149,7 @@ button {
 .powershell-body {
   padding: 14px 16px;
   background: #020408;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .powershell-prompt {
@@ -174,7 +177,7 @@ button {
   color: #f8f8f2;
   caret-color: #ff79c6;
   padding: 12px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.6;
   border-radius: 3px;
@@ -195,7 +198,7 @@ button {
   border-radius: 4px;
   min-height: 165px;
   overflow: hidden;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   line-height: 1.6;
   box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
@@ -276,7 +279,7 @@ button {
 }
 
 .powershell-chip {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 8.5px;
   padding: 4px 9px;
   border-radius: 2px;
@@ -303,11 +306,11 @@ button {
 }
 
 .python-terminal { margin: 16px 24px; background: #020408; border: 1px solid #1e293b; color: #b7d5dc; padding: 16px; border-radius: 4px; }
-.terminal-line { font: 10px 'IBM Plex Mono', monospace; color: #b7d5dc; }
+.terminal-line { font: 10px var(--font-mono); color: #b7d5dc; }
 .terminal-line span { color: #8fc5a7; }
-.python-terminal textarea { display: block; width: 100%; min-height: 130px; margin-top: 12px; padding: 12px; resize: vertical; border: 1px solid #1e293b; background: #000000; color: #00ff66; font: 11px/1.6 'IBM Plex Mono', monospace; outline: none; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+.python-terminal textarea { display: block; width: 100%; min-height: 130px; margin-top: 12px; padding: 12px; resize: vertical; border: 1px solid #1e293b; background: #000000; color: #00ff66; font: 11px/1.6 var(--font-mono); outline: none; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
 .python-terminal textarea:focus { border-color: #38bdf8; }
-.python-terminal small { display: block; margin-top: 10px; color: #64748b; font-size: 8px; font-family: 'IBM Plex Mono', monospace; }
+.python-terminal small { display: block; margin-top: 10px; color: #64748b; font-size: 8px; font-family: var(--font-mono); }
 .bot-actions { display: flex; align-items: center; gap: 10px; padding: 0 24px 20px; flex-wrap: wrap; }
 .bot-actions .primary-button, .bot-actions .danger-button, .bot-actions .secondary-button, .bot-actions .linked-button { margin: 0; min-height: 40px; }
 .danger-button { border: 1px solid var(--red); background: var(--red); color: white; padding: 10px 14px; font-size: 9px; }
@@ -432,7 +435,7 @@ button {
 .media-takeaways li strong { color: var(--navy); font-weight: 500; }
 .media-timestamps { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; align-items: center; }
 .media-timestamps span.ts-label { font-size: 8px; color: var(--muted); letter-spacing: .08em; }
-.ts-badge { border: 1px solid var(--line); background: white; color: var(--navy); padding: 4px 8px; font-size: 8px; font-family: 'IBM Plex Mono', monospace; display: inline-flex; align-items: center; gap: 4px; border-radius: 2px; cursor: pointer; transition: all .15s ease; }
+.ts-badge { border: 1px solid var(--line); background: white; color: var(--navy); padding: 4px 8px; font-size: 8px; font-family: var(--font-mono); display: inline-flex; align-items: center; gap: 4px; border-radius: 2px; cursor: pointer; transition: all .15s ease; }
 .ts-badge:hover, .ts-badge.active { background: var(--navy); color: white; border-color: var(--navy); }
 .media-sync-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; background: #eef5f7; border: 1px solid #c2d9e3; color: var(--blue); font-size: 8px; font-weight: 600; border-radius: 2px; cursor: pointer; margin-left: auto; transition: all .15s ease; }
 .media-sync-badge:hover { background: var(--navy); color: white; border-color: var(--navy); }
@@ -574,7 +577,7 @@ button {
   gap: 6px;
   font-size: 7.5px;
   color: var(--muted);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 .session-badge {
   padding: 1px 4px;
@@ -630,7 +633,7 @@ button {
   font-size: 8px;
   color: var(--muted);
   letter-spacing: .08em;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 .chat-messages-container {
   flex: 1;
@@ -697,7 +700,7 @@ button {
   color: var(--blue);
   font-size: 7px;
   border-radius: 2px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 .agent-tool-accordion {
   background: #f8fafb;
@@ -705,7 +708,7 @@ button {
   border-radius: 2px;
   padding: 8px 12px;
   margin-bottom: 14px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 8px;
 }
 .tool-summary-row {
@@ -763,7 +766,7 @@ button {
   border-radius: 4px;
   color: var(--blue);
   font-size: 9px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 /* 2-1. Sticky Bottom Input Bar */
@@ -862,7 +865,7 @@ button {
 }
 .hud-quote-row span {
   font-size: 10px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
 }
 .hud-quant-metrics {
@@ -887,7 +890,7 @@ button {
 .hud-metric-cell strong {
   font-size: 10px;
   color: var(--navy);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 .hud-news-feed {
   display: flex;
@@ -919,7 +922,7 @@ button {
   color: var(--muted);
   display: flex;
   justify-content: space-between;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 /* Responsive adjustments */
@@ -972,7 +975,7 @@ button {
   font-size: 11px;
   letter-spacing: .08em;
   color: #f8fafc;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .instance-identity span {
@@ -981,7 +984,7 @@ button {
   background: #1e293b;
   padding: 2px 6px;
   border-radius: 2px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .instance-status-pill {
@@ -989,7 +992,7 @@ button {
   align-items: center;
   gap: 6px;
   font-size: 8.5px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 9999px;
@@ -1076,14 +1079,14 @@ button {
   font-size: 7px;
   color: #64748b;
   letter-spacing: .06em;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   text-transform: uppercase;
 }
 
 .instance-spec-cell strong {
   font-size: 9.5px;
   color: #cbd5e1;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 500;
 }
 
@@ -1099,7 +1102,7 @@ button {
   align-items: center;
   gap: 5px;
   font-size: 8.5px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 3px;
@@ -1147,7 +1150,7 @@ button {
   border: 1px solid #1e293b;
   border-radius: 3px;
   padding: 10px 12px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 8px;
   line-height: 1.6;
   color: #94a3b8;
@@ -1441,6 +1444,57 @@ button {
 
 .animate-ticker-tape:hover {
   animation-play-state: paused;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* ── Typography System (Inter UI / Pretendard Chat / JetBrains Mono Code) ── */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. Monospace & Python Code Blocks (Consolas / Menlo / JetBrains Mono) */
+code,
+pre,
+kbd,
+samp,
+.dracula-editor-wrap,
+.dracula-code-display,
+.dracula-code-textarea,
+.dracula-line-numbers,
+.powershell-body,
+.powershell-prompt,
+.powershell-chip,
+.terminal-log-line,
+.instance-live-terminal,
+.mono-cell,
+.agent-tool-accordion,
+.tool-item-line,
+.session-item-meta,
+.quick-chip {
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace !important;
+}
+
+/* 2. AI Chat Responses (Pretendard / Apple SD Gothic Neo / Malgun Gothic Fallback) */
+.chat-msg-agent-body,
+.chat-msg-agent-body p,
+.chat-msg-agent-body li,
+.chat-msg-agent-body strong,
+.chat-msg-agent-body span,
+.chat-msg-agent-body div,
+.chat-msg-user-body,
+.chat-msg-agent,
+.chat-msg-user,
+.chat-messages-container,
+.agent-chat-main,
+.research-response,
+.chat-input-textarea {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', 'Noto Sans KR', sans-serif !important;
+}
+
+/* Code tags inside AI Chat responses */
+.chat-msg-agent-body pre,
+.chat-msg-agent-body code,
+.chat-msg-user-body pre,
+.chat-msg-user-body code {
+  font-family: 'JetBrains Mono', 'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace !important;
 }
 
 

@@ -545,7 +545,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
   const isCurrentProfitable = currentPairSpreadPct > 0.015;
 
   return (
-    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden', fontFamily: "'IBM Plex Mono', monospace" }}>
+    <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden', fontFamily: "var(--font-mono)" }}>
       {/* ── Top Bar with Tab Switchers & Latency Readout ── */}
       <div style={{ background: '#0b131e', borderBottom: '1px solid #1e293b', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -1175,7 +1175,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
       {/* ── Position Yield Simulator Modal ── */}
       {calcModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ width: '480px', background: '#ffffff', border: '1px solid #d8dee4', borderRadius: '4px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.3)', fontFamily: "'IBM Plex Mono', monospace" }}>
+          <div style={{ width: '480px', background: '#ffffff', border: '1px solid #d8dee4', borderRadius: '4px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.3)', fontFamily: "var(--font-mono)" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #edf0f2', paddingBottom: '12px', marginBottom: '16px' }}>
               <strong style={{ fontSize: '14px', color: '#18334a' }}>
                 🧮 {selectedFundingAsset.symbol} 델타 뉴트럴 차익거래 시뮬레이터

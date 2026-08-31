@@ -2276,7 +2276,7 @@ export default function Page() {
                   <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600 }}>RESERVED ESCROW POOL</span>
                   <span className="live-dot" style={{ width: '6px', height: '6px', background: (escrowPool?.currentBalance ?? 0) > 0 ? '#10b981' : '#94a3b8' }} />
                 </div>
-                <strong style={{ fontSize: '20px', color: (escrowPool?.currentBalance ?? 0) > 0 ? '#0f766e' : '#475569', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                <strong style={{ fontSize: '20px', color: (escrowPool?.currentBalance ?? 0) > 0 ? '#0f766e' : '#475569', display: 'block', margin: '4px 0 2px', fontFamily: "var(--font-mono)" }}>
                   {(escrowPool?.currentBalance ?? 0.0).toFixed(2)} <small style={{ fontSize: '11px', color: '#64748b' }}>USDT</small>
                 </strong>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '2px' }}>
@@ -2323,7 +2323,7 @@ export default function Page() {
 
               <div style={{ minWidth: '160px', padding: '10px 14px', background: '#0b131e', border: '1px solid #1e293b', borderRadius: '4px', color: '#ffffff' }}>
                 <span style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 600, display: 'block' }}>ROUND #{String(round).padStart(2, '0')} CLOSES IN</span>
-                <strong style={{ fontSize: '20px', color: '#f59e0b', display: 'block', margin: '4px 0 2px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                <strong style={{ fontSize: '20px', color: '#f59e0b', display: 'block', margin: '4px 0 2px', fontFamily: "var(--font-mono)" }}>
                   {format1HCountdown(hourlyRemainingSec)}
                 </strong>
                 <span style={{ fontSize: '8.5px', color: '#34d399', display: 'block' }}>
@@ -2571,7 +2571,7 @@ export default function Page() {
                     {isUpWinning ? `[UP WINNING] +$${priceDelta.toFixed(2)} (+${priceDeltaPct.toFixed(2)}%)` : `[DOWN WINNING] -$${Math.abs(priceDelta).toFixed(2)} (${priceDeltaPct.toFixed(2)}%)`}
                   </span>
                 </div>
-                <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: "'IBM Plex Mono', monospace" }}>
+                <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: "var(--font-mono)" }}>
                   1H OPEN STRIKE: <strong style={{ color: '#f59e0b' }}>${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                   <span style={{ margin: '0 8px', color: '#475569' }}>|</span>
                   CURRENT TICK: <strong style={{ color: isUpWinning ? '#34d399' : '#f87171' }}>${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
@@ -2769,7 +2769,7 @@ export default function Page() {
                             fill={strokeColor}
                             fontSize="9.5"
                             fontWeight="700"
-                            fontFamily="'IBM Plex Mono', monospace"
+                            fontFamily="var(--font-mono)"
                           >
                             ${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                           </text>
@@ -3017,13 +3017,13 @@ export default function Page() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', background: '#f8fafb', padding: '14px', borderRadius: '4px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
                   <div>
                     <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>실시간 에스크로 잔액</span>
-                    <strong style={{ fontSize: '18px', color: '#0f766e', fontFamily: "'IBM Plex Mono', monospace" }}>
+                    <strong style={{ fontSize: '18px', color: '#0f766e', fontFamily: "var(--font-mono)" }}>
                       {(escrowPool?.currentBalance ?? 0.0).toFixed(2)} <small style={{ fontSize: '10px', color: '#64748b' }}>USDT</small>
                     </strong>
                   </div>
                   <div>
                     <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>지급된 보상 누적</span>
-                    <strong style={{ fontSize: '18px', color: '#dc2626', fontFamily: "'IBM Plex Mono', monospace" }}>
+                    <strong style={{ fontSize: '18px', color: '#dc2626', fontFamily: "var(--font-mono)" }}>
                       {(escrowPool?.claimedAmount ?? 0.0).toFixed(2)} <small style={{ fontSize: '10px', color: '#64748b' }}>USDT</small>
                     </strong>
                   </div>
@@ -3050,7 +3050,7 @@ export default function Page() {
                       주소 복사 📋
                     </button>
                   </div>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#0c4a6e', wordBreak: 'break-all', background: '#fff', padding: '6px 8px', borderRadius: '3px', border: '1px solid #e0f2fe' }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: '11px', color: '#0c4a6e', wordBreak: 'break-all', background: '#fff', padding: '6px 8px', borderRadius: '3px', border: '1px solid #e0f2fe' }}>
                     {escrowPool?.escrowAddress || '0xb0390a087488E304cA32996532Ab9f40028511fE'}
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: '9.5px', color: '#0369a1', lineHeight: 1.4 }}>
@@ -3069,7 +3069,7 @@ export default function Page() {
                       value={adminConfigCapacity}
                       onChange={(e) => setAdminConfigCapacity(e.target.value)}
                       placeholder="예: 100.0"
-                      style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '8px 12px', fontSize: '12px', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '8px 12px', fontSize: '12px', fontFamily: "var(--font-mono)" }}
                     />
                     <button
                       type="button"
@@ -3178,7 +3178,7 @@ export default function Page() {
                     value={adminSweepAddress}
                     onChange={(e) => setAdminSweepAddress(e.target.value)}
                     placeholder="0x... (메타마스크 또는 바이비트/바이낸스/OKX USDT 입금 주소)"
-                    style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '8px 12px', fontSize: '11px', fontFamily: "'IBM Plex Mono', monospace" }}
+                    style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '8px 12px', fontSize: '11px', fontFamily: "var(--font-mono)" }}
                   />
                 </div>
 
@@ -3193,7 +3193,7 @@ export default function Page() {
                         value={adminSweepAmount}
                         onChange={(e) => setAdminSweepAmount(e.target.value)}
                         placeholder={`최대 ${(escrowPool?.currentBalance ?? 0.0).toFixed(2)}`}
-                        style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '8px 12px', fontSize: '11px', fontFamily: "'IBM Plex Mono', monospace" }}
+                        style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '8px 12px', fontSize: '11px', fontFamily: "var(--font-mono)" }}
                       />
                       <button
                         type="button"
@@ -3279,12 +3279,12 @@ export default function Page() {
                             </td>
                             <td style={{ padding: '6px 8px' }}>
                               <div style={{ fontWeight: 600, color: '#1e293b' }}>{item.description}</div>
-                              <div style={{ fontSize: '8.5px', color: '#64748b', fontFamily: "'IBM Plex Mono', monospace" }}>{item.destinationAddress}</div>
+                              <div style={{ fontSize: '8.5px', color: '#64748b', fontFamily: "var(--font-mono)" }}>{item.destinationAddress}</div>
                             </td>
-                            <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace", color: item.type === 'ADMIN_SWEEP' ? '#dc2626' : '#059669' }}>
+                            <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontFamily: "var(--font-mono)", color: item.type === 'ADMIN_SWEEP' ? '#dc2626' : '#059669' }}>
                               {item.type === 'ADMIN_SWEEP' ? `-${item.amount?.toFixed(2)}` : `+${item.amount?.toFixed(2)}`} USDT
                             </td>
-                            <td style={{ padding: '6px 8px', fontFamily: "'IBM Plex Mono', monospace", fontSize: '8.5px', color: '#64748b' }}>
+                            <td style={{ padding: '6px 8px', fontFamily: "var(--font-mono)", fontSize: '8.5px', color: '#64748b' }}>
                               {item.txHash?.substring(0, 10)}...
                             </td>
                           </tr>
@@ -3425,7 +3425,7 @@ export default function Page() {
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>수신 지갑 / 거래소 USDT 입금 주소</label>
                   <input
-                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '11px', fontFamily: "'IBM Plex Mono', monospace" }}
+                    style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '11px', fontFamily: "var(--font-mono)" }}
                     placeholder="0x... (메타마스크 또는 바이비트/바이낸스 USDT 입금 주소)"
                     value={claimAddress}
                     onChange={(e) => setClaimAddress(e.target.value)}
@@ -3485,7 +3485,7 @@ export default function Page() {
                       [복사]
                     </button>
                   </div>
-                  <code style={{ background: '#0b131e', color: '#38bdf8', padding: '4px 8px', borderRadius: '3px', display: 'block', fontSize: '11.5px', fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <code style={{ background: '#0b131e', color: '#38bdf8', padding: '4px 8px', borderRadius: '3px', display: 'block', fontSize: '11.5px', fontFamily: "var(--font-mono)" }}>
                     {depositSuccessResult.licenseToken}
                   </code>
                   <div style={{ marginTop: '8px', color: '#64748b' }}><b>트랜잭션 해시:</b> {depositSuccessResult.txHash}</div>
@@ -3641,7 +3641,7 @@ export default function Page() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '18px' }}>⚠️</span>
                 <div>
-                  <strong style={{ fontSize: '13px', color: '#f87171', letterSpacing: '.05em', fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <strong style={{ fontSize: '13px', color: '#f87171', letterSpacing: '.05em', fontFamily: "var(--font-mono)" }}>
                     [지원 불가 자산 예외 안내]
                   </strong>
                   <div style={{ fontSize: '9px', color: '#94a3b8', marginTop: '2px' }}>
@@ -3668,7 +3668,7 @@ export default function Page() {
             </div>
 
             <div style={{ marginBottom: '18px' }}>
-              <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 600, letterSpacing: '.08em', display: 'block', marginBottom: '8px', fontFamily: "'IBM Plex Mono', monospace" }}>
+              <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 600, letterSpacing: '.08em', display: 'block', marginBottom: '8px', fontFamily: "var(--font-mono)" }}>
                 💡 현재 24H 클라우드 봇 지원 자산군 (INSTITUTIONAL GRADE)
               </span>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '9px', color: '#cbd5e1' }}>
@@ -3688,7 +3688,7 @@ export default function Page() {
             </div>
 
             <div>
-              <span style={{ fontSize: '9.5px', color: '#94a3b8', display: 'block', marginBottom: '8px', fontFamily: "'IBM Plex Mono', monospace" }}>
+              <span style={{ fontSize: '9.5px', color: '#94a3b8', display: 'block', marginBottom: '8px', fontFamily: "var(--font-mono)" }}>
                 👉 검증된 메이저 자산으로 즉시 전환하기:
               </span>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
@@ -3710,7 +3710,7 @@ export default function Page() {
                       borderRadius: '3px',
                       cursor: 'pointer',
                       textAlign: 'center',
-                      fontFamily: "'IBM Plex Mono', monospace"
+                      fontFamily: "var(--font-mono)"
                     }}
                     onClick={() => {
                       setSearched(rec.sym)
@@ -4359,7 +4359,7 @@ export default function Page() {
                   value={newInstanceApiKey}
                   onChange={(e) => setNewInstanceApiKey(e.target.value)}
                   placeholder={language === 'ko' ? '거래소에서 발급받은 API Key 입력' : 'Enter Exchange API Key'}
-                  style={{ marginTop: '4px', fontFamily: "'IBM Plex Mono', monospace" }}
+                  style={{ marginTop: '4px', fontFamily: "var(--font-mono)" }}
                 />
               </label>
 
@@ -4370,7 +4370,7 @@ export default function Page() {
                   value={newInstanceApiSecret}
                   onChange={(e) => setNewInstanceApiSecret(e.target.value)}
                   placeholder={language === 'ko' ? '거래소 Secret Key 입력' : 'Enter Exchange Secret Key'}
-                  style={{ marginTop: '4px', fontFamily: "'IBM Plex Mono', monospace" }}
+                  style={{ marginTop: '4px', fontFamily: "var(--font-mono)" }}
                 />
               </label>
             </div>
@@ -4395,7 +4395,7 @@ export default function Page() {
                   value={newInstanceLicenseKey || licenseToken || ''}
                   onChange={(e) => setNewInstanceLicenseKey(e.target.value)}
                   placeholder={language === 'ko' ? '예: AETH-7F3A-88B1-NODE (결제 후 텔레그램으로 전송된 키)' : 'e.g. AETH-7F3A-88B1-NODE'}
-                  style={{ marginTop: '4px', fontFamily: "'IBM Plex Mono', monospace" }}
+                  style={{ marginTop: '4px', fontFamily: "var(--font-mono)" }}
                 />
               </label>
             </div>
@@ -4483,7 +4483,7 @@ export default function Page() {
           </div>
 
           <div className="powershell-target-bar">
-            <span style={{ fontSize: '8px', color: '#94a3b8', fontFamily: "'IBM Plex Mono', monospace", marginRight: '4px' }}>
+            <span style={{ fontSize: '8px', color: '#94a3b8', fontFamily: "var(--font-mono)", marginRight: '4px' }}>
               TARGET_SYMBOL_FLAGS:
             </span>
             {[
@@ -4630,7 +4630,7 @@ export default function Page() {
                     border: '1px solid #14b8a6',
                     color: '#ffffff',
                     fontWeight: 'bold',
-                    fontFamily: "'IBM Plex Mono', monospace"
+                    fontFamily: "var(--font-mono)"
                   }}
                   onClick={handleTestSandbox}
                   disabled={sandboxLoading}
@@ -4649,7 +4649,7 @@ export default function Page() {
                       borderRadius: '2px',
                       background: sandboxIsError ? '#ef4444' : '#10b981',
                       color: '#ffffff',
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                       letterSpacing: '0.05em'
                     }}>
                       {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
@@ -4667,7 +4667,7 @@ export default function Page() {
                     lineHeight: '1.6',
                     borderRadius: '3px',
                     whiteSpace: 'pre-wrap',
-                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontFamily: "var(--font-mono)",
                     boxShadow: sandboxIsError ? '0 0 16px rgba(239, 68, 68, 0.25)' : '0 0 16px rgba(16, 185, 129, 0.2)'
                   }}>
                     {sandboxLog}
@@ -4727,7 +4727,7 @@ export default function Page() {
             <div className="session-list">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px 4px' }}>
                 <span className="session-group-label" style={{ padding: 0 }}>RESEARCH TOPICS</span>
-                <span style={{ fontSize: '7px', color: 'var(--blue)', fontFamily: "'IBM Plex Mono', monospace" }}>{agentSessions.length} TOPICS</span>
+                <span style={{ fontSize: '7px', color: 'var(--blue)', fontFamily: "var(--font-mono)" }}>{agentSessions.length} TOPICS</span>
               </div>
               {agentSessions.map((sess) => (
                 <div
@@ -4827,8 +4827,8 @@ export default function Page() {
                       {msg.imageUrl && (
                         <div style={{ marginTop: '6px', marginBottom: '8px', background: '#0a0f18', padding: '5px', border: '1px solid #1e293b', borderRadius: '3px', display: 'inline-block' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 4px', borderBottom: '1px solid #1e293b', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '7.5px', color: '#38bdf8', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.05em' }}>[ATTACHED_CHART_BUFFER]</span>
-                            <span style={{ fontSize: '7.5px', color: '#64748b', fontFamily: "'IBM Plex Mono', monospace" }}>GROUND_TRUTH_SYNCED</span>
+                            <span style={{ fontSize: '7.5px', color: '#38bdf8', fontFamily: "var(--font-mono)", letterSpacing: '0.05em' }}>[ATTACHED_CHART_BUFFER]</span>
+                            <span style={{ fontSize: '7.5px', color: '#64748b', fontFamily: "var(--font-mono)" }}>GROUND_TRUTH_SYNCED</span>
                           </div>
                           <img
                             src={msg.imageUrl}
@@ -4847,7 +4847,7 @@ export default function Page() {
                           <span>AETHER QUANT AI</span>
                           <span className="agent-persona-role">INSTITUTIONAL COPILOT</span>
                         </div>
-                        <span style={{ fontSize: '7.5px', color: 'var(--muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
+                        <span style={{ fontSize: '7.5px', color: 'var(--muted)', fontFamily: "var(--font-mono)" }}>
                           {msg.timestamp} · AUDITED
                         </span>
                       </div>
@@ -4855,12 +4855,12 @@ export default function Page() {
                       {msg.toolCalls && msg.toolCalls.length > 0 && (
                         <div className="agent-tool-accordion">
                           <div className="tool-summary-row">
-                            <span style={{ fontFamily: "'IBM Plex Mono', monospace" }}>[EXECUTED AGENT TOOL CALLS: {msg.toolCalls.length}]</span>
-                            <span style={{ color: '#10b981', fontFamily: "'IBM Plex Mono', monospace" }}>SUCCESS ✓</span>
+                            <span style={{ fontFamily: "var(--font-mono)" }}>[EXECUTED AGENT TOOL CALLS: {msg.toolCalls.length}]</span>
+                            <span style={{ color: '#10b981', fontFamily: "var(--font-mono)" }}>SUCCESS ✓</span>
                           </div>
                           <div className="tool-items-list">
                             {msg.toolCalls.map((tc, idx) => (
-                              <div key={idx} className="tool-item-line" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+                              <div key={idx} className="tool-item-line" style={{ fontFamily: "var(--font-mono)" }}>
                                 <b>↳ {tc.name}:</b> {tc.detail}
                               </div>
                             ))}
@@ -4881,7 +4881,7 @@ export default function Page() {
               {agentThinking && (
                 <div className="chat-thinking-box" style={{ background: 'rgba(56, 189, 248, 0.06)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
                   <Sparkles size={14} className="animate-spin" style={{ color: '#38bdf8' }} />
-                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', color: '#e0f2fe' }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: '11px', color: '#e0f2fe' }}>
                     <strong style={{ color: '#38bdf8', letterSpacing: '0.5px' }}>[QUANT AI REASONING]</strong> {agentThinkingStep}
                   </span>
                 </div>
@@ -4907,19 +4907,19 @@ export default function Page() {
                       color: '#38bdf8',
                       borderColor: 'rgba(56, 189, 248, 0.35)',
                       fontWeight: 'bold',
-                      fontFamily: "'IBM Plex Mono', monospace"
+                      fontFamily: "var(--font-mono)"
                     }}
                     onClick={() => chatFileInputRef.current?.click()}
                   >
                     + ATTACH CHART CAPTURE
                   </button>
-                  <button className="quick-chip" style={{ fontFamily: "'IBM Plex Mono', monospace" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
+                  <button className="quick-chip" style={{ fontFamily: "var(--font-mono)" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
                     SUPPORT & SQUEEZE ANALYSIS
                   </button>
-                  <button className="quick-chip" style={{ fontFamily: "'IBM Plex Mono', monospace" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 3단계 분할 매수 비중 어떻게 조절해?`)}>
+                  <button className="quick-chip" style={{ fontFamily: "var(--font-mono)" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 3단계 분할 매수 비중 어떻게 조절해?`)}>
                     POSITION SIZING LADDER
                   </button>
-                  <button className="quick-chip" style={{ fontFamily: "'IBM Plex Mono', monospace" }} onClick={() => handleSendAgentMessage(`만약 50일 이동평균선 이탈 시 손절 및 헷징 플랜은?`)}>
+                  <button className="quick-chip" style={{ fontFamily: "var(--font-mono)" }} onClick={() => handleSendAgentMessage(`만약 50일 이동평균선 이탈 시 손절 및 헷징 플랜은?`)}>
                     STOP-LOSS & HEDGING RISK
                   </button>
                 </div>
@@ -4933,7 +4933,7 @@ export default function Page() {
                   padding: '8px 12px',
                   borderRadius: '3px',
                   marginBottom: '8px',
-                  fontFamily: "'IBM Plex Mono', monospace"
+                  fontFamily: "var(--font-mono)"
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -4962,7 +4962,7 @@ export default function Page() {
                         fontSize: '8px',
                         padding: '4px 8px',
                         borderRadius: '2px',
-                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontFamily: "var(--font-mono)",
                         cursor: 'pointer',
                         letterSpacing: '0.05em'
                       }}
@@ -4981,21 +4981,21 @@ export default function Page() {
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 4시간봉에서 승률 70% 넘는 RSI(14) + 볼린저 밴드 단타 봇 전략 파이썬 코드를 작성하고 튜닝해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       ⚡ RSI+볼린저 단타 봇 빌드
                     </button>
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} SMA20/50 골든크로스 기반 손익비 1:3 추세추종 알고리즘과 백테스트 성능표를 작성해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       📈 골든크로스 1:3 추세추종
                     </button>
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 변동성 돌파(ATR) 전략의 샤프 지수를 2.0 이상으로 자율 튜닝하고 봇 배포 JSON을 생성해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       🛡️ 변동성 돌파 샤프 2.0+ 튜닝
                     </button>
@@ -5005,21 +5005,21 @@ export default function Page() {
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`1,000만 원 예산으로 ${currentSession?.symbol || searched} 3단계 분할 매수 집행 티켓을 발행해줘. 최대 허용 손실은 50만 원 한도야.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       🛡️ 1,000만원 3단계 분할 티켓
                     </button>
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 현재가 기준 켈리 공식(Kelly)으로 최적 투입 자본금과 1/2차 익절 목표가를 계산해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       ⚖️ 켈리 공식 최적 자본배분
                     </button>
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 진입 시 반드시 지켜야 할 손절(Invalidation) 기준선과 리스크 무효화 조건을 알려줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       🚨 손절 및 무효화 기준선 산출
                     </button>
@@ -5029,21 +5029,21 @@ export default function Page() {
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 오늘 매수 유효성과 실시간 기술적 지표, 8,000봉 프랙탈 일치율을 심층 분석해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       🔍 실시간 미시구조 & 프랙탈 진단
                     </button>
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 온체인 고래 지갑 이동과 선물 펀딩비, 바이낸스 수급 상태를 브리핑해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       🐋 온체인 고래 & 선물 펀딩비
                     </button>
                     <button
                       type="button"
                       onClick={() => setAgentInputPrompt(`최신 외신 뉴스 속보와 시장 감성 점수를 바탕으로 ${currentSession?.symbol || searched}의 거시 호재/악재를 팩트체크해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'IBM Plex Mono', monospace" }}
+                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
                     >
                       📰 외신 속보 & RAG 팩트체크
                     </button>
@@ -5072,7 +5072,7 @@ export default function Page() {
               />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <small style={{ fontSize: '8px', color: 'var(--muted)', fontFamily: "'IBM Plex Mono', monospace" }}>
+                <small style={{ fontSize: '8px', color: 'var(--muted)', fontFamily: "var(--font-mono)" }}>
                   ACTIVE ENGINES: Python FastDTW + Exchange API + ta4j Loop
                 </small>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -5080,7 +5080,7 @@ export default function Page() {
                     type="button"
                     className="secondary-button"
                     onClick={() => chatFileInputRef.current?.click()}
-                    style={{ padding: '6px 10px', fontSize: '8px', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.04em' }}
+                    style={{ padding: '6px 10px', fontSize: '8px', fontFamily: "var(--font-mono)", letterSpacing: '0.04em' }}
                     title="차트 캡처 사진 첨부"
                   >
                     + ATTACH IMAGE
@@ -5111,7 +5111,7 @@ export default function Page() {
                     </div>
                     <div className="hud-quote-row">
                       <strong>{hud.name}</strong>
-                      <span style={{ color: '#2b866d', fontFamily: "'IBM Plex Mono', monospace" }}>
+                      <span style={{ color: '#2b866d', fontFamily: "var(--font-mono)" }}>
                         {hud.price}
                       </span>
                     </div>
@@ -5158,7 +5158,7 @@ export default function Page() {
                     <div style={{ padding: '8px 10px', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '4px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span style={{ fontSize: '9px', color: '#94a3b8' }}>TOP FRACTAL MATCH</span>
-                        <strong style={{ fontSize: '11px', color: '#38bdf8', fontFamily: "'IBM Plex Mono', monospace" }}>89.4% 일치</strong>
+                        <strong style={{ fontSize: '11px', color: '#38bdf8', fontFamily: "var(--font-mono)" }}>89.4% 일치</strong>
                       </div>
                       <div style={{ fontSize: '10px', color: '#f1f5f9', fontWeight: 'bold', marginBottom: '4px' }}>
                         상승 깃발형 돌파 (Bullish Flag)
