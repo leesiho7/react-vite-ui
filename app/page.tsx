@@ -1173,6 +1173,11 @@ export default function Page() {
   const [sandboxIsError, setSandboxIsError] = useState(false)
   const [sandboxLoading, setSandboxLoading] = useState(false)
 
+  // Upgrade & Pro Quant Subscription Modal State
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [upgradePlan, setUpgradePlan] = useState<'FREE' | 'PRO'>('PRO')
+  const [paymentCopied, setPaymentCopied] = useState(false)
+
   // Pure On-Chain Deposit Modal State (Non-Custodial P2P)
   const [depositModalOpen, setDepositModalOpen] = useState(false)
   const [selectedNetwork, setSelectedNetwork] = useState('polygon')
@@ -3441,6 +3446,106 @@ export default function Page() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Institutional Upgrade & Pro Quant Subscription Modal ── */}
+      {upgradeOpen && (
+        <div className="upgrade-overlay" onClick={() => setUpgradeOpen(false)}>
+          <div className="upgrade-sheet" onClick={(e) => e.stopPropagation()}>
+            <button className="upgrade-close" aria-label="Close modal" onClick={() => setUpgradeOpen(false)}>×</button>
+            <div className="upgrade-spark">✦</div>
+            <span className="upgrade-kicker">INSTITUTIONAL QUANT ACCESS</span>
+            <h2>
+              Unlock <em>Pro Intelligence.</em>
+            </h2>
+            <p className="upgrade-subtitle">
+              {language === 'ko'
+                ? '기관급 실시간 아비트라지, 24시간 무중단 클라우드 봇, 전 종목 프랙탈 분석을 제한 없이 이용하세요.'
+                : 'Full access to cross-exchange arbitrage, 24/7 dedicated IDC bot capacity, and real-time multi-fractal DTW models.'}
+            </p>
+
+            <div className="upgrade-toggle">
+              <button
+                className={upgradePlan === 'FREE' ? 'selected' : ''}
+                onClick={() => setUpgradePlan('FREE')}
+              >
+                {language === 'ko' ? '베이직 (Basic)' : 'Basic'}
+              </button>
+              <button
+                className={upgradePlan === 'PRO' ? 'selected' : ''}
+                onClick={() => setUpgradePlan('PRO')}
+              >
+                {language === 'ko' ? '프로 퀀트 (Pro Quant)' : 'Pro Quant'}
+              </button>
+            </div>
+
+            <div className="upgrade-table">
+              <div className="upgrade-table-head">
+                <span>{language === 'ko' ? '제공 기능 및 엔진 사양' : 'ENGINE CAPABILITY'}</span>
+                <b>FREE</b>
+                <b>PRO</b>
+              </div>
+              <div className="upgrade-row">
+                <span>{language === 'ko' ? '실시간 바이낸스/바이비트 호가창' : 'L2 Live Depth Orderbook'}</span>
+                <b>✓</b>
+                <b className="has-feature">✓</b>
+              </div>
+              <div className="upgrade-row">
+                <span>{language === 'ko' ? '24시간 무중단 클라우드 봇 호스팅' : '24/7 Cloud Bot IDC Hosting'}</span>
+                <b>—</b>
+                <b className="has-feature">✓</b>
+              </div>
+              <div className="upgrade-row">
+                <span>{language === 'ko' ? '크로스 거래소 무위험 아비트라지' : 'Real-time Cross Arbitrage Scanner'}</span>
+                <b>—</b>
+                <b className="has-feature">✓</b>
+              </div>
+              <div className="upgrade-row">
+                <span>{language === 'ko' ? 'FastDTW 8000 프랙탈 패턴 서치' : 'FastDTW 8000 Fractal Engine'}</span>
+                <b>—</b>
+                <b className="has-feature">✓</b>
+              </div>
+              <div className="upgrade-row">
+                <span>{language === 'ko' ? '텔레그램 1:1 실시간 시그널 알림' : '1:1 Telegram Realtime Dispatch'}</span>
+                <b>—</b>
+                <b className="has-feature">✓</b>
+              </div>
+            </div>
+
+            <div className="upgrade-price">
+              <strong>{upgradePlan === 'PRO' ? '$7.00' : '$0.00'}</strong>
+              <small>{upgradePlan === 'PRO' ? 'USDT / 30 DAYS' : 'FREE TIER'}</small>
+              <span>{upgradePlan === 'PRO' ? (language === 'ko' ? '무약정 월간 자동 연장' : 'non-custodial on-chain') : (language === 'ko' ? '기본 기능 체험' : 'basic trial')}</span>
+            </div>
+
+            <button
+              className="upgrade-cta"
+              onClick={() => {
+                setUpgradeOpen(false)
+                setDepositModalOpen(true)
+              }}
+            >
+              {upgradePlan === 'PRO'
+                ? (language === 'ko' ? '프로 퀀트 구독 및 결제 ($7 USDT)' : 'SUBSCRIBE TO PRO QUANT')
+                : (language === 'ko' ? '현재 베이직 플랜 이용 중' : 'CURRENTLY ON FREE PLAN')}
+              <span>↗</span>
+            </button>
+
+            <div className="usdt-payment-note">
+              <span>{language === 'ko' ? '스마트 컨트랙트 및 TRC20/POLYGON 온체인 결제 지원' : 'Non-custodial USDT On-chain Escrow'}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText('0xb0390a087488E304cA32996532Ab9f40028511fE')
+                  setPaymentCopied(true)
+                  setTimeout(() => setPaymentCopied(false), 2000)
+                }}
+              >
+                {paymentCopied ? (language === 'ko' ? '주소 복사됨 ✓' : 'Copied ✓') : (language === 'ko' ? '공식 지갑 주소 복사' : 'Copy Official Wallet')}
+              </button>
+            </div>
           </div>
         </div>
       )}
