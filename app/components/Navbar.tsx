@@ -160,16 +160,7 @@ export default function Navbar({
                 <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
               </button>
             </li>
-            <li>
-              <button
-                type="button"
-                style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${communityOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
-                onClick={onToggleCommunity}
-              >
-                {menuText.commons}
-              </button>
-            </li>
+
             <li>
               <button
                 type="button"

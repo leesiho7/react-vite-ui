@@ -3915,55 +3915,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* ── Strategy Commons (Public Quant) ── */}
-      {communityOpen && (
-        <section className="commons-section" id="strategy-commons">
-          <div className="commons-header">
-            <div>
-              <div className="eyebrow"><Diamond /> STRATEGY COMMONS <span>100% OPEN SOURCE & VERIFIED</span></div>
-              <h2>Proof over<br /><em>performance.</em></h2>
-              <p>선동이나 찌라시 없이, 과거 5년치 백테스트 수식과 데이터로만 검증된 오픈소스 퀀트 전략입니다.<br className="desktop-only" /> 누구나 원클릭으로 내 차트에 복사(Fork & Run)하여 무료 검증할 수 있습니다.</p>
-            </div>
-            <div className="commons-stats">
-              <span>VERIFIED STRATEGIES <strong>{strategies.length || 248}</strong></span>
-              <span>TOTAL BACKTEST RUNS <strong>1,904</strong></span>
-            </div>
-          </div>
-
-          <div className="leaderboard panel">
-            <div className="panel-heading">
-              <span><Diamond /> TRANSPARENT LEADERBOARD (ta4j ENGINE)</span>
-              <span className="status-tag">🛡️ CODE VERIFIED</span>
-            </div>
-            <div className="strategy-head">
-              <span>RANK</span>
-              <span>STRATEGY / RULES</span>
-              <span>AUTHOR</span>
-              <span>RETURN</span>
-              <span>MAX DD</span>
-              <span>ACTION</span>
-            </div>
-            {strategies.map((strat, idx) => (
-              <div className="strategy-row" key={strat.id}>
-                <span className="strategy-rank">0{idx + 1}</span>
-                <span className="strategy-name">
-                  <strong>{strat.name}</strong>
-                  <small>{strat.entryRules} ➔ {strat.exitRules}</small>
-                </span>
-                <span>{strat.authorNickname}</span>
-                <span className="return-value">+{strat.totalReturnPct}%</span>
-                <span className="drawdown">-{strat.maxDrawdownPct}%</span>
-                <button
-                  className="fork-button"
-                  onClick={() => setForkedStrategy(strat.name)}
-                >
-                  {forkedStrategy === strat.name ? 'FORKED ✓' : 'FORK & RUN ↗'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ── Live Newswire (Language Localized) ── */}
       {newsOpen && (
