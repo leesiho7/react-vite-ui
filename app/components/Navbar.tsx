@@ -124,21 +124,21 @@ export default function Navbar({
 
   return (
     <header className="w-full bg-[#121212] text-white border-b border-[#222222] select-none sticky top-0 z-50 shadow-lg font-sans">
-      {/* ── 1단 글로벌 네비게이션: 2-Block justify-between 1줄 칼각 정렬 (56px 여백 일치) ── */}
-      <nav className="w-full max-w-[1440px] mx-auto flex items-center justify-between h-[64px] px-4 sm:px-8 md:px-[56px] gap-4 bg-[#121212]">
+      {/* ── 1단 글로벌 네비게이션: 2-Block justify-between 1줄 칼각 정렬 (56px 높이 & 56px 여백 일치) ── */}
+      <nav className="w-full max-w-[1440px] mx-auto flex items-center justify-between h-[56px] px-4 sm:px-8 md:px-[56px] gap-4 bg-[#121212]">
         
         {/* [왼쪽 블록: AETHER 로고 + 다국어 텍스트 링크 메뉴] */}
         <div className="flex items-center gap-6 lg:gap-8 min-w-0 flex-1 overflow-hidden">
           {/* A 네모상자 + AETHER 브랜드 락업 (고정 크기) */}
           <Link href="/" className="flex items-center gap-3 text-white no-underline group flex-shrink-0">
-            <div className="w-[30px] h-[30px] border border-[#38bdf8] bg-[#090e17] text-[#38bdf8] font-serif font-bold text-[18px] grid place-items-center rounded-[2px] shadow-[0_0_12px_rgba(56,189,248,0.3)] group-hover:border-white transition-colors">
+            <div className="w-[28px] h-[28px] border border-[#38bdf8] bg-[#090e17] text-[#38bdf8] font-serif font-bold text-[16px] grid place-items-center rounded-[2px] shadow-[0_0_12px_rgba(56,189,248,0.3)] group-hover:border-white transition-colors">
               A
             </div>
             <div className="flex flex-col">
-              <strong className="text-[14px] tracking-[0.16em] text-white font-bold leading-tight">
+              <strong className="text-[13px] tracking-[0.16em] text-white font-bold leading-tight">
                 AETHER
               </strong>
-              <span className="text-[8px] text-[#71717a] tracking-[0.12em] font-mono whitespace-nowrap mt-0.5">
+              <span className="text-[7.5px] text-[#71717a] tracking-[0.12em] font-mono whitespace-nowrap mt-0.5">
                 AI FACT-CHECK & QUANT
               </span>
             </div>
@@ -286,13 +286,13 @@ export default function Navbar({
         </div>
       </nav>
 
-      {/* ── 2단 실시간 펄스 티커 바: 좌측 고정 배지 + 사이드로 끊김없이 슥슥 흐르는 무한 롤링 테이프 ── */}
-      <div className="w-full bg-[#161616] text-white h-[36px] border-t border-[#222222] flex items-center overflow-hidden">
-        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center overflow-hidden">
+      {/* ── 2단 실시간 펄스 티커 바: 흰색(bg-white / #ffffff) 배경 + 상단 네비게이션바와 동일한 높이(h-[56px]) 및 패딩(px-4 sm:px-8 md:px-[56px]) 완전 일치 ── */}
+      <div className="w-full bg-white text-[#0f172a] h-[56px] border-t border-b border-[#e2e8f0] flex items-center overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center overflow-hidden h-full">
           {/* LIVE PULSE 고정 라벨 */}
-          <div className="flex items-center gap-2 pr-4 mr-2 border-r border-[#27272a] font-bold text-[#38bdf8] flex-shrink-0 z-10 bg-[#161616]">
-            <span className="text-[9.5px] text-[#38bdf8] font-mono tracking-wider font-bold">{menuText.pulse}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+          <div className="flex items-center gap-2.5 pr-4 mr-3 border-r border-[#e2e8f0] font-bold text-[#0284c7] flex-shrink-0 z-10 bg-white h-full">
+            <span className="text-[10.5px] text-[#0284c7] font-mono tracking-wider font-bold">{menuText.pulse}</span>
+            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
           </div>
 
           {/* 사이드로 유려하게 슥슥 무한 이동하는 동적 마키 테이프 (마우스 호버 시 일시정지) */}
@@ -303,12 +303,12 @@ export default function Navbar({
                   key={`${item.symbol}-${index}`}
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer flex-shrink-0 p-0 text-[11px]"
+                  className="flex items-center gap-2 hover:opacity-75 transition-opacity cursor-pointer flex-shrink-0 p-0 text-[11.5px]"
                   onClick={() => onSelectSymbol && onSelectSymbol(item.target)}
                   title={`클릭하여 ${item.symbol} 차트 및 퀀트 지표 동기화`}
                 >
-                  <span className="text-[#e4e4e7] font-bold font-mono">{item.symbol}</span>
-                  <span className={`font-mono font-semibold ${item.isUp ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
+                  <span className="text-[#0f172a] font-bold font-mono tracking-tight">{item.symbol}</span>
+                  <span className={`font-mono font-bold ${item.isUp ? 'text-[#059669]' : 'text-[#dc2626]'}`}>
                     {item.price} {item.change}
                   </span>
                 </button>
