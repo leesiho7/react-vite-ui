@@ -47,16 +47,16 @@ export default function Navbar({
   }, [])
 
   const tickers = [
-    { symbol: 'BTC', price: '$78,891.12', change: '+2.41%', isUp: true, target: 'BTC/USD' },
-    { symbol: 'ETH', price: '$2,340.50', change: '+1.85%', isUp: true, target: 'ETH/USD' },
-    { symbol: 'NVDA', price: '$138.50', change: '-1.45%', isUp: false, target: 'NVDA' },
-    { symbol: 'SOL', price: '$178.50', change: '+4.20%', isUp: true, target: 'SOL/USD' },
-    { symbol: 'TSLA', price: '$218.40', change: '-1.71%', isUp: false, target: 'TSLA' },
-    { symbol: 'AAPL', price: '$224.20', change: '+1.63%', isUp: true, target: 'AAPL' },
-    { symbol: '005930.KS', price: '₩56,200', change: '+0.89%', isUp: true, target: '005930.KS' },
-    { symbol: '000660.KS', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS' },
-    { symbol: 'XRP', price: '$2.15', change: '+5.12%', isUp: true, target: 'XRP/USD' },
-    { symbol: 'BNB', price: '$648.20', change: '+0.95%', isUp: true, target: 'BNB/USD' }
+    { symbol: 'BTC', name: 'Bitcoin', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$78,891.12', change: '+2.41%', isUp: true, target: 'BTC/USD' },
+    { symbol: 'ETH', name: 'Ethereum', logo: 'https://financialmodelingprep.com/image-stock/ETHUSD.png', price: '$2,340.50', change: '+1.85%', isUp: true, target: 'ETH/USD' },
+    { symbol: 'NVDA', name: 'NVIDIA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '-1.45%', isUp: false, target: 'NVDA' },
+    { symbol: 'SOL', name: 'Solana', logo: 'https://financialmodelingprep.com/image-stock/SOLUSD.png', price: '$178.50', change: '+4.20%', isUp: true, target: 'SOL/USD' },
+    { symbol: 'TSLA', name: 'Tesla', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', isUp: false, target: 'TSLA' },
+    { symbol: 'AAPL', name: 'Apple', logo: 'https://financialmodelingprep.com/image-stock/AAPL.png', price: '$224.20', change: '+1.63%', isUp: true, target: 'AAPL' },
+    { symbol: '005930.KS', name: 'Samsung', logo: 'https://financialmodelingprep.com/image-stock/005930.KS.png', price: '₩56,200', change: '+0.89%', isUp: true, target: '005930.KS' },
+    { symbol: '000660.KS', name: 'SK Hynix', logo: 'https://financialmodelingprep.com/image-stock/000660.KS.png', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS' },
+    { symbol: 'XRP', name: 'Ripple', logo: 'https://financialmodelingprep.com/image-stock/XRPUSD.png', price: '$2.15', change: '+5.12%', isUp: true, target: 'XRP/USD' },
+    { symbol: 'BNB', name: 'BNB', logo: 'https://financialmodelingprep.com/image-stock/BNBUSD.png', price: '$648.20', change: '+0.95%', isUp: true, target: 'BNB/USD' }
   ];
 
   const menuText = {
@@ -307,6 +307,16 @@ export default function Navbar({
                   onClick={() => onSelectSymbol && onSelectSymbol(item.target)}
                   title={`클릭하여 ${item.symbol} 차트 및 퀀트 지표 동기화`}
                 >
+                  <div style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px', maxWidth: '18px', maxHeight: '18px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', flexShrink: 0 }}>
+                    <img
+                      src={item.logo}
+                      alt={item.symbol}
+                      width={14}
+                      height={14}
+                      style={{ width: '14px', height: '14px', maxWidth: '14px', maxHeight: '14px', objectFit: 'contain', display: 'block' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
                   <span className="text-[#0f172a] font-bold font-mono tracking-tight">{item.symbol}</span>
                   <span className={`font-mono font-bold ${item.isUp ? 'text-[#059669]' : 'text-[#dc2626]'}`}>
                     {item.price} {item.change}
