@@ -289,11 +289,7 @@ export default function Navbar({
       {/* ── 2단 실시간 펄스 티커 바: 흰색(bg-white / #ffffff) 배경 + 상단 네비게이션바와 동일한 높이(h-[56px]) 및 패딩(px-4 sm:px-8 md:px-[56px]) 완전 일치 ── */}
       <div className="w-full bg-white text-[#0f172a] h-[56px] border-t border-b border-[#e2e8f0] flex items-center overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 md:px-[56px] flex items-center overflow-hidden h-full">
-          {/* LIVE PULSE 고정 라벨 */}
-          <div className="flex items-center gap-2.5 pr-4 mr-3 border-r border-[#e2e8f0] font-bold text-[#0284c7] flex-shrink-0 z-10 bg-white h-full">
-            <span className="text-[10.5px] text-[#0284c7] font-mono tracking-wider font-bold">{menuText.pulse}</span>
-            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
-          </div>
+
 
           {/* 사이드로 유려하게 슥슥 무한 이동하는 동적 마키 테이프 (마우스 호버 시 일시정지) */}
           <div className="flex-1 overflow-hidden relative">
