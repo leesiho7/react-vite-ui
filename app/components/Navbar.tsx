@@ -17,6 +17,8 @@ interface NavbarProps {
   onToggleCommunity?: () => void;
   newsOpen?: boolean;
   onToggleNews?: () => void;
+  arbitrageOpen?: boolean;
+  onToggleArbitrage?: () => void;
 }
 
 export default function Navbar({
@@ -31,7 +33,9 @@ export default function Navbar({
   communityOpen = false,
   onToggleCommunity,
   newsOpen = false,
-  onToggleNews
+  onToggleNews,
+  arbitrageOpen = false,
+  onToggleArbitrage
 }: NavbarProps) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false)
   const langDropdownRef = useRef<HTMLDivElement>(null)
@@ -187,9 +191,20 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <Link href="/arbitrage" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
-                {menuText.arbitrage}
-              </Link>
+              {onToggleArbitrage ? (
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${arbitrageOpen ? 'text-[#38bdf8] font-bold' : 'text-[#a1a1aa] hover:text-white'}`}
+                  onClick={onToggleArbitrage}
+                >
+                  {menuText.arbitrage}
+                </button>
+              ) : (
+                <Link href="/arbitrage" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
+                  {menuText.arbitrage}
+                </Link>
+              )}
             </li>
           </ul>
         </div>

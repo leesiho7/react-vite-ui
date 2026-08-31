@@ -43,6 +43,7 @@ import {
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
 import { RealtimeChart } from '../components/RealtimeChart'
 import { Orderbook } from '../components/Orderbook'
+import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
 
 const defaultAssets = [
   { symbol: 'BTC', name: 'Bitcoin', price: '$67,842.10', change: '+2.84%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/bitcoin/default.svg' },
@@ -839,6 +840,7 @@ export default function Page() {
   const [eventOpen, setEventOpen] = useState(false)
   const [communityOpen, setCommunityOpen] = useState(false)
   const [newsOpen, setNewsOpen] = useState(false)
+  const [arbitrageOpen, setArbitrageOpen] = useState(false)
   const [articleModalOpen, setArticleModalOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
@@ -2232,6 +2234,16 @@ export default function Page() {
           if (next) {
             setTimeout(() => {
               document.getElementById('live-newswire')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 60)
+          }
+        }}
+        arbitrageOpen={arbitrageOpen}
+        onToggleArbitrage={() => {
+          const next = !arbitrageOpen
+          setArbitrageOpen(next)
+          if (next) {
+            setTimeout(() => {
+              document.getElementById('arbitrage-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }, 60)
           }
         }}
@@ -3915,6 +3927,26 @@ export default function Page() {
         </div>
       )}
 
+
+      {/* ── Real-time Cross-Exchange Arbitrage & L2 Orderbook Terminal ── */}
+      {arbitrageOpen && (
+        <section className="arbitrage-section" id="arbitrage-terminal" style={{ margin: '24px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', background: '#0b131e', padding: '12px 18px', borderRadius: '4px', border: '1px solid #1e293b' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontSize: '12px', fontWeight: 'bold' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }} />
+              <span>CROSS-EXCHANGE ARBITRAGE & L2 ORDERBOOK TERMINAL</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setArbitrageOpen(false)}
+              style={{ background: 'transparent', border: '1px solid #334155', color: '#94a3b8', padding: '4px 10px', fontSize: '11px', borderRadius: '3px', cursor: 'pointer' }}
+            >
+              닫기 ✕
+            </button>
+          </div>
+          <FullOrderbookTerminal defaultSymbol="BTCUSDT" />
+        </section>
+      )}
 
       {/* ── Live Newswire (Language Localized) ── */}
       {newsOpen && (
