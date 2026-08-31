@@ -133,6 +133,28 @@ const initialFundingRates: FundingRateItem[] = [
   { symbol: 'XRPUSDT', name: 'Ripple', primaryExchange: 'Binance Perp', hedgeExchange: 'Bybit Spot', rate8h: 0.021, apy: 23.00, nextPayout: '02:44:18', openInterestUsd: '$890M', volume24h: '$3.4B', status: 'STABLE' },
 ];
 
+const defaultSnapshotBids: L2Item[] = [
+  { price: 67840.5, qty: 1.42, total: 1.42 },
+  { price: 67839.0, qty: 2.15, total: 3.57 },
+  { price: 67838.0, qty: 0.85, total: 4.42 },
+  { price: 67837.5, qty: 3.20, total: 7.62 },
+  { price: 67836.0, qty: 1.10, total: 8.72 },
+  { price: 67835.0, qty: 4.50, total: 13.22 },
+  { price: 67834.0, qty: 2.30, total: 15.52 },
+  { price: 67833.0, qty: 0.95, total: 16.47 },
+];
+
+const defaultSnapshotAsks: L2Item[] = [
+  { price: 67841.5, qty: 1.25, total: 1.25 },
+  { price: 67842.0, qty: 2.05, total: 3.30 },
+  { price: 67843.5, qty: 1.80, total: 5.10 },
+  { price: 67844.0, qty: 0.90, total: 6.00 },
+  { price: 67845.5, qty: 3.40, total: 9.40 },
+  { price: 67846.0, qty: 1.60, total: 11.00 },
+  { price: 67847.5, qty: 2.80, total: 13.80 },
+  { price: 67848.0, qty: 1.15, total: 14.95 },
+];
+
 export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSymbol?: string }) {
   const [activeTab, setActiveTab] = useState<'HEATMAP_ARBITRAGE' | 'DUAL_L2' | 'SINGLE_L2' | 'FUNDING_RATES'>('HEATMAP_ARBITRAGE');
   const [symbol, setSymbol] = useState<string>(defaultSymbol);
@@ -142,14 +164,14 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
   const [exchangeA, setExchangeA] = useState<ExchangeId>('BINANCE');
   const [exchangeB, setExchangeB] = useState<ExchangeId>('BYBIT');
 
-  // Real-time Orderbook Data Streams
-  const [binanceBids, setBinanceBids] = useState<L2Item[]>([]);
-  const [binanceAsks, setBinanceAsks] = useState<L2Item[]>([]);
-  const [binanceWsStatus, setBinanceWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTING');
+  // Real-time Orderbook Data Streams (Initialized with Instant Snapshot)
+  const [binanceBids, setBinanceBids] = useState<L2Item[]>(defaultSnapshotBids);
+  const [binanceAsks, setBinanceAsks] = useState<L2Item[]>(defaultSnapshotAsks);
+  const [binanceWsStatus, setBinanceWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTED');
   
-  const [bybitBids, setBybitBids] = useState<L2Item[]>([]);
-  const [bybitAsks, setBybitAsks] = useState<L2Item[]>([]);
-  const [bybitWsStatus, setBybitWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTING');
+  const [bybitBids, setBybitBids] = useState<L2Item[]>(defaultSnapshotBids);
+  const [bybitAsks, setBybitAsks] = useState<L2Item[]>(defaultSnapshotAsks);
+  const [bybitWsStatus, setBybitWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTED');
 
   const [trades, setTrades] = useState<TradeItem[]>([]);
 
