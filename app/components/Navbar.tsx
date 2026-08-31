@@ -20,6 +20,8 @@ interface NavbarProps {
   arbitrageOpen?: boolean;
   onToggleArbitrage?: () => void;
   onOpenUpgrade?: () => void;
+  tradeOpen?: boolean;
+  onToggleTrade?: () => void;
 }
 
 export default function Navbar({
@@ -37,7 +39,9 @@ export default function Navbar({
   onToggleNews,
   arbitrageOpen = false,
   onToggleArbitrage,
-  onOpenUpgrade
+  onOpenUpgrade,
+  tradeOpen = false,
+  onToggleTrade
 }: NavbarProps) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false)
   const langDropdownRef = useRef<HTMLDivElement>(null)
@@ -220,6 +224,22 @@ export default function Navbar({
               >
                 {menuText.newswire}
               </button>
+            </li>
+            <li>
+              {onToggleTrade ? (
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-bold ${tradeOpen ? 'text-[#f47a20]' : 'text-[#f47a20] hover:text-white'}`}
+                  onClick={onToggleTrade}
+                >
+                  TRADE ✦
+                </button>
+              ) : (
+                <Link href="/trade" className="text-[#f47a20] font-bold hover:text-white transition-colors no-underline text-[12px]">
+                  TRADE ↗
+                </Link>
+              )}
             </li>
             <li>
               <a href="#trading-console" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">

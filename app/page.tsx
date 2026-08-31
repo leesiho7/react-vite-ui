@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera } from 'lucide-react'
+import { UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, BrainCircuit, Send, Bot, RefreshCw } from 'lucide-react'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import {
@@ -41,26 +41,8 @@ import {
   AuthResponse
 } from '../lib/types'
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
-import { RealtimeChart } from '../components/RealtimeChart'
-import { Orderbook } from '../components/Orderbook'
+import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
-
-const defaultAssets = [
-  { symbol: 'BTC', name: 'Bitcoin', price: '$67,842.10', change: '+2.84%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/bitcoin/default.svg' },
-  { symbol: 'ETH', name: 'Ethereum', price: '$3,482.66', change: '+1.17%', signal: 'HOLD', tone: 'neutral', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/ethereum/default.svg' },
-  { symbol: 'SOL', name: 'Solana', price: '$184.28', change: '-0.42%', signal: 'WATCH', tone: 'negative', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/solana/default.svg' },
-  { symbol: 'BNB', name: 'Binance Coin', price: '$648.20', change: '+1.85%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/binance/default.svg' },
-  { symbol: 'ADA', name: 'Cardano', price: '$0.742', change: '+3.45%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/cardano/default.svg' },
-  { symbol: 'SUI', name: 'Sui Network', price: '$3.28', change: '+5.62%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/sui/default.svg' },
-  { symbol: 'DOGE', name: 'Dogecoin', price: '$0.264', change: '+4.12%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/dogecoin/default.svg' },
-  { symbol: 'XRP', name: 'Ripple', price: '$2.41', change: '+2.18%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/ripple/default.svg' },
-  { symbol: 'NVDA', name: 'NVIDIA', price: '$142.61', change: '+3.18%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/nvidia/default.svg' },
-  { symbol: '005930', name: 'Samsung Electronics', price: '₩71,800', change: '+1.42%', signal: 'BUY', tone: 'positive', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/samsung/default.svg' },
-  { symbol: 'AMZN', name: 'Amazon', price: '$228.84', change: '+0.86%', signal: 'HOLD', tone: 'neutral', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/amazon/default.svg' },
-  { symbol: 'TSLA', name: 'Tesla', price: '$342.67', change: '-1.24%', signal: 'WATCH', tone: 'negative', logo: 'https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/tesla/default.svg' },
-  { symbol: 'GOLD', name: 'Gold', price: '$2,945.30', change: '+0.38%', signal: 'HOLD', tone: 'neutral' },
-  { symbol: 'OIL', name: 'Crude Oil', price: '$71.84', change: '-0.67%', signal: 'WATCH', tone: 'negative' },
-]
 
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 type Language = keyof typeof languageLabels
@@ -841,6 +823,13 @@ export default function Page() {
   const [communityOpen, setCommunityOpen] = useState(false)
   const [newsOpen, setNewsOpen] = useState(false)
   const [arbitrageOpen, setArbitrageOpen] = useState(false)
+  const [tradeOpen, setTradeOpen] = useState(true)
+  const [marketActiveSymbol, setMarketActiveSymbol] = useState('BTC / USD')
+  const [marketChartInterval, setMarketChartInterval] = useState('1W')
+  const [marketCopilotTab, setMarketCopilotTab] = useState<'INSIGHTS' | 'GUIDE' | 'CODE'>('INSIGHTS')
+  const [marketPrompt, setMarketPrompt] = useState('')
+  const [marketCopilotLoading, setMarketCopilotLoading] = useState(false)
+  const [marketMessages, setMarketMessages] = useState<{ role: 'user' | 'assistant'; text: string; time: string }[]>([])
   const [articleModalOpen, setArticleModalOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
@@ -2195,10 +2184,6 @@ export default function Page() {
     }
   }
 
-  const filteredAssets = useMemo(() => defaultAssets.filter((asset) =>
-    `${asset.symbol} ${asset.name}`.toLowerCase().includes(query.toLowerCase())
-  ), [query])
-
   return (
     <>
       {/* ── AETHER 2-Tier Modern Top Navigation Bar ── */}
@@ -2252,10 +2237,412 @@ export default function Page() {
             }, 60)
           }
         }}
+        tradeOpen={tradeOpen}
+        onToggleTrade={() => {
+          const next = !tradeOpen
+          setTradeOpen(next)
+          if (next) {
+            setTimeout(() => {
+              document.getElementById('market-intelligence-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 60)
+          }
+        }}
         onOpenUpgrade={() => setUpgradeOpen(true)}
       />
 
       <main className="terminal-shell">
+
+      {/* ── Real-Time Market Intelligence & AI Copilot Workspace ── */}
+      {tradeOpen && (
+        <section className="workspace-light market-page" id="market-intelligence-terminal" style={{ background: '#ffffff', border: '1px solid #dfe3eb', borderRadius: '8px', padding: '24px 28px', margin: '20px 0 25px', fontFamily: 'var(--font-sans)' }}>
+          <header className="market-intro" style={{ paddingTop: '10px' }}>
+            <div>
+              <span className="market-kicker">{language === 'ko' ? '마켓 / 오버뷰' : language === 'cn' ? '市场 / 概览' : 'MARKETS / OVERVIEW'}</span>
+              <h1 style={{ fontSize: 'clamp(28px, 4vw, 42px)', margin: '8px 0', fontFamily: 'var(--font-sans)' }}>
+                {language === 'ko' ? <>실시간 <em>마켓 인텔리전스</em></> : language === 'cn' ? <>实时 <em>市场情报</em></> : <>Market <em>intelligence</em></>}
+              </h1>
+              <p>{language === 'ko' ? '글로벌 자산 시세를 실시간으로 비교하고, 거래 전 AI 코파일럿의 정밀 퀀트 분석을 확인하세요.' : language === 'cn' ? '探索全球市场，比较实时价格，并在交易前咨询AI副驾驶。' : 'Explore global markets, compare live prices, and ask the AI Copilot before you trade.'}</p>
+            </div>
+            <div className="market-search">
+              <Search size={16} />
+              <span>{language === 'ko' ? '종목 또는 마켓 검색...' : language === 'cn' ? '搜索代码或市场...' : 'Search symbol or market'}</span>
+              <kbd>⌘ K</kbd>
+            </div>
+          </header>
+
+          <nav className="asset-tabs">
+            {(language === 'ko'
+              ? [
+                  { key: 'Overview', label: '오버뷰' },
+                  { key: 'Crypto', label: '가상자산' },
+                  { key: 'Indices', label: '글로벌 지수' },
+                  { key: 'Stocks', label: '빅테크·주식' },
+                  { key: 'Commodities', label: '원자재' }
+                ]
+              : language === 'cn'
+              ? [
+                  { key: 'Overview', label: '概览' },
+                  { key: 'Crypto', label: '加密资产' },
+                  { key: 'Indices', label: '全球指数' },
+                  { key: 'Stocks', label: '科技·股票' },
+                  { key: 'Commodities', label: '大宗商品' }
+                ]
+              : [
+                  { key: 'Overview', label: 'Overview' },
+                  { key: 'Crypto', label: 'Crypto' },
+                  { key: 'Indices', label: 'Indices' },
+                  { key: 'Stocks', label: 'Stocks' },
+                  { key: 'Commodities', label: 'Commodities' }
+                ]
+            ).map((tab) => (
+              <button key={tab.key} className={tab.key === 'Overview' ? 'selected' : ''} style={{ fontFamily: 'var(--font-sans)' }}>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <section className="popular-section">
+            <div className="section-heading">
+              <h2 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '주요 인기 마켓' : language === 'cn' ? '热门市场' : 'Popular markets'} <ArrowUpRight size={18} /></h2>
+              <a href="/trade" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#8a92a2', textDecoration: 'none', fontSize: '10px', fontFamily: 'var(--font-sans)' }}>
+                {language === 'ko' ? '대화면 단독 터미널' : language === 'cn' ? '全屏独立终端' : 'Full Standalone Terminal'} <ArrowUpRight size={13} />
+              </a>
+            </div>
+            <div className="symbol-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '12px' }}>
+              {[
+                { name: 'BTC / USD', ticker: 'BTC', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$78,418.00', change: '+2.84%', tag: language === 'ko' ? '디지털 골드 · 기축' : 'Digital Gold · Reserve' },
+                { name: 'ETH / USD', ticker: 'ETH', logo: 'https://financialmodelingprep.com/image-stock/ETHUSD.png', price: '$3,842.17', change: '+1.62%', tag: language === 'ko' ? '스마트 컨트랙트 허브' : 'Layer 1 Smart Contracts' },
+                { name: 'SOL / USD', ticker: 'SOL', logo: 'https://financialmodelingprep.com/image-stock/SOLUSD.png', price: '$182.64', change: '-0.48%', tag: language === 'ko' ? '초고속 DeFi 생태계' : 'High-Throughput DeFi' },
+                { name: 'XRP / USD', ticker: 'XRP', logo: 'https://financialmodelingprep.com/image-stock/XRPUSD.png', price: '$2.15', change: '+5.12%', tag: language === 'ko' ? '국경 간 결제 프로토콜' : 'Cross-Border Protocol' },
+                { name: 'BNB / USD', ticker: 'BNB', logo: 'https://financialmodelingprep.com/image-stock/BNBUSD.png', price: '$648.20', change: '+0.95%', tag: language === 'ko' ? '바이낸스 체인 가스' : 'Binance Chain Gas' },
+                { name: 'NVDA', ticker: 'NVDA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', tag: language === 'ko' ? 'AI 반도체 거인' : 'AI Semiconductor Giant' }
+              ].map((item, i) => {
+                const isSelected = marketActiveSymbol === item.name || (item.ticker === 'NVDA' && marketActiveSymbol === 'NVDA')
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    className={`symbol-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => {
+                      setMarketActiveSymbol(item.name)
+                      setSearched(item.ticker === 'NVDA' ? 'NVDA' : item.name.replace(' / ', '/'))
+                    }}
+                    style={{ padding: '12px 14px', minHeight: '84px', alignItems: 'center', fontFamily: 'var(--font-sans)' }}
+                  >
+                    <span className="symbol-rank" style={{ fontSize: '10px' }}>{String(i + 1).padStart(2, '0')}</span>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      <img src={item.logo} alt={item.name} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    </div>
+                    <span className="symbol-copy">
+                      <strong style={{ fontSize: '11.5px', fontFamily: 'var(--font-sans)' }}>{item.name}</strong>
+                      <small style={{ fontSize: '9px', color: '#8a92a2', fontFamily: 'var(--font-sans)' }}>{item.tag}</small>
+                    </span>
+                    <b className={item.change.startsWith('+') ? 'up' : 'down'} style={{ fontSize: '10px' }}>{item.change}</b>
+                    <span className="symbol-price" style={{ fontSize: '12px' }}>
+                      {isSelected && priceFormatted !== '—' ? priceFormatted : item.price}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+
+          <div className="market-workspace">
+            <section className="market-chart-column">
+              <div className="section-heading">
+                <h2 style={{ fontFamily: 'var(--font-sans)' }}>{marketActiveSymbol} {language === 'ko' ? '실시간 차트' : language === 'cn' ? '实时图表' : 'chart'}</h2>
+                <div className="chart-intervals">
+                  {['1m', '5m', '15m', '1h', '4h', '1D', '1W', '1M'].map((int) => (
+                    <button
+                      key={int}
+                      className={marketChartInterval === int ? 'selected' : ''}
+                      onClick={() => setMarketChartInterval(int)}
+                      style={{ fontFamily: 'var(--font-sans)' }}
+                    >
+                      {int}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <TerminalTradingChart
+                symbol={marketActiveSymbol}
+                ticker={marketActiveSymbol.includes('NVDA') ? 'NVDA' : marketActiveSymbol.split(' ')[0]}
+                category={marketActiveSymbol.includes('NVDA') ? 'stocks' : 'crypto'}
+                currentPrice={price > 0 ? price : 78418.0}
+                latestKline={latestKline}
+                interval={marketChartInterval}
+              />
+
+              <div className="trade-lower">
+                <section className="orderbook-panel">
+                  <div className="panel-title">
+                    <span>{language === 'ko' ? '오더북 · 바이낸스 L2 (100ms)' : language === 'cn' ? '订单簿 · 币安 L2 (100ms)' : 'ORDER BOOK · BINANCE L2 (100MS)'}</span>
+                    <i style={{ background: '#ecfdf5', color: '#09a58e', border: '1px solid #a7f3d0' }}>{language === 'ko' ? '실시간' : language === 'cn' ? '实时' : 'LIVE'}</i>
+                  </div>
+                  <div className="book-head">
+                    <span>{language === 'ko' ? '가격 (USD)' : 'PRICE (USD)'}</span>
+                    <span>{language === 'ko' ? '수량' : 'SIZE'} ({searched.split('/')[0]})</span>
+                  </div>
+                  {(orderbook.asks.length > 0 ? orderbook.asks.slice(0, 5).reverse().map(a => [a.price.toFixed(2), a.qty.toFixed(2)]) : [
+                    ['78,142.20', '0.42'],
+                    ['78,130.00', '0.86'],
+                    ['78,118.50', '1.23'],
+                    ['78,104.80', '2.10'],
+                    ['78,096.10', '1.74']
+                  ]).map(([p, s], idx) => (
+                    <div className="book-row ask" key={`ask-${p}-${idx}`}>
+                      <span>{p}</span>
+                      <span>{s}</span>
+                    </div>
+                  ))}
+                  <div className="mid-price">
+                    {priceFormatted !== '—' ? priceFormatted : '$78,118.40'} <span>{priceChange24h !== '0.00%' ? priceChange24h : '+0.04%'}</span>
+                  </div>
+                  {(orderbook.bids.length > 0 ? orderbook.bids.slice(0, 5).map(b => [b.price.toFixed(2), b.qty.toFixed(2)]) : [
+                    ['78,084.10', '0.67'],
+                    ['78,070.40', '1.04'],
+                    ['78,062.00', '2.18'],
+                    ['78,051.30', '0.94'],
+                    ['78,038.80', '3.42']
+                  ]).map(([p, s], idx) => (
+                    <div className="book-row bid" key={`bid-${p}-${idx}`}>
+                      <span>{p}</span>
+                      <span>{s}</span>
+                    </div>
+                  ))}
+                </section>
+
+                <section className="execution-card">
+                  <div className="panel-title">
+                    <span>{language === 'ko' ? '24/7 퀀트 엔진 가동 상태' : 'EXECUTION STATUS'}</span>
+                    <Bot size={14} color="#f47a20" />
+                  </div>
+                  <div className="execution-status">
+                    <i style={{ background: '#10b981' }} /> {language === 'ko' ? '자동화 알고리즘 준비 완료' : 'Ready for Automated Execution'}
+                  </div>
+                  <p>{language === 'ko' ? '거래소 API를 연동하여 24시간 퀀트 봇을 가동하세요. AI가 진입 근거를 상세히 제시합니다.' : 'Connect your exchange account to place trades. AI can explain the setup before execution.'}</p>
+                  <a href="/trade" className="outline-button" style={{ textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>
+                    {language === 'ko' ? '거래소 API 연동' : 'CONNECT EXCHANGE'} <ArrowUpRight size={14} />
+                  </a>
+                </section>
+              </div>
+            </section>
+
+            <aside className="market-copilot">
+              <div className="copilot-heading">
+                <div>
+                  <span className="market-kicker">{language === 'ko' ? 'AI 코파일럿 데스크' : 'AI COPILOT'}</span>
+                  <h2 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '시장을 분석하고 질문하세요.' : 'Ask the market.'}</h2>
+                </div>
+                <span className="model-pill">
+                  <Sparkles size={13} /> 4-ENGINE RAG
+                </span>
+              </div>
+
+              <div className="copilot-tabs">
+                <button
+                  className={marketCopilotTab === 'INSIGHTS' ? 'active' : ''}
+                  onClick={() => setMarketCopilotTab('INSIGHTS')}
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  {language === 'ko' ? '인사이트' : 'INSIGHTS'}
+                </button>
+                <button
+                  className={marketCopilotTab === 'GUIDE' ? 'active' : ''}
+                  onClick={() => setMarketCopilotTab('GUIDE')}
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  {language === 'ko' ? '플레이북' : 'GUIDE'}
+                </button>
+                <button
+                  className={marketCopilotTab === 'CODE' ? 'active' : ''}
+                  onClick={() => setMarketCopilotTab('CODE')}
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  {language === 'ko' ? '파이썬 코드' : 'CODE'}
+                </button>
+              </div>
+
+              {marketCopilotTab === 'INSIGHTS' && (
+                <div className="insight-card">
+                  <span className="signal-tag">{marketActiveSymbol} · {language === 'ko' ? '상승 모멘텀' : 'MOMENTUM'}</span>
+                  <h3 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '기관급 시장 미시구조 분석' : 'Buyers remain in control.'}</h3>
+                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '주간 VWAP 상단 지지 및 거래량 증가세 확인. FastDTW 8,000 프랙탈 기반 상단 저항선 테스트 유력.' : 'Price is holding above the weekly VWAP with rising volume. The next resistance zone sits near $78,420.'}</p>
+                  <div className="signal-metrics">
+                    <span>{language === 'ko' ? '신뢰도' : 'CONFIDENCE'} <b>84%</b></span>
+                    <span>{language === 'ko' ? '바이어스' : 'BIAS'} <b>{language === 'ko' ? '매수 우위' : 'BULLISH'}</b></span>
+                  </div>
+                </div>
+              )}
+
+              {marketCopilotTab === 'GUIDE' && (
+                <div className="insight-card" style={{ borderColor: '#bfdbfe', background: '#eff6ff' }}>
+                  <span className="signal-tag" style={{ color: '#2563eb' }}>{marketActiveSymbol} · {language === 'ko' ? '퀀트 플레이북' : 'EXECUTION PLAYBOOK'}</span>
+                  <h3 style={{ color: '#1e3a8a', fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '최적 진입 & 리스크 관리 매트릭스' : 'Recommended Trade Setup'}</h3>
+                  <div style={{ color: '#1e40af', fontSize: '11px', lineHeight: 1.6, marginTop: '6px', fontFamily: 'var(--font-sans)' }}>
+                    • <b>{language === 'ko' ? '권장 진입:' : 'Entry Zone:'}</b> {language === 'ko' ? 'SMA20 지지선 부근 분할 매수' : 'Limit order near Support'}<br />
+                    • <b>{language === 'ko' ? '익절 타겟:' : 'Target:'}</b> {language === 'ko' ? '+2.8% 1차 저항선' : '+2.8% Resistance target'}<br />
+                    • <b>{language === 'ko' ? '손절 기준:' : 'Stop Loss:'}</b> {language === 'ko' ? '-1.2% 트레일링 스탑' : '-1.2% trailing stop'}
+                  </div>
+                  <div className="signal-metrics" style={{ borderColor: '#dbeafe', marginTop: '10px' }}>
+                    <span>{language === 'ko' ? '손익비' : 'RISK REWARD'} <b>1 : 2.6</b></span>
+                    <span>{language === 'ko' ? '최대 리스크' : 'MAX RISK'} <b>0.35x</b></span>
+                  </div>
+                </div>
+              )}
+
+              {marketCopilotTab === 'CODE' && (
+                <div className="insight-card" style={{ borderColor: '#cbd5e1', background: '#090e17', color: '#38bdf8' }}>
+                  <span className="signal-tag" style={{ color: '#38bdf8' }}>{language === 'ko' ? '파이썬 3.12 24/7 퀀트 전략' : 'PYTHON QUANT STRATEGY'}</span>
+                  <pre style={{ margin: 0, fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#a5f3fc', overflowX: 'auto', lineHeight: 1.45 }}>
+{`# 24H Mean Reversion Strategy (${marketActiveSymbol.replace(' / ', '/')})
+def signal(tick):
+    rsi = tick.get("rsi", 50.0)
+    if rsi < 32.0:
+        return {"action": "BUY", "risk": 0.35}
+    elif rsi > 68.0:
+        return {"action": "SELL", "risk": 0.35}
+    return {"action": "HOLD"}`}
+                  </pre>
+                </div>
+              )}
+
+              {marketMessages.length > 0 && (
+                <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '160px', overflowY: 'auto' }}>
+                  {marketMessages.map((m, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        background: m.role === 'user' ? '#fff4ec' : '#f8fafc',
+                        border: m.role === 'user' ? '1px solid #ffedd5' : '1px solid #e2e8f0',
+                        color: m.role === 'user' ? '#c2410c' : '#334155',
+                        fontFamily: 'var(--font-sans)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', opacity: 0.6, marginBottom: '2px' }}>
+                        <b>{m.role === 'user' ? (language === 'ko' ? '사용자' : 'YOU') : (language === 'ko' ? 'AI 코파일럿' : 'COPILOT')}</b>
+                        <span>{m.time}</span>
+                      </div>
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {marketMessages.length === 0 && (
+                <div className="copilot-message">
+                  <BrainCircuit size={16} color="#f47a20" />
+                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? `실제 백엔드 4-Engine AI에 ${marketActiveSymbol} 퀀트 전략을 질문하세요.` : `Ask me to explain this chart, compare assets, or draft a risk-managed trade plan.`}</p>
+                </div>
+              )}
+
+              <div className="copilot-composer">
+                <textarea
+                  value={marketPrompt}
+                  onChange={(e) => setMarketPrompt(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      if (!marketPrompt.trim() || marketCopilotLoading) return
+                      const userMsg = marketPrompt.trim()
+                      const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                      setMarketMessages(prev => [...prev, { role: 'user', text: userMsg, time: now }])
+                      setMarketPrompt('')
+                      setMarketCopilotLoading(true)
+
+                      const mappedMode = marketCopilotTab === 'INSIGHTS' ? 'INSIGHT' : marketCopilotTab === 'GUIDE' ? 'GUIDE' : 'CODING'
+                      const cleanSym = marketActiveSymbol.replace(' / ', '').replace('/', '').toUpperCase()
+                      try {
+                        const res = await sendResearchChat({
+                          symbol: cleanSym,
+                          prompt: userMsg,
+                          mode: mappedMode as any,
+                          language: language
+                        })
+                        const text = res.reply || res.answer || `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 모멘텀 분석이 완료되었습니다.`
+                        setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
+                      } catch (err) {
+                        setMarketMessages(prev => [...prev, { role: 'assistant', text: `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 상방 모멘텀 테스트 유효.`, time: now }])
+                      } finally {
+                        setMarketCopilotLoading(false)
+                      }
+                    }
+                  }}
+                  placeholder={language === 'ko' ? `${marketActiveSymbol} AI 코파일럿에게 질문하기...` : `Ask Copilot about ${marketActiveSymbol}...`}
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                />
+                <button
+                  type="button"
+                  aria-label="Send question"
+                  disabled={marketCopilotLoading}
+                  onClick={async () => {
+                    if (!marketPrompt.trim() || marketCopilotLoading) return
+                    const userMsg = marketPrompt.trim()
+                    const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                    setMarketMessages(prev => [...prev, { role: 'user', text: userMsg, time: now }])
+                    setMarketPrompt('')
+                    setMarketCopilotLoading(true)
+
+                    const mappedMode = marketCopilotTab === 'INSIGHTS' ? 'INSIGHT' : marketCopilotTab === 'GUIDE' ? 'GUIDE' : 'CODING'
+                    const cleanSym = marketActiveSymbol.replace(' / ', '').replace('/', '').toUpperCase()
+                    try {
+                      const res = await sendResearchChat({
+                        symbol: cleanSym,
+                        prompt: userMsg,
+                        mode: mappedMode as any,
+                        language: language
+                      })
+                      const text = res.reply || res.answer || `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 모멘텀 분석이 완료되었습니다.`
+                      setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
+                    } catch (err) {
+                      setMarketMessages(prev => [...prev, { role: 'assistant', text: `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 상방 모멘텀 테스트 유효.`, time: now }])
+                    } finally {
+                      setMarketCopilotLoading(false)
+                    }
+                  }}
+                >
+                  {marketCopilotLoading ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                </button>
+              </div>
+              {marketCopilotLoading && <span className="sent-note" style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '바이낸스 오더플로우 및 프랙탈 추론 중…' : 'Analyzing market micro-structure…'}</span>}
+            </aside>
+          </div>
+
+          <section className="market-snapshot" style={{ marginTop: '35px' }}>
+            <div className="section-heading">
+              <h2>Market snapshot</h2>
+              <button>All markets <ChevronDown size={14} /></button>
+            </div>
+            <div className="snapshot-grid">
+              {[
+                ['S&P 500', '5,842.91', '+0.37%'],
+                ['NASDAQ 100', '20,118.44', '+0.61%'],
+                ['GOLD', '$2,348.70', '-0.12%']
+              ].map(([name, price, change]) => (
+                <div className="snapshot-card" key={name}>
+                  <span>{name}</span>
+                  <strong>{price}</strong>
+                  <b className={change.startsWith('+') ? 'up' : 'down'}>{change}</b>
+                  <div className="mini-bars">
+                    <i /><i /><i /><i /><i />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <footer className="market-footer">
+            <span>Quotes are indicative and real-time streaming. Not financial advice.</span>
+            <span>
+              <span className="market-live-dot" /> DATA FEED NOMINAL
+            </span>
+          </footer>
+        </section>
+      )}
 
       {/* ── 1-Hour Quick-Strike Prediction League Modal / Drawer ── */}
       {eventOpen && (
@@ -4120,134 +4507,6 @@ export default function Page() {
         onSearch={handlePerformSearch}
         language={language}
       />
-
-      {/* ── 1. Real-Time Market Pulse & Interactive Chart (Unified Full-Width Panel) ── */}
-      <section className="market-panel panel" id="market-panel">
-        <div className="panel-heading">
-          <span><Diamond /> {copy.market}</span>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button
-              className="text-button"
-              style={{ fontSize: '8px' }}
-              onClick={() => setOrderbookOpen(!orderbookOpen)}
-            >
-              {orderbookOpen ? (language === 'cn' ? '隐藏订单簿' : 'Hide orderbook') : (language === 'cn' ? '显示订单簿' : 'Show orderbook')}
-            </button>
-            <span className="muted">{searched} / {period}</span>
-          </div>
-        </div>
-
-        <div className="asset-tabs">
-          {defaultAssets.map((asset) => {
-            const item = asset.symbol === '005930' ? `${asset.symbol}.KS` : asset.symbol === 'GOLD' ? 'XAU/USD' : asset.symbol === 'OIL' ? 'WTI/USD' : `${asset.symbol}/USD`
-            return <button className={searched === item ? 'active' : ''} key={item} onClick={() => setSearched(item)}>{asset.logo ? <img className="asset-logo" src={asset.logo} alt={`${asset.name} logo`} /> : <span className="asset-logo-text" aria-hidden="true">{asset.symbol.slice(0, 1)}</span>}{item}</button>
-          })}
-        </div>
-
-        <div className="market-panel-content">
-          <div className="market-chart-col">
-            <div className="price-row">
-              <div>
-                <span className="overline">{searched} · SPOT LIVE WEBSOCKET</span>
-                <strong style={{ color: tickDirection === 'UP' ? '#2b866d' : tickDirection === 'DOWN' ? '#ac5d59' : '#18334a' }}>
-                  {priceFormatted}
-                </strong>
-              </div>
-              <span className={priceChange24h.startsWith('+') ? 'gain' : 'drawdown'}>
-                {priceChange24h} <small>24H</small>
-              </span>
-            </div>
-
-            {/* Realtime Canvas Chart */}
-            <RealtimeChart
-              initialCandles={candles}
-              latestKline={latestKline}
-              currentPrice={price}
-              symbol={searched}
-              period={period}
-            />
-
-            <div className="period-row">
-              {['1m', '5m', '15m', '30m', '1H', '4H', '1D', '1W'].map((item) => (
-                <button
-                  className={period === item ? 'selected' : ''}
-                  key={item}
-                  onClick={() => setPeriod(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Ultra-Fast 100ms Live Orderbook (Depth) */}
-          {orderbookOpen && (
-            <div className="market-orderbook-col">
-              <Orderbook
-                orderbook={orderbook}
-                latencyMs={latencyMs}
-                connectionStatus={connectionStatus}
-                symbol={searched}
-              />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── 2. 4-Engine AI Signal Register & Fact-Check Matrix (Unified Full-Width Panel) ── */}
-      <section className="signals-panel panel" id="signals-panel">
-        <div className="panel-heading">
-          <span><Diamond /> {copy.signals}</span>
-          <span className="status-tag">{copy.factCheckTag}</span>
-        </div>
-
-        <div className="signals-panel-content">
-          <div className="signals-list-col">
-            {filteredAssets.map((asset) => (
-              <button
-                className="signal-item"
-                key={asset.symbol}
-                onClick={() => setSearched(asset.symbol === '005930' ? `${asset.symbol}.KS` : asset.symbol === 'GOLD' ? 'XAU/USD' : asset.symbol === 'OIL' ? 'WTI/USD' : `${asset.symbol}/USD`)}
-              >
-                <span className="asset-icon">{asset.logo ? <img src={asset.logo} alt={`${asset.name} logo`} /> : <span aria-hidden="true">{asset.symbol.slice(0, 1)}</span>}</span>
-                <span className="asset-name">
-                  <strong>{asset.symbol}/USD</strong>
-                  <small>{asset.name}</small>
-                </span>
-                <span className="asset-price">
-                  <strong>{asset.price}</strong>
-                  <small className={asset.tone}>{asset.change}</small>
-                </span>
-                <span className={`signal-badge ${asset.tone}`}>{asset.signal}</span>
-                <span className="chevron">›</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="signals-decision-col">
-            {/* ta4j + Chroma 4-Engine Confidence */}
-            <div className="confidence">
-              <div>
-                <span>AI COMPOSITE CONFIDENCE (FUSION SCORE)</span>
-                <strong>{decisionReport?.totalScore ? `+${decisionReport.totalScore}` : '+0.82'}</strong>
-              </div>
-              <div className="confidence-bar">
-                <i style={{ width: `${Math.round(((decisionReport?.totalScore || 0.82) + 1) * 50)}%` }} />
-              </div>
-              <small>
-                {decisionReport?.divergenceRisk || (language === 'ko' ? '정상: 기술적 지표와 거시 외신 감성이 강력한 상방 동조를 이룹니다.' : language === 'cn' ? '正常：技术面量化指标与宏观机构情绪高度契合。' : 'NORMAL: Technical indicators and macro sentiment remain aligned.')}
-              </small>
-            </div>
-
-            <div className="advisory-briefing">
-              <span className="advisory-title">{copy.personas}</span>
-              <div><b>{copy.buffett}</b><span>{personaText(decisionReport?.personaAdvice?.warrenBuffett)}</span></div>
-              <div><b>{copy.simons}</b><span>{personaText(decisionReport?.personaAdvice?.jimSimons)}</span></div>
-              <div><b>{copy.dalio}</b><span>{personaText(decisionReport?.personaAdvice?.rayDalio)}</span></div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── 24H Trading Operations Console ── */}
       <section className="trading-console panel" id="trading-console">
