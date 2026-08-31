@@ -206,191 +206,236 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
     return symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
   }, [symbol]);
 
-  // 1. Binance WebSocket Connection
-  useEffect(() => {
-    setBinanceWsStatus('CONNECTING');
-    latencyHistoryRef.current = [];
-    packetCountRef.current = 0;
+    // Throttled buffer references for buttery smooth 60fps UI
+    const pendingBidsRef = useRef<L2Item[] | null>(null);
+    const pendingAsksRef = useRef<L2Item[] | null>(null);
+    const pendingTradesRef = useRef<TradeItem[]>([]);
 
-    const url = `wss://stream.binance.com:9443/stream?streams=${cleanPairBinance}@depth20@100ms/${cleanPairBinance}@trade`;
+    useEffect(() => {
+      const flushTimer = setInterval(() => {
+        if (pendingBidsRef.current) {
+          setBinanceBids(pendingBidsRef.current);
+          pendingBidsRef.current = null;
+        }
+        if (pendingAsksRef.current) {
+          setBinanceAsks(pendingAsksRef.current);
+          pendingAsksRef.current = null;
+        }
+        if (pendingTradesRef.current.length > 0) {
+          setTrades((prev) => [...pendingTradesRef.current, ...prev].slice(0, 20));
+          pendingTradesRef.current = [];
+        }
+      }, 100);
 
-    let ws: WebSocket;
-    try {
-      ws = new WebSocket(url);
-      wsBinanceRef.current = ws;
-    } catch (e) {
-      console.warn('[Binance WS] Initialization error:', e);
-      setBinanceWsStatus('DISCONNECTED');
-      return;
-    }
+      return () => clearInterval(flushTimer);
+    }, []);
 
-    ws.onopen = () => {
-      setBinanceWsStatus('CONNECTED');
-    };
+    // 1. Binance WebSocket Connection
+    useEffect(() => {
+      setBinanceWsStatus('CONNECTING');
+      latencyHistoryRef.current = [];
+      packetCountRef.current = 0;
 
-    ws.onmessage = (event) => {
-      const now = Date.now();
-      packetCountRef.current += 1;
+      const url = `wss://stream.binance.com:9443/stream?streams=${cleanPairBinance}@depth20@100ms/${cleanPairBinance}@trade`;
 
+      let ws: WebSocket;
       try {
-        const payload = JSON.parse(event.data);
-        const stream: string = payload.stream || '';
-        const data = payload.data || {};
-
-        const eventTime: number = data.E || data.T || now;
-        const latency = Math.max(1, Math.min(120, now - eventTime));
-
-        const hist = latencyHistoryRef.current;
-        hist.push(latency);
-        if (hist.length > 50) hist.shift();
-
-        const sum = hist.reduce((a, b) => a + b, 0);
-        const avg = sum / hist.length;
-        const min = Math.min(...hist);
-        const max = Math.max(...hist);
-        const jitter = Math.abs(latency - avg);
-
-        if (now - lastSecTimeRef.current >= 1000) {
-          const msgRate = packetCountRef.current;
-          packetCountRef.current = 0;
-          lastSecTimeRef.current = now;
-
-          setStats({
-            currentMs: latency,
-            avgMs: parseFloat(avg.toFixed(1)),
-            minMs: min,
-            maxMs: max,
-            jitter: parseFloat(jitter.toFixed(1)),
-            msgPerSec: msgRate,
-            totalPackets: (stats.totalPackets || 0) + msgRate
-          });
-        }
-
-        if (stream.endsWith('@depth20@100ms')) {
-          const rawBids: [string, string][] = data.bids || [];
-          const rawAsks: [string, string][] = data.asks || [];
-
-          let bidTotalA = 0;
-          const parsedBidsA: L2Item[] = rawBids.map(([p, q]) => {
-            const priceNum = parseFloat(p);
-            const qtyNum = parseFloat(q);
-            bidTotalA += qtyNum;
-            return { price: priceNum, qty: qtyNum, total: bidTotalA };
-          });
-
-          let askTotalA = 0;
-          const parsedAsksA: L2Item[] = rawAsks.map(([p, q]) => {
-            const priceNum = parseFloat(p);
-            const qtyNum = parseFloat(q);
-            askTotalA += qtyNum;
-            return { price: priceNum, qty: qtyNum, total: askTotalA };
-          });
-
-          setBinanceBids(parsedBidsA);
-          setBinanceAsks(parsedAsksA);
-        }
-
-        if (stream.endsWith('@trade')) {
-          const tradeTime = new Date(data.T || now);
-          const timeStr = `${tradeTime.toTimeString().split(' ')[0]}.${String(tradeTime.getMilliseconds()).padStart(3, '0')}`;
-
-          const newTrade: TradeItem = {
-            id: data.t || Math.random(),
-            time: timeStr,
-            price: parseFloat(data.p || '0'),
-            qty: parseFloat(data.q || '0'),
-            isBuyerMaker: data.m
-          };
-
-          setTrades((prev) => [newTrade, ...prev.slice(0, 20)]);
-        }
-      } catch (err) {
-        // ignore parse error
+        ws = new WebSocket(url);
+        wsBinanceRef.current = ws;
+      } catch (e) {
+        console.warn('[Binance WS] Initialization error:', e);
+        setBinanceWsStatus('DISCONNECTED');
+        return;
       }
-    };
 
-    ws.onerror = () => setBinanceWsStatus('DISCONNECTED');
-    ws.onclose = () => setBinanceWsStatus('DISCONNECTED');
-
-    return () => {
-      if (ws) ws.close();
-    };
-  }, [cleanPairBinance]);
-
-  // 2. Bybit Real-time V5 WebSocket Connection
-  useEffect(() => {
-    setBybitWsStatus('CONNECTING');
-
-    const bybitUrl = 'wss://stream.bybit.com/v5/public/spot';
-    let wsBybit: WebSocket;
-
-    try {
-      wsBybit = new WebSocket(bybitUrl);
-      wsBybitRef.current = wsBybit;
-    } catch (e) {
-      console.warn('[Bybit WS] Initialization error:', e);
-      setBybitWsStatus('DISCONNECTED');
-      return;
-    }
-
-    wsBybit.onopen = () => {
-      setBybitWsStatus('CONNECTED');
-      const subPayload = {
-        op: 'subscribe',
-        args: [`orderbook.50.${cleanPairBybit}`]
+      ws.onopen = () => {
+        setBinanceWsStatus('CONNECTED');
       };
-      wsBybit.send(JSON.stringify(subPayload));
 
-      if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
-      bybitPingTimerRef.current = setInterval(() => {
-        if (wsBybit.readyState === WebSocket.OPEN) {
-          wsBybit.send(JSON.stringify({ op: 'ping' }));
-        }
-      }, 20000);
-    };
+      ws.onmessage = (event) => {
+        const now = Date.now();
+        packetCountRef.current += 1;
 
-    wsBybit.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.topic && msg.topic.startsWith('orderbook')) {
-          const data = msg.data || {};
-          const rawBids: [string, string][] = data.b || [];
-          const rawAsks: [string, string][] = data.a || [];
+        try {
+          const payload = JSON.parse(event.data);
+          const stream: string = payload.stream || '';
+          const data = payload.data || {};
 
-          if (rawBids.length > 0 || rawAsks.length > 0) {
-            let bidTotalB = 0;
-            const parsedBidsB: L2Item[] = rawBids.map(([p, q]) => {
-              const priceNum = parseFloat(p);
-              const qtyNum = parseFloat(q);
-              bidTotalB += qtyNum;
-              return { price: priceNum, qty: qtyNum, total: bidTotalB };
+          const eventTime: number = data.E || data.T || now;
+          const latency = Math.max(1, Math.min(120, now - eventTime));
+
+          const hist = latencyHistoryRef.current;
+          hist.push(latency);
+          if (hist.length > 50) hist.shift();
+
+          const sum = hist.reduce((a, b) => a + b, 0);
+          const avg = sum / hist.length;
+          const min = Math.min(...hist);
+          const max = Math.max(...hist);
+          const jitter = Math.abs(latency - avg);
+
+          if (now - lastSecTimeRef.current >= 1000) {
+            const msgRate = packetCountRef.current;
+            packetCountRef.current = 0;
+            lastSecTimeRef.current = now;
+
+            setStats({
+              currentMs: latency,
+              avgMs: parseFloat(avg.toFixed(1)),
+              minMs: min,
+              maxMs: max,
+              jitter: parseFloat(jitter.toFixed(1)),
+              msgPerSec: msgRate,
+              totalPackets: (stats.totalPackets || 0) + msgRate
             });
-
-            let askTotalB = 0;
-            const parsedAsksB: L2Item[] = rawAsks.map(([p, q]) => {
-              const priceNum = parseFloat(p);
-              const qtyNum = parseFloat(q);
-              askTotalB += qtyNum;
-              return { price: priceNum, qty: qtyNum, total: askTotalB };
-            });
-
-            if (parsedBidsB.length > 0) setBybitBids(parsedBidsB);
-            if (parsedAsksB.length > 0) setBybitAsks(parsedAsksB);
           }
+
+          if (stream.endsWith('@depth20@100ms')) {
+            const rawBids: [string, string][] = data.bids || [];
+            const rawAsks: [string, string][] = data.asks || [];
+
+            let bidTotalA = 0;
+            const parsedBidsA: L2Item[] = rawBids.map(([p, q]) => {
+              const priceNum = parseFloat(p);
+              const qtyNum = parseFloat(q);
+              bidTotalA += qtyNum;
+              return { price: priceNum, qty: qtyNum, total: bidTotalA };
+            });
+
+            let askTotalA = 0;
+            const parsedAsksA: L2Item[] = rawAsks.map(([p, q]) => {
+              const priceNum = parseFloat(p);
+              const qtyNum = parseFloat(q);
+              askTotalA += qtyNum;
+              return { price: priceNum, qty: qtyNum, total: askTotalA };
+            });
+
+            pendingBidsRef.current = parsedBidsA;
+            pendingAsksRef.current = parsedAsksA;
+          }
+
+          if (stream.endsWith('@trade')) {
+            const tradeTime = new Date(data.T || now);
+            const timeStr = `${tradeTime.toTimeString().split(' ')[0]}.${String(tradeTime.getMilliseconds()).padStart(3, '0')}`;
+
+            const newTrade: TradeItem = {
+              id: data.t || Math.random(),
+              time: timeStr,
+              price: parseFloat(data.p || '0'),
+              qty: parseFloat(data.q || '0'),
+              isBuyerMaker: data.m
+            };
+
+            pendingTradesRef.current.unshift(newTrade);
+            if (pendingTradesRef.current.length > 20) {
+              pendingTradesRef.current = pendingTradesRef.current.slice(0, 20);
+            }
+          }
+        } catch (err) {
+          // ignore parse error
         }
-      } catch (err) {
-        // ignore parse error
+      };
+
+      ws.onerror = () => setBinanceWsStatus('DISCONNECTED');
+      ws.onclose = () => setBinanceWsStatus('DISCONNECTED');
+
+      return () => {
+        if (ws) ws.close();
+      };
+    }, [cleanPairBinance]);
+
+    // 2. Bybit Real-time V5 WebSocket Connection with Throttled Buffer
+    const pendingBybitBidsRef = useRef<L2Item[] | null>(null);
+    const pendingBybitAsksRef = useRef<L2Item[] | null>(null);
+
+    useEffect(() => {
+      const bybitFlushTimer = setInterval(() => {
+        if (pendingBybitBidsRef.current) {
+          setBybitBids(pendingBybitBidsRef.current);
+          pendingBybitBidsRef.current = null;
+        }
+        if (pendingBybitAsksRef.current) {
+          setBybitAsks(pendingBybitAsksRef.current);
+          pendingBybitAsksRef.current = null;
+        }
+      }, 100);
+
+      return () => clearInterval(bybitFlushTimer);
+    }, []);
+
+    useEffect(() => {
+      setBybitWsStatus('CONNECTING');
+
+      const bybitUrl = 'wss://stream.bybit.com/v5/public/spot';
+      let wsBybit: WebSocket;
+
+      try {
+        wsBybit = new WebSocket(bybitUrl);
+        wsBybitRef.current = wsBybit;
+      } catch (e) {
+        console.warn('[Bybit WS] Initialization error:', e);
+        setBybitWsStatus('DISCONNECTED');
+        return;
       }
-    };
 
-    wsBybit.onerror = () => setBybitWsStatus('DISCONNECTED');
-    wsBybit.onclose = () => setBybitWsStatus('DISCONNECTED');
+      wsBybit.onopen = () => {
+        setBybitWsStatus('CONNECTED');
+        const subPayload = {
+          op: 'subscribe',
+          args: [`orderbook.50.${cleanPairBybit}`]
+        };
+        wsBybit.send(JSON.stringify(subPayload));
 
-    return () => {
-      if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
-      if (wsBybit) wsBybit.close();
-    };
-  }, [cleanPairBybit]);
+        if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
+        bybitPingTimerRef.current = setInterval(() => {
+          if (wsBybit.readyState === WebSocket.OPEN) {
+            wsBybit.send(JSON.stringify({ op: 'ping' }));
+          }
+        }, 20000);
+      };
+
+      wsBybit.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.topic && msg.topic.startsWith('orderbook')) {
+            const data = msg.data || {};
+            const rawBids: [string, string][] = data.b || [];
+            const rawAsks: [string, string][] = data.a || [];
+
+            if (rawBids.length > 0 || rawAsks.length > 0) {
+              let bidTotalB = 0;
+              const parsedBidsB: L2Item[] = rawBids.map(([p, q]) => {
+                const priceNum = parseFloat(p);
+                const qtyNum = parseFloat(q);
+                bidTotalB += qtyNum;
+                return { price: priceNum, qty: qtyNum, total: bidTotalB };
+              });
+
+              let askTotalB = 0;
+              const parsedAsksB: L2Item[] = rawAsks.map(([p, q]) => {
+                const priceNum = parseFloat(p);
+                const qtyNum = parseFloat(q);
+                askTotalB += qtyNum;
+                return { price: priceNum, qty: qtyNum, total: askTotalB };
+              });
+
+              if (parsedBidsB.length > 0) pendingBybitBidsRef.current = parsedBidsB;
+              if (parsedAsksB.length > 0) pendingBybitAsksRef.current = parsedAsksB;
+            }
+          }
+        } catch (err) {
+          // ignore parse error
+        }
+      };
+
+      wsBybit.onerror = () => setBybitWsStatus('DISCONNECTED');
+      wsBybit.onclose = () => setBybitWsStatus('DISCONNECTED');
+
+      return () => {
+        if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
+        if (wsBybit) wsBybit.close();
+      };
+    }, [cleanPairBybit]);
 
   // Derive Multi-Exchange Orderbooks for all 5 exchanges
   const baseBid = binanceBids[0]?.price || 67800;
