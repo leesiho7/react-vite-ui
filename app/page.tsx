@@ -1175,7 +1175,7 @@ export default function Page() {
 
   // Upgrade & Pro Quant Subscription Modal State
   const [upgradeOpen, setUpgradeOpen] = useState(false)
-  const [upgradePlan, setUpgradePlan] = useState<'FREE' | 'PRO'>('PRO')
+  const [upgradePlan, setUpgradePlan] = useState<'CORE' | 'PRO'>('CORE')
   const [paymentCopied, setPaymentCopied] = useState(false)
 
   // Pure On-Chain Deposit Modal State (Non-Custodial P2P)
@@ -2252,6 +2252,7 @@ export default function Page() {
             }, 60)
           }
         }}
+        onOpenUpgrade={() => setUpgradeOpen(true)}
       />
 
       <main className="terminal-shell">
@@ -3452,74 +3453,44 @@ export default function Page() {
 
       {/* ── Institutional Upgrade & Pro Quant Subscription Modal ── */}
       {upgradeOpen && (
-        <div className="upgrade-overlay" onClick={() => setUpgradeOpen(false)}>
-          <div className="upgrade-sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="upgrade-close" aria-label="Close modal" onClick={() => setUpgradeOpen(false)}>×</button>
-            <div className="upgrade-spark">✦</div>
-            <span className="upgrade-kicker">INSTITUTIONAL QUANT ACCESS</span>
-            <h2>
-              Unlock <em>Pro Intelligence.</em>
+        <div className="upgrade-overlay" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
+          <section className="upgrade-sheet">
+            <button className="upgrade-close" aria-label="Close upgrade dialog" onClick={() => setUpgradeOpen(false)}>×</button>
+            <div className="upgrade-spark">A</div>
+            <span className="upgrade-kicker">AETHER INTELLIGENCE</span>
+            <h2 id="upgrade-title">
+              Upgrade your<br />
+              <em>market edge.</em>
             </h2>
-            <p className="upgrade-subtitle">
-              {language === 'ko'
-                ? '기관급 실시간 아비트라지, 24시간 무중단 클라우드 봇, 전 종목 프랙탈 분석을 제한 없이 이용하세요.'
-                : 'Full access to cross-exchange arbitrage, 24/7 dedicated IDC bot capacity, and real-time multi-fractal DTW models.'}
-            </p>
-
-            <div className="upgrade-toggle">
-              <button
-                className={upgradePlan === 'FREE' ? 'selected' : ''}
-                onClick={() => setUpgradePlan('FREE')}
-              >
-                {language === 'ko' ? '베이직 (Basic)' : 'Basic'}
-              </button>
-              <button
-                className={upgradePlan === 'PRO' ? 'selected' : ''}
-                onClick={() => setUpgradePlan('PRO')}
-              >
-                {language === 'ko' ? '프로 퀀트 (Pro Quant)' : 'Pro Quant'}
-              </button>
+            <p className="upgrade-subtitle">고급 모델과 더 높은 한도로 금융 분석을 확장하세요.</p>
+            <div className="upgrade-toggle" role="tablist">
+              <button className={upgradePlan === 'CORE' ? 'selected' : ''} onClick={() => setUpgradePlan('CORE')}>CORE</button>
+              <button className={upgradePlan === 'PRO' ? 'selected' : ''} onClick={() => setUpgradePlan('PRO')}>PRO</button>
             </div>
-
             <div className="upgrade-table">
               <div className="upgrade-table-head">
-                <span>{language === 'ko' ? '제공 기능 및 엔진 사양' : 'ENGINE CAPABILITY'}</span>
-                <b>FREE</b>
+                <span>기능</span>
+                <b>CORE</b>
                 <b>PRO</b>
               </div>
-              <div className="upgrade-row">
-                <span>{language === 'ko' ? '실시간 바이낸스/바이비트 호가창' : 'L2 Live Depth Orderbook'}</span>
-                <b>✓</b>
-                <b className="has-feature">✓</b>
-              </div>
-              <div className="upgrade-row">
-                <span>{language === 'ko' ? '24시간 무중단 클라우드 봇 호스팅' : '24/7 Cloud Bot IDC Hosting'}</span>
-                <b>—</b>
-                <b className="has-feature">✓</b>
-              </div>
-              <div className="upgrade-row">
-                <span>{language === 'ko' ? '크로스 거래소 무위험 아비트라지' : 'Real-time Cross Arbitrage Scanner'}</span>
-                <b>—</b>
-                <b className="has-feature">✓</b>
-              </div>
-              <div className="upgrade-row">
-                <span>{language === 'ko' ? 'FastDTW 8000 프랙탈 패턴 서치' : 'FastDTW 8000 Fractal Engine'}</span>
-                <b>—</b>
-                <b className="has-feature">✓</b>
-              </div>
-              <div className="upgrade-row">
-                <span>{language === 'ko' ? '텔레그램 1:1 실시간 시그널 알림' : '1:1 Telegram Realtime Dispatch'}</span>
-                <b>—</b>
-                <b className="has-feature">✓</b>
-              </div>
+              {[
+                ['코어 모델', true, true],
+                ['고급 모델', false, true],
+                ['더 높은 메시지 및 업로드 한도', false, true],
+                ['24H 자동매매봇 인스턴스', '1개', '2개'],
+                ['우선 처리 및 심층 리서치', false, true]
+              ].map(([label, core, pro]) => (
+                <div className="upgrade-row" key={String(label)}>
+                  <span>{label}</span>
+                  <b className={core ? 'has-feature' : ''}>{core === true ? '✓' : core || '—'}</b>
+                  <b className="has-feature">{pro === true ? '✓' : pro}</b>
+                </div>
+              ))}
             </div>
-
             <div className="upgrade-price">
-              <strong>{upgradePlan === 'PRO' ? '$7.00' : '$0.00'}</strong>
-              <small>{upgradePlan === 'PRO' ? 'USDT / 30 DAYS' : 'FREE TIER'}</small>
-              <span>{upgradePlan === 'PRO' ? (language === 'ko' ? '무약정 월간 자동 연장' : 'non-custodial on-chain') : (language === 'ko' ? '기본 기능 체험' : 'basic trial')}</span>
+              <strong>{upgradePlan === 'CORE' ? '7' : '13'} <small>USDT</small></strong>
+              <span>월 구독 · 언제든 취소 가능</span>
             </div>
-
             <button
               className="upgrade-cta"
               onClick={() => {
@@ -3527,45 +3498,49 @@ export default function Page() {
                 setDepositModalOpen(true)
               }}
             >
-              {upgradePlan === 'PRO'
-                ? (language === 'ko' ? '프로 퀀트 구독 및 결제 ($7 USDT)' : 'SUBSCRIBE TO PRO QUANT')
-                : (language === 'ko' ? '현재 베이직 플랜 이용 중' : 'CURRENTLY ON FREE PLAN')}
-              <span>↗</span>
+              {upgradePlan === 'CORE' ? 'UPGRADE TO CORE (7 USDT)' : 'UPGRADE TO PRO (13 USDT)'} <span>→</span>
             </button>
-
             <div className="usdt-payment-note">
-              <span>{language === 'ko' ? '스마트 컨트랙트 및 TRC20/POLYGON 온체인 결제 지원' : 'Non-custodial USDT On-chain Escrow'}</span>
+              <span>USDT PAYMENT</span>
               <button
                 type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText('0xb0390a087488E304cA32996532Ab9f40028511fE')
+                onClick={async () => {
+                  const planCode = upgradePlan === 'CORE' ? 'AETHER-CORE-7-USDT' : 'AETHER-PRO-13-USDT'
+                  await navigator.clipboard?.writeText(planCode)
                   setPaymentCopied(true)
-                  setTimeout(() => setPaymentCopied(false), 2000)
+                  setTimeout(() => setPaymentCopied(false), 1800)
                 }}
               >
-                {paymentCopied ? (language === 'ko' ? '주소 복사됨 ✓' : 'Copied ✓') : (language === 'ko' ? '공식 지갑 주소 복사' : 'Copy Official Wallet')}
+                {paymentCopied ? 'PAYMENT DETAILS COPIED' : 'VIEW PAYMENT DETAILS'}
               </button>
             </div>
-          </div>
+          </section>
         </div>
       )}
 
       {/* ── 순수 온체인 P2P $7 USDT 입금 모달 (Non-Custodial Direct Deposit) ── */}
       {depositModalOpen && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="panel" style={{ width: '520px', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <strong style={{ fontSize: '15px' }}>💎 24H 퀀트 봇 호스팅 30일 구독 ($7.0 USDT)</strong>
-              <button className="text-button" onClick={() => setDepositModalOpen(false)}>닫기 ×</button>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, fontFamily: "var(--font-sans)" }}>
+          <div className="panel" style={{ width: '520px', background: '#fff', padding: '24px', borderRadius: '6px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', fontFamily: "var(--font-sans)" }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '22px', height: '22px', border: '1px solid #38bdf8', background: '#090e17', color: '#38bdf8', fontWeight: 800, fontSize: '13px', display: 'grid', placeItems: 'center', borderRadius: '3px', boxShadow: '0 0 8px rgba(56,189,248,0.35)' }}>
+                  A
+                </div>
+                <strong style={{ fontSize: '15px', color: '#18334a', fontWeight: 700, fontFamily: "var(--font-sans)" }}>
+                  {upgradePlan === 'CORE' ? 'AETHER CORE 모델 30일 구독 ($7.0 USDT)' : 'AETHER PRO 모델 30일 구독 ($13.0 USDT)'}
+                </strong>
+              </div>
+              <button className="text-button" style={{ fontFamily: "var(--font-sans)", cursor: 'pointer' }} onClick={() => setDepositModalOpen(false)}>닫기 ×</button>
             </div>
 
             {depositSuccessResult ? (
               <div style={{ textAlign: 'center', padding: '12px 0' }}>
                 <CheckCircle2 size={42} color="#0f766e" style={{ margin: '0 auto 12px' }} />
-                <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#18334a' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: '#18334a', fontFamily: "var(--font-sans)", fontWeight: 700 }}>
                   {language === 'ko' ? '결제가 성공적으로 승인되었습니다.' : 'Payment Approved Successfully.'}
                 </h3>
-                <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', lineHeight: 1.5, fontFamily: "var(--font-sans)" }}>
                   {language === 'ko'
                     ? '대표님의 텔레그램(@AetherQuantOfficialBot)으로 봇 구동 라이선스 키가 즉시 발송되었습니다. 아래 발급된 키로 거래소 API를 연동하여 24시간 봇을 가동하세요.'
                     : 'Your bot license key has been transmitted to your Telegram. Use this key to provision your 24/7 cloud quant worker.'}
@@ -3573,13 +3548,13 @@ export default function Page() {
 
                 <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '14px', borderRadius: '4px', marginBottom: '16px', textAlign: 'left', fontSize: '11px', wordBreak: 'break-all' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ color: '#0f766e', fontWeight: 700 }}>
+                    <span style={{ color: '#0f766e', fontWeight: 700, fontFamily: "var(--font-sans)" }}>
                       {language === 'ko' ? '텔레그램 전송 라이선스 키:' : 'Telegram Transmitted License Key:'}
                     </span>
                     <button
                       type="button"
                       className="text-button"
-                      style={{ fontSize: '9px', color: '#0284c7' }}
+                      style={{ fontSize: '9px', color: '#0284c7', fontFamily: "var(--font-sans)", cursor: 'pointer' }}
                       onClick={() => {
                         if (depositSuccessResult.licenseToken) {
                           navigator.clipboard.writeText(depositSuccessResult.licenseToken)
@@ -3593,14 +3568,14 @@ export default function Page() {
                   <code style={{ background: '#0b131e', color: '#38bdf8', padding: '4px 8px', borderRadius: '3px', display: 'block', fontSize: '11.5px', fontFamily: "var(--font-mono)" }}>
                     {depositSuccessResult.licenseToken}
                   </code>
-                  <div style={{ marginTop: '8px', color: '#64748b' }}><b>트랜잭션 해시:</b> {depositSuccessResult.txHash}</div>
-                  <div style={{ marginTop: '4px', color: '#059669', fontWeight: 600 }}><b>상태:</b> ACTIVE (30일 무중단 가동 라이선스 유효)</div>
+                  <div style={{ marginTop: '8px', color: '#64748b', fontFamily: "var(--font-sans)" }}><b>트랜잭션 해시:</b> <span style={{ fontFamily: "var(--font-mono)" }}>{depositSuccessResult.txHash}</span></div>
+                  <div style={{ marginTop: '4px', color: '#059669', fontWeight: 600, fontFamily: "var(--font-sans)" }}><b>상태:</b> ACTIVE (30일 무중단 가동 라이선스 유효)</div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <button
                     className="primary-button"
-                    style={{ width: '100%', padding: '12px', background: '#0f766e', color: '#fff', fontSize: '12.5px', fontWeight: 'bold' }}
+                    style={{ width: '100%', padding: '12px', background: '#0f766e', color: '#fff', fontSize: '12.5px', fontWeight: 'bold', fontFamily: "var(--font-sans)" }}
                     onClick={() => {
                       setNewInstanceLicenseKey(depositSuccessResult.licenseToken)
                       setDepositModalOpen(false)
@@ -3611,7 +3586,7 @@ export default function Page() {
                   </button>
                   <button
                     className="secondary-button"
-                    style={{ width: '100%', padding: '10px', fontSize: '11.5px' }}
+                    style={{ width: '100%', padding: '10px', fontSize: '11.5px', fontFamily: "var(--font-sans)" }}
                     onClick={handleConnectTelegram}
                   >
                     <ExternalLink size={13} style={{ display: 'inline', marginRight: '6px' }} />
@@ -3621,26 +3596,26 @@ export default function Page() {
               </div>
             ) : (
               <div>
-                <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '12px' }}>
+                <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '12px', fontFamily: "var(--font-sans)" }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span>구독 플랜:</span> <b>24시간 가상 인스턴스 30일 이용권</b>
+                    <span>구독 플랜:</span> <b style={{ color: '#18334a' }}>{upgradePlan === 'CORE' ? 'AETHER 코어 모델 & 24H 봇 1개 (CORE)' : 'AETHER 프로 모델 & 24H 봇 2개 + 심층 리서치 (PRO)'}</b>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>입금 금액:</span> <b style={{ color: '#2b866d', fontSize: '14px' }}>7.00 USDT</b>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span>입금 금액:</span> <b style={{ color: '#0f766e', fontSize: '15px', fontFamily: "var(--font-mono)", fontWeight: 700 }}>{upgradePlan === 'CORE' ? '7.00 USDT' : '13.00 USDT'}</b>
                   </div>
                 </div>
 
                 {/* 1-Click MetaMask Quick Pay Button */}
-                <div style={{ marginBottom: '16px', padding: '12px', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '4px' }}>
+                <div style={{ marginBottom: '16px', padding: '12px', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '4px', fontFamily: "var(--font-sans)" }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <strong style={{ fontSize: '12px', color: '#c2410c', display: 'block' }}>🦊 메타마스크 1초 직접 결제</strong>
-                      <span style={{ fontSize: '10px', color: '#7c2d12' }}>지갑에서 [승인] 한 번으로 7 USDT 자동 전송</span>
+                      <strong style={{ fontSize: '12px', color: '#c2410c', display: 'block', fontWeight: 700 }}>🦊 메타마스크 1초 직접 결제</strong>
+                      <span style={{ fontSize: '10px', color: '#7c2d12' }}>지갑에서 [승인] 한 번으로 {upgradePlan === 'CORE' ? '7' : '13'} USDT 자동 전송</span>
                     </div>
                     <button
                       type="button"
                       className="primary-button"
-                      style={{ background: '#ea580c', color: '#fff', padding: '8px 14px', fontSize: '11px', fontWeight: 700, borderRadius: '4px' }}
+                      style={{ background: '#ea580c', color: '#fff', padding: '8px 14px', fontSize: '11px', fontWeight: 700, borderRadius: '4px', fontFamily: "var(--font-sans)" }}
                       disabled={confirmLoading}
                       onClick={handleMetaMaskDirectPay}
                     >
@@ -3651,13 +3626,13 @@ export default function Page() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '14px 0 10px' }}>
                   <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
-                  <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>또는 해외 거래소(바이비트/바이낸스/OKX) 출금 전송</span>
+                  <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, fontFamily: "var(--font-sans)" }}>또는 해외 거래소(바이비트/바이낸스/OKX) 출금 전송</span>
                   <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }}></div>
                 </div>
 
                 {/* Network Selection */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+                <div style={{ marginBottom: '16px', fontFamily: "var(--font-sans)" }}>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: '#18334a' }}>
                     1. 출금할 네트워크 선택 (TRC20 트론 또는 Polygon 권장)
                   </label>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -3676,7 +3651,10 @@ export default function Page() {
                           fontWeight: selectedNetwork === item.key ? 700 : 500,
                           border: selectedNetwork === item.key ? '2px solid #18334a' : '1px solid #ddd',
                           background: selectedNetwork === item.key ? '#18334a' : '#f9f9f9',
-                          color: selectedNetwork === item.key ? '#fff' : '#333'
+                          color: selectedNetwork === item.key ? '#fff' : '#333',
+                          fontFamily: "var(--font-sans)",
+                          cursor: 'pointer',
+                          borderRadius: '3px'
                         }}
                         onClick={() => setSelectedNetwork(item.key)}
                       >
@@ -3687,37 +3665,37 @@ export default function Page() {
                 </div>
 
                 {/* Deposit Address Box */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
-                    2. 아래 공식 입금 지갑 주소로 7.0 USDT 전송
+                <div style={{ marginBottom: '16px', fontFamily: "var(--font-sans)" }}>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: '#18334a' }}>
+                    2. 아래 공식 입금 지갑 주소로 {upgradePlan === 'CORE' ? '7.0' : '13.0'} USDT 전송
                   </label>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <input
                       readOnly
-                      style={{ flex: 1, padding: '8px', border: '1px solid #ccc', fontSize: '11px', background: '#fbfbfb', wordBreak: 'break-all' }}
+                      style={{ flex: 1, padding: '8px 10px', border: '1px solid #cbd5e1', fontSize: '11px', background: '#f8fafc', wordBreak: 'break-all', fontFamily: "var(--font-mono)", color: '#0f172a' }}
                       value={depositWallets[selectedNetwork] || depositWallets['trc20'] || depositWallets['polygon']}
                     />
                     <button
                       className="secondary-button"
-                      style={{ padding: '0 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      style={{ padding: '0 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "var(--font-sans)", cursor: 'pointer' }}
                       onClick={handleCopyWallet}
                     >
                       {copied ? <Check size={14} color="#2b866d" /> : <Copy size={14} />}
                       {copied ? '복사됨' : '복사'}
                     </button>
                   </div>
-                  <small style={{ fontSize: '10px', color: '#888', marginTop: '4px', display: 'block' }}>
+                  <small style={{ fontSize: '10px', color: '#64748b', marginTop: '4px', display: 'block', fontFamily: "var(--font-sans)" }}>
                     * 반드시 선택하신 {selectedNetwork.toUpperCase()} 네트워크의 USDT만 전송해 주세요.
                   </small>
                 </div>
 
                 {/* TxHash Confirmation */}
-                <div style={{ marginBottom: '16px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
+                <div style={{ marginBottom: '16px', fontFamily: "var(--font-sans)" }}>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#18334a' }}>
                     3. 전송 완료 후 발급된 트랜잭션 해시(TxHash/TxID) 입력
                   </label>
                   <input
-                    style={{ width: '100%', padding: '8px', border: '1px solid #ccc', fontSize: '12px' }}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #cbd5e1', fontSize: '11.5px', fontFamily: "var(--font-mono)" }}
                     placeholder="0x... 또는 TRON TxID 입력 (위조/가짜 해시는 실시간 차단됩니다)"
                     value={userTxHash}
                     onChange={(e) => setUserTxHash(e.target.value)}
@@ -3726,11 +3704,11 @@ export default function Page() {
 
                 <button
                   className="primary-button"
-                  style={{ width: '100%', padding: '12px', background: '#2b866d', color: '#fff', fontSize: '13px', fontWeight: 'bold' }}
+                  style={{ width: '100%', padding: '12px', background: '#0f766e', color: '#fff', fontSize: '13px', fontWeight: 'bold', fontFamily: "var(--font-sans)", cursor: 'pointer', borderRadius: '4px' }}
                   disabled={confirmLoading}
                   onClick={handleSubmitDepositConfirmation}
                 >
-                  {confirmLoading ? '블록체인 온체인 트랜잭션 승인 확인 중…' : '7.0 USDT 온체인 검증 및 봇 활성화 ↗'}
+                  {confirmLoading ? '블록체인 온체인 트랜잭션 승인 확인 중…' : `${upgradePlan === 'CORE' ? '7.0' : '13.0'} USDT 온체인 검증 및 봇 활성화 ↗`}
                 </button>
               </div>
             )}

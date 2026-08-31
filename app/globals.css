@@ -1500,12 +1500,22 @@ button {
 .upgrade-spark { 
   display: grid; 
   place-items: center; 
-  width: 52px; 
-  height: 52px; 
-  margin: 4px auto 18px; 
-  color: #fff; 
-  background: var(--blue); 
-  font-size: 27px; 
+  width: 44px; 
+  height: 44px; 
+  margin: 4px auto 16px; 
+  color: #38bdf8; 
+  background: #090e17; 
+  border: 1.5px solid #38bdf8; 
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 22px; 
+  font-weight: 800;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35), inset 0 0 8px rgba(56, 189, 248, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.upgrade-spark:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.55), inset 0 0 10px rgba(56, 189, 248, 0.25);
 }
 .upgrade-kicker { 
   display: block; 

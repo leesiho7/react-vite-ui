@@ -19,6 +19,7 @@ interface NavbarProps {
   onToggleNews?: () => void;
   arbitrageOpen?: boolean;
   onToggleArbitrage?: () => void;
+  onOpenUpgrade?: () => void;
 }
 
 export default function Navbar({
@@ -35,7 +36,8 @@ export default function Navbar({
   newsOpen = false,
   onToggleNews,
   arbitrageOpen = false,
-  onToggleArbitrage
+  onToggleArbitrage,
+  onOpenUpgrade
 }: NavbarProps) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false)
   const langDropdownRef = useRef<HTMLDivElement>(null)
@@ -299,6 +301,16 @@ export default function Navbar({
               </div>
             )}
           </div>
+
+          {/* ── UPGRADE MODEL 버튼 ── */}
+          <button
+            type="button"
+            className="upgrade-model-button"
+            onClick={onOpenUpgrade}
+            title="AETHER Pro Intelligence Upgrade"
+          >
+            ✦ UPGRADE MODEL
+          </button>
 
           {currentUser ? (
             <div className="flex items-center gap-2.5 pl-3 border-l border-[#27272a]">
