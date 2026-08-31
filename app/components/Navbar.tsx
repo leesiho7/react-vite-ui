@@ -50,10 +50,10 @@ export default function Navbar({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const tickers = [
-    { symbol: 'BTC', name: 'Bitcoin', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$78,891.12', change: '+2.41%', isUp: true, target: 'BTC/USD' },
+  const [tickers, setTickers] = useState([
+    { symbol: 'BTC', name: 'Bitcoin', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$78,418.00', change: '+2.41%', isUp: true, target: 'BTC/USD' },
     { symbol: 'ETH', name: 'Ethereum', logo: 'https://financialmodelingprep.com/image-stock/ETHUSD.png', price: '$2,340.50', change: '+1.85%', isUp: true, target: 'ETH/USD' },
-    { symbol: 'NVDA', name: 'NVIDIA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '-1.45%', isUp: false, target: 'NVDA' },
+    { symbol: 'NVDA', name: 'NVIDIA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', isUp: true, target: 'NVDA' },
     { symbol: 'SOL', name: 'Solana', logo: 'https://financialmodelingprep.com/image-stock/SOLUSD.png', price: '$178.50', change: '+4.20%', isUp: true, target: 'SOL/USD' },
     { symbol: 'TSLA', name: 'Tesla', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', isUp: false, target: 'TSLA' },
     { symbol: 'AAPL', name: 'Apple', logo: 'https://financialmodelingprep.com/image-stock/AAPL.png', price: '$224.20', change: '+1.63%', isUp: true, target: 'AAPL' },
@@ -61,7 +61,51 @@ export default function Navbar({
     { symbol: '000660.KS', name: 'SK Hynix', logo: 'https://financialmodelingprep.com/image-stock/000660.KS.png', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS' },
     { symbol: 'XRP', name: 'Ripple', logo: 'https://financialmodelingprep.com/image-stock/XRPUSD.png', price: '$2.15', change: '+5.12%', isUp: true, target: 'XRP/USD' },
     { symbol: 'BNB', name: 'BNB', logo: 'https://financialmodelingprep.com/image-stock/BNBUSD.png', price: '$648.20', change: '+0.95%', isUp: true, target: 'BNB/USD' }
-  ];
+  ]);
+
+  // Real-time Binance Live Ticker Multi-Stream
+  useEffect(() => {
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket('wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/solusdt@ticker/xrpusdt@ticker/bnbusdt@ticker');
+      ws.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          const data = payload.data;
+          if (!data || !data.s) return;
+
+          const symbolMap: Record<string, string> = {
+            BTCUSDT: 'BTC',
+            ETHUSDT: 'ETH',
+            SOLUSDT: 'SOL',
+            XRPUSDT: 'XRP',
+            BNBUSDT: 'BNB'
+          };
+
+          const symKey = symbolMap[data.s];
+          if (!symKey) return;
+
+          const priceNum = parseFloat(data.c || '0');
+          const changePct = parseFloat(data.P || '0');
+          const isUp = changePct >= 0;
+          const formattedPrice = priceNum >= 1000
+            ? `$${priceNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : priceNum >= 1
+              ? `$${priceNum.toFixed(2)}`
+              : `$${priceNum.toFixed(4)}`;
+          const formattedChange = `${isUp ? '+' : ''}${changePct.toFixed(2)}%`;
+
+          setTickers((prev) =>
+            prev.map((t) => (t.symbol === symKey ? { ...t, price: formattedPrice, change: formattedChange, isUp } : t))
+          );
+        } catch (e) {}
+      };
+    } catch (e) {}
+
+    return () => {
+      if (ws) ws.close();
+    };
+  }, []);
 
   const menuText = {
     ko: {
