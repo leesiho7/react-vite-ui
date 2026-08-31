@@ -1456,6 +1456,215 @@ button {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
+/* ── Upgrade & Subscription Overlay Sheet (Institutional Clean UI) ────────── */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.upgrade-overlay { 
+  position: fixed; 
+  inset: 0; 
+  z-index: 2000; 
+  display: grid; 
+  place-items: center; 
+  padding: 18px; 
+  background: rgba(8, 23, 35, .72); 
+  backdrop-filter: blur(4px);
+  font-family: var(--font-sans);
+}
+.upgrade-sheet { 
+  position: relative; 
+  width: min(470px, 100%); 
+  max-height: min(760px, 94vh); 
+  overflow: auto; 
+  padding: 32px 28px 24px; 
+  background: #fff; 
+  border: 1px solid var(--line); 
+  box-shadow: 0 24px 70px rgba(7, 19, 29, .28); 
+  font-family: var(--font-sans);
+}
+.upgrade-close { 
+  position: absolute; 
+  top: 14px; 
+  right: 16px; 
+  border: 0; 
+  background: transparent; 
+  color: var(--muted); 
+  font-size: 25px; 
+  line-height: 1; 
+  cursor: pointer;
+}
+.upgrade-close:hover {
+  color: var(--navy);
+}
+.upgrade-spark { 
+  display: grid; 
+  place-items: center; 
+  width: 52px; 
+  height: 52px; 
+  margin: 4px auto 18px; 
+  color: #fff; 
+  background: var(--blue); 
+  font-size: 27px; 
+}
+.upgrade-kicker { 
+  display: block; 
+  color: var(--blue); 
+  text-align: center; 
+  font-size: 9px; 
+  letter-spacing: .14em; 
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+.upgrade-sheet h2 { 
+  margin: 14px 0 8px; 
+  color: var(--navy); 
+  text-align: center; 
+  font-family: var(--font-sans); 
+  font-size: clamp(28px, 4vw, 36px); 
+  font-weight: 700;
+  line-height: 1.05; 
+  letter-spacing: -.03em; 
+}
+.upgrade-sheet h2 em { 
+  color: var(--blue); 
+  font-style: normal; 
+}
+.upgrade-subtitle { 
+  margin: 0 auto 22px; 
+  color: var(--muted); 
+  text-align: center; 
+  font-size: 11px; 
+  line-height: 1.5;
+  font-family: var(--font-sans);
+}
+.upgrade-toggle { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 4px; 
+  padding: 4px; 
+  margin-bottom: 22px; 
+  background: #f2f4f6; 
+  border-radius: 999px; 
+}
+.upgrade-toggle button { 
+  border: 0; 
+  border-radius: 999px; 
+  background: transparent; 
+  color: var(--muted); 
+  padding: 12px; 
+  font-size: 12px; 
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.upgrade-toggle button.selected { 
+  background: #fff; 
+  color: var(--navy); 
+  font-weight: 600;
+  box-shadow: 0 2px 7px rgba(24,51,74,.12); 
+}
+.upgrade-table { 
+  border: 1px solid var(--line); 
+  border-radius: 8px; 
+  overflow: hidden; 
+}
+.upgrade-table-head, .upgrade-row { 
+  display: grid; 
+  grid-template-columns: 1fr 65px 65px; 
+  align-items: center; 
+  gap: 8px; 
+  padding: 14px 15px; 
+  border-bottom: 1px solid #edf0f2; 
+}
+.upgrade-table-head { 
+  color: var(--muted); 
+  font-size: 9px; 
+  font-family: var(--font-sans);
+  letter-spacing: .05em;
+}
+.upgrade-table-head b:last-child { 
+  color: var(--blue); 
+}
+.upgrade-row:last-child { 
+  border-bottom: 0; 
+}
+.upgrade-row span { 
+  color: var(--navy); 
+  font-size: 11px; 
+  line-height: 1.35; 
+  font-family: var(--font-sans);
+}
+.upgrade-row b { 
+  color: #a8b0b6; 
+  font-size: 17px; 
+  font-weight: 400; 
+  text-align: center; 
+}
+.upgrade-row b.has-feature { 
+  color: var(--blue); 
+}
+.upgrade-price { 
+  display: flex; 
+  align-items: baseline; 
+  gap: 12px; 
+  padding: 20px 2px 14px; 
+}
+.upgrade-price strong { 
+  color: var(--navy); 
+  font-family: var(--font-sans); 
+  font-size: 32px; 
+  font-weight: 700;
+  line-height: 1;
+}
+.upgrade-price small { 
+  color: var(--blue); 
+  font-family: var(--font-mono), monospace; 
+  font-size: 11px; 
+  font-weight: 600; 
+}
+.upgrade-price span { 
+  color: var(--muted); 
+  font-size: 9px; 
+  font-family: var(--font-sans);
+}
+.upgrade-cta { 
+  width: 100%; 
+  min-height: 54px; 
+  border: 0; 
+  border-radius: 999px; 
+  background: var(--navy); 
+  color: #fff; 
+  font-size: 12px; 
+  font-weight: 600; 
+  letter-spacing: .08em; 
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.upgrade-cta:hover { 
+  background: var(--blue); 
+}
+.upgrade-cta span { 
+  float: right; 
+  margin-right: 18px; 
+  font-size: 18px; 
+}
+.usdt-payment-note { 
+  display: flex; 
+  justify-content: space-between; 
+  gap: 10px; 
+  margin-top: 13px; 
+  color: var(--muted); 
+  font-size: 8px; 
+  font-family: var(--font-sans);
+}
+.usdt-payment-note button { 
+  border: 0; 
+  background: transparent; 
+  color: var(--blue); 
+  font-size: 8px; 
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
 /* ── Typography System (Inter UI / Pretendard Chat / JetBrains Mono Code) ── */
 /* ══════════════════════════════════════════════════════════════════════════ */
 
