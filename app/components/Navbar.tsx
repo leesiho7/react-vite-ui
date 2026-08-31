@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
@@ -196,7 +196,7 @@ export default function Navbar({
               </a>
             </li>
             <li>
-              <Link href="/orderbook" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
+              <Link href="/arbitrage" className="hover:text-white transition-colors no-underline text-[#a1a1aa] text-[12px] font-medium">
                 {menuText.arbitrage}
               </Link>
             </li>
