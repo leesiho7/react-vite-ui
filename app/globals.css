@@ -2217,10 +2217,34 @@ samp,
   font-size: 10px;
 }
 
+/* ── 10-Win Prediction League Global Typography & Pretendard Patch ── */
+.league-section,
+.league-section *,
+.league-header,
+.pool-readout,
+.golden-tease-btn,
+.claim-ready-btn,
+.league-section button,
+.league-section input,
+.league-section select,
+.league-section textarea,
+.league-section p,
+.league-section span,
+.league-section strong,
+.league-section b,
+.league-section h2,
+.league-section h3,
+.league-section h4 {
+  font-family: var(--font-sans) !important;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+}
 
-
-
-
-
-
+.league-section .font-mono,
+.league-section [style*="font-mono"],
+.league-section code,
+.league-section pre {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0;
+}
 

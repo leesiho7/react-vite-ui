@@ -2986,7 +2986,7 @@ def signal(tick):
 
       {/* ── 1-Hour Quick-Strike Prediction League Modal / Drawer ── */}
       {eventOpen && (
-        <section className="league-section" id="ten-win-league" style={{ background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
+        <section className="league-section" id="ten-win-league" style={{ fontFamily: 'var(--font-sans)', background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
           {/* Header Bar */}
           <div className="league-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #edf0f2', paddingBottom: '20px' }}>
             <div>
@@ -4101,7 +4101,7 @@ def signal(tick):
       {/* ── 10-Win Streak Claim Modal (Non-Custodial) ── */}
       {claimModalOpen && (
         <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="panel" style={{ width: '480px', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
+          <div className="panel" style={{ fontFamily: 'var(--font-sans)', width: '480px', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <strong style={{ fontSize: '15px' }}>🏆 10연승 챌린지 $10.00 USDT Claim</strong>
               <button className="text-button" onClick={() => setClaimModalOpen(false)}>닫기 ×</button>
