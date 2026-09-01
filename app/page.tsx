@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, BrainCircuit, Send, Bot, RefreshCw } from 'lucide-react'
+import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown } from 'lucide-react'
 import Navbar from './components/Navbar'
-import Hero from './components/Hero'
 import {
   fetchIntegratedDecision,
   fetchHistoricalCandles,
@@ -46,6 +45,25 @@ import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
 
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 type Language = keyof typeof languageLabels
+
+export function getSymbolLogo(nameOrTicker: string): string {
+  const sym = (nameOrTicker || '').toUpperCase()
+  if (sym.includes('BTC') || sym === 'BITCOIN') return 'https://financialmodelingprep.com/image-stock/BTCUSD.png'
+  if (sym.includes('ETH') || sym === 'ETHEREUM') return 'https://financialmodelingprep.com/image-stock/ETHUSD.png'
+  if (sym.includes('SOL') || sym === 'SOLANA') return 'https://financialmodelingprep.com/image-stock/SOLUSD.png'
+  if (sym.includes('XRP') || sym === 'RIPPLE') return 'https://financialmodelingprep.com/image-stock/XRPUSD.png'
+  if (sym.includes('BNB')) return 'https://financialmodelingprep.com/image-stock/BNBUSD.png'
+  if (sym.includes('DOGE')) return 'https://financialmodelingprep.com/image-stock/DOGEUSD.png'
+  if (sym.includes('SUI')) return 'https://financialmodelingprep.com/image-stock/SUIUSD.png'
+  if (sym.includes('ADA') || sym === 'CARDANO') return 'https://financialmodelingprep.com/image-stock/ADAUSD.png'
+  if (sym.includes('S&P') || sym.includes('SPX') || sym.includes('500') || sym.includes('SPY')) return 'https://financialmodelingprep.com/image-stock/SPY.png'
+  if (sym.includes('NASDAQ') || sym.includes('NDX') || sym.includes('QQQ')) return 'https://financialmodelingprep.com/image-stock/QQQ.png'
+  if (sym.includes('GOLD') || sym.includes('XAU') || sym === 'GLD') return 'https://financialmodelingprep.com/image-stock/GLD.png'
+  if (sym.includes('NVDA')) return 'https://financialmodelingprep.com/image-stock/NVDA.png'
+  if (sym.includes('TSLA')) return 'https://financialmodelingprep.com/image-stock/TSLA.png'
+  if (sym.includes('AAPL')) return 'https://financialmodelingprep.com/image-stock/AAPL.png'
+  return `https://financialmodelingprep.com/image-stock/${sym.replace(/[^A-Z0-9]/g, '')}.png`
+}
 
 const newsCategoryTabs = [
   { key: 'ALL', count: 9, labels: { en: 'ALL WIRES', ko: '전체 속보', cn: '全部快讯' } },
@@ -502,7 +520,7 @@ const personaProfiles: Record<PersonaType, { name: string; tag: string; title: s
     name: 'J. Han',
     tag: 'SYSTEM TRADING',
     title: 'Director of Quantitative Execution',
-    desc: 'ta4j 프랙탈 패턴, 비대칭 손익비(1:3.4), 모멘텀 돌파 전문'
+    desc: 'AETHER 프랙탈 패턴, 비대칭 손익비(1:3.4), 모멘텀 돌파 전문'
   }
 }
 
@@ -539,7 +557,7 @@ const getDefaultUserSessions = (user?: AuthResponse | null): AgentSession[] => {
           role: 'agent',
           persona: 'alex',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          content: `안녕하세요, **${name}** 님! **AETHER AI 리서치 데스크 (Bloomberg Desk & ta4j Multi-Fractal)**입니다.\n\n${isGuest ? '현재 **BTC/USD**의 실시간 시장 미시구조와 온체인 지표를 분석 중입니다.' : '회원님의 전용 퀀트 워크스페이스가 활성화되었습니다.'}\n\n궁금하신 종목 티커(예: BTC, ETH, NVDA, 삼전 등)나 가격대, 청산 리스크, 자본 배분 전략을 질문해 주세요.`
+          content: `안녕하세요, **${name}** 님! **AETHER AI 리서치 데스크 (AETHER Intelligence OS & Multi-Fractal)**입니다.\n\n${isGuest ? '현재 **BTC/USD**의 실시간 시장 미시구조와 온체인 지표를 분석 중입니다.' : '회원님의 전용 퀀트 워크스페이스가 활성화되었습니다.'}\n\n궁금하신 종목 티커(예: BTC, ETH, NVDA, 삼전 등)나 가격대, 청산 리스크, 자본 배분 전략을 질문해 주세요.`
         }
       ]
     }
@@ -824,12 +842,14 @@ export default function Page() {
   const [newsOpen, setNewsOpen] = useState(false)
   const [arbitrageOpen, setArbitrageOpen] = useState(false)
   const [tradeOpen, setTradeOpen] = useState(true)
+  const [researchOpen, setResearchOpen] = useState(true)
   const [marketActiveSymbol, setMarketActiveSymbol] = useState('BTC / USD')
   const [marketChartInterval, setMarketChartInterval] = useState('1W')
   const [marketCopilotTab, setMarketCopilotTab] = useState<'INSIGHTS' | 'GUIDE' | 'CODE'>('INSIGHTS')
   const [marketPrompt, setMarketPrompt] = useState('')
   const [marketCopilotLoading, setMarketCopilotLoading] = useState(false)
   const [marketMessages, setMarketMessages] = useState<{ role: 'user' | 'assistant'; text: string; time: string }[]>([])
+  const [isCopilotExpanded, setIsCopilotExpanded] = useState(false)
   const [articleModalOpen, setArticleModalOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
@@ -892,7 +912,7 @@ export default function Page() {
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('alex')
   const [agentInputPrompt, setAgentInputPrompt] = useState<string>('')
   const [agentThinking, setAgentThinking] = useState<boolean>(false)
-  const [agentThinkingStep, setAgentThinkingStep] = useState<string>('ta4j 퀀트 지표 & 20/50 SMA 계산 중...')
+  const [agentThinkingStep, setAgentThinkingStep] = useState<string>('AETHER 퀀트 모멘텀 지표 & 20/50 EMA 계산 중...')
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const [attachedImageName, setAttachedImageName] = useState<string>('')
   const chatFileInputRef = useRef<HTMLInputElement>(null)
@@ -950,7 +970,7 @@ export default function Page() {
           role: 'agent',
           persona: 'alex',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          content: `안녕하세요. **AETHER AI 리서치 데스크 (Bloomberg Desk & ta4j Multi-Fractal)**입니다.\n\n현재 **${sym}**의 실시간 시장 미시구조, 온체인 유동성, 그리고 Bright Data 실시간 뉴스 피드를 모니터링하고 있습니다.\n\n궁금하신 지지/저항 가격대, 숏/롱 청산 리스크, 또는 자본 배분 전략을 편하게 질문해 주세요. **[📷 차트 캡처 사진 첨부]** 기능으로 이미지 분석도 가능합니다.`
+          content: `안녕하세요. **AETHER AI 리서치 데스크 (AETHER Intelligence OS & Multi-Fractal)**입니다.\n\n현재 **${sym}**의 실시간 시장 미시구조, 온체인 유동성, 그리고 Bright Data 실시간 뉴스 피드를 모니터링하고 있습니다.\n\n궁금하신 지지/저항 가격대, 숏/롱 청산 리스크, 또는 자본 배분 전략을 편하게 질문해 주세요. **[📷 차트 캡처 사진 첨부]** 기능으로 이미지 분석도 가능합니다.`
         }
       ]
     }
@@ -1057,7 +1077,7 @@ export default function Page() {
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           toolCalls: [
             { name: 'ta4j.calculateSignals', detail: `${curSess.symbol} RSI, SMA20/50, Volatility Bands calculated`, status: 'DONE' },
-            { name: 'fastDtw.fractalScan', detail: `8,000 candles FastDTW parallel pattern matching`, status: 'DONE' },
+            { name: 'aether.fractalEngine', detail: `AETHER 8,000 빅데이터 프랙탈 패턴 스캔 완료`, status: 'DONE' },
             { name: 'brightdata.scrapeNews', detail: `Bright Data real-time financial news stream & sentiment scoring`, status: 'DONE' },
             { name: 'qwenMax.streaming', detail: `Qwen-Max 300B+ Flagship real-time token streaming`, status: 'RUNNING' }
           ]
@@ -1105,7 +1125,7 @@ export default function Page() {
               { name: 'qwenMax.issueActionTicket', detail: `Institutional 3-stage execution ticket issued`, status: 'DONE' }
             ] : [
               { name: 'ta4j.calculateSignals', detail: `${curSess.symbol} RSI, SMA20/50, Volatility Bands calculated`, status: 'DONE' },
-              { name: 'fastDtw.fractalScan', detail: `8,000 candles FastDTW parallel pattern matching`, status: 'DONE' },
+              { name: 'aether.fractalEngine', detail: `AETHER 8,000 빅데이터 프랙탈 패턴 스캔 완료`, status: 'DONE' },
               { name: 'brightdata.scrapeNews', detail: `Bright Data real-time financial news stream & sentiment scoring`, status: 'DONE' },
               { name: 'qwenMax.synthesize', detail: `Institutional Qwen-Max Flagship Synthesis complete`, status: 'DONE' }
             ];
@@ -1180,6 +1200,7 @@ export default function Page() {
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [depositSuccessResult, setDepositSuccessResult] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [marketDropdownOpen, setMarketDropdownOpen] = useState(false)
 
   // 10-Win Streak Claim Modal State
   const [claimModalOpen, setClaimModalOpen] = useState(false)
@@ -2247,6 +2268,16 @@ export default function Page() {
             }, 60)
           }
         }}
+        researchOpen={researchOpen}
+        onToggleResearch={() => {
+          const next = !researchOpen
+          setResearchOpen(next)
+          if (next) {
+            setTimeout(() => {
+              document.getElementById('research-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 60)
+          }
+        }}
         onOpenUpgrade={() => setUpgradeOpen(true)}
       />
 
@@ -2313,9 +2344,11 @@ export default function Page() {
                 { name: 'BTC / USD', ticker: 'BTC', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$78,418.00', change: '+2.84%', tag: language === 'ko' ? '디지털 골드 · 기축' : 'Digital Gold · Reserve' },
                 { name: 'ETH / USD', ticker: 'ETH', logo: 'https://financialmodelingprep.com/image-stock/ETHUSD.png', price: '$3,842.17', change: '+1.62%', tag: language === 'ko' ? '스마트 컨트랙트 허브' : 'Layer 1 Smart Contracts' },
                 { name: 'SOL / USD', ticker: 'SOL', logo: 'https://financialmodelingprep.com/image-stock/SOLUSD.png', price: '$182.64', change: '-0.48%', tag: language === 'ko' ? '초고속 DeFi 생태계' : 'High-Throughput DeFi' },
-                { name: 'XRP / USD', ticker: 'XRP', logo: 'https://financialmodelingprep.com/image-stock/XRPUSD.png', price: '$2.15', change: '+5.12%', tag: language === 'ko' ? '국경 간 결제 프로토콜' : 'Cross-Border Protocol' },
-                { name: 'BNB / USD', ticker: 'BNB', logo: 'https://financialmodelingprep.com/image-stock/BNBUSD.png', price: '$648.20', change: '+0.95%', tag: language === 'ko' ? '바이낸스 체인 가스' : 'Binance Chain Gas' },
-                { name: 'NVDA', ticker: 'NVDA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', tag: language === 'ko' ? 'AI 반도체 거인' : 'AI Semiconductor Giant' }
+                { name: 'S&P 500', ticker: 'SPX', logo: 'https://financialmodelingprep.com/image-stock/SPY.png', price: '5,842.91', change: '+0.37%', tag: language === 'ko' ? '미국 대형주 500 지수' : 'US S&P 500 Benchmark' },
+                { name: 'NASDAQ 100', ticker: 'NDX', logo: 'https://financialmodelingprep.com/image-stock/QQQ.png', price: '20,118.44', change: '+0.61%', tag: language === 'ko' ? '나스닥 빅테크 100 지수' : 'NASDAQ 100 Tech' },
+                { name: 'GOLD', ticker: 'XAU', logo: 'https://financialmodelingprep.com/image-stock/GLD.png', price: '$2,348.70', change: '-0.12%', tag: language === 'ko' ? '실물 금 안전자산' : 'Physical Gold Commodity' },
+                { name: 'NVDA', ticker: 'NVDA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', tag: language === 'ko' ? 'AI 반도체 거인' : 'AI Semiconductor Giant' },
+                { name: 'TSLA', ticker: 'TSLA', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', tag: language === 'ko' ? '자율주행·로보택시' : 'Autonomous Driving' }
               ].map((item, i) => {
                 const isSelected = marketActiveSymbol === item.name || (item.ticker === 'NVDA' && marketActiveSymbol === 'NVDA')
                 return (
@@ -2350,7 +2383,84 @@ export default function Page() {
           <div className="market-workspace">
             <section className="market-chart-column">
               <div className="section-heading">
-                <h2 style={{ fontFamily: 'var(--font-sans)' }}>{marketActiveSymbol} {language === 'ko' ? '실시간 차트' : language === 'cn' ? '实时图表' : 'chart'}</h2>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMarketDropdownOpen(!marketDropdownOpen)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#f4f5f7] hover:bg-[#fff4ec] border border-[#dfe3eb] hover:border-[#f47a20] rounded-[8px] text-[#101522] transition-all cursor-pointer shadow-sm"
+                    title="종목 변경하기"
+                  >
+                    <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                      <img
+                        src={getSymbolLogo(marketActiveSymbol)}
+                        alt={marketActiveSymbol}
+                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = getSymbolLogo(marketActiveSymbol); }}
+                      />
+                    </div>
+                    <strong style={{ fontSize: '14px', fontFamily: 'var(--font-sans)', color: '#101522' }}>{marketActiveSymbol}</strong>
+                    <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#09a58e' }}>
+                      {priceFormatted !== '—' ? priceFormatted : '$78,418.00'}
+                    </span>
+                    <ChevronDown size={14} className={`text-[#64748b] transition-transform duration-200 ml-1 ${marketDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {marketDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 w-[300px] sm:w-[340px] bg-white border border-[#dfe3eb] rounded-[12px] shadow-2xl z-50 p-2 animate-in fade-in max-h-[300px] overflow-y-auto">
+                      {[
+                        { name: 'BTC / USD', ticker: 'BTC', price: '$78,418.00', change: '+2.84%', tag: '디지털 골드' },
+                        { name: 'ETH / USD', ticker: 'ETH', price: '$3,842.17', change: '+1.62%', tag: '스마트 컨트랙트' },
+                        { name: 'SOL / USD', ticker: 'SOL', price: '$182.64', change: '-0.48%', tag: '초고속 DeFi' },
+                        { name: 'S&P 500', ticker: 'SPX', price: '5,842.91', change: '+0.37%', tag: '미국 대형주 500 지수' },
+                        { name: 'NASDAQ 100', ticker: 'NDX', price: '20,118.44', change: '+0.61%', tag: '나스닥 빅테크 100 지수' },
+                        { name: 'GOLD', ticker: 'XAU', price: '$2,348.70', change: '-0.12%', tag: '실물 금 안전자산' },
+                        { name: 'NVDA', ticker: 'NVDA', price: '$138.50', change: '+2.45%', tag: 'AI 반도체 거인' },
+                        { name: 'TSLA', ticker: 'TSLA', price: '$218.40', change: '-1.71%', tag: '자율주행·로보택시' },
+                        { name: 'AAPL', ticker: 'AAPL', price: '$224.20', change: '+1.63%', tag: '애플 인텔리전스' },
+                        { name: 'XRP / USD', ticker: 'XRP', price: '$2.15', change: '+5.12%', tag: '국경 간 결제' },
+                        { name: 'BNB / USD', ticker: 'BNB', price: '$648.20', change: '+0.95%', tag: '바이낸스 생태계' },
+                        { name: 'DOGE / USD', ticker: 'DOGE', price: '$0.284', change: '+8.45%', tag: '밈 유동성' }
+                      ].map((item) => {
+                        const isSel = marketActiveSymbol === item.name || (item.ticker === 'NVDA' && marketActiveSymbol === 'NVDA')
+                        return (
+                          <button
+                            key={item.name}
+                            type="button"
+                            onClick={() => {
+                              setMarketActiveSymbol(item.name)
+                              setSearched(item.ticker === 'NVDA' ? 'NVDA' : item.name.replace(' / ', '/'))
+                              setMarketDropdownOpen(false)
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-[6px] hover:bg-[#fff4ec] text-left transition-colors cursor-pointer border-0 ${
+                              isSel ? 'bg-[#fff4ec] text-[#f47a20]' : 'text-[#172033]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                <img
+                                  src={getSymbolLogo(item.name)}
+                                  alt={item.name}
+                                  style={{ width: '15px', height: '15px', objectFit: 'contain' }}
+                                  onError={(e) => { (e.target as HTMLImageElement).src = getSymbolLogo(item.name); }}
+                                />
+                              </div>
+                              <div>
+                                <div className="text-[12px] font-bold leading-tight">{item.name}</div>
+                                <div className="text-[9px] text-[#94a3b8]">{item.tag}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[12px] font-mono font-bold">{item.price}</div>
+                              <div className={`text-[10px] font-mono font-bold ${item.change.startsWith('+') ? 'text-[#09a58e]' : 'text-[#ef4e5d]'}`}>
+                                {item.change}
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
                 <div className="chart-intervals">
                   {['1m', '5m', '15m', '1h', '4h', '1D', '1W', '1M'].map((int) => (
                     <button
@@ -2436,7 +2546,7 @@ export default function Page() {
                   <h2 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '시장을 분석하고 질문하세요.' : 'Ask the market.'}</h2>
                 </div>
                 <span className="model-pill">
-                  <Sparkles size={13} /> 4-ENGINE RAG
+                  <Sparkles size={13} /> AETHER QUANT
                 </span>
               </div>
 
@@ -2468,7 +2578,7 @@ export default function Page() {
                 <div className="insight-card">
                   <span className="signal-tag">{marketActiveSymbol} · {language === 'ko' ? '상승 모멘텀' : 'MOMENTUM'}</span>
                   <h3 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '기관급 시장 미시구조 분석' : 'Buyers remain in control.'}</h3>
-                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '주간 VWAP 상단 지지 및 거래량 증가세 확인. FastDTW 8,000 프랙탈 기반 상단 저항선 테스트 유력.' : 'Price is holding above the weekly VWAP with rising volume. The next resistance zone sits near $78,420.'}</p>
+                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '주간 VWAP 상단 지지 및 거래량 증가세 확인. AETHER 시계열 프랙탈 엔진 기반 상단 저항선 테스트 유력.' : 'Price is holding above the weekly VWAP with rising volume. The next resistance zone sits near $78,420.'}</p>
                   <div className="signal-metrics">
                     <span>{language === 'ko' ? '신뢰도' : 'CONFIDENCE'} <b>84%</b></span>
                     <span>{language === 'ko' ? '바이어스' : 'BIAS'} <b>{language === 'ko' ? '매수 우위' : 'BULLISH'}</b></span>
@@ -2527,7 +2637,31 @@ def signal(tick):
                         <b>{m.role === 'user' ? (language === 'ko' ? '사용자' : 'YOU') : (language === 'ko' ? 'AI 코파일럿' : 'COPILOT')}</b>
                         <span>{m.time}</span>
                       </div>
-                      <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{m.text}</div>
+                      {m.role === 'assistant' && (
+                        <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={() => setIsCopilotExpanded(true)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              color: '#f47a20',
+                              padding: '2px 6px',
+                              background: '#fff4ec',
+                              borderRadius: '4px',
+                              border: '1px solid #fed7aa',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Maximize2 size={10} />
+                            <span>{language === 'ko' ? '전체화면으로 크게 보기' : 'Expand View'}</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -2536,7 +2670,7 @@ def signal(tick):
               {marketMessages.length === 0 && (
                 <div className="copilot-message">
                   <BrainCircuit size={16} color="#f47a20" />
-                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? `실제 백엔드 4-Engine AI에 ${marketActiveSymbol} 퀀트 전략을 질문하세요.` : `Ask me to explain this chart, compare assets, or draft a risk-managed trade plan.`}</p>
+                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? `🤖 AETHER AI 코파일럿에게 ${marketActiveSymbol} 실시간 분석 및 매매 전략을 자유롭게 질문하세요.` : `Ask AETHER AI Copilot about ${marketActiveSymbol} live chart analysis or trade plans.`}</p>
                 </div>
               )}
 
@@ -2556,12 +2690,15 @@ def signal(tick):
 
                       const mappedMode = marketCopilotTab === 'INSIGHTS' ? 'INSIGHT' : marketCopilotTab === 'GUIDE' ? 'GUIDE' : 'CODING'
                       const cleanSym = marketActiveSymbol.replace(' / ', '').replace('/', '').toUpperCase()
+                      const copilotHistory = marketMessages.slice(-6).map(m => ({ role: m.role, content: m.text })).filter(m => m.content.trim().length > 0)
                       try {
                         const res = await sendResearchChat({
                           symbol: cleanSym,
                           prompt: userMsg,
                           mode: mappedMode as any,
-                          language: language
+                          language: language,
+                          conversationId: `copilot-${cleanSym}`,
+                          history: copilotHistory
                         })
                         const text = res.reply || res.answer || `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 모멘텀 분석이 완료되었습니다.`
                         setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
@@ -2589,12 +2726,15 @@ def signal(tick):
 
                     const mappedMode = marketCopilotTab === 'INSIGHTS' ? 'INSIGHT' : marketCopilotTab === 'GUIDE' ? 'GUIDE' : 'CODING'
                     const cleanSym = marketActiveSymbol.replace(' / ', '').replace('/', '').toUpperCase()
+                    const copilotHistory = marketMessages.slice(-6).map(m => ({ role: m.role, content: m.text })).filter(m => m.content.trim().length > 0)
                     try {
                       const res = await sendResearchChat({
                         symbol: cleanSym,
                         prompt: userMsg,
                         mode: mappedMode as any,
-                        language: language
+                        language: language,
+                        conversationId: `copilot-${cleanSym}`,
+                        history: copilotHistory
                       })
                       const text = res.reply || res.answer || `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 모멘텀 분석이 완료되었습니다.`
                       setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
@@ -2608,9 +2748,209 @@ def signal(tick):
                   {marketCopilotLoading ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                 </button>
               </div>
-              {marketCopilotLoading && <span className="sent-note" style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '바이낸스 오더플로우 및 프랙탈 추론 중…' : 'Analyzing market micro-structure…'}</span>}
+              {marketCopilotLoading && <span className="sent-note" style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '실시간 시장 수급 및 과거 차트 승률 대조 중…' : 'Analyzing live market signals…'}</span>}
             </aside>
           </div>
+
+        {/* ── In-Place Floating Fullscreen Copilot Modal (Pure OLED Black) ── */}
+        {isCopilotExpanded && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.88)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setIsCopilotExpanded(false)}
+          >
+            <div
+              style={{
+                background: '#000000',
+                border: '1px solid #1e293b',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '940px',
+                maxHeight: '88vh',
+                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 1px 1px rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                color: '#e2e8f0',
+                fontFamily: 'var(--font-sans)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #141820', background: '#000000' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img src={getSymbolLogo(marketActiveSymbol)} alt={marketActiveSymbol} style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#f8fafc' }}>{marketActiveSymbol}</h3>
+                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(244,122,32,0.15)', color: '#f47a20', fontWeight: 600, border: '1px solid rgba(244,122,32,0.3)' }}>
+                        AETHER QUANT OS
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>{language === 'ko' ? '실시간 거래소 오더북 & 시계열 프랙탈 융합 인텔리전스 데스크' : 'Institutional Market Micro-Structure & Fractal Intelligence'}</p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className="copilot-tabs" style={{ margin: 0, padding: 0 }}>
+                    <button className={marketCopilotTab === 'INSIGHTS' ? 'active' : ''} onClick={() => setMarketCopilotTab('INSIGHTS')} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                      {language === 'ko' ? '인사이트' : 'INSIGHTS'}
+                    </button>
+                    <button className={marketCopilotTab === 'GUIDE' ? 'active' : ''} onClick={() => setMarketCopilotTab('GUIDE')} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                      {language === 'ko' ? '플레이북' : 'GUIDE'}
+                    </button>
+                    <button className={marketCopilotTab === 'CODE' ? 'active' : ''} onClick={() => setMarketCopilotTab('CODE')} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                      {language === 'ko' ? '파이썬 코드' : 'CODE'}
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setIsCopilotExpanded(false)}
+                    style={{ background: '#1e293b', border: 'none', color: '#94a3b8', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', background: '#000000' }}>
+                {marketCopilotTab === 'INSIGHTS' && (
+                  <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#080808', border: '1px solid #1c1c1c' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{marketActiveSymbol} · {language === 'ko' ? '상승 모멘텀 진단' : 'MOMENTUM INSIGHT'}</span>
+                      <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>신뢰도 84% · 매수 우위 (BULLISH)</span>
+                    </div>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#f3f4f6' }}>{language === 'ko' ? '기관급 시장 미시구조 & 8,000봉 프랙탈 분석' : 'Institutional Market Structure & Fractal Analysis'}</h4>
+                    <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, color: '#9ca3af' }}>{language === 'ko' ? '주간 VWAP 상단 지지 및 거래량 증가세 확인. AETHER 시계열 프랙탈 엔진 기반 상단 저항선 테스트 유력. 스마트머니 온체인 지갑 순유입 기조 유지.' : 'Price is holding above weekly VWAP with rising volume. Resistance test probable.'}</p>
+                  </div>
+                )}
+                {marketCopilotTab === 'GUIDE' && (
+                  <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#040a14', border: '1px solid #10243e' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#3b82f6' }}>{marketActiveSymbol} · {language === 'ko' ? '기관급 분할 진입 가이드' : 'EXECUTION PLAYBOOK'}</span>
+                      <span style={{ fontSize: '11px', color: '#60a5fa', fontWeight: 600 }}>손익비 1:2.6 · 최대 허용 리스크 0.35x</span>
+                    </div>
+                    <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#bfdbfe' }}>
+                      • <b>권장 진입:</b> SMA 20 지지선 부근 분할 매수<br />
+                      • <b>익절 타겟:</b> +2.8% 1차 저항선 도달 시 50% 분할 익절<br />
+                      • <b>손절 기준:</b> -1.2% 하향 이탈 시 트레일링 스탑 청산
+                    </div>
+                  </div>
+                )}
+                {marketCopilotTab === 'CODE' && (
+                  <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#040404', border: '1px solid #171717' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>PYTHON 3.12 QUANT BOT</span>
+                    <pre style={{ margin: '10px 0 0 0', fontSize: '12px', fontFamily: 'var(--font-mono)', color: '#7dd3fc', lineHeight: 1.5, overflowX: 'auto' }}>
+{`# 24H High-Performance Algorithmic Bot (${marketActiveSymbol.replace(' / ', '/')})
+def signal(tick):
+    rsi = tick.get("rsi", 50.0)
+    if rsi < 32.0:
+        return {"action": "BUY", "size_ratio": 0.35, "stop_loss_pct": -0.025}
+    elif rsi > 68.0:
+        return {"action": "SELL", "size_ratio": 0.35, "take_profit_pct": 0.055}
+    return {"action": "HOLD"}`}
+                    </pre>
+                  </div>
+                )}
+
+                {/* Chat History Messages */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h4 style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {language === 'ko' ? '대화 세션 & AI 심층 답변 기록' : 'Session History & Analysis'}
+                  </h4>
+                  {marketMessages.length === 0 ? (
+                    <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#050505', borderRadius: '12px', border: '1px dashed #1f2937' }}>
+                      {language === 'ko' ? '아래 질문창에 질문을 입력하시면 넓은 화면에서 실시간 퀀트 심층 리포트가 생성됩니다.' : 'Type your question below to generate a comprehensive institutional quant report.'}
+                    </div>
+                  ) : (
+                    marketMessages.map((m, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '16px 20px',
+                          borderRadius: '12px',
+                          fontSize: '13px',
+                          background: m.role === 'user' ? '#140c06' : '#080808',
+                          border: m.role === 'user' ? '1px solid #381504' : '1px solid #1c1c1c',
+                          color: m.role === 'user' ? '#fdba74' : '#f1f5f9',
+                          lineHeight: 1.65
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', opacity: 0.6, marginBottom: '6px' }}>
+                          <b>{m.role === 'user' ? (language === 'ko' ? '👤 나의 질문' : 'USER') : (language === 'ko' ? '🤖 AETHER 퀀트 AI' : 'AETHER QUANT AI')}</b>
+                          <span>{m.time}</span>
+                        </div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer / Composer */}
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #141820', background: '#000000' }}>
+                <div className="copilot-composer" style={{ margin: 0 }}>
+                  <textarea
+                    value={marketPrompt}
+                    onChange={(e) => setMarketPrompt(e.target.value)}
+                    placeholder={language === 'ko' ? `${marketActiveSymbol}에 대해 추가 질문하기...` : `Ask follow-up questions about ${marketActiveSymbol}...`}
+                    style={{ fontFamily: 'var(--font-sans)', minHeight: '52px', fontSize: '13px' }}
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        const btn = document.getElementById('copilot-modal-send-btn')
+                        if (btn) btn.click()
+                      }
+                    }}
+                  />
+                  <button
+                    id="copilot-modal-send-btn"
+                    type="button"
+                    disabled={marketCopilotLoading}
+                    onClick={async () => {
+                      if (!marketPrompt.trim() || marketCopilotLoading) return
+                      const userMsg = marketPrompt.trim()
+                      const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                      setMarketMessages(prev => [...prev, { role: 'user', text: userMsg, time: now }])
+                      setMarketPrompt('')
+                      setMarketCopilotLoading(true)
+
+                      const mappedMode = marketCopilotTab === 'INSIGHTS' ? 'INSIGHT' : marketCopilotTab === 'GUIDE' ? 'GUIDE' : 'CODING'
+                      const cleanSym = marketActiveSymbol.replace(' / ', '').replace('/', '').toUpperCase()
+                      const copilotHistory = marketMessages.slice(-6).map(m => ({ role: m.role, content: m.text })).filter(m => m.content.trim().length > 0)
+                      try {
+                        const res = await sendResearchChat({
+                          symbol: cleanSym,
+                          prompt: userMsg,
+                          mode: mappedMode as any,
+                          language: language,
+                          conversationId: `copilot-${cleanSym}`,
+                          history: copilotHistory
+                        })
+                        const text = res.reply || res.answer || `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 모멘텀 분석이 완료되었습니다.`
+                        setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
+                      } catch (err) {
+                        setMarketMessages(prev => [...prev, { role: 'assistant', text: `[${cleanSym} 퀀트 인텔리전스] 실시간 호가 기준 상방 모멘텀 테스트 유효.`, time: now }])
+                      } finally {
+                        setMarketCopilotLoading(false)
+                      }
+                    }}
+                  >
+                    {marketCopilotLoading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
           <section className="market-snapshot" style={{ marginTop: '35px' }}>
             <div className="section-heading">
@@ -2657,7 +2997,7 @@ def signal(tick):
                 10 wins. <em style={{ color: '#0f766e', fontStyle: 'italic' }}>One claim.</em>
               </h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
-                <strong>[LAYER 1] AI vs 인간 배틀:</strong> ta4j 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
+                <strong>[LAYER 1] AI vs 인간 배틀:</strong> AETHER 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
                 <strong>[LAYER 2] 1시간 기준 고정가 정산:</strong> 라운드 시작 시 고정된 <strong>1H 기준가</strong> 대비 1시간 캔들 종가의 <strong>상승(UP) / 하락(DOWN)</strong> 예측<br className="desktop-only" />
                 배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 <strong>$10.00 USDT</strong>가 즉시 지급됩니다.
               </p>
@@ -3843,7 +4183,13 @@ def signal(tick):
         <div className="upgrade-overlay" role="dialog" aria-modal="true" aria-labelledby="upgrade-title">
           <section className="upgrade-sheet">
             <button className="upgrade-close" aria-label="Close upgrade dialog" onClick={() => setUpgradeOpen(false)}>×</button>
-            <div className="upgrade-spark">A</div>
+            <div className="upgrade-spark flex items-center justify-center">
+              <img
+                src="/brand-logo.png"
+                alt="AETHER Brand Logo"
+                className="w-[42px] h-[42px] object-contain rounded-[8px] shadow-[0_0_20px_rgba(244,122,32,0.35)]"
+              />
+            </div>
             <span className="upgrade-kicker">AETHER INTELLIGENCE</span>
             <h2 id="upgrade-title">
               Upgrade your<br />
@@ -3911,9 +4257,11 @@ def signal(tick):
           <div className="panel" style={{ width: '520px', background: '#fff', padding: '24px', borderRadius: '6px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)', fontFamily: "var(--font-sans)" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '22px', height: '22px', border: '1px solid #38bdf8', background: '#090e17', color: '#38bdf8', fontWeight: 800, fontSize: '13px', display: 'grid', placeItems: 'center', borderRadius: '3px', boxShadow: '0 0 8px rgba(56,189,248,0.35)' }}>
-                  A
-                </div>
+                <img
+                  src="/brand-logo.png"
+                  alt="AETHER Brand Logo"
+                  style={{ width: '26px', height: '26px', objectFit: 'contain', borderRadius: '4px', boxShadow: '0 0 10px rgba(244,122,32,0.3)' }}
+                />
                 <strong style={{ fontSize: '15px', color: '#18334a', fontWeight: 700, fontFamily: "var(--font-sans)" }}>
                   {upgradePlan === 'CORE' ? 'AETHER CORE 모델 30일 구독 ($7.0 USDT)' : 'AETHER PRO 모델 30일 구독 ($13.0 USDT)'}
                 </strong>
@@ -4500,14 +4848,6 @@ def signal(tick):
         </section>
       )}
 
-      {/* ── Hero Search Section (Interactive AI Line Art & Responsive Layout) ── */}
-      <Hero
-        query={query}
-        onQueryChange={setQuery}
-        onSearch={handlePerformSearch}
-        language={language}
-      />
-
       {/* ── 24H Trading Operations Console ── */}
       <section className="trading-console panel" id="trading-console">
         <div className="instance-console-head">
@@ -4688,7 +5028,7 @@ def signal(tick):
                 >
                   <option value="RSI + Bollinger Multi-Fractal">RSI + Bollinger Multi-Fractal (추세추종)</option>
                   <option value="SMA 20/50 Dual Crossover">SMA 20/50 Dual Crossover (골든크로스)</option>
-                  <option value="FastDTW 8000 Pattern Match">FastDTW 8000 Pattern Match (프랙탈 반등)</option>
+                  <option value="AETHER Fractal Match">AETHER 시계열 프랙탈 매칭 (빅데이터 반등 패턴)</option>
                   <option value="Custom Python Script">Custom Python Script (개발자 모드 코드)</option>
                 </select>
               </label>
@@ -4894,7 +5234,7 @@ def signal(tick):
         <div className="bot-mode-switch" role="tablist" aria-label="Bot execution mode">
           <button role="tab" aria-selected={botMode === 'GENERAL'} className={botMode === 'GENERAL' ? 'selected' : ''} onClick={() => setBotMode('GENERAL')}>
             <strong>GENERAL MODE {language === 'ko' ? '(입문용 모드)' : language === 'cn' ? '(入门模式)' : ''}</strong>
-            <span>{language === 'ko' ? 'ta4j 노코드 퀀트 파라미터 제어' : language === 'cn' ? 'TA4J 无代码量化参数控制' : 'TA4J quant controls'}</span>
+            <span>{language === 'ko' ? 'AETHER 노코드 퀀트 파라미터 제어' : language === 'cn' ? 'TA4J 无代码量化参数控制' : 'TA4J quant controls'}</span>
           </button>
           <button role="tab" aria-selected={botMode === 'DEVELOPER'} className={botMode === 'DEVELOPER' ? 'selected' : ''} onClick={() => setBotMode('DEVELOPER')}>
             <strong>DEVELOPER MODE {language === 'ko' ? '(개발자 모드)' : language === 'cn' ? '(开发者模式)' : ''}</strong>
@@ -5047,525 +5387,316 @@ def signal(tick):
         </div>
       </section>
 
-      {/* ── AI Agent Studio (3-Column Copilot Workstation) ── */}
-      <section className="research-terminal panel" id="research-terminal">
-        <div className="panel-heading">
-          <span><Diamond /> AI AGENT WORKSPACE · {currentSession?.symbol || searched}</span>
-          <span className="status-tag">
-            AETHER AI COPILOT · {researchMode === 'INSIGHT' ? 'INSIGHT MODE' : 'GUIDE MODE'}
-          </span>
-        </div>
-
-        <div className="agent-studio-layout">
-          {/* 1. Left Column: Sessions & Topic Manager */}
-          <aside className="agent-sidebar">
-            <div className="agent-sidebar-top">
-              <button className="new-session-btn" onClick={() => handleCreateNewSession()}>
-                <span>+ NEW RESEARCH SESSION</span>
-                <span>↗</span>
-              </button>
+      {/* ── AI Research Intelligence Workspace (Light Mode Embedded Studio) ── */}
+      {researchOpen && (
+        <section className="research-terminal panel" id="research-terminal" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e3e6ee', borderRadius: '12px', background: '#ffffff', margin: '24px 0' }}>
+        <div className="workspace-light" style={{ minHeight: 'auto' }}>
+          {/* Header Intro inside main page */}
+          <div className="research-intro-light" style={{ padding: '36px 20px 20px', borderBottom: '1px solid #f1f5f9' }}>
+            <div className="terminal-kicker">
+              <Sparkles size={13} className="text-[#f47a20]" />
+              <span>Institutional Market Intelligence</span>
             </div>
 
-            <div className="session-list">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 16px 4px' }}>
-                <span className="session-group-label" style={{ padding: 0 }}>RESEARCH TOPICS</span>
-                <span style={{ fontSize: '7px', color: 'var(--blue)', fontFamily: "var(--font-mono)" }}>{agentSessions.length} TOPICS</span>
-              </div>
-              {agentSessions.map((sess) => (
-                <div
-                  key={sess.id}
-                  className={`session-item ${activeSessionId === sess.id ? 'active' : ''}`}
-                  onClick={() => setActiveSessionId(sess.id)}
-                >
-                  <div className="session-item-info">
-                    <span className="session-item-title">{sess.title}</span>
-                    <div className="session-item-meta">
-                      <span className="session-badge">{sess.symbol}</span>
-                      <span>{sess.updatedAt}</span>
-                    </div>
-                  </div>
+            <h2 style={{ fontSize: 'clamp(28px, 4vw, 42px)', margin: '10px 0 8px', fontWeight: 700, letterSpacing: '-0.04em', color: '#101522' }}>
+              AETHER // Research <em style={{ background: 'linear-gradient(135deg, #f47a20 0%, #ff9f43 50%, #e65100 100%)', WebkitBackgroundClip: 'text', color: 'transparent', fontStyle: 'normal', fontWeight: 800 }}>Intelligence</em>
+            </h2>
+
+            <p style={{ maxWidth: '620px', margin: '0 auto', fontSize: '13px', color: '#64748b' }}>
+              AETHER 글로벌 인텔리전스 레이더와 시계열 빅데이터 프랙탈 엔진을 결합하여 수치 근거가 명확한 기관급 투자 리서치 리포트를 생성합니다.
+            </p>
+
+            <div className="model-selector" title="Alibaba Cloud DashScope Flagship 300B+ Cloud GPU Engine">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+              <span>Engine:</span>
+              <strong className="text-[#f47a20] font-semibold">Qwen-Max (Alibaba Cloud Flagship)</strong>
+              <span className="text-[9px] font-mono text-[#94A3B8]">· 300B+ Params</span>
+            </div>
+
+            {/* 5 Prompt Chiplets Bar */}
+            <div className="prompt-chiplets-bar" style={{ marginTop: '20px', marginBottom: '0' }}>
+              {[
+                { key: 'INSIGHT', name: '인사이트', icon: <Sparkles size={14} className="text-[#f47a20]" />, tag: 'FACT-CHECK', cssClass: 'chiplet-insight' },
+                { key: 'GUIDE', name: '가이드(자율형)', icon: <Bot size={14} className="text-[#0284C7]" />, tag: 'AUTONOMOUS', cssClass: 'chiplet-guide' },
+                { key: 'CODING', name: '코딩</>', icon: <Code2 size={14} className="text-[#059669]" />, tag: 'PYTHON / ALGO', cssClass: 'chiplet-coding' },
+                { key: 'MASTER', name: '마스터', icon: <Crown size={14} className="text-[#D97706]" />, tag: 'COUNCIL & MENTAL', cssClass: 'chiplet-master' },
+                { key: 'AGENT', name: '에이전트', icon: <Layers size={14} className="text-[#6366F1]" />, tag: 'AUTONOMOUS QUANT AI', cssClass: 'chiplet-agent' }
+              ].map(chip => {
+                const isActive = (researchMode || 'INSIGHT') === chip.key
+                return (
                   <button
-                    className="session-delete-btn"
-                    title="세션 삭제"
-                    onClick={(e) => handleDeleteSession(sess.id, e)}
+                    key={chip.key}
+                    type="button"
+                    onClick={() => {
+                      setResearchMode(chip.key as any)
+                      if (currentSession) {
+                        setAgentSessions(prev => prev.map(s => s.id === currentSession.id ? { ...s, mode: chip.key as any } : s))
+                      }
+                    }}
+                    className={`prompt-chiplet ${isActive ? `active ${chip.cssClass}` : ''}`}
                   >
-                    ✕
+                    {chip.icon}
+                    <span>{chip.name}</span>
+                    <span className="chiplet-tag">{chip.tag}</span>
                   </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Research 2-Column Shell (Rail + Main Canvas) */}
+          <div className="research-shell-light" style={{ minHeight: '520px' }}>
+            {/* 1. Left Rail Sidebar */}
+            <aside className="research-rail-light">
+              <div className="research-rail-title">
+                <span>Research History</span>
+                <button type="button" onClick={() => handleCreateNewSession()} title="새 리서치 생성">
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              <button type="button" className="new-research" onClick={() => handleCreateNewSession()}>
+                <Plus size={14} />
+                <span>New Research</span>
+              </button>
+
+              <span className="rail-label">Recent Sessions</span>
+
+              <div className="flex flex-col gap-1 overflow-y-auto max-h-[420px]">
+                {agentSessions.map((sess) => (
+                  <button
+                    key={sess.id}
+                    type="button"
+                    onClick={() => setActiveSessionId(sess.id)}
+                    className={`rail-item ${activeSessionId === sess.id ? 'active' : ''}`}
+                  >
+                    <MessageSquare size={13} className={activeSessionId === sess.id ? 'text-[#f47a20]' : 'text-[#94A3B8]'} />
+                    <span className="truncate flex-1">{sess.title}</span>
+                    <span
+                      onClick={(e) => handleDeleteSession(sess.id, e)}
+                      className="opacity-0 hover:opacity-100 p-0.5 rounded hover:bg-[#e2e8f0] text-[#94a3b8] hover:text-[#ef4444]"
+                      title="세션 삭제"
+                    >
+                      <X size={11} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="rail-bottom">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-[#f47a20]" />
+                  <span>Qwen-Max Flagship (300B+)</span>
                 </div>
-              ))}
-            </div>
-          </aside>
-
-          {/* 2. Center Column: Multi-turn Chat Stream */}
-          <main className="agent-chat-main">
-            <div className="agent-chat-header">
-              <div className="agent-header-title">
-                <h3>{currentSession?.title || `${searched} Research`}</h3>
-                <span>
-                  Bloomberg Desk & ta4j Multi-Fractal Fusion · Live Context
-                </span>
+                <small>AETHER Intelligence OS v2.5 Active</small>
               </div>
-              <div className="research-mode-switch" role="tablist" style={{ margin: 0, display: 'flex', gap: '2px' }}>
-                <button
-                  role="tab"
-                  aria-selected={researchMode === 'INSIGHT'}
-                  className={researchMode === 'INSIGHT' ? 'selected' : ''}
-                  onClick={() => {
-                    setResearchMode('INSIGHT')
-                    if (currentSession) {
-                      setAgentSessions(prev => prev.map(s => s.id === currentSession.id ? { ...s, mode: 'INSIGHT' } : s))
-                    }
-                  }}
-                  title="시장 지표, 8,000봉 프랙탈, RAG 외신 팩트체크 리서치"
-                >
-                  <strong>인사이트</strong>
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={researchMode === 'GUIDE'}
-                  className={researchMode === 'GUIDE' ? 'selected' : ''}
-                  onClick={() => {
-                    setResearchMode('GUIDE')
-                    if (currentSession) {
-                      setAgentSessions(prev => prev.map(s => s.id === currentSession.id ? { ...s, mode: 'GUIDE' } : s))
-                    }
-                  }}
-                  title="자율형 리스크 방패: 3단계 분할 집행 티켓 & 켈리 공식 자본배분"
-                >
-                  <strong>가이드 (자율형)</strong>
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={researchMode === 'CODING'}
-                  className={researchMode === 'CODING' ? 'selected' : ''}
-                  style={{
-                    borderLeft: '1px solid rgba(56, 189, 248, 0.3)',
-                    background: researchMode === 'CODING' ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2))' : undefined,
-                    color: researchMode === 'CODING' ? '#38bdf8' : undefined,
-                    fontWeight: 700
-                  }}
-                  onClick={() => {
-                    setResearchMode('CODING')
-                    if (currentSession) {
-                      setAgentSessions(prev => prev.map(s => s.id === currentSession.id ? { ...s, mode: 'CODING' } : s))
-                    }
-                  }}
-                  title="노코드 퀀트 전략 자동 튜너 & 봇 빌더: 파이썬/ta4j 코드 및 아레나 배포"
-                >
-                  <strong>코딩 &lt;&gt;</strong>
-                </button>
-              </div>
-            </div>
+            </aside>
 
-            <div className="chat-messages-container">
-              {currentSession?.messages?.map((msg) => (
-                <div key={msg.id} className={msg.role === 'user' ? 'chat-msg-user' : 'chat-msg-agent'}>
-                  {msg.role === 'user' ? (
-                    <>
-                      <div className="chat-msg-user-header">
-                        <span>YOU · PROMPT</span>
-                        <span>{msg.timestamp}</span>
-                      </div>
-                      {msg.imageUrl && (
-                        <div style={{ marginTop: '6px', marginBottom: '8px', background: '#0a0f18', padding: '5px', border: '1px solid #1e293b', borderRadius: '3px', display: 'inline-block' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 4px', borderBottom: '1px solid #1e293b', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '7.5px', color: '#38bdf8', fontFamily: "var(--font-mono)", letterSpacing: '0.05em' }}>[ATTACHED_CHART_BUFFER]</span>
-                            <span style={{ fontSize: '7.5px', color: '#64748b', fontFamily: "var(--font-mono)" }}>GROUND_TRUTH_SYNCED</span>
+            {/* 2. Main Chat Canvas */}
+            <main className="research-main-light" style={{ padding: '24px 28px' }}>
+              {/* Chat Thread */}
+              <div className="research-chat-thread" style={{ marginTop: '0', maxWidth: '100%' }}>
+                {currentSession?.messages?.map((msg) => {
+                  if (msg.role === 'user') {
+                    return (
+                      <div key={msg.id} className="research-bubble-user">
+                        {msg.imageUrl && (
+                          <div className="mb-2 p-1.5 bg-black/20 rounded-md border border-white/20 inline-block">
+                            <img src={msg.imageUrl} alt="Attached Chart" className="max-h-[140px] rounded object-cover" />
                           </div>
-                          <img
-                            src={msg.imageUrl}
-                            alt="Uploaded Chart"
-                            style={{ maxHeight: '180px', maxWidth: '100%', borderRadius: '2px', display: 'block' }}
-                          />
+                        )}
+                        <div>{msg.content}</div>
+                        <div className="text-[10px] text-right mt-1.5 opacity-70 font-mono">{msg.timestamp}</div>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div key={msg.id} className="research-bubble-agent">
+                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E5E7EB] text-[11px] font-mono text-[#64748B]">
+                        <div className="flex items-center gap-2">
+                          <BrainCircuit size={14} className="text-[#f47a20]" />
+                          <span className="font-bold text-[#101522]">
+                            AETHER [{researchMode || 'INSIGHT'}] QUANT RESEARCH REPORT
+                          </span>
                         </div>
-                      )}
-                      <div className="chat-msg-user-body">{msg.content}</div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="chat-msg-agent-header">
-                        <div className="agent-persona-tag">
-                          <Diamond />
-                          <span>AETHER QUANT AI</span>
-                          <span className="agent-persona-role">INSTITUTIONAL COPILOT</span>
-                        </div>
-                        <span style={{ fontSize: '7.5px', color: 'var(--muted)', fontFamily: "var(--font-mono)" }}>
-                          {msg.timestamp} · AUDITED
+                        <span className="px-2 py-0.5 rounded font-bold bg-[#DCFCE7] text-[#16A34A]">
+                          VERDICT: BUY
                         </span>
                       </div>
 
                       {msg.toolCalls && msg.toolCalls.length > 0 && (
-                        <div className="agent-tool-accordion">
-                          <div className="tool-summary-row">
-                            <span style={{ fontFamily: "var(--font-mono)" }}>[EXECUTED AGENT TOOL CALLS: {msg.toolCalls.length}]</span>
-                            <span style={{ color: '#10b981', fontFamily: "var(--font-mono)" }}>SUCCESS ✓</span>
+                        <div className="tool-tracing-box">
+                          <div className="tool-tracing-head">
+                            <span>[EXECUTED AGENT TOOL CALLS: {msg.toolCalls.length}]</span>
+                            <span className="flex items-center gap-1 text-[#059669]">
+                              SUCCESS ✓
+                            </span>
                           </div>
-                          <div className="tool-items-list">
+                          <div className="tool-tracing-list">
                             {msg.toolCalls.map((tc, idx) => (
-                              <div key={idx} className="tool-item-line" style={{ fontFamily: "var(--font-mono)" }}>
-                                <b>↳ {tc.name}:</b> {tc.detail}
+                              <div key={idx}>
+                                <b className="text-[#f47a20]">↳ {tc.name}:</b> {tc.detail}
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      <div className="chat-msg-agent-body">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content}
-                        </ReactMarkdown>
+                      <div className="prose max-w-none text-[14px] leading-relaxed">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       </div>
-                    </>
-                  )}
-                </div>
-              ))}
 
-              {agentThinking && (
-                <div className="chat-thinking-box" style={{ background: 'rgba(56, 189, 248, 0.06)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
-                  <Sparkles size={14} className="animate-spin" style={{ color: '#38bdf8' }} />
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: '11px', color: '#e0f2fe' }}>
-                    <strong style={{ color: '#38bdf8', letterSpacing: '0.5px' }}>[QUANT AI REASONING]</strong> {agentThinkingStep}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom Input Area with Image Attachment & Paste Support */}
-            <div className="agent-chat-input-wrapper">
-              <input
-                type="file"
-                ref={chatFileInputRef}
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleImageFileSelect}
-              />
-
-              <div className="chat-input-actions">
-                <div className="quick-prompt-chips-bar">
-                  <button
-                    className="quick-chip"
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.08)',
-                      color: '#38bdf8',
-                      borderColor: 'rgba(56, 189, 248, 0.35)',
-                      fontWeight: 'bold',
-                      fontFamily: "var(--font-mono)"
-                    }}
-                    onClick={() => chatFileInputRef.current?.click()}
-                  >
-                    + ATTACH CHART CAPTURE
-                  </button>
-                  <button className="quick-chip" style={{ fontFamily: "var(--font-mono)" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 핵심 지지선과 숏스퀴즈 가능성은?`)}>
-                    SUPPORT & SQUEEZE ANALYSIS
-                  </button>
-                  <button className="quick-chip" style={{ fontFamily: "var(--font-mono)" }} onClick={() => handleSendAgentMessage(`현재 ${currentSession?.symbol || searched}의 3단계 분할 매수 비중 어떻게 조절해?`)}>
-                    POSITION SIZING LADDER
-                  </button>
-                  <button className="quick-chip" style={{ fontFamily: "var(--font-mono)" }} onClick={() => handleSendAgentMessage(`만약 50일 이동평균선 이탈 시 손절 및 헷징 플랜은?`)}>
-                    STOP-LOSS & HEDGING RISK
-                  </button>
-                </div>
-              </div>
-
-              {attachedImage && (
-                <div style={{
-                  background: '#090e17',
-                  border: '1px solid #1e293b',
-                  borderLeft: '3px solid #38bdf8',
-                  padding: '8px 12px',
-                  borderRadius: '3px',
-                  marginBottom: '8px',
-                  fontFamily: "var(--font-mono)"
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ border: '1px solid #334155', padding: '2px', background: '#05080e', borderRadius: '2px' }}>
-                        <img src={attachedImage} alt="Preview" style={{ width: '38px', height: '38px', objectFit: 'cover', display: 'block' }} />
-                      </div>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 'bold', letterSpacing: '0.04em' }}>
-                            [IMAGE_BUFFER] {attachedImageName ? attachedImageName.toUpperCase() : 'CHART_CAPTURE.PNG'}
-                          </span>
-                          <span style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '1px 4px', borderRadius: '2px' }}>
-                            BYBIT/BINANCE API SYNC
-                          </span>
-                        </div>
-                        <p style={{ fontSize: '8.5px', color: '#64748b', margin: '2px 0 0 0', letterSpacing: '0.02em', lineHeight: '1.4' }}>
-                          Y-Axis 가격 축 & 상단 OHLCV 캔들이 거래소 실시간 수치 API 및 Python FastDTW와 동기화됩니다.
-                        </p>
-                      </div>
+                      <div className="text-[10px] text-right mt-2 opacity-60 font-mono">{msg.timestamp} · AUDITED ✓</div>
                     </div>
-                    <button
-                      style={{
-                        background: '#180707',
-                        border: '1px solid #ef4444',
-                        color: '#fca5a5',
-                        fontSize: '8px',
-                        padding: '4px 8px',
-                        borderRadius: '2px',
-                        fontFamily: "var(--font-mono)",
-                        cursor: 'pointer',
-                        letterSpacing: '0.05em'
-                      }}
-                      onClick={() => { setAttachedImage(null); setAttachedImageName(''); }}
-                    >
-                      [DISCARD / ✕]
-                    </button>
-                  </div>
-                </div>
-              )}
+                  )
+                })}
 
-              {/* Quick Prompt Recommendation Chips */}
-              <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
-                {researchMode === 'CODING' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 4시간봉에서 승률 70% 넘는 RSI(14) + 볼린저 밴드 단타 봇 전략 파이썬 코드를 작성하고 튜닝해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      ⚡ RSI+볼린저 단타 봇 빌드
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} SMA20/50 골든크로스 기반 손익비 1:3 추세추종 알고리즘과 백테스트 성능표를 작성해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      📈 골든크로스 1:3 추세추종
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 변동성 돌파(ATR) 전략의 샤프 지수를 2.0 이상으로 자율 튜닝하고 봇 배포 JSON을 생성해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      🛡️ 변동성 돌파 샤프 2.0+ 튜닝
-                    </button>
-                  </>
-                ) : researchMode === 'GUIDE' ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`1,000만 원 예산으로 ${currentSession?.symbol || searched} 3단계 분할 매수 집행 티켓을 발행해줘. 최대 허용 손실은 50만 원 한도야.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      🛡️ 1,000만원 3단계 분할 티켓
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 현재가 기준 켈리 공식(Kelly)으로 최적 투입 자본금과 1/2차 익절 목표가를 계산해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      ⚖️ 켈리 공식 최적 자본배분
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 진입 시 반드시 지켜야 할 손절(Invalidation) 기준선과 리스크 무효화 조건을 알려줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      🚨 손절 및 무효화 기준선 산출
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 오늘 매수 유효성과 실시간 기술적 지표, 8,000봉 프랙탈 일치율을 심층 분석해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      🔍 실시간 미시구조 & 프랙탈 진단
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`${currentSession?.symbol || searched} 온체인 고래 지갑 이동과 선물 펀딩비, 바이낸스 수급 상태를 브리핑해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      🐋 온체인 고래 & 선물 펀딩비
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAgentInputPrompt(`최신 외신 뉴스 속보와 시장 감성 점수를 바탕으로 ${currentSession?.symbol || searched}의 거시 호재/악재를 팩트체크해줘.`)}
-                      style={{ fontSize: '7.5px', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#818cf8', padding: '3px 7px', borderRadius: '3px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "var(--font-mono)" }}
-                    >
-                      📰 외신 속보 & RAG 팩트체크
-                    </button>
-                  </>
+                {agentThinking && (
+                  <div className="research-bubble-agent">
+                    <div className="flex items-center gap-3 text-[13px] text-[#f47a20] font-semibold">
+                      <RefreshCw size={16} className="animate-spin text-[#f47a20]" />
+                      <span>{agentThinkingStep || 'Qwen-Max 대형모델이 기관급 퀀트 프레임워크로 심층 리서치 중입니다...'}</span>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              <textarea
-                className="chat-input-textarea"
-                placeholder={
-                  researchMode === 'CODING'
-                    ? `원하시는 봇 전략(예: "RSI+볼린저 4시간봉 승률 70% 단타 봇 짜줘")을 입력하세요...`
-                    : researchMode === 'GUIDE'
-                    ? `시드 금액과 허용 손실(예: "1,000만원 3분할 매수 계획 짜줘. 손실 50만원 한도")을 입력하세요...`
-                    : `${currentSession?.symbol || searched}의 기관급 퀀트 시나리오 질문 또는 Ctrl+V로 차트 이미지 붙여넣기...`
-                }
-                value={agentInputPrompt}
-                onChange={(e) => setAgentInputPrompt(e.target.value)}
-                onPaste={handleChatPaste}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSendAgentMessage()
-                  }
-                }}
-              />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <small style={{ fontSize: '8px', color: 'var(--muted)', fontFamily: "var(--font-mono)" }}>
-                  ACTIVE ENGINES: Python FastDTW + Exchange API + ta4j Loop
-                </small>
-                <div style={{ display: 'flex', gap: '6px' }}>
+              {/* Research Composer (Input Box) */}
+              <div className="research-composer-light" style={{ maxWidth: '100%', marginTop: '20px' }}>
+                <div className="composer-top">
+                  <span className="font-mono text-[11px] text-[#f47a20] font-semibold flex items-center gap-1.5">
+                    <Sparkles size={13} />
+                    <span>✦ {researchMode || 'INSIGHT'} // Deep Intelligence · ${currentSession?.symbol || searched}</span>
+                  </span>
                   <button
                     type="button"
-                    className="secondary-button"
-                    onClick={() => chatFileInputRef.current?.click()}
-                    style={{ padding: '6px 10px', fontSize: '8px', fontFamily: "var(--font-mono)", letterSpacing: '0.04em' }}
-                    title="차트 캡처 사진 첨부"
+                    onClick={() => { setAgentInputPrompt(''); setAttachedImage(null); setAttachedImageName(''); }}
+                    className="hover:underline cursor-pointer"
                   >
-                    + ATTACH IMAGE
-                  </button>
-                  <button
-                    className="primary-button"
-                    onClick={() => handleSendAgentMessage()}
-                    disabled={agentThinking || (!agentInputPrompt.trim() && !attachedImage)}
-                    style={{ padding: '8px 16px', fontSize: '9px' }}
-                  >
-                    {agentThinking ? 'SYNTHESIZING…' : 'SEND PROMPT'} <span>↗</span>
+                    Clear
                   </button>
                 </div>
-              </div>
-            </div>
-          </main>
 
-          {/* 3. Right Column: Telemetry Context HUD */}
-          <aside className="agent-hud">
-            {(() => {
-              const hud = getAssetTelemetry(currentSession?.symbol || searched)
-              return (
-                <>
-                  <div className="hud-widget">
-                    <div className="hud-widget-head">
-                      <span><Diamond /> ASSET TELEMETRY</span>
-                      <span>REALTIME</span>
-                    </div>
-                    <div className="hud-quote-row">
-                      <strong>{hud.name}</strong>
-                      <span style={{ color: '#2b866d', fontFamily: "var(--font-mono)" }}>
-                        {hud.price}
-                      </span>
+                {attachedImage && (
+                  <div className="mx-4 mt-2 p-2 bg-[#f8fafc] border border-[#cbd5e1] border-l-4 border-l-[#f47a20] rounded flex items-center justify-between text-[11px] font-mono">
+                    <div className="flex items-center gap-3">
+                      <img src={attachedImage} alt="Preview" className="w-9 h-9 object-cover rounded border" />
+                      <div>
+                        <span className="font-bold text-[#f47a20]">[ATTACHED_CHART] {attachedImageName || 'CHART_CAPTURE.PNG'}</span>
+                        <p className="text-[9px] text-[#64748b] m-0">AETHER 실시간 거래소 오더북 및 프랙탈 엔진과 동기화됩니다.</p>
+                      </div>
                     </div>
                     <button
-                      className="secondary-button"
-                      style={{ fontSize: '8px', padding: '5px 8px', width: '100%', marginTop: '4px' }}
-                      onClick={() => handleSyncChart(currentSession?.symbol || searched)}
+                      type="button"
+                      onClick={() => { setAttachedImage(null); setAttachedImageName(''); }}
+                      className="px-2 py-1 bg-[#fee2e2] text-[#dc2626] rounded border border-[#fca5a5] text-[9px] font-bold cursor-pointer"
                     >
-                      SYNC TO MAIN CHART ↗
+                      ✕ 삭제
+                    </button>
+                  </div>
+                )}
+
+                <textarea
+                  value={agentInputPrompt}
+                  onChange={e => setAgentInputPrompt(e.target.value)}
+                  onPaste={handleChatPaste}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault()
+                      handleSendAgentMessage()
+                    }
+                  }}
+                  placeholder={`${currentSession?.symbol || searched}의 온체인 수급, 팩트체크, 지표 분석을 질문하거나 차트 캡처 사진을 Ctrl+V로 붙여넣으세요...`}
+                  disabled={agentThinking}
+                />
+
+                <div className="composer-bottom">
+                  <div className="composer-tools">
+                    <button
+                      type="button"
+                      title="차트 캡처 사진 첨부 (Ctrl+V 지원)"
+                      onClick={() => chatFileInputRef.current?.click()}
+                    >
+                      <Paperclip size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      title="타겟 종목 전환"
+                      onClick={() => setSearched(s => s === 'BTC/USD' ? 'ETH/USD' : s === 'ETH/USD' ? 'SOL/USD' : s === 'SOL/USD' ? 'NVDA' : 'BTC/USD')}
+                    >
+                      <BarChart2 size={15} />
+                    </button>
+                    <button type="button" title="RAG 지식베이스 검색">
+                      <BookOpen size={15} />
+                    </button>
+                    <button type="button" title="AETHER 시계열 프랙탈 매칭">
+                      <Cpu size={15} />
                     </button>
                   </div>
 
-                  <div className="hud-widget">
-                    <div className="hud-widget-head">
-                      <span><Diamond /> TA4J QUANT SIGNALS</span>
-                      <span>4-ENGINE</span>
-                    </div>
-                    <div className="hud-quant-metrics">
-                      <div className="hud-metric-cell">
-                        <span>RSI (14)</span>
-                        <strong>{hud.rsi} <small style={{ color: 'var(--blue)' }}>({hud.rsiStatus})</small></strong>
-                      </div>
-                      <div className="hud-metric-cell">
-                        <span>COMPOSITE SCORE</span>
-                        <strong style={{ color: '#2b866d' }}>{hud.score}</strong>
-                      </div>
-                      <div className="hud-metric-cell">
-                        <span>1ST SUPPORT (SMA20)</span>
-                        <strong>{hud.supp}</strong>
-                      </div>
-                      <div className="hud-metric-cell">
-                        <span>1ST RESISTANCE</span>
-                        <strong>{hud.res}</strong>
-                      </div>
-                    </div>
+                  <div className="composer-send">
+                    <span>{agentInputPrompt.length} chars · Cmd+Enter</span>
+                    <button
+                      type="button"
+                      className="send-research"
+                      onClick={() => handleSendAgentMessage()}
+                      disabled={(!agentInputPrompt.trim() && !attachedImage) || agentThinking}
+                      title="리서치 질의 전송"
+                    >
+                      {agentThinking ? <RefreshCw size={14} className="animate-spin" /> : <Send size={13} className="ml-0.5" />}
+                    </button>
                   </div>
+                </div>
+              </div>
 
-                  {/* FastDTW 8,000 Historical BigData Fractal Match */}
-                  <div className="hud-widget" style={{ borderLeft: '3px solid #38bdf8' }}>
-                    <div className="hud-widget-head">
-                      <span><Diamond /> FASTDTW 8,000 FRACTAL</span>
-                      <span style={{ color: '#38bdf8' }}>12-THREAD</span>
-                    </div>
-                    <div style={{ padding: '8px 10px', background: 'rgba(56, 189, 248, 0.05)', borderRadius: '4px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '9px', color: '#94a3b8' }}>TOP FRACTAL MATCH</span>
-                        <strong style={{ fontSize: '11px', color: '#38bdf8', fontFamily: "var(--font-mono)" }}>89.4% 일치</strong>
-                      </div>
-                      <div style={{ fontSize: '10px', color: '#f1f5f9', fontWeight: 'bold', marginBottom: '4px' }}>
-                        상승 깃발형 돌파 (Bullish Flag)
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#64748b' }}>
-                        <span>5-DAY WIN RATE: <b style={{ color: '#10b981' }}>80%</b></span>
-                        <span>EXP RETURN: <b style={{ color: '#10b981' }}>+6.4%</b></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="hud-widget">
-                    <div className="hud-widget-head">
-                      <span><Diamond /> LIVE NEWS WIRE</span>
-                      <span>BRIGHT DATA</span>
-                    </div>
-                    <div className="hud-news-feed">
-                      <div className="hud-news-item">
-                        <a href="#media-intelligence" className="hud-news-title">
-                          {hud.news}
-                        </a>
-                        <div className="hud-news-meta">
-                          <span>Realtime Intelligence</span>
-                          <span style={{ color: '#2b866d' }}>LIVE CITATION</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )
-            })()}
-          </aside>
-        </div>
-      </section>
-
-      {/* ── Integrated Decision Banner ── */}
-      <section className="decision-banner">
-        <div className="decision-title">
-          <span className="decision-icon">↗</span>
-          <div>
-            <span className="overline">{copy.decision} (4-ENGINE FUSION)</span>
-            <strong>{decisionReport?.finalAction || stance} · {searched}</strong>
-            <p style={{ fontSize: '10px', color: '#74808c', margin: '4px 0 0' }}>
-              {decisionReport?.decisionReason || (language === 'cn' ? 'ta4j 定量指标、机构新闻情绪与历史形态胜率共同支持上行动能。' : language === 'ko' ? 'ta4j 정량 지표, 기관 뉴스 감성, 과거 패턴 승률이 강한 상승 모멘텀을 지지합니다.' : 'Quant indicators, news sentiment, and historical fractal patterns support a strong uptrend.')}
-            </p>
+              {/* Dynamic Recommended Prompt Chips */}
+              <div className="research-prompts" style={{ maxWidth: '100%', marginTop: '16px' }}>
+                <span>RECOMMENDED [{researchMode || 'INSIGHT'}] QUERIES</span>
+                <div>
+                  {(researchMode === 'CODING' ? [
+                    { label: '⚡ RSI+볼린저 단타 봇 파이썬 빌드', prompt: `${currentSession?.symbol || searched} 4시간봉 승률 70% RSI(14) + 볼린저 밴드 단타 봇 파이썬 코드를 작성해줘.` },
+                    { label: '📈 골든크로스 1:3 손익비 추세추종', prompt: `${currentSession?.symbol || searched} SMA20/50 골든크로스 기반 손익비 1:3 추세추종 알고리즘을 작성해줘.` },
+                    { label: '🛡️ AETHER 시계열 프랙탈 패턴 유사도 계산기', prompt: `${currentSession?.symbol || searched} 과거 8,000개 캔들과 최근 30개 캔들 간의 시계열 파동 유사도 및 프랙탈 일치율을 계산하는 고속 연산 코드를 작성해줘.` },
+                    { label: '🤖 REST API 포트폴리오 자동 리밸런싱', prompt: `${currentSession?.symbol || searched} Spring Boot REST API와 통신하여 주기적으로 타겟 비중을 맞추는 자동 리밸런싱 Python 함수를 만들어줘.` }
+                  ] : researchMode === 'GUIDE' ? [
+                    { label: '🛡️ 1,000만원 3단계 분할 매수 티켓', prompt: `1,000만 원 예산으로 ${currentSession?.symbol || searched} 3단계 분할 매수 집행 티켓을 발행해줘. 최대 손실은 50만 원 한도야.` },
+                    { label: '⚖️ 켈리 공식(Kelly) 최적 자본배분', prompt: `${currentSession?.symbol || searched} 현재가 기준 켈리 공식으로 최적 투입 자본금과 1/2차 익절 목표가를 계산해줘.` },
+                    { label: '🚨 손절선(Invalidation) & 트레일링 스탑', prompt: `SMA20 및 ATR(14) 지표를 활용하여 추세 이탈 시 손실을 최소화하는 동적 무효화(Invalidation) 기준선을 단계별로 가이드해줘.` },
+                    { label: '🔄 선물 펀딩비 차익거래(Arbitrage) 가이드', prompt: `현물 매수 + 선물 1배 숏 델타 뉴트럴 펀딩비 수취 전략의 수익률 계산 공식과 리스크 관리 매뉴얼을 정리해줘.` }
+                  ] : researchMode === 'MASTER' ? [
+                    { label: '📊 워런 버핏 13F 기관 포트폴리오 분석', prompt: `버크셔 해서웨이(Berkshire Hathaway)의 최신 13F 공시 데이터와 $277B 현금 보유 전략이 시사하는 시장 사이클 관점을 심층 분석해줘.` },
+                    { label: '🏛️ 연준(Fed) 기준금리 경로 & CPI 진단', prompt: `미국 연준(Fed)의 기준금리 인하/동결 시나리오와 실질금리 변동이 글로벌 유동성 및 가상자산에 미치는 거시적 펀더멘탈을 진단해줘.` },
+                    { label: '💻 빅테크 AI Capex & 클라우드 성장성', prompt: `빅테크 기업들의 분기별 AI 인프라 자본지출(Capex) 추이와 반도체 공급망 EPS 성장률을 퀀트 펀더멘탈 지표로 정밀 분석해줘.` },
+                    { label: '🐋 온체인 LTH 70% 공급쇼크 밸류에이션', prompt: `거래소 유통 잔고 감소 추이와 1년 이상 비이동 장기보유자(LTH) 70% 상회가 유발하는 공급 쇼크(Supply Shock) 펀더멘탈을 평가해줘.` }
+                  ] : researchMode === 'AGENT' ? [
+                    { label: '🔮 2030 글로벌 가상자산 미래 시나리오', prompt: `2030년 월가 중앙은행 디지털화폐(CBDC)와 온체인 인공지능 자율 거래소가 공존하는 글로벌 금융 시장의 하루를 영화 같은 시나리오로 창작해줘.` },
+                    { label: '📰 기관급 위클리 퀀트 뉴스레터 초안', prompt: `골드만삭스/블룸버그 리서치 헤드라인 스타일로 이번 주 글로벌 매크로, 온체인 고래, 프랙탈 패턴을 아우르는 고급스러운 위클리 인텔리전스 레터를 작성해줘.` },
+                    { label: '🎙️ 워런 버핏 vs 퀀트 AI 가상 토론', prompt: `가치투자의 거장 워런 버핏과 초단타 퀀트 AI 에이전트가 "비트코인의 본질 가치와 24H 시장"을 주제로 펼치는 가상 토론 대본을 흥미진진하게 창작해줘.` },
+                    { label: '⚡ 미래 웹3 스테이블코인 결제망 리포트', prompt: `솔라나/폴리곤 기반 마이크로세컨드 스테이블코인 결제 인프라가 전통 SWIFT 망을 대체해 나가는 5단계 로드맵을 창의적인 인텔리전스 리포트로 작성해줘.` }
+                  ] : [
+                    { label: '🪙 비트코인 온체인 & 현물 ETF 수급 분석', prompt: `비트코인(BTCUSDT)의 최근 현물 ETF 기관 순유입 추이와 온체인 장기보유자(LTH) 공급 지표를 바탕으로 단기 지지선 및 향후 5일간 목표가를 분석해줘.` },
+                    { label: '⚡ 솔라나 DEX 유동성 & 온체인 고래 추적', prompt: `솔라나(SOLUSDT) 네트워크 DEX 거래량 급증 및 대형 고래 지갑 순매집 현황을 분석하고 분할 진입 전략을 제시해줘.` },
+                    { label: '📰 지표-외신 다이버전스 감성 분석', prompt: `호재성 외신 속보와 RSI 과매수/과매도 다이버전스가 충돌할 때, 시장의 숨겨진 트랩 리스크와 적정 포지션 비중을 분석해줘.` },
+                    { label: '🖥️ 엔비디아 AI 인프라 수주 랠리 진단', prompt: `엔비디아(NVDA) 차세대 AI 인프라 수주 랠리와 글로벌 빅테크 데이터센터 증설이 미치는 주가 영향도를 진단해줘.` }
+                  ]).map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSendAgentMessage(item.prompt)}
+                      disabled={agentThinking}
+                    >
+                      <Sparkles size={12} className="text-[#f47a20]" />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </main>
           </div>
         </div>
-
-        <div className="decision-score">
-          <span>MODEL SCORE</span>
-          <strong>{decisionReport?.totalScore || '+0.82'} <small>/ 1.0</small></strong>
-        </div>
-
-        <div className="stance-toggle">
-          {['BUY', 'HOLD', 'SELL'].map((item) => (
-            <button
-              className={stance === item ? 'active' : ''}
-              key={item}
-              onClick={() => setStance(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
       </section>
+      )}
 
       {/* ── Lower Grid (AI Insights & Operations) ── */}
       <section className="lower-grid">

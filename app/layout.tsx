@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: 'AETHER — Market Intelligence Terminal',
   description: 'Institutional-grade market intelligence for decision makers.',
   generator: 'v0.app',
+  icons: {
+    icon: '/brand-logo.png',
+    apple: '/brand-logo.png',
+    shortcut: '/brand-logo.png',
+  },
 }
 
 export const viewport: Viewport = {
