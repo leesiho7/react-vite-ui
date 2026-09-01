@@ -1309,7 +1309,7 @@ button {
 
 /* ── Crypto Arbitrage Dashboard Styles (Clean White Institutional Theme) ── */
 .trading-console { margin-top: 24px; }
-.arb-page { --arb-bg:#ffffff; --arb-panel:#f8fafc; --arb-line:#e2e8f0; --arb-text:#18334a; --arb-muted:#64748b; --arb-cyan:#0f766e; --arb-green:#10b981; --arb-red:#ef4444; min-height:100vh; background:var(--arb-bg); color:var(--arb-text); padding:0 4vw 50px; font-family:var(--font-mono),monospace; }
+.arb-page { --arb-bg:#ffffff; --arb-panel:#f8fafc; --arb-line:#e2e8f0; --arb-text:#18334a; --arb-muted:#64748b; --arb-cyan:#0f766e; --arb-green:#10b981; --arb-red:#ef4444; min-height:100vh; background:var(--arb-bg); color:var(--arb-text); padding:0 4vw 50px; font-family:var(--font-sans),sans-serif; letter-spacing:-0.015em; }
 .arb-topbar,.arb-toolbar,.arb-section-heading,.arb-footer,.arb-best-route{display:flex;align-items:center}
 .arb-topbar{min-height:68px;gap:28px;border-bottom:1px solid var(--arb-line)}
 .arb-brand{display:flex;align-items:baseline;gap:10px}
@@ -2246,5 +2246,32 @@ samp,
 .league-section pre {
   font-family: var(--font-mono) !important;
   letter-spacing: 0;
+}
+
+
+
+/* ── Arbitrage Terminal & Orderbook Global Typography Patch ── */
+.arb-page,
+.arb-page *,
+.arb-hero,
+.arb-hero *,
+.arb-toolbar,
+.arb-section-heading,
+.arb-best-route,
+.arbitrage-section,
+.arbitrage-section * {
+  font-family: var(--font-sans) !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.arb-page [style*="font-mono"],
+.arb-page .font-mono,
+.arbitrage-section [style*="font-mono"],
+.arbitrage-section .font-mono,
+.arb-mid-price strong,
+.arb-level,
+.arb-tape-row,
+.arb-table-row {
+  font-family: var(--font-mono) !important;
 }
 

@@ -32,7 +32,7 @@ export default function ArbitragePage() {
         <div>
           <div className="arb-kicker">CROSS-EXCHANGE EXECUTION MONITOR</div>
           <h1 style={{ margin: '10px 0 8px', fontSize: 'clamp(30px, 4vw, 48px)' }}>
-            Crypto <em>Arbitrage</em><br />& Orderbook Intelligence
+            Crypto <span style={{ color: "#0f766e", fontWeight: 800 }}>Arbitrage</span><br />& Orderbook Intelligence
           </h1>
           <p>
             바이낸스, 바이비트, OKX, 업비트 등 글로벌 5대 거래소 간 실시간 L2 호가 스프레드(%) 차익거래 스캐너 및 8시간 무위험 델타 뉴트럴 펀딩비(Funding APY) 수익 매트릭스
