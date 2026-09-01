@@ -2993,8 +2993,12 @@ def signal(tick):
               <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '10px', letterSpacing: '.1em', fontWeight: 600 }}>
                 1-HOUR QUICK STRIKE PREDICTION LEAGUE <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '3px' }}>1H SPEED ROUND</span>
               </div>
-              <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: "var(--font-sans)", fontWeight: 700 }}>
-                10 wins. <em style={{ color: '#0f766e', fontStyle: 'italic' }}>One claim.</em>
+              <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: "var(--font-sans)", fontWeight: 800, letterSpacing: '-0.03em' }}>
+                {language === 'ko' ? (
+                  <>10연승. <span style={{ color: '#0f766e', fontWeight: 800 }}>단 한 번의 보상 클레임 (One claim).</span></>
+                ) : (
+                  <>10 wins. <span style={{ color: '#0f766e', fontWeight: 800 }}>One claim.</span></>
+                )}
               </h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
                 <strong>[LAYER 1] AI vs 인간 배틀:</strong> AETHER 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
