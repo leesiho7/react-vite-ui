@@ -41,6 +41,8 @@ interface NavbarProps {
   onToggleTrade?: () => void;
   researchOpen?: boolean;
   onToggleResearch?: () => void;
+  activeView?: string;
+  onSelectView?: (view: string) => void;
 }
 
 export default function Navbar({
@@ -62,7 +64,9 @@ export default function Navbar({
   tradeOpen = false,
   onToggleTrade,
   researchOpen = false,
-  onToggleResearch
+  onToggleResearch,
+  activeView = 'trade',
+  onSelectView
 }: NavbarProps) {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -206,8 +210,8 @@ export default function Navbar({
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${eventOpen ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
-                  onClick={onToggleEvent}
+                  className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'league' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('league') : (onToggleEvent && onToggleEvent())}
                 >
                   <span>{menuText.league}</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
@@ -218,8 +222,8 @@ export default function Navbar({
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${newsOpen ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
-                  onClick={onToggleNews}
+                  className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'news' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('news') : (onToggleNews && onToggleNews())}
                 >
                   <span>{menuText.news}</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8] animate-ping"></span>
@@ -230,48 +234,52 @@ export default function Navbar({
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${tradeOpen ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
-                  onClick={onToggleTrade}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'trade' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('trade') : (onToggleTrade && onToggleTrade())}
                 >
                   {menuText.trade}
                 </button>
               </li>
 
               <li>
-                <a
-                  href="#trading-console"
-                  className="text-[#a1a1aa] hover:text-[#f47a20] transition-colors no-underline text-[12px] font-medium"
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'bots' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('bots') : handleBotScroll()}
                 >
                   {menuText.bots}
-                </a>
+                </button>
               </li>
 
               <li>
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${researchOpen ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
-                  onClick={onToggleResearch}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'research' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('research') : (onToggleResearch && onToggleResearch())}
                 >
                   {menuText.research}
                 </button>
               </li>
 
               <li>
-                <a
-                  href="#media-wire"
-                  className="text-[#a1a1aa] hover:text-[#f47a20] transition-colors no-underline text-[12px] font-medium"
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'media' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('media') : undefined}
                 >
                   {menuText.media}
-                </a>
+                </button>
               </li>
 
               <li>
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${arbitrageOpen ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
-                  onClick={onToggleArbitrage}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'arbitrage' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView ? onSelectView('arbitrage') : (onToggleArbitrage && onToggleArbitrage())}
                 >
                   {menuText.arbitrage}
                 </button>
@@ -492,7 +500,7 @@ export default function Navbar({
               </button>
             </div>
 
-            {/* 6개 주요 메뉴 카드 2열 그리드 */}
+            {/* 주요 메뉴 카드 그리드 */}
             <div className="grid grid-template-columns grid-cols-2 gap-2.5 mb-4">
               <button
                 type="button"
@@ -500,7 +508,8 @@ export default function Navbar({
                 className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  if (onToggleEvent) onToggleEvent();
+                  if (onSelectView) onSelectView('league');
+                  else if (onToggleEvent) onToggleEvent();
                 }}
               >
                 <Award size={16} className="text-[#10b981]" />
@@ -516,7 +525,8 @@ export default function Navbar({
                 className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  if (onToggleNews) onToggleNews();
+                  if (onSelectView) onSelectView('news');
+                  else if (onToggleNews) onToggleNews();
                 }}
               >
                 <Radio size={16} className="text-[#38bdf8]" />
@@ -532,7 +542,59 @@ export default function Navbar({
                 className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  if (onToggleArbitrage) onToggleArbitrage();
+                  if (onSelectView) onSelectView('trade');
+                  else if (onToggleTrade) onToggleTrade();
+                }}
+              >
+                <TrendingUp size={16} className="text-[#38bdf8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.trade}</div>
+                  <div className="text-[9px] text-[#94a3b8]">실시간 마켓/차트</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('bots');
+                  else handleBotScroll();
+                }}
+              >
+                <Bot size={16} className="text-[#f47a20]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.bots}</div>
+                  <div className="text-[9px] text-[#94a3b8]">24H 자율 봇센터</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('research');
+                  else if (onToggleResearch) onToggleResearch();
+                }}
+              >
+                <BrainCircuit size={16} className="text-[#a855f7]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.research}</div>
+                  <div className="text-[9px] text-[#94a3b8]">AI 퀀트 리서치</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('arbitrage');
+                  else if (onToggleArbitrage) onToggleArbitrage();
                 }}
               >
                 <RefreshCw size={16} className="text-[#f59e0b]" />
@@ -541,19 +603,6 @@ export default function Navbar({
                   <div className="text-[9px] text-[#94a3b8]">실시간 김프 스캐너</div>
                 </div>
               </button>
-
-              <a
-                href="#media-wire"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342', textDecoration: 'none' }}
-                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Sparkles size={16} className="text-[#ec4899]" />
-                <div>
-                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.media}</div>
-                  <div className="text-[9px] text-[#94a3b8]">미디어 인텔리전스</div>
-                </div>
-              </a>
             </div>
 
             {/* 다국어 언어 변경 & 프로 업그레이드 액션 바 */}

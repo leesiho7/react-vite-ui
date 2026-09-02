@@ -42,7 +42,8 @@ import {
   Radio,
   FileCode,
   TrendingUp,
-  X
+  X,
+  Trash2
 } from 'lucide-react'
 import {
   sendResearchChat,
@@ -187,11 +188,12 @@ export default function ResearchPage() {
   const [inputPrompt, setInputPrompt] = useState('')
   const [loading, setLoading] = useState(false)
   const [thinkingStep, setThinkingStep] = useState<string>('')
-  const [activeSessionId, setActiveSessionId] = useState('session-1')
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
 
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const [attachedImageName, setAttachedImageName] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [telemetry, setTelemetry] = useState(getAssetTelemetryFallback('BTCUSDT'))
   const [openToolsMap, setOpenToolsMap] = useState<Record<string, boolean>>({})
@@ -391,29 +393,8 @@ export default function ResearchPage() {
     return () => { mounted = false }
   }, [selectedSymbol])
 
-  const [sessions, setSessions] = useState<ResearchSession[]>([
-    {
-      id: 'session-1',
-      title: '비트코인 온체인 및 현물 ETF 수급 분석',
-      symbol: 'BTCUSDT',
-      updatedAt: '방금 전',
-      messages: []
-    },
-    {
-      id: 'session-2',
-      title: '엔비디아 블랙웰 아키텍처 실적 전망',
-      symbol: 'NVDA',
-      updatedAt: '2시간 전',
-      messages: []
-    },
-    {
-      id: 'session-3',
-      title: '솔라나 DEX 24H 거래량 & 고래 추적',
-      symbol: 'SOLUSDT',
-      updatedAt: '어제',
-      messages: []
-    }
-  ])
+  // 가상 세션 도입: 초기 접속 시 DB/메모리에 빈 세션을 강제 생성하지 않고 빈 배열로 시작
+  const [sessions, setSessions] = useState<ResearchSession[]>([])
 
   const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -428,17 +409,18 @@ export default function ResearchPage() {
     }
   }, [])
 
+  // 새 리서치 세션 추가 및 시작 (New Research / + 버튼 클릭 시 즉시 생성)
   const handleCreateNewSession = () => {
     if (typingTimerRef.current) clearInterval(typingTimerRef.current)
-    const newId = `session-${Date.now()}`
+    const newId = 'session-' + Date.now()
     const newSession: ResearchSession = {
       id: newId,
-      title: '새로운 퀀트 리서치 질의',
+      title: '신규 리서치 세션',
       symbol: selectedSymbol,
       updatedAt: '방금 전',
       messages: []
     }
-    setSessions([newSession, ...sessions])
+    setSessions(prev => [newSession, ...prev])
     setActiveSessionId(newId)
     setCurrentMessages([])
     setInputPrompt('')
@@ -446,10 +428,18 @@ export default function ResearchPage() {
     setAttachedImageName('')
     setLoading(false)
     setThinkingStep('')
+
+    setTimeout(() => {
+      textareaRef.current?.focus()
+    }, 60)
   }
 
-  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  // 좌측 세션 삭제 (개별 삭제)
+  const handleDeleteSession = (sessionId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
     const filtered = sessions.filter(s => s.id !== sessionId)
     setSessions(filtered)
     if (activeSessionId === sessionId) {
@@ -460,6 +450,16 @@ export default function ResearchPage() {
         handleCreateNewSession()
       }
     }
+  }
+
+  // 좌측 세션 전체 삭제 (히스토리 비우기)
+  const handleClearAllSessions = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    setSessions([])
+    handleCreateNewSession()
   }
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -495,7 +495,8 @@ export default function ResearchPage() {
     agentMsgId: string,
     verdict: string,
     qualityScore: number,
-    toolCalls: ToolCallItem[]
+    toolCalls: ToolCallItem[],
+    sessionId: string
   ) => {
     if (typingTimerRef.current) clearInterval(typingTimerRef.current)
 
@@ -525,7 +526,7 @@ export default function ResearchPage() {
             return m
           })
           setSessions(sPrev =>
-            sPrev.map(s => (s.id === activeSessionId ? { ...s, messages: updated } : s))
+            sPrev.map(s => (s.id === sessionId ? { ...s, messages: updated } : s))
           )
           return updated
         })
@@ -549,6 +550,7 @@ export default function ResearchPage() {
     }, 16)
   }
 
+  // ── Lazy Creation (지연 생성): 첫 메시지 전송 시점에 실제 세션 생성 ──
   const handleSendPrompt = async (promptToSend?: string) => {
     const text = (promptToSend || inputPrompt).trim()
     if ((!text && !attachedImage) || loading) return
@@ -573,6 +575,38 @@ export default function ResearchPage() {
       isStreaming: true
     }
 
+    // Lazy Creation: 가상 세션(!activeSessionId)일 때 첫 메시지 전송 시 실제 세션 생성
+    let targetSessionId = activeSessionId
+    if (!targetSessionId) {
+      targetSessionId = `session-${Date.now()}`
+      const topicTitle = text ? (text.length > 24 ? text.slice(0, 24) + '...' : text) : `${selectedSymbol} 차트 분석`
+      const newSession: ResearchSession = {
+        id: targetSessionId,
+        title: topicTitle,
+        symbol: selectedSymbol,
+        updatedAt: '방금 전',
+        messages: [userMsg]
+      }
+      // 이 시점에 비로소 사이드바 History에 등록!
+      setSessions(prev => [newSession, ...prev])
+      setActiveSessionId(targetSessionId)
+    } else {
+      setSessions(prev =>
+        prev.map(s => {
+          if (s.id === targetSessionId) {
+            const isGeneric = s.title.includes('신규 리서치') || s.title.includes('새로운 리서치') || s.messages.length === 0
+            return {
+              ...s,
+              title: isGeneric ? topicTitle : s.title,
+              updatedAt: '방금 전',
+              messages: [...s.messages, userMsg]
+            }
+          }
+          return s
+        })
+      )
+    }
+
     const updatedWithUser = [...currentMessages, userMsg]
     setCurrentMessages([...updatedWithUser, placeholderAgentMsg])
     setInputPrompt('')
@@ -582,20 +616,6 @@ export default function ResearchPage() {
 
     // ── Phase 1 to 4 CoT Reasoning Progression ──
     setThinkingStep('1/4 단계: 거래소 OHLCV 캔들 및 모멘텀 지표 수집 중...')
-
-    setSessions(prev =>
-      prev.map(s => {
-        if (s.id === activeSessionId) {
-          return {
-            ...s,
-            title: s.title === '새로운 퀀트 리서치 질의' ? (text || '차트 캡처 분석').slice(0, 24) + '...' : s.title,
-            updatedAt: '방금 전',
-            messages: updatedWithUser
-          }
-        }
-        return s
-      })
-    )
 
     try {
       setTimeout(() => setThinkingStep('2/4 단계: AETHER 8,000 시계열 프랙탈 매칭 & 온체인 데이터 대조 중...'), 500)
@@ -617,11 +637,17 @@ export default function ResearchPage() {
         mode: selectedMode,
         language,
         imageUrl: attachedImage || undefined,
-        conversationId: activeSessionId,
+        conversationId: targetSessionId,
         history: conversationHistory
       })
 
-      const replyContent = response.reply || response.answer || response.content || response.message || '리서치 결과를 생성할 수 없습니다.'
+      const rawReply = response.reply || response.answer || response.content || response.message || '리서치 결과를 생성할 수 없습니다.'
+      const replyContent = rawReply
+        .replace(/对不起[^\n]*/g, '')
+        .replace(/希望这些信息[^\n]*/g, '')
+        .replace(/请允许我继续用中文[^\n]*/g, '')
+        .replace(/势不可挡[^\n]*/g, '')
+        .replace(/势必继续[^\n]*/g, '');
 
       const mockToolCalls: ToolCallItem[] = [
         { name: '🌐 실시간 뉴스 팩트체크', detail: `${selectedSymbol} 관련 블룸버그·로이터 글로벌 최신 속보 및 공시 팩트체크 검증 완료` },
@@ -637,7 +663,8 @@ export default function ResearchPage() {
         agentMsgId,
         response.intentVerdict || 'BUY',
         response.entryQualityScore || 88,
-        mockToolCalls
+        mockToolCalls,
+        targetSessionId
       )
     } catch (err) {
       if (typingTimerRef.current) clearInterval(typingTimerRef.current)
@@ -725,57 +752,108 @@ export default function ResearchPage() {
         </div>
       </header>
 
-      <div className="research-shell-light">
-        <aside className="research-rail-light">
-          <div className="research-rail-title">
-            <span>Research History</span>
-            <button type="button" onClick={handleCreateNewSession} title="새 리서치 생성">
-              <Plus size={16} />
-            </button>
-          </div>
-
-          <button type="button" className="new-research" onClick={handleCreateNewSession}>
-            <Plus size={14} />
-            <span>New Research</span>
-          </button>
-
-          <span className="rail-label">Recent Sessions</span>
-
-          <div className="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-280px)]">
-            {sessions.map(s => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => {
-                  if (typingTimerRef.current) clearInterval(typingTimerRef.current)
-                  setActiveSessionId(s.id)
-                  setCurrentMessages(s.messages || [])
-                  setLoading(false)
-                  setThinkingStep('')
-                }}
-                className={`rail-item ${activeSessionId === s.id ? 'active' : ''}`}
-              >
-                <MessageSquare size={13} className={activeSessionId === s.id ? 'text-[#f47a20]' : 'text-[#94A3B8]'} />
-                <span className="truncate flex-1">{s.title}</span>
-                <span
-                  onClick={(e) => handleDeleteSession(s.id, e)}
-                  className="opacity-0 hover:opacity-100 p-0.5 rounded hover:bg-[#e2e8f0] text-[#94a3b8] hover:text-[#ef4444]"
-                  title="세션 삭제"
+      <div
+        className="research-shell-light"
+        style={{
+          gridTemplateColumns: sessions.length > 0 ? '240px 1fr' : '1fr',
+          transition: 'grid-template-columns 0.25s ease'
+        }}
+      >
+        {/* 리서치 히스토리가 있을 때만 좌측 패널 렌더링, 없으면 패널 제거 */}
+        {sessions.length > 0 && (
+          <aside className="research-rail-light animate-in fade-in duration-200">
+            <div className="research-rail-title">
+              <span>Research History</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button
+                  type="button"
+                  onClick={handleClearAllSessions}
+                  title="세션 전체 삭제 (히스토리 비우기)"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    padding: '3px 4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  className="hover:text-[#ef4444] hover:bg-[#fee2e2]"
                 >
-                  <X size={11} />
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="rail-bottom">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-[#f47a20]" />
-              <span>Qwen-Max Flagship (300B+)</span>
+                  <Trash2 size={13} />
+                </button>
+                <button type="button" onClick={handleCreateNewSession} title="새 가상 세션 시작 (New Research)">
+                  <Plus size={16} />
+                </button>
+              </div>
             </div>
-            <small>AETHER Intelligence OS v2.5 Active</small>
-          </div>
-        </aside>
+
+            <button type="button" className="new-research" onClick={handleCreateNewSession}>
+              <Plus size={14} />
+              <span>New Research</span>
+            </button>
+
+            <span className="rail-label">Recent Sessions</span>
+
+            <div className="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-280px)]">
+              {sessions.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => {
+                    if (typingTimerRef.current) clearInterval(typingTimerRef.current)
+                    setActiveSessionId(s.id)
+                    setCurrentMessages(s.messages || [])
+                    setLoading(false)
+                    setThinkingStep('')
+                  }}
+                  className={`rail-item ${activeSessionId === s.id ? 'active' : ''}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    paddingRight: '6px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                    <MessageSquare size={13} className={activeSessionId === s.id ? 'text-[#f47a20]' : 'text-[#94A3B8]'} />
+                    <span className="truncate flex-1 text-[12px]">{s.title}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteSession(s.id, e)}
+                    title="세션 삭제"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '3px 4px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: '#94a3b8',
+                      marginLeft: '4px',
+                      flexShrink: 0
+                    }}
+                    className="hover:text-[#ef4444] hover:bg-[#fee2e2]"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="rail-bottom">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-[#f47a20]" />
+                <span>Qwen-Max Flagship (300B+)</span>
+              </div>
+              <small>AETHER Intelligence OS v2.5 Active</small>
+            </div>
+          </aside>
+        )}
 
         <main className="research-main-light">
           <div className="research-intro-light">
@@ -966,6 +1044,7 @@ export default function ResearchPage() {
             )}
 
             <textarea
+              ref={textareaRef}
               value={inputPrompt}
               onChange={e => setInputPrompt(e.target.value)}
               onPaste={handleChatPaste}

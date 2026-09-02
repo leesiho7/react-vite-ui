@@ -11,7 +11,8 @@ import {
   RefreshCw,
   Sparkles,
   Menu,
-  X
+  X,
+  Bot
 } from 'lucide-react'
 
 export interface FinanceNavItem {
@@ -24,16 +25,19 @@ export interface FinanceNavItem {
 const defaultItems: FinanceNavItem[] = [
   { key: 'overview', label: 'OVERVIEW', href: '/', icon: BarChart2 },
   { key: 'trade', label: 'TRADE', href: '/trade', icon: TrendingUp },
+  { key: 'bot', label: '24H BOT', href: '/#trading-console', icon: Bot },
   { key: 'research', label: 'RESEARCH', href: '/#research-terminal', icon: Cpu },
   { key: 'league', label: 'LEAGUE', href: '/#ten-win-league', icon: Award },
+  { key: 'arbitrage', label: 'ARBITRAGE', href: '/#arbitrage-terminal', icon: RefreshCw },
 ]
 
 interface FinanceNavProps {
   active?: string;
   items?: FinanceNavItem[];
+  onSelectTab?: (key: string) => void;
 }
 
-export function FinanceNav({ active = 'trade', items = defaultItems }: FinanceNavProps) {
+export function FinanceNav({ active = 'overview', items = defaultItems, onSelectTab }: FinanceNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -53,10 +57,23 @@ export function FinanceNav({ active = 'trade', items = defaultItems }: FinanceNa
         <nav aria-label="Finance workspace">
           <div className="finance-nav-links">
             {items.map(({ key, label, href, icon: Icon }) => (
-              <Link key={key} className={active === key ? 'active' : ''} href={href}>
+              <a
+                key={key}
+                className={active === key ? 'active' : ''}
+                href={href}
+                onClick={(e) => {
+                  if (onSelectTab) {
+                    if (key !== 'trade') {
+                      e.preventDefault()
+                      onSelectTab(key)
+                    }
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <Icon size={14} />
                 {label}
-              </Link>
+              </a>
             ))}
           </div>
         </nav>

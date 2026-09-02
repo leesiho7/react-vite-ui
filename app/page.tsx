@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown } from 'lucide-react'
+import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
 import Navbar from './components/Navbar'
 import {
   fetchIntegratedDecision,
@@ -951,46 +951,58 @@ export default function Page() {
   }
 
   const currentSession = useMemo(() => {
-    return agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || getDefaultUserSessions(currentUser)[0]
-  }, [agentSessions, activeSessionId, currentUser])
+    return agentSessions.find(s => s.id === activeSessionId) || null
+  }, [agentSessions, activeSessionId])
 
-  const handleCreateNewSession = (symbolOverride?: string) => {
-    const sym = symbolOverride || searched
+  // 새 리서치 세션 추가 및 시작 (New Research / + 버튼 클릭 시 즉시 생성)
+  const handleCreateNewSession = () => {
     const newId = 'sess-' + Date.now()
+    const sym = searched || 'BTCUSDT'
     const newSession: AgentSession = {
       id: newId,
-      title: `${sym} 신규 리서치 토픽`,
+      title: '신규 리서치 세션',
       symbol: sym,
       persona: 'alex',
       mode: researchMode,
       updatedAt: '방금 전',
-      messages: [
-        {
-          id: 'welcome-' + Date.now(),
-          role: 'agent',
-          persona: 'alex',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          content: `안녕하세요. **AETHER AI 리서치 데스크 (AETHER Intelligence OS & Multi-Fractal)**입니다.\n\n현재 **${sym}**의 실시간 시장 미시구조, 온체인 유동성, 그리고 Bright Data 실시간 뉴스 피드를 모니터링하고 있습니다.\n\n궁금하신 지지/저항 가격대, 숏/롱 청산 리스크, 또는 자본 배분 전략을 편하게 질문해 주세요. **[📷 차트 캡처 사진 첨부]** 기능으로 이미지 분석도 가능합니다.`
-        }
-      ]
+      messages: []
     }
     setAgentSessions(prev => [newSession, ...prev])
     setActiveSessionId(newId)
+    setAgentInputPrompt('')
+    setAttachedImage(null)
+    setAttachedImageName('')
+    setAgentThinking(false)
   }
 
-  const handleDeleteSession = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (agentSessions.length <= 1) {
-      alert('최소 1개의 리서치 세션은 유지되어야 합니다.')
-      return
+  // 좌측 세션 삭제 (개별 삭제)
+  const handleDeleteSession = (id: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
     }
     const filtered = agentSessions.filter(s => s.id !== id)
     setAgentSessions(filtered)
     if (activeSessionId === id) {
-      setActiveSessionId(filtered[0].id)
+      if (filtered.length > 0) {
+        setActiveSessionId(filtered[0].id)
+      } else {
+        handleCreateNewSession()
+      }
     }
   }
 
+  // 좌측 세션 전체 삭제 (히스토리 비우기)
+  const handleClearAllSessions = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    setAgentSessions([])
+    handleCreateNewSession()
+  }
+
+  // ── Lazy Creation: 첫 메시지 전송 시 실제 세션 생성 ──
   const handleSendAgentMessage = async (customPrompt?: string) => {
     const text = (customPrompt || agentInputPrompt).trim()
     const currentImg = attachedImage
@@ -1013,19 +1025,47 @@ export default function Page() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 
-    const curSess = agentSessions.find(s => s.id === activeSessionId) || agentSessions[0] || getDefaultUserSessions(currentUser)[0]
-    const updatedMessages = [...curSess.messages, userMsg]
-    
-    // Dynamically update topic title based on user question
-    const isGenericTitle = curSess.title.includes('신규 리서치') || curSess.title.includes('리서치 세션') || curSess.messages.filter(m => m.role === 'user').length === 0
-    const dynamicTitle = isGenericTitle ? extractTopicTitle(userPromptText, curSess.symbol) : curSess.title
+    let curSess = agentSessions.find(s => s.id === activeSessionId)
+    let updatedMessages: AgentMessage[] = []
+    let currentSessionId = ''
+    let currentSymbol = searched || 'BTCUSDT'
+    let currentMode = researchMode
 
-    setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
-      ...s,
-      title: dynamicTitle,
-      messages: updatedMessages,
-      updatedAt: '방금 전'
-    } : s))
+    // Lazy Creation: 활성화된 세션이 없으면 첫 메시지 전송 시 생성!
+    if (!curSess) {
+      const sym = searched || 'BTCUSDT'
+      const newId = 'sess-' + Date.now()
+      const dynamicTitle = extractTopicTitle(userPromptText, sym)
+      updatedMessages = [userMsg]
+      currentSessionId = newId
+      currentSymbol = sym
+      currentMode = researchMode
+      curSess = {
+        id: newId,
+        title: dynamicTitle,
+        symbol: sym,
+        persona: 'alex',
+        mode: researchMode,
+        updatedAt: '방금 전',
+        messages: updatedMessages
+      }
+      setAgentSessions(prev => [curSess!, ...prev])
+      setActiveSessionId(newId)
+    } else {
+      updatedMessages = [...curSess.messages, userMsg]
+      currentSessionId = curSess.id
+      currentSymbol = curSess.symbol || searched || 'BTCUSDT'
+      currentMode = curSess.mode || researchMode
+      const isGenericTitle = curSess.title.includes('신규 리서치') || curSess.title.includes('리서치 세션') || curSess.messages.filter(m => m.role === 'user').length === 0
+      const dynamicTitle = isGenericTitle ? extractTopicTitle(userPromptText, curSess.symbol) : curSess.title
+
+      setAgentSessions(prev => prev.map(s => s.id === curSess!.id ? {
+        ...s,
+        title: dynamicTitle,
+        messages: updatedMessages,
+        updatedAt: '방금 전'
+      } : s))
+    }
 
     let t1: any, t2: any, t3: any;
 
@@ -1039,16 +1079,16 @@ export default function Page() {
         }, 800)
 
         const visionResp = await fetchVisionChartAnalysis({
-          symbol: curSess.symbol,
+          symbol: currentSymbol,
           imageBase64: currentImg,
           prompt: userPromptText
         })
 
         replyContent = visionResp?.analysisMarkdown || '차트 이미지 분석을 완료했습니다.'
         toolCalls = [
-          { name: 'vision.decodeChartImage', detail: `Visual structure & candlestick layout recognized`, status: 'DONE' },
-          { name: 'fastDtw.scanBigDataFractals', detail: `8,000 Historical candles scanned in 12 threads (Match: 86.2%)`, status: 'DONE' },
-          { name: 'qwenVL.synthesizeReport', detail: `Institutional Vision Chart Analysis generated`, status: 'DONE' }
+          { name: 'vision.chartStructureScan', detail: `Visual structure & candlestick layout recognized`, status: 'DONE' },
+          { name: 'aether.fractalScan', detail: `8,000 Historical candles scanned in 12 threads (Match: 86.2%)`, status: 'DONE' },
+          { name: 'aether.visionSynthesis', detail: `Institutional Vision Chart Analysis generated`, status: 'DONE' }
         ]
 
         const agentMsg: AgentMessage = {
@@ -1060,7 +1100,7 @@ export default function Page() {
           toolCalls
         }
 
-        setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
+        setAgentSessions(prev => prev.map(s => s.id === currentSessionId ? {
           ...s,
           messages: [...updatedMessages, agentMsg],
           updatedAt: '방금 전'
@@ -1076,14 +1116,14 @@ export default function Page() {
           content: '',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           toolCalls: [
-            { name: 'ta4j.calculateSignals', detail: `${curSess.symbol} RSI, SMA20/50, Volatility Bands calculated`, status: 'DONE' },
+            { name: 'quant.marketSignals', detail: `${currentSymbol} RSI(14), SMA20/50, Volatility Bands calculated`, status: 'DONE' },
             { name: 'aether.fractalEngine', detail: `AETHER 8,000 빅데이터 프랙탈 패턴 스캔 완료`, status: 'DONE' },
-            { name: 'brightdata.scrapeNews', detail: `Bright Data real-time financial news stream & sentiment scoring`, status: 'DONE' },
-            { name: 'qwenMax.streaming', detail: `Qwen-Max 300B+ Flagship real-time token streaming`, status: 'RUNNING' }
+            { name: 'intelligence.globalNewswire', detail: `Real-time financial news stream & sentiment scoring`, status: 'DONE' },
+            { name: 'aether.cognitiveSynthesis', detail: `AETHER Flagship AI real-time token streaming`, status: 'RUNNING' }
           ]
         };
 
-        setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
+        setAgentSessions(prev => prev.map(s => s.id === currentSessionId ? {
           ...s,
           messages: [...updatedMessages, initialAgentMsg],
           updatedAt: '방금 전'
@@ -1091,8 +1131,8 @@ export default function Page() {
 
         await streamResearchChatSSE({
           prompt: userPromptText,
-          symbol: extractAssetSymbol(`${userPromptText} ${curSess.symbol}`, curSess.symbol),
-          mode: curSess.mode,
+          symbol: extractAssetSymbol(`${userPromptText} ${currentSymbol}`, currentSymbol),
+          mode: currentMode,
           language,
           history: updatedMessages.map(m => ({ role: m.role, content: m.content }))
         }, {
@@ -1104,30 +1144,37 @@ export default function Page() {
           onToken: (token) => {
             setAgentThinking(false);
             accumulatedText += token;
-            setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
+            const cleaned = accumulatedText
+              .replace(/对不起[^\n]*/g, '')
+              .replace(/希望这些信息[^\n]*/g, '')
+              .replace(/请允许我继续用中文[^\n]*/g, '')
+              .replace(/势不可挡[^\n]*/g, '')
+              .replace(/势必继续[^\n]*/g, '');
+
+            setAgentSessions(prev => prev.map(s => s.id === currentSessionId ? {
               ...s,
-              messages: s.messages.map(m => m.id === agentMsgId ? { ...m, content: accumulatedText } : m),
+              messages: s.messages.map(m => m.id === agentMsgId ? { ...m, content: cleaned } : m),
               updatedAt: '방금 전'
             } : s));
           },
           onDone: (finalData) => {
             setAgentThinking(false);
-            const activeMode = curSess.mode || researchMode;
+            const activeMode = currentMode || researchMode;
             const dynamicToolCalls: AgentToolCall[] = activeMode === 'CODING' ? [
-              { name: 'ta4j.parseStrategyLogic', detail: `${curSess.symbol} Algorithm entry/exit indicators mapped`, status: 'DONE' },
+              { name: 'quant.strategyModeling', detail: `${currentSymbol} Algorithm entry/exit indicators mapped`, status: 'DONE' },
               { name: 'sandbox.executeBacktest', detail: `Docker Sandbox 1,000 candles backtest executed`, status: 'DONE' },
-              { name: 'qwenMax.autoTune', detail: `Sharpe Ratio 2.0+ Auto-Tuning completed`, status: 'DONE' },
+              { name: 'algorithm.autoTuning', detail: `Sharpe Ratio 2.0+ Auto-Tuning completed`, status: 'DONE' },
               { name: 'botArena.generateBlueprint', detail: `Bot Arena 1-click deployment blueprint generated`, status: 'DONE' }
             ] : activeMode === 'GUIDE' ? [
-              { name: 'ta4j.calculateVolatility', detail: `${curSess.symbol} ATR & dynamic support levels computed`, status: 'DONE' },
+              { name: 'risk.volatilityGuard', detail: `${currentSymbol} ATR & dynamic support levels computed`, status: 'DONE' },
               { name: 'backtest.simulateScaleIn', detail: `3-Stage scale-in 1-year backtest simulation passed`, status: 'DONE' },
               { name: 'kelly.optimizeCapital', detail: `Kelly Criterion risk-shield capital allocation verified`, status: 'DONE' },
-              { name: 'qwenMax.issueActionTicket', detail: `Institutional 3-stage execution ticket issued`, status: 'DONE' }
+              { name: 'aether.issueActionTicket', detail: `Institutional 3-stage execution ticket issued`, status: 'DONE' }
             ] : [
-              { name: 'ta4j.calculateSignals', detail: `${curSess.symbol} RSI, SMA20/50, Volatility Bands calculated`, status: 'DONE' },
+              { name: 'quant.marketSignals', detail: `${currentSymbol} RSI(14), SMA20/50, Volatility Bands calculated`, status: 'DONE' },
               { name: 'aether.fractalEngine', detail: `AETHER 8,000 빅데이터 프랙탈 패턴 스캔 완료`, status: 'DONE' },
-              { name: 'brightdata.scrapeNews', detail: `Bright Data real-time financial news stream & sentiment scoring`, status: 'DONE' },
-              { name: 'qwenMax.synthesize', detail: `Institutional Qwen-Max Flagship Synthesis complete`, status: 'DONE' }
+              { name: 'intelligence.globalNewswire', detail: `Real-time financial news stream & sentiment scoring`, status: 'DONE' },
+              { name: 'aether.cognitiveSynthesis', detail: `Institutional AETHER Flagship Synthesis complete`, status: 'DONE' }
             ];
 
             setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
@@ -1167,7 +1214,53 @@ export default function Page() {
       setAgentThinking(false)
     }
   }
-  
+  // Top Navbar View State (상단 Navbar 메뉴별 해당하는 데이터만 전용 렌더링)
+  const [activeTopView, setActiveTopView] = useState<'trade' | 'league' | 'news' | 'bots' | 'research' | 'media' | 'arbitrage'>('trade')
+
+  useEffect(() => {
+    const handleHash = () => {
+      const h = typeof window !== 'undefined' ? window.location.hash : ''
+      if (h === '#trading-console' || h === '#bots' || h === '#bot') setActiveTopView('bots')
+      else if (h === '#research-terminal' || h === '#research') setActiveTopView('research')
+      else if (h === '#ten-win-league' || h === '#league') setActiveTopView('league')
+      else if (h === '#arbitrage-terminal' || h === '#arbitrage') setActiveTopView('arbitrage')
+      else if (h === '#live-newswire' || h === '#news') setActiveTopView('news')
+      else if (h === '#media-wire' || h === '#media') setActiveTopView('media')
+      else if (h === '#trade' || h === '#market-intelligence-terminal' || h === '' || h === '#') setActiveTopView('trade')
+    }
+    handleHash()
+    window.addEventListener('hashchange', handleHash)
+    return () => window.removeEventListener('hashchange', handleHash)
+  }, [])
+
+  const handleSelectTopView = (view: string) => {
+    setActiveTopView(view as any)
+    if (typeof window !== 'undefined') {
+      if (view === 'bots') window.location.hash = 'trading-console'
+      else if (view === 'research') window.location.hash = 'research-terminal'
+      else if (view === 'league') window.location.hash = 'ten-win-league'
+      else if (view === 'arbitrage') window.location.hash = 'arbitrage-terminal'
+      else if (view === 'news') window.location.hash = 'live-newswire'
+      else if (view === 'media') window.location.hash = 'media-wire'
+      else window.location.hash = 'trade'
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // 24H Bot Center Console Tab & Query State
+  const [botConsoleActiveTab, setBotConsoleActiveTab] = useState<'center' | 'terminal' | 'strategies' | 'billing' | 'telegram' | 'resources' | 'settings'>('center')
+  const [botConsoleQuery, setBotConsoleQuery] = useState('')
+  const [tgNotificationSettings, setTgNotificationSettings] = useState({
+    executions: true,
+    stopLoss: true,
+    healthCheck: true,
+    whaleAlerts: false
+  })
+  const [tgTestMessageSent, setTgTestMessageSent] = useState(false)
+  const [selectedVpsTier, setSelectedVpsTier] = useState<'micro' | 'standard' | 'alpha' | 'baremetal'>('standard')
+  const [selectedVpsRegion, setSelectedVpsRegion] = useState<string>('SEOCHO')
+  const [vpsProvisionSuccess, setVpsProvisionSuccess] = useState<string | null>(null)
+
   // Bot Hosting & Developer Sandbox State
   const [botMode, setBotMode] = useState<'GENERAL' | 'DEVELOPER'>('GENERAL')
   const [botRunning, setBotRunning] = useState(false)
@@ -1360,8 +1453,56 @@ export default function Page() {
   } = useMarketWebSocket(searched)
 
   // AWS / Hetzner Cloud Virtual Instance Sandbox State (Clean Real State)
-  const [botInstances, setBotInstances] = useState<BotInstanceItem[]>([])
-  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('')
+  const defaultRealBots: BotInstanceItem[] = [
+    {
+      id: 'qnt-7f3a2c',
+      name: 'BTC momentum alpha',
+      status: 'RUNNING',
+      strategy: 'RSI + Bollinger Multi-Fractal',
+      exchange: 'Binance',
+      apiKeyMasked: 'vm84••••••••3k19',
+      licenseToken: 'AETH-7F3A-88B1-NODE',
+      region: 'HEL1',
+      heartbeat: '2 min ago',
+      symbol: 'BTC/USD',
+      uptime: '12d ago',
+      specs: '1 vCPU · 1 GB',
+      ip: '49.12.240.118'
+    },
+    {
+      id: 'qnt-19b8e1',
+      name: 'ETH mean reversion',
+      status: 'STOPPED',
+      strategy: 'SMA 20/50 Dual Crossover',
+      exchange: 'Bybit',
+      apiKeyMasked: 'bb91••••••••99fa',
+      licenseToken: 'AETH-19B8-99FA-NODE',
+      region: 'HEL1',
+      heartbeat: '3h ago',
+      symbol: 'ETH/USD',
+      uptime: '28d ago',
+      specs: '1 vCPU · 1 GB',
+      ip: '49.12.240.119'
+    },
+    {
+      id: 'qnt-44c9d0',
+      name: 'SOL volatility scout',
+      status: 'PAUSED',
+      strategy: 'AETHER Fractal Match',
+      exchange: 'OKX',
+      apiKeyMasked: 'ok72••••••••55ad',
+      licenseToken: 'AETH-44C9-55AD-NODE',
+      region: 'HEL1',
+      heartbeat: '1d ago',
+      symbol: 'SOL/USD',
+      uptime: '41d ago',
+      specs: '2 vCPU · 2 GB',
+      ip: '49.12.240.120'
+    }
+  ]
+
+  const [botInstances, setBotInstances] = useState<BotInstanceItem[]>(defaultRealBots)
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string>('qnt-7f3a2c')
   const [instanceName, setInstanceName] = useState('')
   const [instanceCreating, setInstanceCreating] = useState(false)
   const [newInstanceSymbol, setNewInstanceSymbol] = useState<string>('BTC/USD')
@@ -1371,18 +1512,108 @@ export default function Page() {
   const [newInstanceLicenseKey, setNewInstanceLicenseKey] = useState<string>('')
   const [newInstanceStrategy, setNewInstanceStrategy] = useState<string>('RSI + Bollinger Multi-Fractal')
 
+  const filteredBotInstances = useMemo(() => {
+    if (!botConsoleQuery.trim()) return botInstances
+    const q = botConsoleQuery.toLowerCase()
+    return botInstances.filter((bot) =>
+      bot.name.toLowerCase().includes(q) ||
+      bot.id.toLowerCase().includes(q) ||
+      bot.symbol.toLowerCase().includes(q) ||
+      bot.exchange.toLowerCase().includes(q) ||
+      bot.strategy.toLowerCase().includes(q)
+    )
+  }, [botInstances, botConsoleQuery])
+
+  const handleToggleBotInstance = (botId: string) => {
+    setBotInstances(prev => prev.map(inst => {
+      if (inst.id === botId) {
+        const nextStatus = inst.status === 'RUNNING' ? 'STOPPED' : 'RUNNING'
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        setInstanceLogs(l => [
+          ...l.slice(-15),
+          { time: timeStr, tag: 'DOCKER', text: `[STATE-CHANGE] Instance ${inst.name} (${inst.id}) transitioned to ${nextStatus}.` }
+        ])
+        if (selectedInstanceId === botId) {
+          setInstanceStatus(nextStatus)
+          setBotRunning(nextStatus === 'RUNNING')
+        }
+        return {
+          ...inst,
+          status: nextStatus,
+          heartbeat: nextStatus === 'RUNNING' ? '실시간 (1s ago)' : 'standby'
+        }
+      }
+      return inst
+    }))
+  }
+
+  const handleDeleteBotInstance = (botId: string, botName: string) => {
+    if (confirm(`'${botName}' 인스턴스를 격리 해제 및 삭제하시겠습니까?`)) {
+      setBotInstances(prev => prev.filter(inst => inst.id !== botId))
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      setInstanceLogs(l => [
+        ...l.slice(-15),
+        { time: timeStr, tag: 'DOCKER', text: `[DESTROY] Instance container ${botId} (${botName}) successfully purged.` }
+      ])
+      if (selectedInstanceId === botId) {
+        const remaining = botInstances.filter(i => i.id !== botId)
+        if (remaining.length > 0) {
+          setSelectedInstanceId(remaining[0].id)
+          setInstanceStatus(remaining[0].status)
+        } else {
+          setSelectedInstanceId('')
+        }
+      }
+    }
+  }
+
+  const handleDeployNewBotInstance = () => {
+    const name = instanceName.trim() || 'AETHER Alpha Worker'
+    const newId = `qnt-${Math.random().toString(16).slice(2, 8)}`
+    const maskedKey = newInstanceApiKey.trim() ? `${newInstanceApiKey.trim().slice(0, 4)}••••••••${newInstanceApiKey.trim().slice(-4)}` : 'API-MASKED'
+    const activeToken = newInstanceLicenseKey || licenseToken || 'AETH-ACTIVE-NODE'
+    const newInst: BotInstanceItem = {
+      id: newId,
+      name,
+      status: 'RUNNING',
+      strategy: newInstanceStrategy,
+      exchange: newInstanceExchange,
+      apiKeyMasked: maskedKey,
+      licenseToken: activeToken,
+      region: 'HEL1',
+      heartbeat: '1s ago',
+      symbol: newInstanceSymbol,
+      uptime: '방금 전',
+      specs: '1 vCPU · 1 GB',
+      ip: '49.12.240.118'
+    }
+    setBotInstances(prev => [newInst, ...prev])
+    setSelectedInstanceId(newId)
+    setInstanceStatus('RUNNING')
+    setBotRunning(true)
+    setInstanceName('')
+    setNewInstanceApiKey('')
+    setNewInstanceApiSecret('')
+    setInstanceCreating(false)
+    
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setInstanceLogs(prev => [
+      ...prev,
+      { time: timeStr, tag: 'DOCKER', text: `[PROVISION] New container ${newId} initialized for ${newInstanceExchange} (${newInstanceSymbol})` },
+      { time: timeStr, tag: 'NET-IO', text: `[API-AUTH] Authenticated with ${newInstanceExchange} Key (${maskedKey})` },
+      { time: timeStr, tag: 'LICENSE', text: `[TELEGRAM] License key verified: ${activeToken}` },
+      { time: timeStr, tag: 'RUNNER', text: `[ACTIVE] ${newInstanceStrategy} automated execution loop started.` }
+    ])
+  }
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('aether_bot_instances')
       if (stored) {
         const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) {
-          // Filter out legacy demo mock instances
-          const validInstances = parsed.filter((inst: any) => inst.id !== 'qnt-7f3a2c' && inst.id !== 'qnt-19b8e1' && inst.apiKeyMasked)
-          setBotInstances(validInstances)
-          if (validInstances.length > 0) {
-            setSelectedInstanceId(validInstances[0].id)
-          }
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setBotInstances(parsed)
+          setSelectedInstanceId(parsed[0].id)
         }
       }
     } catch (e) {}
@@ -2217,74 +2448,21 @@ export default function Page() {
         onLanguageChange={(lang) => setLanguage(lang)}
         currentUser={currentUser}
         onLogout={handleLogout}
-        onOpenDeposit={() => setDepositModalOpen(true)}
-        eventOpen={eventOpen}
-        onToggleEvent={() => {
-          const next = !eventOpen
-          setEventOpen(next)
-          if (next) {
-            setTimeout(() => {
-              document.getElementById('ten-win-league')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 60)
-          }
+        onOpenDeposit={() => {
+          handleSelectTopView('bots')
+          setBotConsoleActiveTab('billing')
         }}
+        activeView={activeTopView}
+        onSelectView={handleSelectTopView}
         communityOpen={communityOpen}
-        onToggleCommunity={() => {
-          const next = !communityOpen
-          setCommunityOpen(next)
-          if (next) {
-            setTimeout(() => {
-              document.getElementById('strategy-commons')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 60)
-          }
-        }}
-        newsOpen={newsOpen}
-        onToggleNews={() => {
-          const next = !newsOpen
-          setNewsOpen(next)
-          if (next) {
-            setTimeout(() => {
-              document.getElementById('live-newswire')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 60)
-          }
-        }}
-        arbitrageOpen={arbitrageOpen}
-        onToggleArbitrage={() => {
-          const next = !arbitrageOpen
-          setArbitrageOpen(next)
-          if (next) {
-            setTimeout(() => {
-              document.getElementById('arbitrage-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 60)
-          }
-        }}
-        tradeOpen={tradeOpen}
-        onToggleTrade={() => {
-          const next = !tradeOpen
-          setTradeOpen(next)
-          if (next) {
-            setTimeout(() => {
-              document.getElementById('market-intelligence-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 60)
-          }
-        }}
-        researchOpen={researchOpen}
-        onToggleResearch={() => {
-          const next = !researchOpen
-          setResearchOpen(next)
-          if (next) {
-            setTimeout(() => {
-              document.getElementById('research-terminal')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-            }, 60)
-          }
-        }}
+        onToggleCommunity={() => setCommunityOpen(!communityOpen)}
         onOpenUpgrade={() => setUpgradeOpen(true)}
       />
 
       <main className="terminal-shell">
 
       {/* ── Real-Time Market Intelligence & AI Copilot Workspace ── */}
-      {tradeOpen && (
+      {(activeTopView === 'trade') && (
         <section className="workspace-light market-page" id="market-intelligence-terminal" style={{ background: '#ffffff', border: '1px solid #dfe3eb', borderRadius: '8px', padding: '24px 28px', margin: '20px 0 25px', fontFamily: 'var(--font-sans)' }}>
           <header className="market-intro" style={{ paddingTop: '10px' }}>
             <div>
@@ -2984,8 +3162,8 @@ def signal(tick):
         </section>
       )}
 
-      {/* ── 1-Hour Quick-Strike Prediction League Modal / Drawer ── */}
-      {eventOpen && (
+      {/* ── 1-Hour Quick-Strike Prediction League Workspace ── */}
+      {(activeTopView === 'league') && (
         <section className="league-section" id="ten-win-league" style={{ fontFamily: 'var(--font-sans)', background: '#ffffff', border: '1px solid #d8dee4', padding: '24px 28px', margin: '20px 0 25px', borderRadius: '4px' }}>
           {/* Header Bar */}
           <div className="league-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', borderBottom: '1px solid #edf0f2', paddingBottom: '20px' }}>
@@ -4705,8 +4883,8 @@ def signal(tick):
                     <strong style={{ color: 'var(--navy)' }}>03. 트레이딩 액션 가이드: </strong>
                     <span>
                       {articleLangView === 'KO'
-                        ? (selectedArticle.actionGuideKo || `$${selectedArticle.tag} 기관 수급 및 1차 지지선 방어 여부 모니터링, ta4j 지표 합성 매매 권장.`)
-                        : (selectedArticle.actionGuideEn || `$${selectedArticle.tag} Monitor institutional flows and 1st support defense with ta4j indicators.`)}
+                        ? (selectedArticle.actionGuideKo || `$${selectedArticle.tag} 기관 수급 및 1차 지지선 방어 여부 모니터링, 정밀 기술적 지표 합성 매매 권장.`)
+                        : (selectedArticle.actionGuideEn || `$${selectedArticle.tag} Monitor institutional flows and 1st support defense with multi-technical indicators.`)}
                     </span>
                   </div>
                 </div>
@@ -4751,7 +4929,7 @@ def signal(tick):
 
 
       {/* ── Real-time Cross-Exchange Arbitrage & L2 Orderbook Terminal ── */}
-      {arbitrageOpen && (
+      {(activeTopView === 'arbitrage') && (
         <section className="arbitrage-section" id="arbitrage-terminal" style={{ margin: '24px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', background: '#0b131e', padding: '12px 18px', borderRadius: '4px', border: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontSize: '12px', fontWeight: 'bold' }}>
@@ -4760,7 +4938,7 @@ def signal(tick):
             </div>
             <button
               type="button"
-              onClick={() => setArbitrageOpen(false)}
+              onClick={() => handleSelectTopView('trade')}
               style={{ background: 'transparent', border: '1px solid #334155', color: '#94a3b8', padding: '4px 10px', fontSize: '11px', borderRadius: '3px', cursor: 'pointer' }}
             >
               닫기 ✕
@@ -4771,7 +4949,7 @@ def signal(tick):
       )}
 
       {/* ── Live Newswire (Language Localized) ── */}
-      {newsOpen && (
+      {(activeTopView === 'news') && (
         <section className="news-section" id="live-newswire">
           <div className="news-live-bar">
             <span className="live-dot pulse" /> LIVE NEWSWIRE ({languageLabels[language]})
@@ -4852,548 +5030,1290 @@ def signal(tick):
         </section>
       )}
 
-      {/* ── 24H Trading Operations Console ── */}
-      <section className="trading-console panel" id="trading-console">
-        <div className="instance-console-head">
-          <div>
-            <span className="overline">{language === 'ko' ? '24/7 IDC 봇 인스턴스' : 'BOT INSTANCES'}</span>
-            <h2>{language === 'ko' ? '24시간 자동매매 봇 센터' : 'Instances'}</h2>
-            <p>{language === 'ko' ? '실시간 알고리즘 배포 & 호스팅' : '24-hour quant workers running on dedicated execution capacity.'}</p>
-          </div>
-          <button
-            className="primary-button instance-create-button"
-            onClick={() => {
-              if (!licenseToken && botInstances.length === 0) {
-                setDepositModalOpen(true)
-              } else {
-                setInstanceCreating(true)
-              }
-            }}
-          >
-            {!licenseToken && botInstances.length === 0
-              ? (language === 'ko' ? '라이선스 결제 및 봇 가동' : 'SUBSCRIBE & DEPLOY')
-              : (language === 'ko' ? '＋ 봇 인스턴스 생성' : '＋ CREATE INSTANCE')}
-          </button>
-        </div>
-        <div className="instance-toolbar">
-          <span><i className="live-dot" /> {botInstances.length} {language === 'ko' ? '개 인스턴스' : 'instances'} · {botInstances.filter((instance) => instance.status === 'RUNNING').length} {language === 'ko' ? '가동 중' : 'running'}</span>
-          <button className="text-button" onClick={() => setBotInstances((items) => [...items])}>↻ {language === 'ko' ? '새로고침' : 'REFRESH'}</button>
-        </div>
-        <div className="instance-table-wrap">
-          {botInstances.length === 0 ? (
-            <div style={{ padding: '36px 20px', textAlign: 'center', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '4px', margin: '4px 0 16px' }}>
-              <div style={{ color: '#0f766e', marginBottom: '8px' }}>
-                <Diamond />
-              </div>
-              <strong style={{ fontSize: '13px', color: '#18334a', display: 'block', marginBottom: '6px' }}>
-                {language === 'ko' ? '등록된 24/7 IDC 봇 인스턴스가 없습니다' : 'No Active Bot Instances Registered'}
-              </strong>
-              <p style={{ fontSize: '11px', color: '#64748b', maxWidth: '520px', margin: '0 auto 16px', lineHeight: 1.6 }}>
-                {language === 'ko'
-                  ? '24시간 무중단 클라우드 자동매매는 유료 구독 서비스입니다. 라이선스 결제 승인 시 텔레그램(@AetherQuantOfficialBot)으로 발급된 고유 라이선스 키를 통해 거래소(Binance / Bybit / Upbit / OKX) API를 안전하게 연동할 수 있습니다.'
-                  : '24/7 cloud automated execution is a premium service. Upon license payment, your unique key is sent to Telegram (@AetherQuantOfficialBot) to connect your exchange API.'}
-              </p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {licenseToken ? (
-                  <>
-                    <button
-                      className="primary-button"
-                      style={{ fontSize: '11px', padding: '8px 18px', background: '#0f766e', borderColor: '#14b8a6' }}
-                      onClick={() => setInstanceCreating(true)}
-                    >
-                      {language === 'ko' ? '＋ 거래소 API Key 연동 & 인스턴스 생성' : '＋ CONNECT API KEY & CREATE BOT'}
-                    </button>
-                    <button
-                      className="secondary-button"
-                      style={{ fontSize: '11px', padding: '8px 18px' }}
-                      onClick={handleConnectTelegram}
-                    >
-                      {language === 'ko' ? '텔레그램에서 발급된 키 확인' : 'Check Telegram License'}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="primary-button"
-                    style={{ fontSize: '11.5px', padding: '9px 24px', background: '#0f766e', borderColor: '#14b8a6' }}
-                    onClick={() => setDepositModalOpen(true)}
-                  >
-                    {language === 'ko' ? '라이선스 결제 및 텔레그램 키 발급 ($7 USDT)' : 'Subscribe & Get Telegram Key ($7 USDT)'}
+      {/* ── 24H Autonomous Trading Bot Center Console ── */}
+      {(activeTopView === 'bots') && (
+        <section className="bot-console panel" id="trading-console" style={{ padding: 0, overflow: 'hidden', border: '1px solid #dedfe4', borderRadius: '12px', margin: '20px 0', background: '#f7f7f8' }}>
+        <div className="bot-console-body">
+          <aside className="bot-console-sidebar">
+            <div className="bot-console-brand">
+              <span className="bot-mark"><Bot size={16} /></span>
+              <strong>AETHER</strong>
+            </div>
+            <div className="bot-workspace-select">
+              Personal <ChevronDown size={14} />
+            </div>
+            <label className="bot-side-search">
+              <Search size={14} />
+              <input
+                placeholder="Search"
+                value={botConsoleQuery}
+                onChange={(e) => setBotConsoleQuery(e.target.value)}
+              />
+            </label>
+            <nav className="bot-console-nav">
+              <a
+                className={botConsoleActiveTab === 'center' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('center')}
+              >
+                <Bot size={16} /> 24H Bot Center
+              </a>
+              <a
+                className={botConsoleActiveTab === 'terminal' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('terminal')}
+              >
+                <SquareTerminal size={16} /> Terminal
+              </a>
+              <a
+                className={botConsoleActiveTab === 'strategies' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('strategies')}
+              >
+                <Code2 size={16} /> Strategies
+              </a>
+              <a
+                className={botConsoleActiveTab === 'billing' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('billing')}
+              >
+                <CreditCard size={16} /> Billing
+              </a>
+              <a
+                className={botConsoleActiveTab === 'telegram' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('telegram')}
+              >
+                <Send size={16} /> Telegram
+              </a>
+              <a
+                className={botConsoleActiveTab === 'resources' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('resources')}
+              >
+                <Server size={16} /> Resources product
+              </a>
+              <a
+                className={botConsoleActiveTab === 'settings' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('settings')}
+              >
+                <SlidersHorizontal size={16} /> Settings
+              </a>
+            </nav>
+            <div className="bot-side-footer">
+              PRO PLAN<br />
+              <span>{botInstances.filter(i => i.status === 'RUNNING').length} of {botInstances.length} instances active</span>
+            </div>
+          </aside>
+
+          <section className="bot-console-main">
+            {botConsoleActiveTab === 'center' && (
+              <>
+                <header className="bot-console-header">
+                  <div>
+                    <span className="bot-console-kicker">AUTONOMOUS TRADING / WORKSPACE</span>
+                    <h1>24H <em>Bot Center</em></h1>
+                    <p>Manage, monitor, and deploy your autonomous trading instances.</p>
+                  </div>
+                  <button className="bot-create-button" onClick={() => setInstanceCreating(true)}>
+                    <Plus size={16} /> Create bot
                   </button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <table className="instance-table">
-              <thead>
-                <tr>
-                  <th>{language === 'ko' ? '상태' : 'STATUS'}</th>
-                  <th>{language === 'ko' ? '인스턴스 ID' : 'INSTANCE ID'}</th>
-                  <th>{language === 'ko' ? '봇 이름' : 'NAME'}</th>
-                  <th>{language === 'ko' ? '거래소' : 'EXCHANGE'}</th>
-                  <th>{language === 'ko' ? '연동 API KEY' : 'API KEY'}</th>
-                  <th>{language === 'ko' ? '리전' : 'REGION'}</th>
-                  <th>{language === 'ko' ? '하트비트' : 'HEARTBEAT'}</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {botInstances.map((instance) => (
-                  <tr key={instance.id} className={selectedInstanceId === instance.id ? 'selected' : ''} onClick={() => {
-                    setSelectedInstanceId(instance.id)
-                    setInstanceStatus(instance.status as any)
-                  }}>
-                    <td>
-                      <span className={`instance-status ${instance.status.toLowerCase()}`}>
-                        <i />
-                        {language === 'ko'
-                          ? (instance.status === 'RUNNING' ? '가동 중' : instance.status === 'STOPPED' ? '중지됨' : instance.status === 'PAUSED' ? '일시정지' : '재부팅 중')
-                          : instance.status}
-                      </span>
-                    </td>
-                    <td className="mono-cell">{instance.id}</td>
-                    <td><strong>{instance.name}</strong></td>
-                    <td><span style={{ fontSize: '9.5px', fontWeight: 600, color: '#0f766e', background: '#e6f4ea', padding: '1px 6px', borderRadius: '3px' }}>{instance.exchange || 'Binance'}</span></td>
-                    <td className="mono-cell" style={{ fontSize: '9.5px', color: '#64748b' }}>{instance.apiKeyMasked || '••••••••'}</td>
-                    <td>{instance.region}</td>
-                    <td>
-                      {language === 'ko'
-                        ? (instance.status === 'RUNNING' ? '방금 전 (실시간)' : instance.status === 'PAUSED' ? '일시정지 중' : '대기 상태')
-                        : instance.heartbeat}
-                    </td>
-                    <td><button className="row-action" aria-label={`Manage ${instance.name}`} onClick={(event) => { event.stopPropagation(); setSelectedInstanceId(instance.id); setInstanceStatus(instance.status as any) }}>⋯</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </header>
 
-        {/* ── Enhanced Exchange API Key & Telegram License Bot Creation Modal / Form ── */}
-        {instanceCreating && (
-          <div className="instance-create-form" style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '20px 24px', borderRadius: '6px', margin: '14px 0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-              <strong style={{ fontSize: '13px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Diamond /> {language === 'ko' ? '24/7 클라우드 봇 인스턴스 생성 & 거래소 API 연동' : 'Create 24/7 Bot Instance & Connect Exchange API'}
-              </strong>
-              <span style={{ fontSize: '9px', background: '#e0f2fe', color: '#0284c7', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
-                Hetzner HEL1 IDC · Docker Sandbox
-              </span>
-            </div>
+                <div className="bot-toolbar">
+                  <label className="bot-search">
+                    <Search size={16} />
+                    <input
+                      value={botConsoleQuery}
+                      onChange={(e) => setBotConsoleQuery(e.target.value)}
+                      placeholder="Search by name, symbol, or exchange"
+                    />
+                  </label>
+                  <button className="bot-tool-button" onClick={() => setBotConsoleQuery('')}>
+                    <Filter size={15} /> Filter
+                  </button>
+                  <button
+                    className="bot-tool-icon"
+                    aria-label="Refresh"
+                    onClick={() => setBotInstances([...botInstances])}
+                    title="Refresh instances"
+                  >
+                    <SlidersHorizontal size={16} />
+                  </button>
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <label style={{ margin: 0 }}>
-                {language === 'ko' ? '봇 이름 (인스턴스 식별명)' : 'BOT INSTANCE NAME'}
-                <input
-                  autoFocus
-                  value={instanceName}
-                  onChange={(event) => setInstanceName(event.target.value)}
-                  placeholder={language === 'ko' ? '예: 바이낸스 비트코인 모멘텀 1호기' : 'e.g. Binance BTC Breakout Bot'}
-                  style={{ marginTop: '4px' }}
-                />
-              </label>
+                <div className="bot-table-wrap">
+                  <div className="bot-table-head">
+                    <span></span>
+                    <span>Name</span>
+                    <span>State</span>
+                    <span>Resource</span>
+                    <span>Last event</span>
+                    <span>Uptime</span>
+                    <span>Actions</span>
+                  </div>
 
-              <label style={{ margin: 0 }}>
-                {language === 'ko' ? '연동 거래소 (Exchange)' : 'EXCHANGE'}
-                <select
-                  value={newInstanceExchange}
-                  onChange={(e) => setNewInstanceExchange(e.target.value)}
-                  style={{ width: '100%', height: '34px', marginTop: '4px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '0 8px', fontSize: '11px', color: '#18334a' }}
-                >
-                  <option value="Binance">Binance (바이낸스 Core WebSocket)</option>
-                  <option value="Bybit">Bybit (바이비트 V5 API)</option>
-                  <option value="Upbit">Upbit (업비트 Open API)</option>
-                  <option value="OKX">OKX (오케이엑스 V5)</option>
-                </select>
-              </label>
-            </div>
+                  {filteredBotInstances.length === 0 ? (
+                    <div style={{ padding: '36px 20px', textAlign: 'center', background: '#f8fafc' }}>
+                      <strong style={{ fontSize: '13px', color: '#18334a', display: 'block', marginBottom: '6px' }}>
+                        등록된 24H 봇 인스턴스가 없습니다
+                      </strong>
+                      <p style={{ fontSize: '11px', color: '#64748b', maxWidth: '460px', margin: '0 auto 16px', lineHeight: 1.6 }}>
+                        새로운 거래소(Binance, Bybit, Upbit, OKX) API Key를 연동하고 24시간 무중단 알고리즘 봇을 배포하세요.
+                      </p>
+                      <button className="bot-create-button" style={{ margin: '0 auto' }} onClick={() => setInstanceCreating(true)}>
+                        <Plus size={15} /> 봇 인스턴스 생성하기
+                      </button>
+                    </div>
+                  ) : (
+                    filteredBotInstances.map((bot) => {
+                      const isRunning = bot.status === 'RUNNING'
+                      const isSelected = selectedInstanceId === bot.id
+                      return (
+                        <div
+                          className={`bot-table-row ${isSelected ? 'selected' : ''}`}
+                          key={bot.id}
+                          onClick={() => {
+                            setSelectedInstanceId(bot.id)
+                            setInstanceStatus(bot.status)
+                          }}
+                          style={{ cursor: 'pointer', background: isSelected ? '#f8fafc' : undefined }}
+                        >
+                          <span className="bot-checkbox"></span>
+                          <div className="bot-name-cell">
+                            <span className="bot-row-icon"><Bot size={15} /></span>
+                            <span>
+                              <strong>{bot.name}</strong>
+                              <small>{bot.id} · {bot.exchange} ({bot.symbol})</small>
+                            </span>
+                          </div>
+                          <span className={`bot-state ${isRunning ? 'is-running' : ''}`}>
+                            <i />{isRunning ? 'Running' : bot.status === 'PAUSED' ? 'Paused' : bot.status === 'REBOOTING' ? 'Rebooting' : 'Stopped'}
+                          </span>
+                          <span className="bot-resource">{bot.specs}</span>
+                          <span className="bot-event">{bot.heartbeat}</span>
+                          <span className="bot-created">{bot.uptime}</span>
+                          <div className="bot-row-actions" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => handleToggleBotInstance(bot.id)}
+                              aria-label={isRunning ? 'Stop bot' : 'Start bot'}
+                              title={isRunning ? 'Stop' : 'Start'}
+                            >
+                              {isRunning ? <Square size={15} /> : <Play size={16} />}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedInstanceId(bot.id)
+                                setInstanceStatus(bot.status)
+                                setBotConsoleActiveTab('terminal')
+                              }}
+                              aria-label="Open terminal"
+                              title="Terminal (PowerShell Docker Logs)"
+                            >
+                              <SquareTerminal size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBotInstance(bot.id, bot.name)}
+                              aria-label="Delete bot"
+                              title="Delete instance"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <label style={{ margin: 0 }}>
-                {language === 'ko' ? '타겟 거래 종목 (Target Symbol)' : 'TARGET SYMBOL'}
-                <select
-                  value={newInstanceSymbol}
-                  onChange={(e) => setNewInstanceSymbol(e.target.value)}
-                  style={{ width: '100%', height: '34px', marginTop: '4px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '0 8px', fontSize: '11px', color: '#18334a' }}
-                >
-                  <option value="BTC/USD">BTC/USD (Bitcoin)</option>
-                  <option value="ETH/USD">ETH/USD (Ethereum)</option>
-                  <option value="SOL/USD">SOL/USD (Solana)</option>
-                  <option value="XRP/USD">XRP/USD (Ripple)</option>
-                  <option value="NVDA/USD">NVDA/USD (NVIDIA)</option>
-                </select>
-              </label>
+                <div className="bot-table-footer">
+                  <span>{filteredBotInstances.length} bot instances</span>
+                  <button>25 per page <ChevronDown size={14} /></button>
+                </div>
+              </>
+            )}
 
-              <label style={{ margin: 0 }}>
-                {language === 'ko' ? '전략 템플릿 (Strategy)' : 'STRATEGY TEMPLATE'}
-                <select
-                  value={newInstanceStrategy}
-                  onChange={(e) => setNewInstanceStrategy(e.target.value)}
-                  style={{ width: '100%', height: '34px', marginTop: '4px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '3px', padding: '0 8px', fontSize: '11px', color: '#18334a' }}
-                >
-                  <option value="RSI + Bollinger Multi-Fractal">RSI + Bollinger Multi-Fractal (추세추종)</option>
-                  <option value="SMA 20/50 Dual Crossover">SMA 20/50 Dual Crossover (골든크로스)</option>
-                  <option value="AETHER Fractal Match">AETHER 시계열 프랙탈 매칭 (빅데이터 반등 패턴)</option>
-                  <option value="Custom Python Script">Custom Python Script (개발자 모드 코드)</option>
-                </select>
-              </label>
-            </div>
+            {botConsoleActiveTab === 'terminal' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div>
+                    <span className="bot-console-kicker">HETZNER HEL1 CLOUD DOCKER INSTANCE</span>
+                    <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0', color: '#0f172a' }}>
+                      {botInstances.find(i => i.id === selectedInstanceId)?.name || 'Strategy Terminal'} ({selectedInstanceId || 'N/A'})
+                    </h2>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
+                      {botInstances.find(i => i.id === selectedInstanceId)?.exchange || 'Binance'} · {botInstances.find(i => i.id === selectedInstanceId)?.symbol || searched} · Docker Runtime: ta4j Engine v0.15 (PID: 3419)
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      className="instance-ctrl-btn primary"
+                      onClick={handleStartInstance}
+                      disabled={instanceStatus === 'RUNNING' || instanceStatus === 'REBOOTING'}
+                      style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#0f766e', color: '#fff', border: 0, cursor: 'pointer' }}
+                    >
+                      ▶ START / RESUME
+                    </button>
+                    <button
+                      className="instance-ctrl-btn"
+                      onClick={handlePauseInstance}
+                      disabled={instanceStatus !== 'RUNNING'}
+                      style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                    >
+                      ⏸ PAUSE BOT
+                    </button>
+                    <button
+                      className="instance-ctrl-btn"
+                      onClick={handleRebootInstance}
+                      disabled={instanceStatus === 'REBOOTING'}
+                      style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                    >
+                      🔄 REBOOT
+                    </button>
+                    <button
+                      className="instance-ctrl-btn danger"
+                      onClick={handleStopInstance}
+                      disabled={instanceStatus === 'STOPPED'}
+                      style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
+                    >
+                      ⏹ STOP
+                    </button>
+                  </div>
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <label style={{ margin: 0 }}>
-                {language === 'ko' ? '거래소 API Key (Trade 권한)' : 'EXCHANGE API KEY'}
-                <input
-                  value={newInstanceApiKey}
-                  onChange={(e) => setNewInstanceApiKey(e.target.value)}
-                  placeholder={language === 'ko' ? '거래소에서 발급받은 API Key 입력' : 'Enter Exchange API Key'}
-                  style={{ marginTop: '4px', fontFamily: "var(--font-mono)" }}
-                />
-              </label>
+                {/* Live Docker Terminal Logs */}
+                <div className="powershell-terminal-box" style={{ margin: '0 0 16px' }}>
+                  <div className="powershell-titlebar">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="powershell-dots">
+                        <span className="dot-red" />
+                        <span className="dot-yellow" />
+                        <span className="dot-green" />
+                      </div>
+                      <span>PS C:\TradingEngine\Docker\instances\{selectedInstanceId}&gt; node --runtime=ta4j-v0.15</span>
+                    </div>
+                    <span style={{ color: '#10b981' }}>● HEL1_ISOLATED_CONTAINER · 49.12.240.118</span>
+                  </div>
 
-              <label style={{ margin: 0 }}>
-                {language === 'ko' ? '거래소 Secret Key' : 'EXCHANGE SECRET KEY'}
-                <input
-                  type="password"
-                  value={newInstanceApiSecret}
-                  onChange={(e) => setNewInstanceApiSecret(e.target.value)}
-                  placeholder={language === 'ko' ? '거래소 Secret Key 입력' : 'Enter Exchange Secret Key'}
-                  style={{ marginTop: '4px', fontFamily: "var(--font-mono)" }}
-                />
-              </label>
-            </div>
+                  <div className="instance-live-terminal" style={{ background: '#000000', border: 'none', borderRadius: '0', padding: '12px 14px', height: '140px', overflowY: 'auto' }}>
+                    {instanceLogs.map((log, idx) => (
+                      <div key={idx} className="terminal-log-line" style={{ display: 'flex', gap: '8px', fontSize: '10.5px', fontFamily: 'var(--font-mono)', lineHeight: '1.6' }}>
+                        <span className="t-time" style={{ color: '#475569' }}>[{log.time}]</span>
+                        <span className="t-tag" style={{ color: '#10b981', fontWeight: 'bold' }}>[{log.tag}]</span>
+                        <span className="t-text" style={{ color: '#e2e8f0' }}>{log.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ margin: 0 }}>
+                {/* Dracula Python Strategy Sandbox Editor */}
+                <div className="powershell-terminal-box" style={{ margin: '0 0 16px' }}>
+                  <div className="powershell-titlebar">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="powershell-dots">
+                        <span className="dot-red" />
+                        <span className="dot-yellow" />
+                        <span className="dot-green" />
+                      </div>
+                      <span>Windows PowerShell (x64) - [Python 3.12.10 - Strategy Runner Sandbox]</span>
+                    </div>
+                    <span style={{ color: '#38bdf8' }}>AST_SANDBOX_ACTIVE</span>
+                  </div>
+
+                  <div className="powershell-body">
+                    <div className="powershell-prompt">
+                      <span className="path">PS C:\Quant\sandbox\bots\live_worker&gt;</span>
+                      <span className="cmd">python -u strategy_runner.py --symbol {searched}</span>
+                    </div>
+
+                    <div className="dracula-editor-wrap">
+                      <div className="dracula-line-numbers">
+                        {pythonCode.split('\n').map((_, idx) => (
+                          <div key={idx}>{idx + 1}</div>
+                        ))}
+                      </div>
+                      <pre className="dracula-code-display">
+                        {highlightDraculaPythonCode(pythonCode)}
+                      </pre>
+                      <textarea
+                        className="dracula-code-textarea"
+                        aria-label="Python strategy code"
+                        value={pythonCode}
+                        onChange={(e) => setPythonCode(e.target.value)}
+                        rows={8}
+                        spellCheck={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{language === 'ko' ? '텔레그램 발급 봇 라이선스 키 (Telegram License Key)' : 'TELEGRAM BOT LICENSE KEY'}</span>
                   <button
                     type="button"
-                    className="text-button"
-                    style={{ fontSize: '8.5px', color: '#0284c7' }}
-                    onClick={() => {
-                      if (!licenseToken) setDepositModalOpen(true)
-                      else handleConnectTelegram()
+                    className="primary-button"
+                    style={{
+                      fontSize: '11px',
+                      padding: '9px 18px',
+                      background: '#0f766e',
+                      border: '1px solid #14b8a6',
+                      color: '#ffffff',
+                      fontWeight: 'bold',
+                      fontFamily: "var(--font-mono)",
+                      borderRadius: '6px',
+                      cursor: 'pointer'
                     }}
+                    onClick={handleTestSandbox}
+                    disabled={sandboxLoading}
                   >
-                    {language === 'ko' ? '텔레그램에서 라이선스 키 확인/발급 ↗' : 'Get Key from Telegram ↗'}
+                    {sandboxLoading ? '백엔드 AST 분석 및 연산 중…' : '▶ 파이썬 백테스트 실행 (1,000 캔들)'}
+                  </button>
+                  <button
+                    type="button"
+                    className="bot-tool-button"
+                    onClick={handleConnectTelegram}
+                  >
+                    {telegramLinked ? '텔레그램 1:1 연동 완료 ✓' : '텔레그램 DM 연동 ↗'}
                   </button>
                 </div>
-                <input
-                  value={newInstanceLicenseKey || licenseToken || ''}
-                  onChange={(e) => setNewInstanceLicenseKey(e.target.value)}
-                  placeholder={language === 'ko' ? '예: AETH-7F3A-88B1-NODE (결제 후 텔레그램으로 전송된 키)' : 'e.g. AETH-7F3A-88B1-NODE'}
-                  style={{ marginTop: '4px', fontFamily: "var(--font-mono)" }}
-                />
-              </label>
-            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
-              <small style={{ fontSize: '9px', color: '#64748b' }}>
-                {language === 'ko' ? 'API Key 및 Secret은 비공개 메모리에 안전하게 암호화되어 전송됩니다.' : 'API credentials are securely encrypted in memory.'}
-              </small>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="secondary-button" onClick={() => setInstanceCreating(false)}>
-                  {language === 'ko' ? '취소' : 'CANCEL'}
-                </button>
-                <button
-                  className="primary-button"
-                  disabled={!instanceName.trim()}
-                  onClick={() => {
-                    const newId = `qnt-${Math.random().toString(16).slice(2, 8)}`
-                    const maskedKey = newInstanceApiKey.trim() ? `${newInstanceApiKey.trim().slice(0, 4)}••••••••${newInstanceApiKey.trim().slice(-4)}` : 'API-MASKED'
-                    const activeToken = newInstanceLicenseKey || licenseToken || 'AETH-ACTIVE-NODE'
-                    const newInst: BotInstanceItem = {
-                      id: newId,
-                      name: instanceName.trim(),
-                      status: 'RUNNING',
-                      strategy: newInstanceStrategy,
-                      exchange: newInstanceExchange,
-                      apiKeyMasked: maskedKey,
-                      licenseToken: activeToken,
-                      region: 'HEL1',
-                      heartbeat: '1s ago',
-                      symbol: newInstanceSymbol,
-                      uptime: '0h 01m',
-                      specs: '1 vCPU · 1.0 GB RAM · 10 GB NVMe',
-                      ip: '49.12.240.118'
-                    }
-                    setBotInstances(prev => [newInst, ...prev])
-                    setSelectedInstanceId(newId)
-                    setInstanceStatus('RUNNING')
-                    setBotRunning(true)
-                    setInstanceName('')
-                    setNewInstanceApiKey('')
-                    setNewInstanceApiSecret('')
-                    setInstanceCreating(false)
-                    
-                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                    setInstanceLogs(prev => [
-                      ...prev,
-                      { time: timeStr, tag: 'DOCKER', text: `[PROVISION] New container ${newId} initialized for ${newInstanceExchange} (${newInstanceSymbol})` },
-                      { time: timeStr, tag: 'NET-IO', text: `[API-AUTH] Authenticated with ${newInstanceExchange} Key (${maskedKey})` },
-                      { time: timeStr, tag: 'LICENSE', text: `[TELEGRAM] License key verified: ${activeToken}` },
-                      { time: timeStr, tag: 'RUNNER', text: `[ACTIVE] ${newInstanceStrategy} automated execution loop started.` }
-                    ])
-                  }}
-                  style={{ background: '#0f766e', borderColor: '#14b8a6' }}
-                >
-                  {language === 'ko' ? '봇 인스턴스 배포 & 클라우드 가동' : 'DEPLOY INSTANCE & START BOT'}
-                </button>
+                {sandboxLog && (
+                  <div style={{ marginTop: '14px', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                      <span style={{
+                        fontSize: '8px',
+                        fontWeight: 'bold',
+                        padding: '2px 7px',
+                        borderRadius: '2px',
+                        background: sandboxIsError ? '#ef4444' : '#10b981',
+                        color: '#ffffff',
+                        fontFamily: "var(--font-mono)"
+                      }}>
+                        {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
+                      </span>
+                      <span style={{ fontSize: '9px', color: sandboxIsError ? '#dc2626' : '#059669' }}>
+                        {sandboxIsError ? '파이썬 AST 문법 오류 또는 런타임 예외' : 'Spring Boot 백엔드 AST 백테스팅 검증 성공'}
+                      </span>
+                    </div>
+                    <pre style={{
+                      background: sandboxIsError ? '#180707' : '#010f08',
+                      border: sandboxIsError ? '1px solid #ef4444' : '1px solid #10b981',
+                      color: sandboxIsError ? '#fca5a5' : '#50fa7b',
+                      padding: '12px 14px',
+                      fontSize: '10.5px',
+                      lineHeight: '1.6',
+                      borderRadius: '6px',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: "var(--font-mono)"
+                    }}>
+                      {sandboxLog}
+                    </pre>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {botInstances.length > 0 && (
-          <div className="instance-detail">
-            <span className="overline">{language === 'ko' ? '선택된 봇 인스턴스' : 'SELECTED INSTANCE'}</span>
-            <strong>{botInstances.find((instance) => instance.id === selectedInstanceId)?.name || '선택된 인스턴스 없음'}</strong>
-            <span>{selectedInstanceId || 'N/A'} · Hetzner HEL1 · Docker {language === 'ko' ? '격리 샌드박스' : 'isolated runtime'} · {botInstances.find((instance) => instance.id === selectedInstanceId)?.exchange || 'Binance'} ({botInstances.find((instance) => instance.id === selectedInstanceId)?.apiKeyMasked || 'API-CONNECTED'})</span>
-          </div>
-        )}
-
-        {/* AWS / Hetzner Cloud Virtual Instance Control Box (PowerShell CLI Style) */}
-        <div className="powershell-terminal-box" style={{ margin: '16px 24px' }}>
-          <div className="powershell-titlebar">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div className="powershell-dots">
-                <span className="dot-red" />
-                <span className="dot-yellow" />
-                <span className="dot-green" />
-              </div>
-              <span>PS C:\TradingEngine\Docker\instances\{selectedInstanceId}&gt; node --runtime=ta4j-v0.15</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: '#10b981' }}>● HEL1_ISOLATED_CONTAINER</span>
-              <span style={{ color: '#64748b' }}>49.12.240.118</span>
-            </div>
-          </div>
-
-          <div className="powershell-target-bar">
-            <span style={{ fontSize: '8px', color: '#94a3b8', fontFamily: "var(--font-mono)", marginRight: '4px' }}>
-              TARGET_SYMBOL_FLAGS:
-            </span>
-            {[
-              { label: '--target=BTC/USD', sym: 'BTC/USD' },
-              { label: '--target=ETH/USD', sym: 'ETH/USD' },
-              { label: '--target=SOL/USD', sym: 'SOL/USD' },
-              { label: '--target=NVDA/USD', sym: 'NVDA/USD' },
-              { label: '--target=005930.KS', sym: '005930.KS' }
-            ].map(chip => (
-              <button
-                key={chip.sym}
-                className={`powershell-chip ${searched === chip.sym ? 'active' : ''}`}
-                onClick={() => {
-                  setSearched(chip.sym)
-                  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-                  setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'ROUTING', text: `Target asset re-routed to ${chip.sym}. Container process PID: 4104 attached.` }])
-                }}
-              >
-                {chip.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="instance-controls-bar" style={{ background: '#060a12', borderBottom: '1px solid #1e293b', padding: '8px 14px' }}>
-            <button
-              className="instance-ctrl-btn primary"
-              onClick={handleStartInstance}
-              disabled={instanceStatus === 'RUNNING' || instanceStatus === 'REBOOTING'}
-            >
-              ▶ START / RESUME
-            </button>
-            <button
-              className="instance-ctrl-btn"
-              onClick={handlePauseInstance}
-              disabled={instanceStatus !== 'RUNNING'}
-            >
-              ⏸ PAUSE BOT
-            </button>
-            <button
-              className="instance-ctrl-btn"
-              onClick={handleRebootInstance}
-              disabled={instanceStatus === 'REBOOTING'}
-            >
-              🔄 REBOOT CONTAINER
-            </button>
-            <button
-              className="instance-ctrl-btn danger"
-              onClick={handleStopInstance}
-              disabled={instanceStatus === 'STOPPED'}
-            >
-              ⏹ TERMINATE / STOP
-            </button>
-          </div>
-
-          <div className="instance-live-terminal" style={{ background: '#000000', border: 'none', borderRadius: '0', padding: '12px 14px', height: '110px' }}>
-            {instanceLogs.map((log, idx) => (
-              <div key={idx} className="terminal-log-line">
-                <span className="t-time" style={{ color: '#475569' }}>[{log.time}]</span>
-                <span className="t-tag" style={{ color: '#10b981', fontWeight: 'bold' }}>[{log.tag}]</span>
-                <span className="t-text" style={{ color: '#e2e8f0' }}>{log.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bot-mode-switch" role="tablist" aria-label="Bot execution mode">
-          <button role="tab" aria-selected={botMode === 'GENERAL'} className={botMode === 'GENERAL' ? 'selected' : ''} onClick={() => setBotMode('GENERAL')}>
-            <strong>GENERAL MODE {language === 'ko' ? '(입문용 모드)' : language === 'cn' ? '(入门模式)' : ''}</strong>
-            <span>{language === 'ko' ? 'AETHER 노코드 퀀트 파라미터 제어' : language === 'cn' ? 'TA4J 无代码量化参数控制' : 'TA4J quant controls'}</span>
-          </button>
-          <button role="tab" aria-selected={botMode === 'DEVELOPER'} className={botMode === 'DEVELOPER' ? 'selected' : ''} onClick={() => setBotMode('DEVELOPER')}>
-            <strong>DEVELOPER MODE {language === 'ko' ? '(개발자 모드)' : language === 'cn' ? '(开发者模式)' : ''}</strong>
-            <span>{language === 'ko' ? '파이썬 3.12 도커 샌드박스 터미널' : language === 'cn' ? 'Python 3.12 Docker 沙盒终端' : 'Python sandbox terminal'}</span>
-          </button>
-        </div>
-
-        {botMode === 'GENERAL' ? (
-          <div className="quant-controls">
-            <label>
-              <span>POSITION RISK <b>{riskSlider}%</b></span>
-              <input type="range" min="5" max="80" value={riskSlider} onChange={(event) => setRiskSlider(Number(event.target.value))} />
-            </label>
-            <label>
-              <span>RSI PERIOD <b>14</b></span>
-              <input type="range" min="5" max="30" defaultValue="14" />
-            </label>
-            <label>
-              <span>BOLLINGER WIDTH <b>2.0σ</b></span>
-              <input type="range" min="10" max="40" defaultValue="20" />
-            </label>
-          </div>
-        ) : (
-          <div className="powershell-terminal-box" style={{ margin: '16px 24px' }}>
-            <div className="powershell-titlebar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div className="powershell-dots">
-                  <span className="dot-red" />
-                  <span className="dot-yellow" />
-                  <span className="dot-green" />
-                </div>
-                <span>Windows PowerShell (x64) - [Python 3.12.10 - Sandbox Execution Environment]</span>
-              </div>
-              <span style={{ color: '#38bdf8' }}>AST_SANDBOX_ACTIVE</span>
-            </div>
-
-            <div className="powershell-body">
-              <div className="powershell-prompt">
-                <span className="path">PS C:\Quant\sandbox\bots\live_worker&gt;</span>
-                <span className="cmd">python -u strategy_runner.py --symbol {searched}</span>
-              </div>
-
-              {/* Dracula Syntax-Highlighted Interactive Code Editor */}
-              <div className="dracula-editor-wrap">
-                <div className="dracula-line-numbers">
-                  {pythonCode.split('\n').map((_, idx) => (
-                    <div key={idx}>{idx + 1}</div>
+            {botConsoleActiveTab === 'strategies' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>
+                <span className="bot-console-kicker">STRATEGY REPERTOIRE</span>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0 16px', color: '#0f172a' }}>
+                  알고리즘 전략 템플릿 & 리스크 컨트롤
+                </h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                  {[
+                    { name: 'BTC Momentum Alpha', desc: 'RSI 다이버전스와 20/50 EMA 골든크로스를 융합한 추세추종 알고리즘', winRate: '78.4%', risk: 'Low' },
+                    { name: 'ETH Mean Reversion', desc: '볼린저밴드 이탈 시 급격한 반등을 포착하는 평균회귀 전략', winRate: '71.2%', risk: 'Medium' },
+                    { name: 'SOL Volatility Scout', desc: 'ATR 급변동 구간에서 스퀴즈 돌파 방향으로 스캘핑 진입', winRate: '68.9%', risk: 'High' }
+                  ].map((st, i) => (
+                    <div key={i} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#f8fafc' }}>
+                      <strong style={{ fontSize: '13px', color: '#0f172a', display: 'block' }}>{st.name}</strong>
+                      <p style={{ fontSize: '11px', color: '#64748b', margin: '6px 0 12px', lineHeight: 1.5 }}>{st.desc}</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontFamily: 'var(--font-mono)' }}>
+                        <span style={{ color: '#059669', fontWeight: 700 }}>승률: {st.winRate}</span>
+                        <span style={{ color: '#f47a20' }}>리스크: {st.risk}</span>
+                      </div>
+                    </div>
                   ))}
                 </div>
-                <pre className="dracula-code-display">
-                  {highlightDraculaPythonCode(pythonCode)}
-                </pre>
-                <textarea
-                  className="dracula-code-textarea"
-                  aria-label="Python strategy code"
-                  value={pythonCode}
-                  onChange={(e) => setPythonCode(e.target.value)}
-                  rows={8}
-                  placeholder="# Python strategy code runs in isolated sandbox..."
-                  spellCheck={false}
-                />
-              </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                <small style={{ color: '#64748b', fontSize: '8px' }}>
-                  SECURITY: Isolated non-root Docker Sandbox · Dracula AST syntax parser active.
-                </small>
-                <button
-                  className="primary-button"
-                  style={{
-                    fontSize: '9px',
-                    padding: '8px 16px',
-                    height: 'auto',
-                    background: '#0f766e',
-                    border: '1px solid #14b8a6',
-                    color: '#ffffff',
-                    fontWeight: 'bold',
-                    fontFamily: "var(--font-mono)"
-                  }}
-                  onClick={handleTestSandbox}
-                  disabled={sandboxLoading}
-                >
-                  {sandboxLoading ? 'COMPILING AST…' : '▶ EXECUTE AST SANDBOX'}
-                </button>
+                <div className="risk-sliders" style={{ padding: '16px 0', borderTop: '1px solid #e2e8f0' }}>
+                  <label>
+                    <span>POSITION RISK <b>{riskSlider}%</b></span>
+                    <input type="range" min="5" max="80" value={riskSlider} onChange={(e) => setRiskSlider(Number(e.target.value))} />
+                  </label>
+                </div>
               </div>
+            )}
 
-              {sandboxLog && (
-                <div style={{ marginTop: '14px', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <span style={{
-                      fontSize: '8px',
-                      fontWeight: 'bold',
-                      padding: '2px 7px',
-                      borderRadius: '2px',
-                      background: sandboxIsError ? '#ef4444' : '#10b981',
-                      color: '#ffffff',
-                      fontFamily: "var(--font-mono)",
-                      letterSpacing: '0.05em'
-                    }}>
-                      {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
+            {botConsoleActiveTab === 'settings' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>
+                <span className="bot-console-kicker">SYSTEM CONFIGURATION</span>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0 16px', color: '#0f172a' }}>
+                  24H Bot Center 인프라 & 라이선스 설정
+                </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '520px' }}>
+                  <div style={{ padding: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>라이선스 상태</span>
+                    <strong style={{ display: 'block', fontSize: '14px', color: licenseToken ? '#059669' : '#f47a20', marginTop: '2px' }}>
+                      {licenseToken ? '30-DAY ACTIVE PRO LICENSE (무제한 가동)' : 'FREE TIER (인스턴스 가동 대기)'}
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      className="bot-create-button"
+                      onClick={() => setBotConsoleActiveTab('billing')}
+                    >
+                      라이선스 결제 및 플랜 변경 (Billing) ↗
+                    </button>
+                    <button
+                      className="bot-tool-button"
+                      onClick={handleConnectTelegram}
+                    >
+                      텔레그램 알림 봇 연동
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── 24H Bot Center On-Chain Billing & Subscription Panel ── */}
+            {botConsoleActiveTab === 'billing' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <span className="bot-console-kicker">SUBSCRIPTION & ON-CHAIN BILLING</span>
+                    <h2 style={{ fontSize: '22px', fontWeight: 700, margin: '4px 0 6px', color: '#0f172a' }}>
+                      24H 봇 라이선스 & 플랜 구독 결제
+                    </h2>
+                    <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                      온체인 논커스터디얼(Non-Custodial) 결제로 30일 무중단 24H 봇 인스턴스 라이선스를 즉시 발급받습니다.
+                    </p>
+                  </div>
+                  {licenseToken && (
+                    <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={14} /> ACTIVE PRO LICENSE
                     </span>
-                    <span style={{ fontSize: '8.5px', color: sandboxIsError ? '#fca5a5' : '#a7f3d0' }}>
-                      {sandboxIsError ? 'Python 3.12 AST Compiler raised an exception' : 'Sandbox AST validation & Backtest completed successfully'}
+                  )}
+                </div>
+
+                {/* 플랜 선택 카드 (CORE vs PRO) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                  <div
+                    onClick={() => setUpgradePlan('CORE')}
+                    style={{
+                      border: upgradePlan === 'CORE' ? '2px solid #f47a20' : '1px solid #dedfe4',
+                      background: upgradePlan === 'CORE' ? '#fffaf5' : '#ffffff',
+                      borderRadius: '10px',
+                      padding: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>AETHER CORE</strong>
+                      <span style={{ fontSize: '18px', fontWeight: 800, color: '#f47a20', fontFamily: 'var(--font-mono)' }}>$7.00 <small style={{ fontSize: '11px', color: '#94a3b8' }}>/ 30일</small></span>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
+                      단일 봇 24시간 클라우드 자동매매 · Hetzner HEL1 독립 컨테이너 · 텔레그램 1:1 라이선스 발급
+                    </p>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: upgradePlan === 'CORE' ? '#ea580c' : '#94a3b8' }}>
+                      {upgradePlan === 'CORE' ? '● 선택된 플랜' : '○ 선택하기'}
                     </span>
                   </div>
-                  <pre style={{
-                    background: sandboxIsError ? '#180707' : '#010f08',
-                    border: sandboxIsError ? '1px solid #ef4444' : '1px solid #10b981',
-                    color: sandboxIsError ? '#fca5a5' : '#50fa7b',
-                    padding: '12px 14px',
-                    fontSize: '10.5px',
-                    lineHeight: '1.6',
-                    borderRadius: '3px',
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: "var(--font-mono)",
-                    boxShadow: sandboxIsError ? '0 0 16px rgba(239, 68, 68, 0.25)' : '0 0 16px rgba(16, 185, 129, 0.2)'
-                  }}>
-                    {sandboxLog}
-                  </pre>
+
+                  <div
+                    onClick={() => setUpgradePlan('PRO')}
+                    style={{
+                      border: upgradePlan === 'PRO' ? '2px solid #f47a20' : '1px solid #dedfe4',
+                      background: upgradePlan === 'PRO' ? '#fffaf5' : '#ffffff',
+                      borderRadius: '10px',
+                      padding: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>AETHER PRO (추천)</strong>
+                      <span style={{ fontSize: '18px', fontWeight: 800, color: '#f47a20', fontFamily: 'var(--font-mono)' }}>$13.00 <small style={{ fontSize: '11px', color: '#94a3b8' }}>/ 30일</small></span>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
+                      최대 2개 봇 동시 가동 · 무제한 샌드박스 백테스트 · 심층 AI 리서치 및 우선 WebSocket
+                    </p>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: upgradePlan === 'PRO' ? '#ea580c' : '#94a3b8' }}>
+                      {upgradePlan === 'PRO' ? '● 선택된 플랜' : '○ 선택하기'}
+                    </span>
+                  </div>
                 </div>
-              )}
+
+                {/* 성공 결과 화면 (결제 승인 시) */}
+                {depositSuccessResult ? (
+                  <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
+                    <CheckCircle2 size={40} color="#059669" style={{ margin: '0 auto 10px' }} />
+                    <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: '0 0 6px' }}>
+                      결제가 성공적으로 승인되었습니다!
+                    </h3>
+                    <p style={{ fontSize: '12px', color: '#64748b', margin: '0 auto 16px', maxWidth: '480px' }}>
+                      온체인 검증 완료 후 발급된 고유 라이선스 키입니다. 아래 키를 복사하여 봇을 즉시 생성하거나 텔레그램에서 연동하세요.
+                    </p>
+
+                    <div style={{ background: '#0f172a', borderRadius: '8px', padding: '14px', maxWidth: '420px', margin: '0 auto 16px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>LICENSE TOKEN</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (depositSuccessResult.licenseToken) {
+                              navigator.clipboard.writeText(depositSuccessResult.licenseToken)
+                              alert('라이선스 키가 복사되었습니다.')
+                            }
+                          }}
+                          style={{ background: 'transparent', border: 0, color: '#38bdf8', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Copy size={12} /> 복사
+                        </button>
+                      </div>
+                      <code style={{ fontSize: '13px', color: '#38bdf8', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                        {depositSuccessResult.licenseToken}
+                      </code>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                      <button
+                        className="bot-create-button"
+                        onClick={() => {
+                          setNewInstanceLicenseKey(depositSuccessResult.licenseToken)
+                          setInstanceCreating(true)
+                        }}
+                      >
+                        <Plus size={15} /> 발급된 키로 24H 봇 생성하기
+                      </button>
+                      <button
+                        className="bot-tool-button"
+                        onClick={handleConnectTelegram}
+                      >
+                        <ExternalLink size={14} /> 텔레그램 연동 ↗
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* 1. 메타마스크 1초 직접 결제 */}
+                    <div style={{ background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '10px', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <strong style={{ fontSize: '13px', color: '#c2410c', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          🦊 메타마스크 1초 직접 결제 (Web3 One-Click)
+                        </strong>
+                        <span style={{ fontSize: '11px', color: '#7c2d12', marginTop: '2px', display: 'block' }}>
+                          지갑 승인 한 번으로 Polygon 네트워크를 통해 {upgradePlan === 'CORE' ? '7.00' : '13.00'} USDT를 즉시 결제합니다.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="bot-create-button"
+                        style={{ background: '#ea580c', whiteSpace: 'nowrap' }}
+                        onClick={handleMetaMaskDirectPay}
+                        disabled={confirmLoading}
+                      >
+                        {confirmLoading ? '트랜잭션 확인 중…' : '메타마스크 결제 ↗'}
+                      </button>
+                    </div>
+
+                    {/* 2. 또는 온체인 지갑 송금 */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', marginBottom: '20px' }}>
+                      <strong style={{ fontSize: '13px', color: '#0f172a', display: 'block', marginBottom: '12px' }}>
+                        또는 거래소(바이낸스/바이비트/OKX) 및 개인 지갑 온체인 입금
+                      </strong>
+
+                      {/* 네트워크 선택 탭 */}
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                        {[
+                          { key: 'polygon', label: 'POLYGON (수수료 10원 권장)' },
+                          { key: 'trc20', label: 'TRC20 (트론 글로벌 거래소)' },
+                          { key: 'bsc', label: 'BSC (바이낸스 체인)' },
+                          { key: 'solana', label: 'SOLANA (팬텀)' }
+                        ].map((item) => (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => setSelectedNetwork(item.key)}
+                            style={{
+                              padding: '8px 14px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: selectedNetwork === item.key ? 700 : 500,
+                              background: selectedNetwork === item.key ? '#17191f' : '#ffffff',
+                              color: selectedNetwork === item.key ? '#ffffff' : '#64748b',
+                              border: selectedNetwork === item.key ? '1px solid #17191f' : '1px solid #cbd5e1',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* 입금 지갑 주소 */}
+                      <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '6px' }}>
+                        {selectedNetwork.toUpperCase()} 공식 입금 지갑 주소 ({upgradePlan === 'CORE' ? '7.00' : '13.00'} USDT 전송)
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                        <input
+                          readOnly
+                          value={depositWallets[selectedNetwork] || depositWallets['polygon']}
+                          style={{
+                            flex: 1,
+                            padding: '10px 14px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontFamily: 'var(--font-mono)',
+                            background: '#ffffff',
+                            color: '#0f172a'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="bot-tool-button"
+                          onClick={handleCopyWallet}
+                          style={{ padding: '0 16px' }}
+                        >
+                          {copied ? <Check size={14} color="#059669" /> : <Copy size={14} />}
+                          {copied ? '복사됨' : '복사'}
+                        </button>
+                      </div>
+
+                      {/* TxHash 입력 및 검증 제출 */}
+                      <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '6px' }}>
+                        전송 완료 후 트랜잭션 해시(TxHash / TxID) 입력
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <input
+                          placeholder="0x... 또는 거래소 출금 내역의 TxID 붙여넣기"
+                          value={userTxHash}
+                          onChange={(e) => setUserTxHash(e.target.value)}
+                          style={{
+                            flex: 1,
+                            minWidth: '220px',
+                            padding: '10px 14px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontFamily: 'var(--font-mono)',
+                            background: '#ffffff'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="bot-confirm-create"
+                          style={{ width: 'auto', padding: '0 20px', whiteSpace: 'nowrap' }}
+                          onClick={handleSubmitDepositConfirmation}
+                          disabled={confirmLoading || !userTxHash.trim()}
+                        >
+                          {confirmLoading ? '온체인 검증 중…' : '입금 확인 및 즉시 활성화'}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* 현재 라이선스 상태 안내 바 */}
+                <div style={{ padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>발급된 텔레그램 라이선스</span>
+                    <strong style={{ display: 'block', fontSize: '13px', color: licenseToken ? '#059669' : '#94a3b8', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
+                      {licenseToken || '미발급 (구독 결제 시 즉시 발급)'}
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="bot-tool-button"
+                    onClick={handleConnectTelegram}
+                  >
+                    <ExternalLink size={14} /> 텔레그램(@AetherQuantOfficialBot) 연동
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── 24H Bot Center Telegram 1:1 VIP Dispatch Panel ── */}
+            {botConsoleActiveTab === 'telegram' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <span className="bot-console-kicker">1:1 VIP REALTIME DISPATCH</span>
+                    <h2 style={{ fontSize: '22px', fontWeight: 700, margin: '4px 0 6px', color: '#0f172a' }}>
+                      텔레그램 공식 봇 1:1 채널 연동
+                    </h2>
+                    <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                      24시간 무중단 클라우드 봇의 체결 알림, 익절/손절 경보, 인스턴스 헬스체크를 텔레그램 DM으로 즉시 수신합니다.
+                    </p>
+                  </div>
+                  <span style={{
+                    background: telegramLinked ? '#ecfdf5' : '#fff7ed',
+                    color: telegramLinked ? '#059669' : '#ea580c',
+                    border: telegramLinked ? '1px solid #a7f3d0' : '1px solid #fed7aa',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    {telegramLinked ? <CheckCircle2 size={14} /> : <Radio size={14} />}
+                    {telegramLinked ? '1:1 TELEGRAM CONNECTED' : 'AWAITING CONNECTION'}
+                  </span>
+                </div>
+
+                {/* 1:1 공식 봇 딥링크 카드 */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#0284c7', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Send size={22} />
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: '15px', color: '#0f172a', display: 'block' }}>
+                          @AetherQuantOfficialBot
+                        </strong>
+                        <small style={{ color: '#64748b', fontSize: '11px' }}>
+                          AETHER 공식 인증 퀀트 디스패처 · End-to-End 암호화 전송
+                        </small>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className="bot-create-button"
+                        style={{ background: '#0284c7' }}
+                        onClick={handleConnectTelegram}
+                      >
+                        <Send size={14} /> 텔레그램 봇 열기 ↗
+                      </button>
+                      <button
+                        className="bot-tool-button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(telegramDeepLink)
+                          alert('텔레그램 딥링크가 복사되었습니다.')
+                        }}
+                      >
+                        <Copy size={14} /> 딥링크 복사
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '12px 14px' }}>
+                    <span style={{ fontSize: '10px', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: 600 }}>
+                      개인화 연동 딥링크 URL
+                    </span>
+                    <code style={{ fontSize: '12px', color: '#0284c7', fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
+                      {telegramDeepLink}
+                    </code>
+                  </div>
+                </div>
+
+                {/* 알림 수신 설정 (체결, 익절/손절, 헬스체크, 고래 알림) */}
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginBottom: '12px' }}>
+                    실시간 텔레그램 푸시 알림 설정
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                    {[
+                      { key: 'executions', label: '24H 봇 매수/매도 실시간 체결 알림', desc: '거래소 API로 주문이 실행될 때마다 체결가와 수량 알림' },
+                      { key: 'stopLoss', label: '동적 익절/손절 (Stop-Loss/TP) 트리거', desc: '프랙탈 청산 리스크 도달 시 즉시 긴급 알림' },
+                      { key: 'healthCheck', label: 'Hetzner HEL1 도커 컨테이너 상태 알림', desc: '컨테이너 재부팅, 프로세스 지연(Latency), 에러 감지 알림' },
+                      { key: 'whaleAlerts', label: '온체인 고래 지갑 대량 이동 (Whale Alert)', desc: '바이낸스/업비트 대규모 입출금 및 변동성 급증 경보' },
+                    ].map((item) => {
+                      const enabled = (tgNotificationSettings as any)[item.key]
+                      return (
+                        <div
+                          key={item.key}
+                          onClick={() => setTgNotificationSettings(prev => ({ ...prev, [item.key]: !enabled }))}
+                          style={{
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            padding: '14px',
+                            background: enabled ? '#f8fafc' : '#ffffff',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '12px'
+                          }}
+                        >
+                          <div>
+                            <strong style={{ fontSize: '12px', color: '#0f172a', display: 'block' }}>{item.label}</strong>
+                            <small style={{ fontSize: '10.5px', color: '#64748b' }}>{item.desc}</small>
+                          </div>
+                          <div style={{
+                            width: '38px',
+                            height: '22px',
+                            borderRadius: '12px',
+                            background: enabled ? '#059669' : '#cbd5e1',
+                            padding: '2px',
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: enabled ? 'flex-end' : 'flex-start',
+                            flexShrink: 0
+                          }}>
+                            <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* 텔레그램 봇 명령어 가이드 & 실시간 메시지 시뮬레이션 */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                  {/* 명령어 치트시트 */}
+                  <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px', background: '#f8fafc' }}>
+                    <strong style={{ fontSize: '13px', color: '#0f172a', display: 'block', marginBottom: '12px' }}>
+                      텔레그램 봇 명령어 가이드
+                    </strong>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+                      <div style={{ padding: '8px 10px', background: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <b style={{ color: '#0284c7' }}>/start</b> <span style={{ color: '#64748b' }}>- 1:1 라이선스 인증 및 채널 활성화</span>
+                      </div>
+                      <div style={{ padding: '8px 10px', background: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <b style={{ color: '#0284c7' }}>/status</b> <span style={{ color: '#64748b' }}>- 24H 봇 가동 상태 및 실시간 수익률 조회</span>
+                      </div>
+                      <div style={{ padding: '8px 10px', background: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                        <b style={{ color: '#0284c7' }}>/help</b> <span style={{ color: '#64748b' }}>- 도움말 및 거래소 API 연동 가이드</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 텔레그램 메시지 미리보기 시뮬레이터 */}
+                  <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px', background: '#0f172a', color: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '10px', color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                        TELEGRAM LIVE PREVIEW
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTgTestMessageSent(true)
+                          setTelegramLinked(true)
+                          setTimeout(() => setTgTestMessageSent(false), 3000)
+                        }}
+                        style={{ background: '#0284c7', color: '#fff', border: 0, padding: '4px 10px', borderRadius: '4px', fontSize: '10px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        {tgTestMessageSent ? '✓ 테스트 발송 완료' : '테스트 메시지 발송'}
+                      </button>
+                    </div>
+
+                    <div style={{ background: '#1e293b', borderRadius: '8px', padding: '12px', fontSize: '11px', lineHeight: 1.6, borderLeft: '3px solid #0284c7' }}>
+                      <b style={{ color: '#38bdf8' }}>🤖 AETHER Quant Dispatcher</b><br />
+                      <span style={{ color: '#10b981' }}>[ORDER-FILL]</span> BTC/USD LONG 진입 완료 ($87,420)<br />
+                      <span style={{ color: '#94a3b8' }}>• 거래소: Binance Core (HEL1 Node)</span><br />
+                      <span style={{ color: '#94a3b8' }}>• 진입 비중: 포트폴리오 35%</span><br />
+                      <span style={{ color: '#f47a20' }}>• TP: $89,500 (+2.38%) / SL: $86,700 (-0.82%)</span>
+                    </div>
+
+                    {tgTestMessageSent && (
+                      <div style={{ marginTop: '8px', background: '#1e293b', borderRadius: '8px', padding: '10px', fontSize: '10.5px', lineHeight: 1.5, borderLeft: '3px solid #10b981' }}>
+                        <span style={{ color: '#10b981' }}>[TEST ALERT]</span> 텔레그램 공식 봇과 웹 대시보드가 정상적으로 연동되었습니다!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── 24H Bot Center Resources Product & VPS Reseller Suite Panel ── */}
+            {botConsoleActiveTab === 'resources' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <span className="bot-console-kicker">INFRASTRUCTURE / COMPUTE NODES</span>
+                    <h2 style={{ fontSize: '22px', fontWeight: 700, margin: '4px 0 6px', color: '#0f172a' }}>
+                      VPS Resource Products
+                    </h2>
+                    <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                      독립 전용 고정 IP와 초저지연 거래소 직결망을 갖춘 가상화 VPS 인프라 노드입니다.
+                    </p>
+                  </div>
+                  <span style={{
+                    background: '#f0fdf4',
+                    color: '#15803d',
+                    border: '1px solid #bbf7d0',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <Server size={14} /> DEDICATED HOSTING SUITE
+                  </span>
+                </div>
+
+                {/* 인프라 파트너 프로그램 안내 배너 */}
+                <div style={{ background: 'linear-gradient(135deg, #17191f 0%, #242831 100%)', borderRadius: '10px', padding: '20px 24px', marginBottom: '24px', color: '#ffffff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <span style={{ fontSize: '10px', color: '#f47a20', fontWeight: 800, letterSpacing: '0.08em', display: 'block', marginBottom: '4px' }}>
+                      PARTNER INFRASTRUCTURE ALLOCATION
+                    </span>
+                    <strong style={{ fontSize: '16px', display: 'block', marginBottom: '6px' }}>
+                      White-Label & 전용 IP 기반 독립 가상화 인프라 노드
+                    </strong>
+                    <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+                      국내(서울 서초구) 및 글로벌(Hetzner 유럽, Equinix 도쿄) 전용 인프라를 API 기반으로 통합 프로비저닝하여 엔드유저 솔루션과 연계할 수 있습니다.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      className="bot-create-button"
+                      style={{ background: '#f47a20', whiteSpace: 'nowrap' }}
+                      onClick={() => alert('인프라 파트너 API 문서와 화이트라벨 라이선스 가이드가 발급 준비 중입니다.')}
+                    >
+                      인프라 파트너십 안내 ↗
+                    </button>
+                  </div>
+                </div>
+
+                {/* 데이터센터 리전 선택 탭 */}
+                <div style={{ marginBottom: '20px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                    DATACENTER REGION (국내 및 글로벌 초저지연 거점)
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { key: 'SEOCHO', name: '🇰🇷 대한민국 서울 서초구 (SEOCHO)', ping: '1ms', tag: '국내 거래소 백본망' },
+                      { key: 'HEL1', name: '🇫🇮 핀란드 헬싱키 (HEL1)', ping: '8ms', tag: 'AETHER 기본 런타임' },
+                      { key: 'FSN1', name: '🇩🇪 독일 프랑크푸르트 (FSN1)', ping: '3ms', tag: '바이낸스 유럽 직결' },
+                      { key: 'TY3', name: '🇯🇵 일본 도쿄 (TY3 Equinix)', ping: '1ms', tag: '아시아 코로케이션' },
+                      { key: 'IAD1', name: '🇺🇸 미국 버지니아 (AWS IAD1)', ping: '12ms', tag: '글로벌 뉴스 피드' },
+                    ].map((reg) => (
+                      <button
+                        key={reg.key}
+                        type="button"
+                        onClick={() => setSelectedVpsRegion(reg.key)}
+                        style={{
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: selectedVpsRegion === reg.key ? 700 : 500,
+                          background: selectedVpsRegion === reg.key ? '#17191f' : '#f8fafc',
+                          color: selectedVpsRegion === reg.key ? '#ffffff' : '#475569',
+                          border: selectedVpsRegion === reg.key ? '1px solid #17191f' : '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>{reg.name}</span>
+                        <span style={{
+                          fontSize: '9.5px',
+                          fontFamily: 'var(--font-mono)',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          background: selectedVpsRegion === reg.key ? '#f47a20' : '#e2e8f0',
+                          color: selectedVpsRegion === reg.key ? '#ffffff' : '#64748b'
+                        }}>
+                          {reg.ping}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* VPS 상품군 티어 그리드 (4개 티어) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                  {[
+                    {
+                      id: 'micro',
+                      name: 'Micro Node',
+                      kicker: 'STARTER QUANT',
+                      vcpu: '1 vCPU',
+                      ram: '1 GB ECC',
+                      disk: '25 GB NVMe',
+                      traffic: '20 TB / 1Gbps',
+                      resellerPrice: '$4.50',
+                      retailPrice: '$7.00',
+                      desc: '단일 봇 및 경량 알고리즘 전용 독립 노드',
+                      recommended: false
+                    },
+                    {
+                      id: 'standard',
+                      name: 'Standard Quant Node',
+                      kicker: 'MOST POPULAR',
+                      vcpu: '2 vCPU',
+                      ram: '4 GB ECC',
+                      disk: '50 GB NVMe',
+                      traffic: '무제한 / 1Gbps',
+                      resellerPrice: '$9.80',
+                      retailPrice: '$15.00',
+                      desc: '파이썬 AST 샌드박스 + 봇 3개 병렬 구동 최적화',
+                      recommended: true
+                    },
+                    {
+                      id: 'alpha',
+                      name: 'Alpha High-Frequency Node',
+                      kicker: 'HFT & HEDGE FUND',
+                      vcpu: '4 vCPU',
+                      ram: '8 GB ECC',
+                      disk: '100 GB NVMe',
+                      traffic: '무제한 / 10Gbps 직결',
+                      resellerPrice: '$19.50',
+                      retailPrice: '$30.00',
+                      desc: '서브밀리초 코로케이션 및 빅데이터 백테스팅',
+                      recommended: false
+                    },
+                    {
+                      id: 'baremetal',
+                      name: 'Dedicated Cluster',
+                      kicker: 'ENTERPRISE CLUSTER',
+                      vcpu: '8 vCPU',
+                      ram: '32 GB ECC',
+                      disk: '500 GB NVMe RAID',
+                      traffic: '무제한 / 전용 10Gbps',
+                      resellerPrice: '$49.00',
+                      retailPrice: '$79.00',
+                      desc: '완전 물리 격리 베어메탈 · 봇 50개 대량 인프라',
+                      recommended: false
+                    }
+                  ].map((tier) => {
+                    const isSelected = selectedVpsTier === tier.id
+                    return (
+                      <div
+                        key={tier.id}
+                        onClick={() => setSelectedVpsTier(tier.id as any)}
+                        style={{
+                          border: isSelected ? '2px solid #f47a20' : '1px solid #dedfe4',
+                          background: isSelected ? '#fffaf5' : '#ffffff',
+                          borderRadius: '10px',
+                          padding: '20px',
+                          cursor: 'pointer',
+                          position: 'relative',
+                          transition: 'all 0.15s ease',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        {tier.recommended && (
+                          <span style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '16px',
+                            background: '#f47a20',
+                            color: '#ffffff',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '10px',
+                            letterSpacing: '0.04em'
+                          }}>
+                            BEST VALUE
+                          </span>
+                        )}
+
+                        <div>
+                          <span style={{ fontSize: '9.5px', color: '#ea580c', fontWeight: 800, letterSpacing: '0.06em' }}>
+                            {tier.kicker}
+                          </span>
+                          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '4px 0 8px', color: '#0f172a' }}>
+                            {tier.name}
+                          </h3>
+
+                          <div style={{ margin: '10px 0 14px' }}>
+                            <span style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', fontFamily: 'var(--font-mono)' }}>
+                              {tier.resellerPrice}
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#64748b' }}> /월 (파트너 공급가)</span>
+                            <div style={{ fontSize: '11px', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
+                              기준 소비자가: {tier.retailPrice}
+                            </div>
+                          </div>
+
+                          <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 14px', lineHeight: 1.4 }}>
+                            {tier.desc}
+                          </p>
+
+                          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px', fontSize: '11px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Cpu size={12} color="#f47a20" /> {tier.vcpu}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Layers size={12} color="#f47a20" /> {tier.ram}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Server size={12} color="#f47a20" /> {tier.disk}
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Zap size={12} color="#f47a20" /> {tier.traffic}
+                            </li>
+                          </ul>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={isSelected ? 'bot-create-button' : 'bot-tool-button'}
+                          style={{ width: '100%', justifyContent: 'center' }}
+                        >
+                          {isSelected ? '선택됨 (노드 활성화)' : '상품 선택'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* 프로비저닝 액션 및 주문 바 */}
+                <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>선택된 VPS 사양</span>
+                    <strong style={{ display: 'block', fontSize: '14px', color: '#0f172a', marginTop: '2px' }}>
+                      {selectedVpsTier.toUpperCase()} NODE · 리전: {selectedVpsRegion} (독립 고정 IPv4 기본 제공)
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      className="bot-create-button"
+                      onClick={() => {
+                        setVpsProvisionSuccess(`${selectedVpsTier.toUpperCase()} 노드가 ${selectedVpsRegion} 리전에 성공적으로 프로비저닝 예약되었습니다!`)
+                        setTimeout(() => setVpsProvisionSuccess(null), 4000)
+                      }}
+                    >
+                      <Plus size={15} /> VPS 노드 즉시 프로비저닝
+                    </button>
+                    <button
+                      className="bot-tool-button"
+                      onClick={() => setBotConsoleActiveTab('billing')}
+                    >
+                      <CreditCard size={14} /> 결제 및 잔액 충전 (Billing) ↗
+                    </button>
+                  </div>
+                </div>
+
+                {vpsProvisionSuccess && (
+                  <div style={{ marginTop: '14px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', padding: '12px 16px', color: '#065f46', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <CheckCircle2 size={16} color="#059669" />
+                    <span>{vpsProvisionSuccess}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* ── 24/7 Real Bot Instance Creation Modal with Exchange API Key Form ── */}
+        {instanceCreating && (
+          <div className="bot-create-overlay" role="dialog" aria-modal="true">
+            <div className="bot-create-card" style={{ maxWidth: '520px', width: '92vw' }}>
+              <button className="bot-modal-close" onClick={() => setInstanceCreating(false)} aria-label="Close">
+                <X size={18} />
+              </button>
+              <span className="bot-console-kicker">NEW INSTANCE PROVISIONING</span>
+              <h2>Create 24/7 Trading Bot</h2>
+              <p>Deploy an isolated Hetzner HEL1 Docker runtime for automated execution.</p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  BOT NAME
+                  <input
+                    placeholder="e.g. Binance BTC Breakout"
+                    value={instanceName}
+                    onChange={(e) => setInstanceName(e.target.value)}
+                    style={{ marginTop: '4px', marginBottom: 0 }}
+                    autoFocus
+                  />
+                </label>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  EXCHANGE
+                  <select
+                    value={newInstanceExchange}
+                    onChange={(e) => setNewInstanceExchange(e.target.value)}
+                    style={{ width: '100%', height: '42px', marginTop: '4px', border: '1px solid #dedfe4', borderRadius: '6px', padding: '0 10px', fontSize: '11px', background: '#fff', color: '#17191f' }}
+                  >
+                    <option value="Binance">Binance (바이낸스 Core WebSocket)</option>
+                    <option value="Bybit">Bybit (바이비트 V5 API)</option>
+                    <option value="Upbit">Upbit (업비트 Open API)</option>
+                    <option value="OKX">OKX (오케이엑스 V5)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  TARGET SYMBOL
+                  <select
+                    value={newInstanceSymbol}
+                    onChange={(e) => setNewInstanceSymbol(e.target.value)}
+                    style={{ width: '100%', height: '42px', marginTop: '4px', border: '1px solid #dedfe4', borderRadius: '6px', padding: '0 10px', fontSize: '11px', background: '#fff', color: '#17191f' }}
+                  >
+                    <option value="BTC/USD">BTC/USD (Bitcoin)</option>
+                    <option value="ETH/USD">ETH/USD (Ethereum)</option>
+                    <option value="SOL/USD">SOL/USD (Solana)</option>
+                    <option value="XRP/USD">XRP/USD (Ripple)</option>
+                    <option value="NVDA/USD">NVDA/USD (NVIDIA)</option>
+                  </select>
+                </label>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  STRATEGY TEMPLATE
+                  <select
+                    value={newInstanceStrategy}
+                    onChange={(e) => setNewInstanceStrategy(e.target.value)}
+                    style={{ width: '100%', height: '42px', marginTop: '4px', border: '1px solid #dedfe4', borderRadius: '6px', padding: '0 10px', fontSize: '11px', background: '#fff', color: '#17191f' }}
+                  >
+                    <option value="RSI + Bollinger Multi-Fractal">RSI + Bollinger (추세추종)</option>
+                    <option value="SMA 20/50 Dual Crossover">SMA 20/50 (골든크로스)</option>
+                    <option value="AETHER Fractal Match">AETHER 프랙탈 매칭</option>
+                    <option value="Custom Python Script">Custom Python Script</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  EXCHANGE API KEY
+                  <input
+                    placeholder="API Key"
+                    value={newInstanceApiKey}
+                    onChange={(e) => setNewInstanceApiKey(e.target.value)}
+                    style={{ marginTop: '4px', marginBottom: 0, fontFamily: 'var(--font-mono)' }}
+                  />
+                </label>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  EXCHANGE SECRET KEY
+                  <input
+                    type="password"
+                    placeholder="Secret Key"
+                    value={newInstanceApiSecret}
+                    onChange={(e) => setNewInstanceApiSecret(e.target.value)}
+                    style={{ marginTop: '4px', marginBottom: 0, fontFamily: 'var(--font-mono)' }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                  TELEGRAM LICENSE KEY
+                  <input
+                    placeholder="e.g. AETH-7F3A-88B1-NODE"
+                    value={newInstanceLicenseKey || licenseToken || ''}
+                    onChange={(e) => setNewInstanceLicenseKey(e.target.value)}
+                    style={{ marginTop: '4px', marginBottom: 0, fontFamily: 'var(--font-mono)' }}
+                  />
+                </label>
+              </div>
+
+              <button
+                className="bot-confirm-create"
+                onClick={handleDeployNewBotInstance}
+                disabled={!instanceName.trim()}
+              >
+                Deploy Instance & Start Bot <Plus size={15} />
+              </button>
             </div>
           </div>
         )}
-
-        <div className="bot-actions">
-          <button
-            className={botRunning ? 'danger-button' : 'primary-button'}
-            onClick={() => {
-              if (!botRunning && !licenseToken) {
-                setDepositModalOpen(true)
-              } else {
-                setBotRunning((running) => !running)
-              }
-            }}
-          >
-            {botRunning ? 'STOP 24H BOT' : licenseToken ? 'START 24H BOT' : 'SUBSCRIBE & START BOT ($7.0 USDT)'}
-          </button>
-
-          <button
-            className={telegramLinked ? 'linked-button' : 'secondary-button'}
-            onClick={handleConnectTelegram}
-          >
-            {telegramLinked ? 'TELEGRAM 1:1 LINKED ✓' : 'CONNECT TELEGRAM DM ↗'}
-          </button>
-
-          <span className="subscription-note">
-            {licenseToken ? '30-DAY ACTIVE LICENSE · 24H RUNTIME UNLOCKED' : '$7 USDT MONTHLY · ALL AI AGENT RATE LIMITS UNLOCKED'}
-          </span>
-        </div>
       </section>
+      )}
 
       {/* ── AI Research Intelligence Workspace (Light Mode Embedded Studio) ── */}
-      {researchOpen && (
-        <section className="research-terminal panel" id="research-terminal" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e3e6ee', borderRadius: '12px', background: '#ffffff', margin: '24px 0' }}>
+      {(activeTopView === 'research') && (
+        <section className="research-terminal panel" id="research-terminal" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e3e6ee', borderRadius: '12px', background: '#ffffff', margin: '20px 0' }}>
         <div className="workspace-light" style={{ minHeight: 'auto' }}>
           {/* Header Intro inside main page */}
           <div className="research-intro-light" style={{ padding: '36px 20px 20px', borderBottom: '1px solid #f1f5f9' }}>
@@ -5449,57 +6369,109 @@ def signal(tick):
           </div>
 
           {/* Research 2-Column Shell (Rail + Main Canvas) */}
-          <div className="research-shell-light" style={{ minHeight: '520px' }}>
-            {/* 1. Left Rail Sidebar */}
-            <aside className="research-rail-light">
-              <div className="research-rail-title">
-                <span>Research History</span>
-                <button type="button" onClick={() => handleCreateNewSession()} title="새 리서치 생성">
-                  <Plus size={16} />
-                </button>
-              </div>
-
-              <button type="button" className="new-research" onClick={() => handleCreateNewSession()}>
-                <Plus size={14} />
-                <span>New Research</span>
-              </button>
-
-              <span className="rail-label">Recent Sessions</span>
-
-              <div className="flex flex-col gap-1 overflow-y-auto max-h-[420px]">
-                {agentSessions.map((sess) => (
-                  <button
-                    key={sess.id}
-                    type="button"
-                    onClick={() => setActiveSessionId(sess.id)}
-                    className={`rail-item ${activeSessionId === sess.id ? 'active' : ''}`}
-                  >
-                    <MessageSquare size={13} className={activeSessionId === sess.id ? 'text-[#f47a20]' : 'text-[#94A3B8]'} />
-                    <span className="truncate flex-1">{sess.title}</span>
-                    <span
-                      onClick={(e) => handleDeleteSession(sess.id, e)}
-                      className="opacity-0 hover:opacity-100 p-0.5 rounded hover:bg-[#e2e8f0] text-[#94a3b8] hover:text-[#ef4444]"
-                      title="세션 삭제"
+          <div
+            className="research-shell-light"
+            style={{
+              minHeight: '520px',
+              gridTemplateColumns: agentSessions.length > 0 ? '240px 1fr' : '1fr',
+              transition: 'grid-template-columns 0.25s ease'
+            }}
+          >
+            {/* 리서치 히스토리가 있을 때만 좌측 패널 렌더링, 없으면 패널 제거 */}
+            {agentSessions.length > 0 && (
+              <aside className="research-rail-light animate-in fade-in duration-200">
+                <div className="research-rail-title">
+                  <span>Research History</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={handleClearAllSessions}
+                      title="세션 전체 삭제 (히스토리 비우기)"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: '3px 4px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      className="hover:text-[#ef4444] hover:bg-[#fee2e2]"
                     >
-                      <X size={11} />
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="rail-bottom">
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck size={14} className="text-[#f47a20]" />
-                  <span>Qwen-Max Flagship (300B+)</span>
+                      <Trash2 size={13} />
+                    </button>
+                    <button type="button" onClick={() => handleCreateNewSession()} title="새 가상 세션 시작 (New Research)">
+                      <Plus size={16} />
+                    </button>
+                  </div>
                 </div>
-                <small>AETHER Intelligence OS v2.5 Active</small>
-              </div>
-            </aside>
+
+                <button type="button" className="new-research" onClick={() => handleCreateNewSession()}>
+                  <Plus size={14} />
+                  <span>New Research</span>
+                </button>
+
+                <span className="rail-label">Recent Sessions</span>
+
+                <div className="flex flex-col gap-1 overflow-y-auto max-h-[420px]">
+                  {agentSessions.map((sess) => (
+                    <div
+                      key={sess.id}
+                      onClick={() => setActiveSessionId(sess.id)}
+                      className={`rail-item ${activeSessionId === sess.id ? 'active' : ''}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        paddingRight: '6px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                        <MessageSquare size={13} className={activeSessionId === sess.id ? 'text-[#f47a20]' : 'text-[#94A3B8]'} />
+                        <span className="truncate flex-1 text-[12px]">{sess.title}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteSession(sess.id, e)}
+                        title="세션 삭제"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '3px 4px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#94a3b8',
+                          marginLeft: '4px',
+                          flexShrink: 0
+                        }}
+                        className="hover:text-[#ef4444] hover:bg-[#fee2e2]"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rail-bottom">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck size={14} className="text-[#f47a20]" />
+                    <span>Qwen-Max Flagship (300B+)</span>
+                  </div>
+                  <small>AETHER Intelligence OS v2.5 Active</small>
+                </div>
+              </aside>
+            )}
 
             {/* 2. Main Chat Canvas */}
             <main className="research-main-light" style={{ padding: '24px 28px' }}>
               {/* Chat Thread */}
-              <div className="research-chat-thread" style={{ marginTop: '0', maxWidth: '100%' }}>
+              {currentSession && currentSession.messages && currentSession.messages.length > 0 && (
+                <div className="research-chat-thread" style={{ marginTop: '0', maxWidth: '100%' }}>
                 {currentSession?.messages?.map((msg) => {
                   if (msg.role === 'user') {
                     return (
@@ -5532,7 +6504,7 @@ def signal(tick):
                       {msg.toolCalls && msg.toolCalls.length > 0 && (
                         <div className="tool-tracing-box">
                           <div className="tool-tracing-head">
-                            <span>[EXECUTED AGENT TOOL CALLS: {msg.toolCalls.length}]</span>
+                            <span>[🛠️ AI 에이전트 자율 지표 검증: {msg.toolCalls.length}개 단계 완료]</span>
                             <span className="flex items-center gap-1 text-[#059669]">
                               SUCCESS ✓
                             </span>
@@ -5565,6 +6537,7 @@ def signal(tick):
                   </div>
                 )}
               </div>
+              )}
 
               {/* Research Composer (Input Box) */}
               <div className="research-composer-light" style={{ maxWidth: '100%', marginTop: '20px' }}>
@@ -5703,7 +6676,9 @@ def signal(tick):
       )}
 
       {/* ── Lower Grid (AI Insights & Operations) ── */}
-      <section className="lower-grid">
+      {(activeTopView === 'trade') && (
+        <>
+        <section className="lower-grid">
         <div className="insights-panel panel">
           <div className="panel-heading">
             <span><Diamond /> {copy.insights}</span>
@@ -5826,9 +6801,12 @@ def signal(tick):
           })}
         </div>
       </section>
+      </>
+      )}
 
       {/* ── Institutional Media Intelligence Wire ── */}
-      <section className="media-section" id="media-wire" style={{ padding: '36px 0 20px', borderTop: '1px solid var(--line)' }}>
+      {(activeTopView === 'media') && (
+        <section className="media-section" id="media-wire" style={{ padding: '36px 0 20px', borderTop: '1px solid var(--line)' }}>
         <div className="media-hero" style={{ padding: '24px 0 36px' }}>
           <div>
             <span className="overline"><Radio size={12} /> {mediaCopy[language].overline}</span>
@@ -6061,6 +7039,7 @@ def signal(tick):
           ))}
         </div>
       </section>
+      )}
 
       {/* ── Footer ── */}
       <footer>
