@@ -656,9 +656,6 @@ export default function TradePage() {
                 <span className="market-kicker">AI COPILOT</span>
                 <h2>Ask the market.</h2>
               </div>
-              <span className="model-pill">
-                <Sparkles size={13} /> AETHER QUANT
-              </span>
             </div>
 
             <div className="copilot-tabs">

@@ -256,9 +256,9 @@ export default function ResearchPage() {
         prompt: '비트코인(BTCUSDT)의 최근 현물 ETF 기관 순유입 추이와 온체인 장기보유자(LTH) 공급 지표를 바탕으로 단기 지지선 및 향후 5일간 목표가를 분석해줘.'
       },
       {
-        label: '👻 AETHER 프랙탈 고스트 궤적 & 과거 승률 분석',
+        label: '🔮 AI 고스트 라인 2.0: 듀얼 궤적 앙상블 & 더블 컨펌',
         symbol: 'BTCUSDT',
-        prompt: '비트코인(BTCUSDT) 최근 30개 캔들의 AETHER 시계열 프랙탈 유사도와 과거 가장 일치했던 구간의 향후 5봉 궤적 및 기대수익률을 분석해줘.'
+        prompt: '비트코인(BTCUSDT)에 대해 [결정론적 시계열 프랙탈 궤적(하늘색)]과 [확률적 딥러닝 파동 궤적(보라색)]을 합성한 AI 고스트 라인 2.0 앙상블 분석을 수행해줘. 두 궤적이 같은 방향을 가리키는 [더블 컨펌(Double Confirmed)] 여부와 향후 5~10봉 예상 파동 경로를 진단해줘.'
       },
       {
         label: '📊 주간 VWAP & 실시간 오더북 L2 불균형 진단',
@@ -295,6 +295,11 @@ export default function ResearchPage() {
     ],
     CODING: [
       {
+        label: '🌊 파이썬 워커 엘리어트 5파동 & 피보나치 정밀 카운팅',
+        symbol: 'BTCUSDT',
+        prompt: '비트코인(BTCUSDT) 4시간봉에 대해 SciPy/NumPy로 고점·저점 지그재그 피봇을 추출하고, 피보나치 비율(0.618/1.618)과 파동 무효화 3대 절대 규칙을 오차율 0%로 검증하여 충격파/조정파 번호와 무효화 가격대를 추출하는 파이썬 전용 연산 워커 코드를 작성해줘.'
+      },
+      {
         label: '⚡ 24개 파라미터 노코드 퀀트 오토튜너 최적화 봇',
         symbol: 'BTCUSDT',
         prompt: 'RSI 기간, 손절률(2.0~4.5%), 익절률(4.0~8.0%) 24개 조합을 그리드 시뮬레이션하여 최고 샤프 지수와 승률 조합을 자동 탐색하는 Python 백테스팅 코드를 작성해줘.'
@@ -308,11 +313,6 @@ export default function ResearchPage() {
         label: '📈 바이낸스 실시간 L2 오더북 불균형 수집 봇',
         symbol: 'BTCUSDT',
         prompt: '바이낸스 선물 Depth20 WebSocket 스트림에 비동기(asyncio/websockets)로 접속하여 실시간 호가 불균형(Imbalance)을 계산하는 Python 코드를 작성해줘.'
-      },
-      {
-        label: '🤖 RSI(14) + 볼린저 밴드 1:3 손익비 자율 매매 봇',
-        symbol: 'BTCUSDT',
-        prompt: '4시간봉 승률 70% RSI(14) 과매도 반등 및 볼린저 밴드 하단 터치 기반 손익비 1:3 추세추종 알고리즘 봇 코드를 작성해줘.'
       }
     ],
     MASTER: [
@@ -344,14 +344,14 @@ export default function ResearchPage() {
         prompt: '비트코인(BTCUSDT)에 대해 ① 글로벌 외신 실시간 수급 팩트체크 도구, ② AETHER 퀀트 모멘텀 매트릭스 도구, ③ AETHER 시계열 프랙탈 엔진을 순차 자율 실행(ReAct)하여, 각 도구의 실행 추론 과정(Tool Execution Trace)과 종합 투자 집행 전략을 수립해줘.'
       },
       {
-        label: '🔍 온체인 고래 팩트체크 ↔ 프랙탈 승률 교차 검증',
+        label: '🤖 듀얼 궤적 더블 컨펌(Double Confirmed) 자율 교차 검증',
         symbol: 'BTCUSDT',
-        prompt: '대형 고래 지갑 이동 및 현물 ETF 순유입 데이터를 팩트체크하는 도구를 호출한 뒤, AETHER 시계열 프랙탈 엔진의 과거 패턴 승률과 상호 교차 검증하는 다중 도구 자율 파이프라인을 가동해줘.'
+        prompt: '비트코인(BTCUSDT)에 대해 ① 시계열 프랙탈 엔진 도구와 ② 딥러닝 파동 신경망 도구를 자율 동시 호출하여, 두 궤적이 동일 방향을 가리키는지(Double Confirmed) 상호 교차 검증하고 앙상블 확신도 기반 최적 진입 티켓을 발행해줘.'
       },
       {
-        label: '🤖 4단계 자율 퀀트 오케스트레이션: 집행 티켓 산출',
+        label: '⚡ 이원화 워커 4단계 자율 퀀트 오케스트레이션',
         symbol: 'BTCUSDT',
-        prompt: '외신 팩트체크부터 프랙탈 패턴 매칭, 24개 파라미터 그리드 가상 시뮬레이션까지 4단계 도구를 자율 연쇄 호출(Orchestration)하여, 최적 진입가와 1.5-ATR 동적 트레일링 스탑 집행 티켓을 발행해줘.'
+        prompt: 'Spring Boot 코어와 파이썬 전용 연산 노드의 3대 엔진(C-가속 모멘텀, 8,000봉 프랙탈, 딥러닝 파동 트랜스포머)을 4단계 자율 연쇄 호출(ReAct)하여, 최적 진입가와 1.5-ATR 동적 트레일링 스탑 집행 티켓을 발행해줘.'
       },
       {
         label: '🚨 다중 지표 다이버전스 감지 & 헤징 포지션 설계',

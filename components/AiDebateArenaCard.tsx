@@ -31,10 +31,10 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
     loadDebate();
   }, [symbol]);
 
-  const personaMeta: Record<string, { icon: any; color: string; bg: string; border: string }> = {
-    buffett: { icon: Shield, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-    simons: { icon: Zap, color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
-    dalio: { icon: Landmark, color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' }
+  const personaMeta: Record<string, { icon: any; avatarImg?: string; color: string; bg: string; border: string }> = {
+    buffett: { icon: Shield, avatarImg: '/buffett-avatar.png', color: '#b45309', bg: '#ffffff', border: '#e2e8f0' },
+    simons: { icon: Zap, avatarImg: '/simons-avatar.png', color: '#047857', bg: '#ffffff', border: '#e2e8f0' },
+    dalio: { icon: Landmark, avatarImg: '/dalio-avatar.png', color: '#1d4ed8', bg: '#ffffff', border: '#e2e8f0' }
   };
 
   const isBullish = (debate?.consensusScore ?? 50) >= 60;
@@ -187,15 +187,18 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
       <div style={{ display: 'flex', gap: '6px', marginTop: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
         {[
           { id: 'ALL', label: '전체 토론 (Round-Table)' },
-          { id: 'buffett', label: '👑 워런 버핏 (가치·안전마진)' },
-          { id: 'simons', label: '⚡ 짐 시몬스 (퀀트·수학적 엣지)' },
-          { id: 'dalio', label: '🏛️ 레이 달리오 (올웨더·매크로)' }
+          { id: 'buffett', label: '워런 버핏 (가치·안전마진)', avatarImg: '/buffett-avatar.png' },
+          { id: 'simons', label: '짐 시몬스 (퀀트·수학적 엣지)', avatarImg: '/simons-avatar.png' },
+          { id: 'dalio', label: '레이 달리오 (올웨더·매크로)', avatarImg: '/dalio-avatar.png' }
         ].map(tab => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActivePersonaTab(tab.id as any)}
             style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
               padding: '4px 10px',
               fontSize: '11px',
               fontWeight: activePersonaTab === tab.id ? 700 : 500,
@@ -206,17 +209,42 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
               cursor: 'pointer'
             }}
           >
+            {tab.avatarImg && (
+              <img
+                src={tab.avatarImg}
+                alt=""
+                style={{ width: '15px', height: '15px', borderRadius: '50%', objectFit: 'cover' }}
+              />
+            )}
             {tab.label}
           </button>
         ))}
       </div>
+
+      <style>{`
+        .debate-dialogue-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 16px 18px;
+          position: relative;
+          transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+          cursor: default;
+        }
+        .debate-dialogue-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+          border-color: #cbd5e1;
+        }
+      `}</style>
 
       {/* Dialogue Cards */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '14px' }}>
         {debate?.dialogue
           ?.filter(m => activePersonaTab === 'ALL' || m.personaId === activePersonaTab)
           ?.map((msg, idx) => {
-            const meta = personaMeta[msg.personaId] || { icon: Zap, color: '#64748b', bg: '#f8fafc', border: '#e2e8f0' };
+            const meta = personaMeta[msg.personaId] || { icon: Zap, color: '#64748b', bg: '#ffffff', border: '#e2e8f0' };
             const IconComp = meta.icon;
             const isMsgBull = msg.stance === 'BULLISH';
             const isMsgBear = msg.stance === 'BEARISH';
@@ -224,29 +252,33 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
             return (
               <div
                 key={`${msg.personaId}-${idx}`}
-                style={{
-                  background: meta.bg,
-                  border: `1px solid ${meta.border}`,
-                  borderRadius: '8px',
-                  padding: '14px 16px',
-                  position: 'relative'
-                }}
+                className="debate-dialogue-card"
               >
                 {/* Persona Head */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{
-                      width: '28px',
-                      height: '28px',
+                      width: '32px',
+                      height: '32px',
                       borderRadius: '50%',
-                      background: '#fff',
+                      background: '#f8fafc',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: `1px solid ${meta.border}`,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                      border: '1.5px solid #e2e8f0',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                      overflow: 'hidden',
+                      flexShrink: 0
                     }}>
-                      <IconComp size={15} color={meta.color} />
+                      {meta.avatarImg ? (
+                        <img
+                          src={meta.avatarImg}
+                          alt={msg.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                      ) : (
+                        <IconComp size={15} color={meta.color} />
+                      )}
                     </div>
                     <div>
                       <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
@@ -285,10 +317,10 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
                         style={{
                           fontSize: '10px',
                           fontWeight: 600,
-                          background: '#ffffff',
+                          background: '#f8fafc',
                           color: '#334155',
                           border: '1px solid #e2e8f0',
-                          padding: '2px 7px',
+                          padding: '3px 8px',
                           borderRadius: '4px'
                         }}
                       >
@@ -299,13 +331,13 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
                       <span style={{
                         fontSize: '10px',
                         fontWeight: 700,
-                        background: '#f1f5f9',
+                        background: '#f8fafc',
                         color: meta.color,
-                        border: `1px solid ${meta.border}`,
-                        padding: '2px 7px',
+                        border: '1px solid #e2e8f0',
+                        padding: '3px 8px',
                         borderRadius: '4px'
                       }}>
-                        🎯 {msg.targetPrice}
+                        {msg.targetPrice}
                       </span>
                     )}
                   </div>
@@ -319,15 +351,18 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
       {debate?.keyTakeaway && (
         <div style={{
           marginTop: '14px',
-          padding: '10px 14px',
-          background: '#faf5ff',
-          border: '1px solid #e9d5ff',
-          borderRadius: '6px',
-          fontSize: '11.5px',
-          color: '#6b21a8',
-          lineHeight: 1.5
+          padding: '14px 18px',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          fontSize: '12px',
+          color: '#334155',
+          lineHeight: 1.6,
+          boxShadow: '0 1px 3px rgba(15, 23, 42, 0.03)'
         }}>
-          💡 <b>합의 총평:</b> {debate.keyTakeaway}
+          <span style={{ marginRight: '6px', fontSize: '14px' }}>💡</span>
+          <b style={{ color: '#0f172a', fontWeight: 800 }}>합의 총평:</b>{' '}
+          <span style={{ color: '#334155' }}>{debate.keyTakeaway}</span>
         </div>
       )}
     </div>

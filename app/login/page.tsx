@@ -8,8 +8,11 @@ import { loginApi, socialLogin } from '../../lib/api'
 export default function LoginPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [feedback, setFeedback] = useState<string>('')
+  const [feedback, setFeedback] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showMore, setShowMore] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -324,7 +327,7 @@ export default function LoginPage() {
 
   const handleInstantSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
     setLoading(true)
-    setFeedback(`[${provider}] 간편 소셜 계정 생성 및 로그인 진행 중...`)
+    setFeedback(`[${provider}] 간편 소셜 계정 승인 및 로그인 진행 중...`)
     setIsError(false)
 
     let localKey = `social_user_${provider.toLowerCase()}`
@@ -382,153 +385,238 @@ export default function LoginPage() {
     }
   }
 
+  // 이메일 / 아이디 로그인 핸들러
+  const handleEmailLogin = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!email.trim() || !password) {
+      setFeedback('이메일(아이디)과 비밀번호를 모두 입력해 주세요.')
+      setIsError(true)
+      return
+    }
+
+    setLoading(true)
+    setFeedback('로그인 승인 및 보안 세션 검증 중...')
+    setIsError(false)
+
+    try {
+      const res = await loginApi({
+        username: email.trim(),
+        password: password
+      })
+
+      if (res.success) {
+        setFeedback(`🎉 [${res.nickname || res.username || email}] 님, 환영합니다!`)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_session', JSON.stringify(res))
+        }
+        setTimeout(() => router.push('/'), 600)
+      } else {
+        setFeedback(res.message || '이메일(아이디) 또는 비밀번호가 일치하지 않습니다.')
+        setIsError(true)
+      }
+    } catch (err: any) {
+      setFeedback('서버 통신 오류: ' + (err?.message || '네트워크 연결을 확인해 주세요.'))
+      setIsError(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <main className="auth-shell">
-      <div className="auth-grid">
-        <section className="auth-brand">
-          <Link href="/" className="auth-back">← AETHER TERMINAL</Link>
-          <div className="auth-mark">A</div>
-          <div className="eyebrow"><span className="diamond">◆</span> AI FACT-CHECK & QUANT</div>
-          <h1>Decisions,<br /><em>with evidence.</em></h1>
-          <p>Access your quant workspace and verified signals securely in one second, without entering sensitive personal information.</p>
-          <div className="auth-status">
-            <span className="live-dot" /> SYSTEMS OPERATIONAL <span>ENCRYPTED ZERO-PII SESSION</span>
+    <main className="signup-backdrop">
+      <div className="signup-modal">
+        {/* Visual Brand Left Section */}
+        <section className="signup-visual">
+          <Link href="/" className="signup-logo">
+            AETHER
+          </Link>
+
+          <div className="signup-visual-copy">
+            <span>MARKET INTELLIGENCE</span>
+            <h1>
+              The edge<br />
+              <em>starts here.</em>
+            </h1>
+            <p>실시간 시장 데이터와 분석 도구를 더 빠르게 확인하세요.</p>
+          </div>
+
+          <div className="signup-orbit">
+            <div className="signup-orbit-mark">A</div>
+            <span className="orbit-line orbit-line-one" />
+            <span className="orbit-line orbit-line-two" />
+          </div>
+
+          <div className="signup-visual-footer">
+            AETHER / PRIVATE MARKET WORKSPACE
           </div>
         </section>
 
-        <section className="auth-card">
-          <div className="auth-card-head">
-            <div>
-              <span className="overline">ONE-SECOND ACCESS</span>
-              <h2>Welcome back.</h2>
-              <p className="auth-subtitle">복잡한 비밀번호 입력 없이, 소셜 또는 지갑으로 1초 만에 입장하세요.</p>
-            </div>
-            <span className="status-tag">SECURE</span>
-          </div>
+        {/* Form Panel Right Section */}
+        <section className="signup-form-panel">
+          <Link href="/" className="signup-close" aria-label="홈으로 돌아가기">
+            ×
+          </Link>
 
-          <div className="social-grid social-grid-wide" style={{ marginTop: '20px' }}>
-            {/* GOOGLE */}
-            <button
-              className="social-button"
-              type="button"
-              onClick={() => handleSocial('GOOGLE')}
-              disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-              </svg>
-              <strong style={{ flex: 1, fontSize: '11px' }}>GOOGLE</strong>
-              <span>↗</span>
-            </button>
+          <span className="overline">WELCOME BACK</span>
+          <h2>로그인</h2>
 
-            {/* NAVER */}
-            <button
-              className="social-button"
-              type="button"
-              onClick={() => handleSocial('NAVER')}
-              disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#03C75A" style={{ flexShrink: 0 }}>
-                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/>
-              </svg>
-              <strong style={{ flex: 1, fontSize: '11px' }}>NAVER</strong>
-              <span>↗</span>
-            </button>
-
-            {/* KAKAO */}
-            <button
-              className="social-button"
-              type="button"
-              onClick={() => handleSocial('KAKAO')}
-              disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="#3C1E1E" style={{ flexShrink: 0 }}>
-                <path d="M12 3C6.477 3 2 6.477 2 10.77c0 2.766 1.84 5.19 4.613 6.538l-.94 3.447c-.083.305.263.545.516.357l4.133-2.736c.554.062 1.112.094 1.678.094 5.523 0 10-3.477 10-7.7A7.26 7.26 0 0 0 12 3z"/>
-              </svg>
-              <strong style={{ flex: 1, fontSize: '11px' }}>KAKAO</strong>
-              <span>↗</span>
-            </button>
-
-            {/* APPLE - Official Bitten Apple Logo */}
-            <button
-              className="social-button"
-              type="button"
-              onClick={() => handleSocial('APPLE')}
-              disabled={loading}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#000000', color: '#ffffff', borderColor: '#000000' }}
-            >
-              <svg width="15" height="15" viewBox="0 0 170 170" fill="#ffffff" style={{ flexShrink: 0 }}>
-                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.63-13.98-5.27-8.17-9.58-17.75-12.92-28.75-3.34-11-5.01-21.84-5.01-32.52 0-14.07 3.57-25.75 10.7-35.03 7.14-9.28 16.14-13.98 27.01-14.1 4.79 0 10.15 1.25 16.08 3.76 5.94 2.51 9.77 3.82 11.51 3.94 1.3.12 5.12-1.25 11.45-4.11 6.34-2.86 11.83-4.2 16.48-4.01 12.08.62 21.84 5.34 29.28 14.17-10.7 6.47-15.93 15.34-15.69 26.6.24 8.76 3.63 16.15 10.18 22.18 6.54 6.02 14.3 9.4 23.27 10.13-2.22 6.64-4.87 13.06-7.94 19.26zM119.22 31.84c0-7.23 2.65-14.07 7.95-20.52 5.3-6.45 11.8-10.45 19.51-12.01.62 3.12.72 5.86.3 8.22-.62 3.59-2.09 7.15-4.42 10.67-2.33 3.52-5.18 6.45-8.56 8.79-3.38 2.34-6.85 3.86-10.41 4.56-.37-.73-.77-1.92-1.37-3.71-.97-3.9-1.2-6.57-1.2-8.02z" />
-              </svg>
-              <strong style={{ flex: 1, fontSize: '11px', color: '#ffffff' }}>APPLE</strong>
-              <span style={{ color: '#888888' }}>↗</span>
-            </button>
-          </div>
-
+          {/* Google 1-Click Button */}
           <button
-            className="wallet-button"
+            className="signup-google"
             type="button"
-            onClick={() => handleSocial('METAMASK')}
+            onClick={() => handleSocial('GOOGLE')}
             disabled={loading}
-            style={{
-              marginTop: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 14px',
-              background: '#fff7ed',
-              border: '1px solid #fdba74',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
           >
-            {/* Authentic Official MetaMask Geometric Fox SVG */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 318.6 318.6" style={{ flexShrink: 0 }}>
-              <path fill="#e2761b" stroke="#e2761b" strokeLinecap="round" strokeLinejoin="round" d="m274.1 35.5-99.5 73.9L193 65.8z"/>
-              <path fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" d="m44.4 35.5 98.7 74.6-17.5-44.3zm193.9 171.3-26.5 40.6 56.7 15.6 16.3-55.3zm-204.4.9L50.1 263l56.7-15.6-26.5-40.6z"/>
-              <path fill="#e4761b" stroke="#e4761b" strokeLinecap="round" strokeLinejoin="round" d="m103.6 138.2-15.8 23.9 56.3 2.5-2-60.5zm111.3 0-39-34.8-1.3 61.2 56.2-2.5zM106.8 247.4l33.8-16.5-29.2-22.8zm71.1-16.5 33.9 16.5-4.7-39.3z"/>
-              <path fill="#d7c1b3" stroke="#d7c1b3" strokeLinecap="round" strokeLinejoin="round" d="m211.8 247.4-33.9-16.5 2.7 22.1-.3 9.3zm-105 0 31.5 14.9-.2-9.3 2.5-22.1z"/>
-              <path fill="#233447" stroke="#233447" strokeLinecap="round" strokeLinejoin="round" d="m138.8 193.5-28.2-8.3 19.9-9.1zm40.9 0 8.3-17.4 20 9.1z"/>
-              <path fill="#cd6116" stroke="#cd6116" strokeLinecap="round" strokeLinejoin="round" d="m106.8 247.4 4.8-40.6-31.3.9zM207 206.8l4.8 40.6 26.5-39.7zm23.8-44.7-56.2 2.5 5.2 28.9 8.3-17.4 20 9.1zm-120.2 23.1 20-9.1 8.2 17.4 5.3-28.9-56.3-2.5z"/>
-              <path fill="#e4751f" stroke="#e4751f" strokeLinecap="round" strokeLinejoin="round" d="m87.8 162.1 23.6 46-.8-22.9zm120.3 23.1-1 22.9 23.7-46zm-64-20.6-5.3 28.9 6.6 34.1 1.5-44.9zm30.5 0-2.7 18 1.2 45 6.7-34.1z"/>
-              <path fill="#f6851b" stroke="#f6851b" strokeLinecap="round" strokeLinejoin="round" d="m179.8 193.5-6.7 34.1 4.8 3.3 29.2-22.8 1-22.9zm-69.2-8.3.8 22.9 29.2 22.8 4.8-3.3-6.6-34.1z"/>
-              <path fill="#c0ad9e" stroke="#c0ad9e" strokeLinecap="round" strokeLinejoin="round" d="m180.3 262.3.3-9.3-2.5-2.2h-37.7l-2.3 2.2.2 9.3-31.5-14.9 11 9 22.3 15.5h38.3l22.4-15.5 11-9z"/>
-              <path fill="#161616" stroke="#161616" strokeLinecap="round" strokeLinejoin="round" d="m177.9 230.9-4.8-3.3h-27.7l-4.8 3.3-2.5 22.1 2.3-2.2h37.7l2.5 2.2z"/>
-              <path fill="#763d16" stroke="#763d16" strokeLinecap="round" strokeLinejoin="round" d="m278.3 114.2 8.5-40.8-12.7-37.9-96.2 71.4 37 31.3 52.3 15.3 11.6-13.5-5-3.6 8-7.3-6.2-4.8 8-6.1zM31.8 73.4l8.5 40.8-5.4 4 8 6.1-6.1 4.8 8 7.3-5 3.6 11.5 13.5 52.3-15.3 37-31.3-96.2-71.4z"/>
-              <path fill="#f6851b" stroke="#f6851b" strokeLinecap="round" strokeLinejoin="round" d="m267.2 153.5-52.3-15.3 15.9 23.9-23.7 46 31.2-.4h46.5zm-163.6-15.3-52.3 15.3-17.4 54.2h46.4l31.1.4-23.6-46zm71 26.4 3.3-57.7 15.2-41.1h-67.5l15 41.1 3.5 57.7 1.2 18.2.1 44.8h27.7l.2-44.8z"/>
-            </svg>
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <strong style={{ fontSize: '11px', color: '#c2410c', display: 'block' }}>CONNECT METAMASK</strong>
-              <small style={{ fontSize: '8.5px', color: '#9a3412', display: 'block', marginTop: '1px' }}>ANONYMOUS WEB3 WALLET ACCESS</small>
-            </div>
-            <span style={{ color: '#c2410c', fontWeight: 700 }}>↗</span>
+            <img
+              src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg"
+              alt="Google"
+            />{' '}
+            Google로 계속하기
           </button>
 
+          {/* Expandable Social / Web3 Options */}
+          <div
+            className="signup-more"
+            role="button"
+            tabIndex={0}
+            onClick={() => setShowMore(!showMore)}
+            style={{ userSelect: 'none' }}
+          >
+            기타 로그인 방법 <span>{showMore ? '▴' : '⌄'}</span>
+          </div>
+
+          {showMore && (
+            <div className="social-grid social-grid-wide" style={{ marginTop: '-12px', marginBottom: '20px' }}>
+              {/* NAVER */}
+              <button
+                className="social-button"
+                type="button"
+                onClick={() => handleSocial('NAVER')}
+                disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#03C75A" style={{ flexShrink: 0 }}>
+                  <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/>
+                </svg>
+                <strong style={{ flex: 1, fontSize: '11px' }}>NAVER</strong>
+                <span>↗</span>
+              </button>
+
+              {/* KAKAO */}
+              <button
+                className="social-button"
+                type="button"
+                onClick={() => handleSocial('KAKAO')}
+                disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#3C1E1E" style={{ flexShrink: 0 }}>
+                  <path d="M12 3C6.477 3 2 6.477 2 10.77c0 2.766 1.84 5.19 4.613 6.538l-.94 3.447c-.083.305.263.545.516.357l4.133-2.736c.554.062 1.112.094 1.678.094 5.523 0 10-3.477 10-7.7A7.26 7.26 0 0 0 12 3z"/>
+                </svg>
+                <strong style={{ flex: 1, fontSize: '11px' }}>KAKAO</strong>
+                <span>↗</span>
+              </button>
+
+              {/* APPLE */}
+              <button
+                className="social-button"
+                type="button"
+                onClick={() => handleSocial('APPLE')}
+                disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#000000', color: '#ffffff', borderColor: '#000000' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 170 170" fill="#ffffff" style={{ flexShrink: 0 }}>
+                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.63-13.98-5.27-8.17-9.58-17.75-12.92-28.75-3.34-11-5.01-21.84-5.01-32.52 0-14.07 3.57-25.75 10.7-35.03 7.14-9.28 16.14-13.98 27.01-14.1 4.79 0 10.15 1.25 16.08 3.76 5.94 2.51 9.77 3.82 11.51 3.94 1.3.12 5.12-1.25 11.45-4.11 6.34-2.86 11.83-4.2 16.48-4.01 12.08.62 21.84 5.34 29.28 14.17-10.7 6.47-15.93 15.34-15.69 26.6.24 8.76 3.63 16.15 10.18 22.18 6.54 6.02 14.3 9.4 23.27 10.13-2.22 6.64-4.87 13.06-7.94 19.26zM119.22 31.84c0-7.23 2.65-14.07 7.95-20.52 5.3-6.45 11.8-10.45 19.51-12.01.62 3.12.72 5.86.3 8.22-.62 3.59-2.09 7.15-4.42 10.67-2.33 3.52-5.18 6.45-8.56 8.79-3.38 2.34-6.85 3.86-10.41 4.56-.37-.73-.77-1.92-1.37-3.71-.97-3.9-1.2-6.57-1.2-8.02z" />
+                </svg>
+                <strong style={{ flex: 1, fontSize: '11px', color: '#ffffff' }}>APPLE</strong>
+                <span style={{ color: '#888888' }}>↗</span>
+              </button>
+
+              {/* METAMASK */}
+              <button
+                className="social-button"
+                type="button"
+                onClick={() => handleSocial('METAMASK')}
+                disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff7ed', borderColor: '#fdba74' }}
+              >
+                <span style={{ fontSize: '13px' }}>🦊</span>
+                <strong style={{ flex: 1, fontSize: '11px', color: '#c2410c' }}>METAMASK</strong>
+                <span style={{ color: '#c2410c' }}>↗</span>
+              </button>
+            </div>
+          )}
+
+          {/* Auth Divider */}
+          <div className="auth-divider">
+            <span>또는</span>
+          </div>
+
+          {/* Email / Username & Password Form */}
+          <form onSubmit={handleEmailLogin}>
+            <label className="signup-email-only">
+              이메일 또는 아이디
+              <input
+                type="text"
+                required
+                placeholder="이메일 또는 아이디를 입력하세요"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+              />
+            </label>
+
+            <label className="signup-email-only" style={{ marginTop: '14px', display: 'block' }}>
+              비밀번호
+              <input
+                type="password"
+                required
+                placeholder="비밀번호를 입력하세요"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+
+            <button
+              className="signup-next"
+              type="submit"
+              disabled={loading}
+              style={{
+                marginTop: '20px',
+                background: email.trim() && password ? '#f47a20' : undefined,
+                color: '#fff',
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {loading ? '로그인 처리 중...' : '로그인'}
+            </button>
+          </form>
+
           {feedback && (
-            <div style={{
-              padding: '10px 14px',
-              marginTop: '16px',
-              background: isError ? '#fef2f2' : '#f0fdf4',
-              border: isError ? '1px solid #f87171' : '1px solid #4ade80',
-              color: isError ? '#dc2626' : '#166534',
-              fontSize: '11px',
-              fontWeight: 600,
-              borderRadius: '4px',
-              textAlign: 'center'
-            }}>
+            <div
+              style={{
+                padding: '10px 14px',
+                marginTop: '16px',
+                background: isError ? '#fef2f2' : '#f0fdf4',
+                border: isError ? '1px solid #f87171' : '1px solid #4ade80',
+                color: isError ? '#dc2626' : '#166534',
+                fontSize: '11px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                textAlign: 'center'
+              }}
+            >
               {feedback}
             </div>
           )}
 
-          <div className="auth-divider" style={{ marginTop: '24px' }}><span>PRIVACY & SECURITY GUARANTEE</span></div>
-          <p className="privacy-note">
-            본 터미널은 <b>개인정보 최소 수집(Zero-PII) 원칙</b>을 준수합니다. 주민번호, 비밀번호 등 민감한 개인정보를 일체 요구하거나 저장하지 않습니다.
+          <p className="signup-login" style={{ marginBottom: '32px' }}>
+            아직 계정이 없으신가요? <Link href="/signup">무료 회원가입</Link>
+          </p>
+
+          <p className="signup-terms">
+            로그인함으로써 귀하는 저희 <a href="#terms">개인정보 처리방침</a> 및 서비스 이용약관에 동의합니다.
           </p>
         </section>
       </div>
