@@ -7187,20 +7187,20 @@ def signal(tick):
                 <span>RECOMMENDED [{researchMode || 'INSIGHT'}] QUERIES</span>
                 <div>
                   {(researchMode === 'CODING' ? [
-                    { label: '⚡ RSI+볼린저 단타 봇 파이썬 빌드', prompt: `${currentSession?.symbol || searched} 4시간봉 승률 70% RSI(14) + 볼린저 밴드 단타 봇 파이썬 코드를 작성해줘.` },
-                    { label: '📈 골든크로스 1:3 손익비 추세추종', prompt: `${currentSession?.symbol || searched} SMA20/50 골든크로스 기반 손익비 1:3 추세추종 알고리즘을 작성해줘.` },
-                    { label: '🛡️ AETHER 시계열 프랙탈 패턴 유사도 계산기', prompt: `${currentSession?.symbol || searched} 과거 8,000개 캔들과 최근 30개 캔들 간의 시계열 파동 유사도 및 프랙탈 일치율을 계산하는 고속 연산 코드를 작성해줘.` },
-                    { label: '🤖 REST API 포트폴리오 자동 리밸런싱', prompt: `${currentSession?.symbol || searched} Spring Boot REST API와 통신하여 주기적으로 타겟 비중을 맞추는 자동 리밸런싱 Python 함수를 만들어줘.` }
+                    { label: '⚡ 24개 파라미터 노코드 퀀트 오토튜너', prompt: `${currentSession?.symbol || searched} RSI 기간, 손절률(2~4.5%), 익절률(4~8%) 24개 조합을 그리드 시뮬레이션하여 최고 샤프 지수와 승률 조합을 자동 탐색하는 Python 백테스팅 코드를 작성해줘.` },
+                    { label: '👻 AETHER 프랙탈 고스트 궤적 예측 코드', prompt: `${currentSession?.symbol || searched} 과거 8,000개 캔들과 최근 30개 캔들 간의 시계열 파동 프랙탈 유사도를 계산하고 향후 5봉 궤적을 예측하는 Python 코드를 작성해줘.` },
+                    { label: '📈 실시간 L2 오더북 불균형 수집 봇', prompt: `바이낸스 선물 Depth20 WebSocket 스트림에 비동기로 접속하여 실시간 호가 불균형(Imbalance)을 계산하는 Python 코드를 작성해줘.` },
+                    { label: '🤖 RSI(14) + 볼린저 1:3 손익비 자율 매매', prompt: `${currentSession?.symbol || searched} 4시간봉 승률 70% RSI(14) 과매도 반등 및 볼린저 밴드 하단 터치 기반 손익비 1:3 추세추종 알고리즘 봇 코드를 작성해줘.` }
                   ] : researchMode === 'GUIDE' ? [
+                    { label: '🚨 1.5-ATR 동적 트레일링 스탑 & 손절선', prompt: `14봉 ATR과 주간 VWAP 지표를 활용하여 추세 이탈 시 손실을 최소화하는 1.5-ATR 동적 트레일링 스탑과 무효화(Invalidation) 기준선을 단계별로 가이드해줘.` },
                     { label: '🛡️ 1,000만원 3단계 분할 매수 티켓', prompt: `1,000만 원 예산으로 ${currentSession?.symbol || searched} 3단계 분할 매수 집행 티켓을 발행해줘. 최대 손실은 50만 원 한도야.` },
                     { label: '⚖️ 켈리 공식(Kelly) 최적 자본배분', prompt: `${currentSession?.symbol || searched} 현재가 기준 켈리 공식으로 최적 투입 자본금과 1/2차 익절 목표가를 계산해줘.` },
-                    { label: '🚨 손절선(Invalidation) & 트레일링 스탑', prompt: `SMA20 및 ATR(14) 지표를 활용하여 추세 이탈 시 손실을 최소화하는 동적 무효화(Invalidation) 기준선을 단계별로 가이드해줘.` },
-                    { label: '🔄 선물 펀딩비 차익거래(Arbitrage) 가이드', prompt: `현물 매수 + 선물 1배 숏 델타 뉴트럴 펀딩비 수취 전략의 수익률 계산 공식과 리스크 관리 매뉴얼을 정리해줘.` }
+                    { label: '🔄 선물 펀딩비 차익거래 델타 뉴트럴', prompt: `현물 매수 + 선물 1배 숏 델타 뉴트럴 펀딩비 수취 전략의 수익률 계산 공식과 리스크 관리 매뉴얼을 정리해줘.` }
                   ] : researchMode === 'MASTER' ? [
-                    { label: '📊 워런 버핏 13F 기관 포트폴리오 분석', prompt: `버크셔 해서웨이(Berkshire Hathaway)의 최신 13F 공시 데이터와 $277B 현금 보유 전략이 시사하는 시장 사이클 관점을 심층 분석해줘.` },
-                    { label: '🏛️ 연준(Fed) 기준금리 경로 & CPI 진단', prompt: `미국 연준(Fed)의 기준금리 인하/동결 시나리오와 실질금리 변동이 글로벌 유동성 및 가상자산에 미치는 거시적 펀더멘탈을 진단해줘.` },
-                    { label: '💻 빅테크 AI Capex & 클라우드 성장성', prompt: `빅테크 기업들의 분기별 AI 인프라 자본지출(Capex) 추이와 반도체 공급망 EPS 성장률을 퀀트 펀더멘탈 지표로 정밀 분석해줘.` },
-                    { label: '🐋 온체인 LTH 70% 공급쇼크 밸류에이션', prompt: `거래소 유통 잔고 감소 추이와 1년 이상 비이동 장기보유자(LTH) 70% 상회가 유발하는 공급 쇼크(Supply Shock) 펀더멘탈을 평가해줘.` }
+                    { label: '🏛️ 월가 3대 거장 끝장 토론: 버핏 vs 시몬스 vs 달리오', prompt: `${currentSession?.symbol || searched} 현재 국면을 두고 워런 버핏(가치·안전마진), 짐 시몬스(퀀트·수학적 엣지), 레이 달리오(올웨더·매크로) 3인의 끝장 토론과 1.5-ATR 손절선 합의를 도출해줘.` },
+                    { label: '📊 워런 버핏 13F 기관 포트폴리오 & $277B 현금', prompt: `버크셔 해서웨이(Berkshire Hathaway)의 최신 13F 공시 데이터와 $277B 현금 보유 전략이 시사하는 시장 사이클 관점을 심층 분석해줘.` },
+                    { label: '📜 역사적 데자뷔 타임머신: 과거 급락/폭등장 팩트', prompt: `현재 시장 심리와 가격 흐름이 과거 50년 역사 중 어떤 사건(2021년 5월 급락 or 2020년 3월 등)과 가장 유사한지 역사적 데자뷔를 복기해줘.` },
+                    { label: '🛡️ 뇌동매매 & FOMO 긴급 처방전: 멘탈 수칙', prompt: `급등/급락에 따른 충동 매매(FOMO)를 막기 위한 긴급 손실 시뮬레이션과 지금 당장 지켜야 할 3대 멘탈 가디언 수칙을 처방해줘.` }
                   ] : researchMode === 'AGENT' ? [
                     { label: '🔮 2030 글로벌 가상자산 미래 시나리오', prompt: `2030년 월가 중앙은행 디지털화폐(CBDC)와 온체인 인공지능 자율 거래소가 공존하는 글로벌 금융 시장의 하루를 영화 같은 시나리오로 창작해줘.` },
                     { label: '📰 기관급 위클리 퀀트 뉴스레터 초안', prompt: `골드만삭스/블룸버그 리서치 헤드라인 스타일로 이번 주 글로벌 매크로, 온체인 고래, 프랙탈 패턴을 아우르는 고급스러운 위클리 인텔리전스 레터를 작성해줘.` },
@@ -7208,8 +7208,8 @@ def signal(tick):
                     { label: '⚡ 미래 웹3 스테이블코인 결제망 리포트', prompt: `솔라나/폴리곤 기반 마이크로세컨드 스테이블코인 결제 인프라가 전통 SWIFT 망을 대체해 나가는 5단계 로드맵을 창의적인 인텔리전스 리포트로 작성해줘.` }
                   ] : [
                     { label: '🪙 비트코인 온체인 & 현물 ETF 수급 분석', prompt: `비트코인(BTCUSDT)의 최근 현물 ETF 기관 순유입 추이와 온체인 장기보유자(LTH) 공급 지표를 바탕으로 단기 지지선 및 향후 5일간 목표가를 분석해줘.` },
-                    { label: '⚡ 솔라나 DEX 유동성 & 온체인 고래 추적', prompt: `솔라나(SOLUSDT) 네트워크 DEX 거래량 급증 및 대형 고래 지갑 순매집 현황을 분석하고 분할 진입 전략을 제시해줘.` },
-                    { label: '📰 지표-외신 다이버전스 감성 분석', prompt: `호재성 외신 속보와 RSI 과매수/과매도 다이버전스가 충돌할 때, 시장의 숨겨진 트랩 리스크와 적정 포지션 비중을 분석해줘.` },
+                    { label: '👻 AETHER 프랙탈 고스트 궤적 & 과거 승률', prompt: `${currentSession?.symbol || searched} 최근 30개 캔들의 AETHER 시계열 프랙탈 유사도와 과거 가장 일치했던 구간의 향후 5봉 궤적 및 기대수익률을 분석해줘.` },
+                    { label: '📊 주간 VWAP & 실시간 오더북 L2 불균형', prompt: `주간 VWAP 지지선과 바이낸스 실시간 오더북 매수/매도 불균형 비율, 선물 펀딩비를 융합하여 단기 매물대 돌파 가능성을 진단해줘.` },
                     { label: '🖥️ 엔비디아 AI 인프라 수주 랠리 진단', prompt: `엔비디아(NVDA) 차세대 AI 인프라 수주 랠리와 글로벌 빅테크 데이터센터 증설이 미치는 주가 영향도를 진단해줘.` }
                   ]).map((item, idx) => (
                     <button

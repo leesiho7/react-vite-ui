@@ -135,7 +135,7 @@ export function VisionChartScanModal({ isOpen, onClose, defaultSymbol = 'BTCUSDT
                 차트 사진 1초 AI 비전 진단 (Vision Chart Scan)
               </h3>
               <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>
-                스크린샷 붙여넣기(Ctrl+V) 즉시 거래소 Ground-Truth 수치 & FastDTW 프랙탈 자동 결합
+                스크린샷 붙여넣기(Ctrl+V) 즉시 거래소 Ground-Truth 수치 & AETHER 시계열 프랙탈 자동 결합
               </p>
             </div>
           </div>

@@ -665,7 +665,7 @@ export function TerminalTradingChart({
         const lastPt = pts[pts.length - 1]
         const winPct = ghostData?.winRate || 80
         const expRet = ghostData?.expectedReturn || 6.5
-        const badgeText = `👻 FastDTW 궤적 (+${expRet}% / 승률 ${winPct}%)`
+        const badgeText = `👻 AETHER 프랙탈 궤적 (+${expRet}% / 승률 ${winPct}%)`
 
         ctx.fillStyle = 'rgba(0, 240, 255, 0.25)'
         ctx.strokeStyle = '#00f0ff'
@@ -1019,7 +1019,7 @@ export function TerminalTradingChart({
               gap: '3px'
             }}
           >
-            👻 FastDTW 고스트 {showGhostOverlay ? 'ON' : 'OFF'}
+            👻 프랙탈 고스트 {showGhostOverlay ? 'ON' : 'OFF'}
           </button>
 
           <span style={{ height: '14px', borderLeft: `1px solid ${isDark ? '#363a45' : '#cbd5e1'}` }} />

@@ -251,110 +251,110 @@ export default function ResearchPage() {
   const recommendedPromptsByMode: Record<ChipletMode, Array<{ label: string; symbol: string; prompt: string }>> = {
     INSIGHT: [
       {
-        label: '비트코인 온체인 & 현물 ETF 수급 분석',
+        label: '🪙 비트코인 온체인 & 현물 ETF 수급 분석',
         symbol: 'BTCUSDT',
         prompt: '비트코인(BTCUSDT)의 최근 현물 ETF 기관 순유입 추이와 온체인 장기보유자(LTH) 공급 지표를 바탕으로 단기 지지선 및 향후 5일간 목표가를 분석해줘.'
       },
       {
-        label: '솔라나 DEX 유동성 & 온체인 고래 추적',
-        symbol: 'SOLUSDT',
-        prompt: '솔라나(SOLUSDT) 네트워크 DEX 거래량 급증 및 대형 고래 지갑 순매집 현황을 분석하고 분할 진입 전략을 제시해줘.'
-      },
-      {
-        label: '지표-외신 다이버전스 감성 분석',
+        label: '👻 AETHER 프랙탈 고스트 궤적 & 과거 승률 분석',
         symbol: 'BTCUSDT',
-        prompt: '호재성 외신 속보와 RSI 과매수/과매도 다이버전스가 충돌할 때, 시장의 숨겨진 트랩 리스크와 적정 포지션 비중을 분석해줘.'
+        prompt: '비트코인(BTCUSDT) 최근 30개 캔들의 AETHER 시계열 프랙탈 유사도와 과거 가장 일치했던 구간의 향후 5봉 궤적 및 기대수익률을 분석해줘.'
       },
       {
-        label: '엔비디아 AI 인프라 수주 랠리 진단',
+        label: '📊 주간 VWAP & 실시간 오더북 L2 불균형 진단',
+        symbol: 'BTCUSDT',
+        prompt: '주간 VWAP 지지선과 바이낸스 실시간 오더북 매수/매도 불균형 비율(+18%), 선물 펀딩비를 융합하여 단기 매물대 돌파 가능성을 진단해줘.'
+      },
+      {
+        label: '🖥️ 엔비디아 AI 인프라 수주 랠리 & 반도체 공급망 진단',
         symbol: 'NVDA',
         prompt: '엔비디아(NVDA) 차세대 AI 인프라 수주 랠리와 글로벌 빅테크 데이터센터 증설이 미치는 주가 영향도를 진단해줘.'
       }
     ],
     GUIDE: [
       {
-        label: '변동성 돌파 자율 매매 봇 전략 설계',
+        label: '🚨 1.5-ATR 동적 트레일링 스탑 & 손절선 설정',
         symbol: 'BTCUSDT',
-        prompt: '래리 윌리엄스 변동성 돌파(Volatility Breakout) 전략을 기반으로 24시간 자율 매매 봇의 K값(0.5) 및 진입/청산 룰을 상세히 가이드해줘.'
+        prompt: '14봉 ATR과 주간 VWAP 지표를 활용하여 추세 이탈 시 손실을 최소화하는 1.5-ATR 동적 트레일링 스탑과 무효화(Invalidation) 기준선을 단계별로 가이드해줘.'
       },
       {
-        label: '분할 매수(DCA) & 리스크 패리티 가이드',
+        label: '🛡️ 1,000만원 3단계 분할 매수(DCA) 집행 티켓',
+        symbol: 'BTCUSDT',
+        prompt: '1,000만 원 예산으로 비트코인(BTCUSDT) 3단계 분할 매수 집행 티켓을 발행해줘. 최대 손실은 50만 원 한도야.'
+      },
+      {
+        label: '⚖️ 켈리 공식(Kelly) 최적 자본배분 & 익절 매트릭스',
         symbol: 'ETHUSDT',
-        prompt: '시장 급락 시 최대 낙폭(MDD)을 10% 이내로 방어하는 5단계 분할 매수(DCA) 및 켈리 공식 기반 자금 관리 플레이북을 작성해줘.'
+        prompt: '현재가 기준 켈리 공식으로 승률 80% 구간의 최적 투입 자본금 비중과 1/2차 분할 익절 목표가를 계산해줘.'
       },
       {
-        label: '손절선(Invalidation) & 트레일링 스탑 설정',
-        symbol: 'BTCUSDT',
-        prompt: 'SMA20 및 ATR(14) 지표를 활용하여 추세 이탈 시 손실을 최소화하는 동적 무효화(Invalidation) 기준선을 단계별로 가이드해줘.'
-      },
-      {
-        label: '선물 펀딩비 차익거래(Arbitrage) 가이드',
+        label: '🔄 선물 펀딩비 차익거래 델타 뉴트럴 가이드',
         symbol: 'SOLUSDT',
         prompt: '현물 매수 + 선물 1배 숏 델타 뉴트럴 펀딩비 수취 전략의 수익률 계산 공식과 리스크 관리 매뉴얼을 정리해줘.'
       }
     ],
     CODING: [
       {
-        label: 'Python RSI+볼린저 역추세 퀀트 전략 코드',
+        label: '⚡ 24개 파라미터 노코드 퀀트 오토튜너 최적화 봇',
         symbol: 'BTCUSDT',
-        prompt: '실행 가능한 고성능 RSI(14) < 30 + 볼린저 밴드 하단 터치 반등 매수 백테스팅 스크립트(Python 3.12)를 작성해줘.'
+        prompt: 'RSI 기간, 손절률(2.0~4.5%), 익절률(4.0~8.0%) 24개 조합을 그리드 시뮬레이션하여 최고 샤프 지수와 승률 조합을 자동 탐색하는 Python 백테스팅 코드를 작성해줘.'
       },
       {
-        label: '바이낸스 WebSocket 실시간 오더북 수집 봇',
+        label: '👻 AETHER 시계열 프랙탈 고스트 궤적 추출 알고리즘',
+        symbol: 'BTCUSDT',
+        prompt: '과거 8,000개 캔들과 최근 30개 캔들 간의 시계열 파동 프랙탈 유사도를 계산하고 향후 5봉 궤적을 예측하는 Python 코드를 작성해줘.'
+      },
+      {
+        label: '📈 바이낸스 실시간 L2 오더북 불균형 수집 봇',
         symbol: 'BTCUSDT',
         prompt: '바이낸스 선물 Depth20 WebSocket 스트림에 비동기(asyncio/websockets)로 접속하여 실시간 호가 불균형(Imbalance)을 계산하는 Python 코드를 작성해줘.'
       },
       {
-        label: 'AETHER 시계열 프랙탈 유사도 계산기',
+        label: '🤖 RSI(14) + 볼린저 밴드 1:3 손익비 자율 매매 봇',
         symbol: 'BTCUSDT',
-        prompt: '과거 8,000개 캔들과 최근 30개 캔들 간의 시계열 파동 유사도 및 프랙탈 일치율(%)을 계산하는 고속 연산 코드를 작성해줘.'
-      },
-      {
-        label: 'REST API 포트폴리오 리밸런싱 자동화 스크립트',
-        symbol: 'NVDA',
-        prompt: 'Spring Boot REST API와 통신하여 주기적으로 타겟 비중(BTC 50%, NVDA 30%, CASH 20%)을 맞추는 자동 리밸런싱 Python 함수를 만들어줘.'
+        prompt: '4시간봉 승률 70% RSI(14) 과매도 반등 및 볼린저 밴드 하단 터치 기반 손익비 1:3 추세추종 알고리즘 봇 코드를 작성해줘.'
       }
     ],
     MASTER: [
       {
-        label: '대가들의 끝장 토론: 버핏 vs 캐시우드 vs 소로스 난상 격돌',
+        label: '🏛️ 월가 3대 거장 끝장 토론: 버핏 vs 시몬스 vs 달리오',
         symbol: 'BTCUSDT',
-        prompt: '비트코인(BTCUSDT) 현재 국면을 두고 워런 버핏(보수 가치), 캐시 우드(혁신 성장), 조지 소로스(매크로 심판) 3인의 끝장 토론과 중재 결론을 도출해줘.'
+        prompt: '비트코인(BTCUSDT) 현재 국면을 두고 워런 버핏(가치·안전마진), 짐 시몬스(퀀트·수학적 엣지), 레이 달리오(올웨더·매크로) 3인의 끝장 토론과 1.5-ATR 손절선 합의를 도출해줘.'
       },
       {
-        label: '역사적 데자뷔 타임머신: 과거 급락장/폭등장과의 팩트 매칭',
+        label: '📊 워런 버핏 13F 기관 포트폴리오 & $277B 현금 분석',
+        symbol: 'BTCUSDT',
+        prompt: '버크셔 해서웨이(Berkshire Hathaway)의 최신 13F 공시 데이터와 $277B 현금 보유 전략이 시사하는 시장 사이클 관점을 심층 분석해줘.'
+      },
+      {
+        label: '📜 역사적 데자뷔 타임머신: 과거 급락장/폭등장과의 팩트 매칭',
         symbol: 'BTCUSDT',
         prompt: '현재 비트코인 시장 심리와 가격 흐름이 과거 50년 역사 중 어떤 사건(2021년 5월 급락 or 2020년 3월 등)과 가장 유사한지 역사적 데자뷔를 복기해줘.'
       },
       {
-        label: '악마의 변호인 (Red Team): 내 투자 생각의 치명적 맹점 3가지 공격',
-        symbol: 'NVDA',
-        prompt: '엔비디아(NVDA)를 매수하려는 투자자의 논리에서 가장 치명적인 3가지 맹점을 월가 공매도 헤지펀드 시각에서 가혹하게 비판하고 반박 질문을 던져줘.'
-      },
-      {
-        label: '뇌동매매 & FOMO 긴급 처방전: 감정 제어 및 쿨다운 행동 수칙',
+        label: '🛡️ 뇌동매매 & FOMO 긴급 처방전: 감정 제어 및 쿨다운 수칙',
         symbol: 'SOLUSDT',
         prompt: '솔라나(SOLUSDT) 급등/급락에 따른 충동 매매(FOMO)를 막기 위한 긴급 손실 시뮬레이션과 지금 당장 지켜야 할 3대 멘탈 가디언 수칙을 처방해줘.'
       }
     ],
-    CREATIVE: [
+    AGENT: [
       {
-        label: '2030 글로벌 가상자산 미래 시나리오 소설',
+        label: '🔮 2030 글로벌 가상자산 미래 시나리오',
         symbol: 'BTCUSDT',
         prompt: '2030년 월가 중앙은행 디지털화폐(CBDC)와 온체인 인공지능 자율 거래소가 공존하는 글로벌 금융 시장의 하루를 영화 같은 시나리오로 창작해줘.'
       },
       {
-        label: '기관급 위클리 퀀트 뉴스레터 초안 작성',
+        label: '📰 기관급 위클리 퀀트 뉴스레터 초안 작성',
         symbol: 'BTCUSDT',
         prompt: '골드만삭스/블룸버그 리서치 헤드라인 스타일로 이번 주 글로벌 매크로, 온체인 고래, 프랙탈 패턴을 아우르는 고급스러운 위클리 인텔리전스 레터를 작성해줘.'
       },
       {
-        label: '워런 버핏 vs 퀀트 AI 가상 토론',
+        label: '🎙️ 워런 버핏 vs 퀀트 AI 가상 끝장 토론',
         symbol: 'BTCUSDT',
         prompt: '가치투자의 거장 워런 버핏과 초단타 퀀트 AI 에이전트가 "비트코인의 본질 가치와 24H 시장"을 주제로 펼치는 가상 토론 대본을 흥미진진하게 창작해줘.'
       },
       {
-        label: '미래 웹3 스테이블코인 결제망 예측 리포트',
+        label: '⚡ 미래 웹3 스테이블코인 결제망 예측 리포트',
         symbol: 'SOLUSDT',
         prompt: '솔라나/폴리곤 기반 마이크로세컨드 스테이블코인 결제 인프라가 전통 SWIFT 망을 대체해 나가는 5단계 로드맵을 창의적인 인텔리전스 리포트로 작성해줘.'
       }
@@ -577,9 +577,9 @@ export default function ResearchPage() {
 
     // Lazy Creation: 가상 세션(!activeSessionId)일 때 첫 메시지 전송 시 실제 세션 생성
     let targetSessionId = activeSessionId
+    const topicTitle = text ? (text.length > 24 ? text.slice(0, 24) + '...' : text) : `${selectedSymbol} 차트 분석`
     if (!targetSessionId) {
       targetSessionId = `session-${Date.now()}`
-      const topicTitle = text ? (text.length > 24 ? text.slice(0, 24) + '...' : text) : `${selectedSymbol} 차트 분석`
       const newSession: ResearchSession = {
         id: targetSessionId,
         title: topicTitle,
