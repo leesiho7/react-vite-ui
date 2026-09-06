@@ -210,11 +210,10 @@ export default function Navbar({
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'league' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'league' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
                   onClick={() => onSelectView ? onSelectView('league') : (onToggleEvent && onToggleEvent())}
                 >
-                  <span>{menuText.league}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
+                  {menuText.league}
                 </button>
               </li>
 
@@ -222,11 +221,10 @@ export default function Navbar({
                 <button
                   type="button"
                   style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
-                  className={`flex items-center gap-1.5 transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'news' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'news' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
                   onClick={() => onSelectView ? onSelectView('news') : (onToggleNews && onToggleNews())}
                 >
-                  <span>{menuText.news}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8] animate-ping"></span>
+                  {menuText.news}
                 </button>
               </li>
 

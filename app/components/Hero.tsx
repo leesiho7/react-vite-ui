@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import { Sparkles, ArrowUpRight, Search, Zap, Cpu, Network } from 'lucide-react'
@@ -295,7 +295,7 @@ export default function Hero({
                 <text x="-12" y="15" fill="#6B7280" fontSize="8" fontFamily="'IBM Plex Mono', monospace">ON_CHAIN</text>
               </g>
 
-              {/* 노드 5: 좌하단 백테스팅 엔진 (ta4j Engine) */}
+              {/* 노드 5: 좌하단 백테스팅 엔진 (AETHER Quant Matrix) */}
               <g transform="translate(160, 310)">
                 <circle r="4" fill="#FFFFFF" stroke="#6B7280" strokeWidth="1.5" />
                 <circle r="1.5" fill="#6B7280" />

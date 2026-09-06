@@ -22,7 +22,11 @@ export default function BotPage() {
       <div className="bot-console-body">
         <aside className="bot-console-sidebar">
           <div className="bot-console-brand">
-            <span className="bot-mark"><Bot size={16} /></span>
+            <img
+              src="/brand-logo.png"
+              alt="AETHER Brand Logo"
+              className="w-[26px] h-[26px] object-contain rounded-[6px]"
+            />
             <strong>AETHER</strong>
           </div>
           <div className="bot-workspace-select">

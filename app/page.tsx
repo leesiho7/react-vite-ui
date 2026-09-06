@@ -66,7 +66,8 @@ export function getSymbolLogo(nameOrTicker: string): string {
 }
 
 const newsCategoryTabs = [
-  { key: 'ALL', count: 9, labels: { en: 'ALL WIRES', ko: '전체 속보', cn: '全部快讯' } },
+  { key: 'ALL', count: 10, labels: { en: 'ALL WIRES', ko: '전체 속보', cn: '全部快讯' } },
+  { key: 'GEOPOLITICS', count: 3, labels: { en: 'GEOPOLITICAL RISKS', ko: '지정학적 리스크', cn: '地缘政治风险' } },
   { key: 'CRYPTO', count: 3, labels: { en: 'CRYPTO ASSETS', ko: '가상자산', cn: '加密资产' } },
   { key: 'TECH', count: 3, labels: { en: 'TECH & AI', ko: '빅테크·AI', cn: '科技与AI' } },
   { key: 'MACRO', count: 2, labels: { en: 'MACRO & FED', ko: '거시경제·연준', cn: '宏观与美联储' } },
@@ -78,6 +79,57 @@ type NewsCategoryKey = typeof newsCategoryTabs[number]['key']
 // Multilingual News Feeds
 const newsItemsByLang = {
   en: [
+    {
+      category: 'GEOPOLITICS',
+      source: 'REUTERS GEOPOLITICAL WIRE',
+      tag: 'IRAN',
+      title: 'U.S. launches targeted retaliatory strikes in Iran; troop casualties trigger Middle East war panic as Bitcoin plunges and crude oil surges +5%',
+      snippet: 'Kinetic strike on Iranian military installations fuels Strait of Hormuz blockade fears, sparking massive risk-off liquidation across crypto and tech equities.',
+      rootCauseKo: '미국의 대이란 군사 시설 정밀 보복 공습 및 미군 사상자 발생에 따른 중동 전면전 확전 위기',
+      rootCauseEn: 'U.S. precision military strikes inside Iran causing troop casualties and severe Middle East escalation',
+      causalChainKo: '미-이란 직접 군사 충돌 ➔ 호르무즈 해협 봉쇄 공포로 국제유가(WTI) +5.2% 폭등 ➔ 인플레이션 재점화 및 연준 금리 인하 지연 우려 ➔ 글로벌 기관 안전자산(달러, 금) 현금화 ➔ 레버리지 롱 청산으로 비트코인(-4.8%) 및 글로벌 증시 동반 투매',
+      causalChainEn: 'U.S.-Iran confrontation ➔ Oil supply disruption (WTI +5.2%) ➔ Inflation fears delay Fed cuts ➔ Risk-off liquidation in Bitcoin and equities',
+      marketImpactDetail: '비트코인(BTC): -$3,400 급락 / WTI 원유: +5.2% 폭등 / 금(Gold): +2.1% 강세 / 나스닥선물: -1.9% 약세',
+      impact: '9.8',
+      sentiment: 'BEARISH',
+      tone: 'negative',
+      thumb: 'IRAN',
+      imageUrl: 'https://images.unsplash.com/photo-1519073147904-23e655032ea3?auto=format&fit=crop&w=800&q=80'
+    },
+    {
+      category: 'GEOPOLITICS',
+      source: 'FINANCIAL TIMES EUROPE DESK',
+      tag: 'RUSSIA',
+      title: 'Russia-Ukraine missile strikes intensify near European energy grid; NATO borders on high alert as natural gas spikes +8.4%',
+      snippet: 'Strikes on critical trans-European gas pipelines spark winter supply crisis fears, boosting safe-haven dollar demand and pressuring risk-on liquidity.',
+      rootCauseKo: '러시아-우크라이나 전선 장거리 미사일 타격 격화 및 유럽 에너지 인프라 피격에 따른 NATO 안보 긴장 고조',
+      rootCauseEn: 'Escalating long-range missile strikes in Russia-Ukraine war and European energy grid disruption',
+      causalChainKo: '러-우 전선 에너지 인프라 피격 ➔ 유럽 천연가스 +8.4% 급등 및 겨울철 에너지 공급 위기 재점화 ➔ 유로화 약세 및 달러 인덱스 104 돌파 ➔ 글로벌 펀드 신흥국 및 위험자산 비중 축소 ➔ 가상자산 시장 단기 차익 실현 및 보수적 관망세 전환',
+      causalChainEn: 'Energy grid attacks ➔ European natural gas spikes +8.4% ➔ Euro weakness drives USD index higher ➔ Global funds de-risk from equities and crypto',
+      marketImpactDetail: '유럽 천연가스: +8.4% 급등 / 달러인덱스(DXY): 104.2 강세 / 금(XAU): +1.8% 상승 / 비트코인: 박스권 하단 지지선 테스트',
+      impact: '9.2',
+      sentiment: 'BEARISH',
+      tone: 'negative',
+      thumb: 'RUSSIA',
+      imageUrl: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=800&q=80'
+    },
+    {
+      category: 'GEOPOLITICS',
+      source: 'BLOOMBERG GEOPOLITICS DESK',
+      tag: 'TAIWAN',
+      title: 'Taiwan Strait naval blockade drills trigger TSMC chip disruption panic; Big Tech and crypto slip on supply shock fears',
+      snippet: 'Encirclement exercises around Taiwan raise maritime shipping freeze alarms, dragging down Nvidia, Apple, and broader risk assets.',
+      rootCauseKo: '대만 해협 주변 대규모 군사 봉쇄 훈련 및 첨단 반도체 파운드리 물류 단절 위험',
+      rootCauseEn: 'Military exercises surrounding Taiwan Strait threatening TSMC advanced foundry supply chain',
+      causalChainKo: '대만 해협 해상·항공 봉쇄 훈련 ➔ 글로벌 첨단 칩의 90%를 생산하는 TSMC 공급망 차질 공포 ➔ 엔비디아, 애플, AMD 등 글로벌 빅테크 생산 중단 리스크 ➔ 나스닥 및 아시아 반도체 지수 -2.5% 투매 ➔ 위험자산 전반 유동성 회피 심리로 비트코인 동반 하방 압력',
+      causalChainEn: 'Taiwan Strait maritime blockade risks ➔ TSMC chip disruption panic ➔ Tech giants (Nvidia, Apple) selloff ➔ Broad market liquidity contraction pulls crypto down',
+      marketImpactDetail: '엔비디아(NVDA): -3.2% 하락 / TSMC: -4.1% 급락 / 나스닥: -2.2% 약세 / 글로벌 반도체 공급망 리스크 지수 최고치',
+      impact: '9.6',
+      sentiment: 'BEARISH',
+      tone: 'negative',
+      thumb: 'TAIWAN',
+      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'
+    },
     { category: 'CRYPTO', source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: 'Bitcoin holds above $67K as institutional ETF net inflows top $480M', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
     { category: 'TECH', source: 'REUTERS TECH', tag: 'NVDA', title: 'NVIDIA signals sustained enterprise demand for next-gen AI superclusters', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
     { category: 'CRYPTO', source: 'BLOOMBERG MARKETS', tag: 'SOL', title: 'Solana decentralized exchange volume hits all-time record amidst liquidity surge', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
@@ -89,6 +141,57 @@ const newsItemsByLang = {
     { category: 'ONCHAIN', source: 'COINDESK ONCHAIN', tag: 'ONCHAIN', title: 'Whale address accumulation reaches 3-month peak with 32,000 BTC net intake', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: 'WHALE', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
   ],
   ko: [
+    {
+      category: 'GEOPOLITICS',
+      source: '로이터 외신 긴급 지정학 데스크',
+      tag: 'IRAN',
+      title: '미국의 대이란 군사 시설 정밀 보복 공습 단행… 미군 사상자 발생 및 중동 전면전 위기 고조에 비트코인 급락·국제유가 폭등',
+      snippet: '미군의 이란 군사 기지 전격 타격으로 호르무즈 해협 봉쇄 공포 확산. 안전자산 선호 심리 폭발하며 글로벌 위험자산 연쇄 투매 촉발.',
+      rootCauseKo: '미국의 대이란 군사 시설 정밀 보복 공습 및 미군 사상자 발생에 따른 중동 전면전 확전 위기',
+      rootCauseEn: 'U.S. precision military strikes inside Iran causing troop casualties and severe Middle East escalation',
+      causalChainKo: '미-이란 직접 군사 충돌 ➔ 호르무즈 해협 봉쇄 공포로 국제유가(WTI) +5.2% 폭등 ➔ 인플레이션 재점화 및 연준 금리 인하 지연 우려 ➔ 글로벌 기관 안전자산(달러, 금) 현금화 ➔ 레버리지 롱 청산으로 비트코인(-4.8%) 및 글로벌 증시 동반 투매',
+      causalChainEn: 'U.S.-Iran confrontation ➔ Oil supply disruption (WTI +5.2%) ➔ Inflation fears delay Fed cuts ➔ Risk-off liquidation in Bitcoin and equities',
+      marketImpactDetail: '비트코인(BTC): -$3,400 급락 / WTI 원유: +5.2% 폭등 / 금(Gold): +2.1% 강세 / 나스닥선물: -1.9% 약세',
+      impact: '9.8',
+      sentiment: 'BEARISH',
+      tone: 'negative',
+      thumb: 'IRAN',
+      imageUrl: 'https://images.unsplash.com/photo-1519073147904-23e655032ea3?auto=format&fit=crop&w=800&q=80'
+    },
+    {
+      category: 'GEOPOLITICS',
+      source: '파이낸셜타임스 유럽 긴급 타전',
+      tag: 'RUSSIA',
+      title: '러시아-우크라이나 전선 장거리 미사일 타격 격화… 유럽 에너지 인프라 피격에 천연가스 +8.4% 폭등·글로벌 위험회피 확산',
+      snippet: '동유럽 가스 수송 파이프라인 인근 공습으로 겨울철 공급망 위기 재점화. 유로화 급락 및 달러 인덱스 104 돌파로 가상자산 시장 유동성 위축.',
+      rootCauseKo: '러시아-우크라이나 전선 장거리 미사일 타격 격화 및 유럽 에너지 인프라 피격에 따른 NATO 안보 긴장 고조',
+      rootCauseEn: 'Escalating long-range missile strikes in Russia-Ukraine war and European energy grid disruption',
+      causalChainKo: '러-우 전선 에너지 인프라 피격 ➔ 유럽 천연가스 +8.4% 급등 및 겨울철 에너지 공급 위기 재점화 ➔ 유로화 약세 및 달러 인덱스 104 돌파 ➔ 글로벌 펀드 신흥국 및 위험자산 비중 축소 ➔ 가상자산 시장 단기 차익 실현 및 보수적 관망세 전환',
+      causalChainEn: 'Energy grid attacks ➔ European natural gas spikes +8.4% ➔ Euro weakness drives USD index higher ➔ Global funds de-risk from equities and crypto',
+      marketImpactDetail: '유럽 천연가스: +8.4% 급등 / 달러인덱스(DXY): 104.2 강세 / 금(XAU): +1.8% 상승 / 비트코인: 박스권 하단 지지선 테스트',
+      impact: '9.2',
+      sentiment: 'BEARISH',
+      tone: 'negative',
+      thumb: 'RUSSIA',
+      imageUrl: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=800&q=80'
+    },
+    {
+      category: 'GEOPOLITICS',
+      source: '블룸버그 인텔리전스 지정학 데스크',
+      tag: 'TAIWAN',
+      title: '대만 해협 군사 봉쇄 훈련 전격 개시… TSMC 파운드리 차질 공포에 엔비디아·애플 등 빅테크 및 글로벌 증시 동반 하락',
+      snippet: '대만 해상 물류 포위 위협으로 전 세계 첨단 칩 90% 공급망 중단 공포 확산. 나스닥 선물 급락 및 안전자산 쏠림으로 크립토 동반 하락.',
+      rootCauseKo: '대만 해협 주변 대규모 군사 봉쇄 훈련 및 첨단 반도체 파운드리 물류 단절 위험',
+      rootCauseEn: 'Military exercises surrounding Taiwan Strait threatening TSMC advanced foundry supply chain',
+      causalChainKo: '대만 해협 해상·항공 봉쇄 훈련 ➔ 글로벌 첨단 칩의 90%를 생산하는 TSMC 공급망 차질 공포 ➔ 엔비디아, 애플, AMD 등 글로벌 빅테크 생산 중단 리스크 ➔ 나스닥 및 아시아 반도체 지수 -2.5% 투매 ➔ 위험자산 전반 유동성 회피 심리로 비트코인 동반 하방 압력',
+      causalChainEn: 'Taiwan Strait maritime blockade risks ➔ TSMC chip disruption panic ➔ Tech giants (Nvidia, Apple) selloff ➔ Broad market liquidity contraction pulls crypto down',
+      marketImpactDetail: '엔비디아(NVDA): -3.2% 하락 / TSMC: -4.1% 급락 / 나스닥: -2.2% 약세 / 글로벌 반도체 공급망 리스크 지수 최고치',
+      impact: '9.6',
+      sentiment: 'BEARISH',
+      tone: 'negative',
+      thumb: 'TAIWAN',
+      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'
+    },
     { category: 'CRYPTO', source: '연합인포맥스 속보', tag: 'BTC', title: '비트코인 현물 ETF 4.8억 달러 순유입… 67,000달러 안착 시도', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
     { category: 'TECH', source: '한국경제 증권부', tag: 'NVDA', title: '엔비디아 차세대 AI 인프라 수주 랠리… 글로벌 반도체 동반 강세', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
     { category: 'CRYPTO', source: '블룸버그 코리아', tag: 'SOL', title: '솔라나 DEX 24시간 거래량 역대 최대치 경신… 기관 유동성 집중', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
@@ -975,12 +1078,13 @@ export default function Page() {
     setAgentThinking(false)
   }
 
-  // 좌측 세션 삭제 (개별 삭제)
+  // 좌측 세션 삭제 (개별 삭제 - 백엔드 세션 메모리 초기화 연동)
   const handleDeleteSession = (id: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation()
       e.preventDefault()
     }
+    resetResearchMemory(id).catch(() => {})
     const filtered = agentSessions.filter(s => s.id !== id)
     setAgentSessions(filtered)
     if (activeSessionId === id) {
@@ -992,12 +1096,13 @@ export default function Page() {
     }
   }
 
-  // 좌측 세션 전체 삭제 (히스토리 비우기)
+  // 좌측 세션 전체 삭제 (히스토리 비우기 - 백엔드 세션 메모리 초기화 연동)
   const handleClearAllSessions = (e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation()
       e.preventDefault()
     }
+    agentSessions.forEach(s => resetResearchMemory(s.id).catch(() => {}))
     setAgentSessions([])
     handleCreateNewSession()
   }
@@ -1630,10 +1735,10 @@ export default function Page() {
   const [instanceStatus, setInstanceStatus] = useState<'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED'>('RUNNING')
   const [instanceUptime, setInstanceUptime] = useState<number>(52140)
   const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([
-    { time: '00:40:12', tag: 'DOCKER', text: 'Container initialized: hetzner-bot-sandbox-node1 (Python 3.12, ta4j engine v0.15)' },
+    { time: '00:40:12', tag: 'DOCKER', text: 'Container initialized: hetzner-bot-sandbox-node1 (Python 3.12, AETHER Quant Matrix v2.4)' },
     { time: '00:40:18', tag: 'NET-IO', text: 'WebSocket stream established with Binance Core (49.12.240.118 -> wss://stream.binance.com)' },
     { time: '00:40:24', tag: 'SECURITY', text: 'AST static validation passed: 0 dangerous OS calls · memory cap 1024MB enforced' },
-    { time: '00:40:30', tag: 'RUNNER', text: 'Strategy active: ta4j Multi-Fractal + Dynamic Stop-loss Guard armed' }
+    { time: '00:40:30', tag: 'RUNNER', text: 'Strategy active: AETHER Multi-Fractal + Dynamic Stop-loss Guard armed' }
   ])
 
   useEffect(() => {
@@ -1651,7 +1756,7 @@ export default function Page() {
     const logTimer = setInterval(() => {
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       const sampleLogs = [
-        { tag: 'ta4j-Engine', text: `Tick processed for ${searched} · Invalidation guard verified` },
+        { tag: 'AETHER-Matrix', text: `Tick processed for ${searched} · Invalidation guard verified` },
         { tag: 'Docker-Worker', text: `Memory footprint 39.2MB / 1024MB · Execution cycle 12ms (Zero slippage)` },
         { tag: 'Stream-Receiver', text: `WebSocket tick price updated: ${priceFormatted} · Orderbook balanced` },
         { tag: 'Quant-Core', text: `Multi-fractal pattern matched 89% · Position sizing 30% armed` },
@@ -1902,14 +2007,74 @@ export default function Page() {
 
   // Language and Category-bound News List (Dynamic real-time scraped feed with multilingual translation)
   const [newsCategory, setNewsCategory] = useState<NewsCategoryKey>('ALL')
+  const [wireStockQuery, setWireStockQuery] = useState('')
+
+  // ── [실시간 자산 데이터 파이프라인] 우리 플랫폼 보유 및 지원 종목 목록 & Binance Multi-Stream WebSocket ──
+  const [liveAssetTickers, setLiveAssetTickers] = useState([
+    { symbol: 'BTC', name: 'Bitcoin', nameKo: '비트코인', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$67,842.10', change: '+2.41%', isUp: true, target: 'BTC/USD', score: '8.8' },
+    { symbol: 'ETH', name: 'Ethereum', nameKo: '이더리움', logo: 'https://financialmodelingprep.com/image-stock/ETHUSD.png', price: '$2,340.50', change: '+1.85%', isUp: true, target: 'ETH/USD', score: '8.2' },
+    { symbol: 'NVDA', name: 'NVIDIA', nameKo: '엔비디아', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', isUp: true, target: 'NVDA', score: '9.1' },
+    { symbol: 'SOL', name: 'Solana', nameKo: '솔라나', logo: 'https://financialmodelingprep.com/image-stock/SOLUSD.png', price: '$178.50', change: '+4.20%', isUp: true, target: 'SOL/USD', score: '8.5' },
+    { symbol: 'TSLA', name: 'Tesla', nameKo: '테슬라', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', isUp: false, target: 'TSLA', score: '7.2' },
+    { symbol: 'AAPL', name: 'Apple', nameKo: '애플', logo: 'https://financialmodelingprep.com/image-stock/AAPL.png', price: '$224.20', change: '+1.63%', isUp: true, target: 'AAPL', score: '8.0' },
+    { symbol: '005930.KS', name: 'Samsung Elec', nameKo: '삼성전자', logo: 'https://financialmodelingprep.com/image-stock/005930.KS.png', price: '₩56,200', change: '+0.89%', isUp: true, target: '005930.KS', score: '7.8' },
+    { symbol: '000660.KS', name: 'SK Hynix', nameKo: 'SK하이닉스', logo: 'https://financialmodelingprep.com/image-stock/000660.KS.png', price: '₩186,500', change: '+2.14%', isUp: true, target: '000660.KS', score: '8.4' },
+    { symbol: 'XRP', name: 'Ripple', nameKo: '리플', logo: 'https://financialmodelingprep.com/image-stock/XRPUSD.png', price: '$2.15', change: '+5.12%', isUp: true, target: 'XRP/USD', score: '8.3' },
+    { symbol: 'BNB', name: 'BNB', nameKo: '바이낸스코인', logo: 'https://financialmodelingprep.com/image-stock/BNBUSD.png', price: '$648.20', change: '+0.95%', isUp: true, target: 'BNB/USD', score: '7.9' }
+  ])
+
+  useEffect(() => {
+    let ws: WebSocket
+    try {
+      ws = new WebSocket('wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/solusdt@ticker/xrpusdt@ticker/bnbusdt@ticker')
+      ws.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data)
+          const data = payload.data
+          if (!data || !data.s) return
+          const symbolMap: Record<string, string> = {
+            BTCUSDT: 'BTC',
+            ETHUSDT: 'ETH',
+            SOLUSDT: 'SOL',
+            XRPUSDT: 'XRP',
+            BNBUSDT: 'BNB'
+          }
+          const symKey = symbolMap[data.s]
+          if (!symKey) return
+          const priceNum = parseFloat(data.c || '0')
+          const changePct = parseFloat(data.P || '0')
+          const isUp = changePct >= 0
+          setLiveAssetTickers((prev) =>
+            prev.map((t) => {
+              if (t.symbol === symKey) {
+                const formattedPrice =
+                  priceNum >= 1000
+                    ? `$${priceNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : priceNum >= 1
+                    ? `$${priceNum.toFixed(2)}`
+                    : `$${priceNum.toFixed(4)}`
+                const formattedChange = `${isUp ? '+' : ''}${changePct.toFixed(2)}%`
+                return { ...t, price: formattedPrice, change: formattedChange, isUp }
+              }
+              return t
+            })
+          )
+        } catch {}
+      }
+    } catch {}
+    return () => {
+      if (ws) ws.close()
+    }
+  }, [])
   const currentNewsList = useMemo(() => {
     let list: NewsItem[] = []
     if (rawLiveItems.length > 0) {
       list = rawLiveItems.map((item: any) => {
         let cat: NewsCategoryKey = 'ALL'
-        if (item.category === 'CRYPTO') cat = 'CRYPTO'
+        if (item.category === 'GEOPOLITICS' || item.category === 'WAR') cat = 'GEOPOLITICS'
+        else if (item.category === 'CRYPTO') cat = 'CRYPTO'
         else if (item.category === 'US_TECH' || item.category === 'TECH') cat = 'TECH'
-        else if (item.category === 'MACRO') cat = 'MACRO'
+        else if (item.category === 'MACRO' || item.category === 'ENERGY') cat = 'MACRO'
         else if (item.category === 'KOREA' || item.category === 'ONCHAIN') cat = 'ONCHAIN'
 
         // Select language localized title and snippet
@@ -1936,6 +2101,11 @@ export default function Page() {
           snippet: item.snippet,
           snippetKo: item.snippetKo,
           snippetCn: item.snippetCn,
+          rootCauseKo: item.rootCauseKo,
+          rootCauseEn: item.rootCauseEn,
+          causalChainKo: item.causalChainKo,
+          causalChainEn: item.causalChainEn,
+          marketImpactDetail: item.marketImpactDetail,
           actionGuideKo: item.actionGuideKo,
           actionGuideEn: item.actionGuideEn,
           actionGuideCn: item.actionGuideCn,
@@ -4948,84 +5118,410 @@ def signal(tick):
         </section>
       )}
 
-      {/* ── Live Newswire (Language Localized) ── */}
+      {/* ── Live Newswire: Wire News Architecture (Data Pipeline Integrated) ── */}
       {(activeTopView === 'news') && (
-        <section className="news-section" id="live-newswire">
-          <div className="news-live-bar">
-            <span className="live-dot pulse" /> LIVE NEWSWIRE ({languageLabels[language]})
-            <span className="news-timer">{copy.rollingTag}</span>
-            <button onClick={() => setNewsOpen(false)}>{copy.newsClose}</button>
-          </div>
+        <section className="wire-news-shell" id="live-newswire" style={{ margin: '0 auto', maxWidth: '1440px', padding: '0 24px 40px' }}>
+          {/* 와이어 뉴스 헤딩 섹션 */}
+          <section className="wire-news-heading">
+            <div>
+              <span className="overline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Radio size={12} className="text-[#38bdf8] animate-pulse" />
+                {language === 'ko' ? '실시간 글로벌 시장 인텔리전스 와이어' : language === 'cn' ? '全球实时市场情报快讯' : 'REAL-TIME GLOBAL MARKET INTELLIGENCE WIRE'}
+              </span>
+              <h1>
+                {language === 'ko' ? '소음 없는 실시간 시장 맥락' : language === 'cn' ? '没有噪音的实时市场语境' : 'Market Context, Without the Noise'}
+              </h1>
+              <p>
+                {language === 'ko'
+                  ? '공식 기관 출처의 금융 뉴스와 AI 팩트체크 인텔리전스를 실시간 데이터 파이프라인으로 확인하세요.'
+                  : language === 'cn'
+                  ? '通过实时数据管道查看来自官方机构的金融新闻和AI真实性核查情报。'
+                  : 'Finance-specialized news and AI fact-checked intelligence directly streamed from official sources.'}
+              </p>
+            </div>
+          </section>
 
-          {/* ── Institutional Category Filter Bar ── */}
-          <div className="news-category-bar">
-            <span className="news-category-label">
-              <Diamond /> CATEGORY
-            </span>
-            {newsCategoryTabs.map((tab) => {
-              const isSelected = newsCategory === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  className={`news-category-button ${isSelected ? 'selected' : ''}`}
-                  onClick={() => setNewsCategory(tab.key as any)}
-                >
-                  <span>{tab.labels[language]}</span>
-                  <small>{tab.count}</small>
-                </button>
-              );
-            })}
-          </div>
-          <div className="news-layout" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '18px', alignItems: 'stretch' }}>
-            <button className="news-lead" onClick={() => selectNews(activeNews)} style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '145px 1fr', gap: '16px', width: '100%' }}>
-                <div className="news-thumb hero-thumb" style={{ width: '100%', height: '120px' }}>
-                  {activeNews.imageUrl ? <img src={activeNews.imageUrl} alt={activeNews.title} className="news-photo-hero" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : activeNews.thumb}
-                </div>
-                <div className="news-lead-copy">
-                  <span className="overline">{activeNews.source} · {activeNews.tag}</span>
-                  <h2 style={{ fontSize: '18px', margin: '8px 0 10px', lineHeight: 1.35 }}>{activeNews.title}</h2>
-                  <p style={{ fontSize: '10.5px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {(activeNews as any).snippet || '기관 투자자 수급 및 온체인 지표 실시간 분석.'}
-                  </p>
-                </div>
+          {/* 3단 그리드 레이아웃: 좌측(종목점수/검색/관심목록) - 중앙(실시간 뉴스 피처 & 그리드) - 우측(최신속보 & 요약) */}
+          <div className="wire-layout">
+            {/* ── 좌측 사이드바: 종목 검색 및 주식/코인 점수 ── */}
+            <aside className="wire-sidebar">
+              <div className="wire-section-title">
+                <h2>{language === 'ko' ? '주식·가상자산 점수' : language === 'cn' ? '股票/加密评分' : 'STOCK SCORES'}</h2>
+                <span>{currentNewsList.length} / 4224</span>
               </div>
-              <div className="news-meta" style={{ borderTop: '1px solid #edf0f2', paddingTop: '10px', marginTop: '10px', width: '100%' }}>
-                <span className={`sentiment ${activeNews.tone}`}>{activeNews.sentiment}</span>
-                <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
-                <span>{copy.newsLeadFact}</span>
-              </div>
-            </button>
+              <label className="wire-search">
+                <Search size={15} />
+                <input
+                  value={wireStockQuery}
+                  onChange={(e) => setWireStockQuery(e.target.value)}
+                  placeholder={language === 'ko' ? '종목 검색 (예: NVDA, BTC)' : language === 'cn' ? '搜索股票/代币' : 'Search stocks/symbols'}
+                />
+              </label>
 
-            {/* Bloomberg-Style Fixed Height Scroll Container */}
-            <div
-              className="media-feed"
-              style={{
-                maxHeight: '440px',
-                overflowY: 'auto',
-                border: '1px solid var(--line)',
-                background: 'white',
-                scrollbarWidth: 'thin'
-              }}
-            >
-              {currentNewsList.map((item) => (
-                <button
-                  className={`feed-item ${item.title === activeNews.title ? 'active' : ''}`}
-                  key={item.title}
-                  onClick={() => selectNews(item)}
-                >
-                  <div className="news-thumb">{item.imageUrl ? <img src={item.imageUrl} alt={item.title} className="news-photo-item" /> : item.thumb}</div>
-                  <div>
-                    <span className="feed-source">{item.source} <b>{item.tag}</b></span>
-                    <strong>{item.title}</strong>
-                    <div>
-                      <span className={`sentiment ${item.tone}`}>{item.sentiment}</span>
-                      <span className="impact">IMPACT {item.impact}</span>
+              {liveAssetTickers
+                .filter((item) => {
+                  const q = wireStockQuery.toLowerCase().trim()
+                  if (!q) return true
+                  return (
+                    item.name.toLowerCase().includes(q) ||
+                    item.nameKo.toLowerCase().includes(q) ||
+                    item.symbol.toLowerCase().includes(q)
+                  )
+                })
+                .map((item) => {
+                  const isCurrent = searched.startsWith(item.symbol) || searched === item.target
+                  const dynamicScore = isCurrent && decisionReport?.totalScore
+                    ? (decisionReport.totalScore * 10).toFixed(1)
+                    : item.score
+
+                  return (
+                    <button
+                      key={item.symbol}
+                      type="button"
+                      className={`wire-stock ${isCurrent ? 'active' : ''}`}
+                      onClick={() => setSearched(item.target)}
+                      title={`클릭하여 ${item.name}(${item.symbol}) 차트, 퀀트 리포트 및 속보 동기화`}
+                    >
+                      <div
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          minWidth: '26px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #dfe3eb',
+                          flexShrink: 0
+                        }}
+                      >
+                        <img
+                          src={item.logo}
+                          alt={item.symbol}
+                          width={18}
+                          height={18}
+                          style={{ width: '18px', height: '18px', objectFit: 'contain', display: 'block' }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none'
+                          }}
+                        />
+                      </div>
+                      <span>
+                        <strong>{language === 'ko' ? item.nameKo : item.name}</strong>
+                        <small>{item.symbol} · AI SCORE {dynamicScore}</small>
+                      </span>
+                      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono), monospace', color: '#17191f', fontWeight: 600 }}>
+                          {item.price}
+                        </span>
+                        <b style={{ color: item.isUp ? '#09a58e' : '#e34f5a', fontSize: '9px' }}>
+                          {item.change}
+                        </b>
+                      </div>
+                    </button>
+                  )
+                })}
+
+              <div className="wire-sidebar-divider" />
+              <h2>{language === 'ko' ? '관심 종목' : language === 'cn' ? '关注列表' : 'WATCHLIST'}</h2>
+              <p className="wire-muted">
+                {language === 'ko'
+                  ? '선택한 종목의 AI 팩트체크 속보와 수급을 실시간으로 추적합니다.'
+                  : language === 'cn'
+                  ? '实时追踪所选资产的AI核查快讯与资金流向。'
+                  : 'Track AI fact-checked news and institutional flows in real-time.'}
+              </p>
+              <button
+                type="button"
+                className="wire-create"
+                onClick={() => handleSelectTopView('trade')}
+              >
+                + {language === 'ko' ? '차트 연동 분석하기' : language === 'cn' ? '联动图表分析' : 'SYNC CHART & TRADE'}
+              </button>
+            </aside>
+
+            {/* ── 중앙 섹션: 카테고리 필터 + 메인 기사 + 2열 뉴스 그리드 ── */}
+            <section className="wire-center">
+              <div className="media-toolbar">
+                <div className="media-filters">
+                  <SlidersHorizontal size={13} />
+                  {newsCategoryTabs.map((tab) => {
+                    const isSelected = newsCategory === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        className={isSelected ? 'selected' : ''}
+                        onClick={() => setNewsCategory(tab.key as any)}
+                      >
+                        {tab.labels[language]}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="media-updated">
+                  {language === 'ko' ? '실시간 스트리밍' : 'LIVE STREAM'} · {currentNewsList.length} {language === 'ko' ? '개 기사' : 'ARTICLES'}
+                </span>
+              </div>
+
+              {/* 메인 피처 기사 (실제 뉴스 기사 데이터) */}
+              {activeNews && (
+                <section className="media-feature panel" style={{ background: '#fff', border: '1px solid #dfe3eb', borderRadius: '6px', overflow: 'hidden', marginBottom: '20px' }}>
+                  <div
+                    className="media-feature-visual"
+                    style={{
+                      minHeight: '230px',
+                      background: '#17191f',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => selectNews(activeNews)}
+                  >
+                    {activeNews.imageUrl ? (
+                      <img
+                        src={activeNews.imageUrl}
+                        alt={activeNews.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#94a3b8', fontSize: '20px', fontWeight: 700 }}>
+                        {activeNews.tag || 'MARKET WIRE'}
+                      </div>
+                    )}
+                    <div style={{ position: 'absolute', bottom: '12px', left: '12px', background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 600 }}>
+                      AI FACT-CHECKED
                     </div>
+                  </div>
+
+                  <div className="media-feature-copy" style={{ padding: '18px 22px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                      <span className="overline" style={{ fontSize: '10px', color: '#f47a20', fontWeight: 700 }}>
+                        ★ FEATURED · {activeNews.source} · {activeNews.tag}
+                      </span>
+                      <span className={`sentiment ${activeNews.tone}`} style={{ fontSize: '9px', fontWeight: 700 }}>
+                        {activeNews.sentiment}
+                      </span>
+                    </div>
+
+                    <h2
+                      className="hover:text-[#f47a20] transition-colors duration-200"
+                      style={{ fontSize: '19px', lineHeight: '1.3', margin: '0 0 10px', cursor: 'pointer' }}
+                      onClick={() => selectNews(activeNews)}
+                    >
+                      {activeNews.title}
+                    </h2>
+                    <p style={{ fontSize: '11px', color: '#687184', lineHeight: '1.6', margin: '0 0 14px' }}>
+                      {(activeNews as any).snippet || activeNews.title}
+                    </p>
+
+                    {/* ⚡ AETHER AI 심층 인과관계 체인 (Deep Causal Chain & Root Cause) */}
+                    {((activeNews as any).causalChainKo || (activeNews as any).rootCauseKo) && (
+                      <div
+                        style={{
+                          margin: '0 0 16px',
+                          padding: '12px 14px',
+                          borderRadius: '6px',
+                          background: '#fff8f3',
+                          border: '1px solid #ffd8be',
+                          fontSize: '11px',
+                          lineHeight: '1.55'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#c2410c', fontWeight: 700, fontSize: '10px' }}>
+                          <span>⚡ AI 심층 인과관계 분석 (CAUSAL CHAIN REACTION)</span>
+                        </div>
+                        {(activeNews as any).rootCauseKo && (
+                          <div style={{ marginBottom: '6px', color: '#17191f' }}>
+                            <strong style={{ color: '#ea580c' }}>[발생 원인]</strong> {(activeNews as any).rootCauseKo}
+                          </div>
+                        )}
+                        {(activeNews as any).causalChainKo && (
+                          <div style={{ color: '#431407', background: 'rgba(255,255,255,0.7)', padding: '6px 8px', borderRadius: '4px', border: '1px solid #fed7aa', marginBottom: '6px' }}>
+                            <strong style={{ color: '#ea580c' }}>[파급 경로]</strong> {(activeNews as any).causalChainKo}
+                          </div>
+                        )}
+                        {(activeNews as any).marketImpactDetail && (
+                          <div style={{ fontSize: '10px', color: '#7c2d12', fontWeight: 600 }}>
+                            📌 <strong>시장 파급:</strong> {(activeNews as any).marketImpactDetail}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #edf0f2', paddingTop: '12px' }}>
+                      <div className="media-meta" style={{ display: 'flex', gap: '10px', fontSize: '10px', color: '#9aa2b1' }}>
+                        <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
+                        <span>{activeNews.source}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          className="primary-button"
+                          style={{ height: '32px', padding: '0 12px', fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px', borderRadius: '4px' }}
+                          onClick={() => selectNews(activeNews)}
+                        >
+                          {language === 'ko' ? '기사 전문 리포트' : 'READ BRIEF'}
+                        </button>
+                        {activeNews.link && (
+                          <a
+                            href={activeNews.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="secondary-button"
+                            style={{ height: '32px', padding: '0 10px', fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', borderRadius: '4px' }}
+                          >
+                            {language === 'ko' ? '원문' : 'SOURCE'} <ExternalLink size={11} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* 실시간 2열 뉴스 그리드 */}
+              <section className="media-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                {currentNewsList.slice(0, 6).map((item) => (
+                  <button
+                    className={`media-card ${activeNews.title === item.title ? 'active' : ''}`}
+                    key={item.title + (item.link || '')}
+                    onClick={() => selectNews(item)}
+                    style={{
+                      background: '#fff',
+                      border: activeNews.title === item.title ? '1.5px solid #f47a20' : '1px solid #dfe3eb',
+                      borderRadius: '6px',
+                      overflow: 'hidden',
+                      textAlign: 'left',
+                      padding: 0,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    <div className="media-card-thumb" style={{ height: '110px', width: '100%', background: '#1e293b', overflow: 'hidden', position: 'relative' }}>
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', color: '#94a3b8', fontSize: '12px' }}>
+                          {item.tag || 'NEWS'}
+                        </div>
+                      )}
+                      <span style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '8px', padding: '2px 6px', borderRadius: '2px' }}>
+                        {item.tag}
+                      </span>
+                    </div>
+                    <div className="media-card-body" style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div className="media-card-top" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#9aa2b1', marginBottom: '6px' }}>
+                          <span>{item.source}</span>
+                          <span className={`sentiment ${item.tone}`}>{item.sentiment}</span>
+                        </div>
+                        <h3
+                          className="hover:text-[#f47a20] transition-colors duration-200"
+                          style={{ fontSize: '12px', fontWeight: 600, margin: '0 0 6px', lineHeight: '1.35', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                        >
+                          {item.title}
+                        </h3>
+                        <p style={{ fontSize: '10px', color: '#687184', margin: 0, lineHeight: '1.45', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {(item as any).snippet || item.title}
+                        </p>
+                        {((item as any).rootCauseKo || (item as any).causalChainKo) && (
+                          <div style={{ marginTop: '6px', padding: '4px 6px', background: '#fff8f3', borderRadius: '3px', border: '1px solid #fed7aa', fontSize: '9px', color: '#c2410c', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            <strong>⚡ 인과분석:</strong> {(item as any).rootCauseKo || (item as any).causalChainKo}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', marginTop: '10px' }}>
+                        <span style={{ fontSize: '9px', color: '#9aa2b1' }}>IMPACT {item.impact}/10</span>
+                        <span className="card-link" style={{ fontSize: '9px', color: '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+                          {language === 'ko' ? '분석' : 'VIEW'} <ArrowUpRight size={11} />
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </section>
+            </section>
+
+            {/* ── 우측 사이드바: 최신 실시간 속보 피드 & 시장 요약 ── */}
+            <aside className="wire-right">
+              <div className="wire-section-title">
+                <h2>{language === 'ko' ? '실시간 속보 피드' : language === 'cn' ? '实时快讯流' : 'LATEST WIRES'}</h2>
+                <span style={{ color: '#09a58e', fontWeight: 600 }}>REAL-TIME</span>
+              </div>
+
+              {currentNewsList.slice(0, 6).map((s) => (
+                <button
+                  className="wire-feed"
+                  key={s.title}
+                  onClick={() => selectNews(s)}
+                  style={{
+                    borderBottom: '1px solid #dfe3eb',
+                    padding: '12px 0',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottomStyle: 'solid',
+                    borderBottomWidth: '1px',
+                    borderBottomColor: '#edf0f2',
+                    textAlign: 'left',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <strong
+                    className="hover:text-[#f47a20] transition-colors duration-200"
+                    style={{ display: 'block', fontSize: '11px', lineHeight: '1.4', marginBottom: '4px' }}
+                  >
+                    {s.title}
+                  </strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#9aa2b1' }}>
+                    <b style={{ color: '#f47a20', fontWeight: 600 }}>{s.source}</b>
+                    <span className={`sentiment ${s.tone}`}>{s.sentiment}</span>
                   </div>
                 </button>
               ))}
-            </div>
+
+              <div className="wire-sidebar-divider" />
+              <h2>{language === 'ko' ? '글로벌 시장 요약' : language === 'cn' ? '全球市场概览' : 'MARKET SUMMARY'}</h2>
+              <div className="wire-summary-tabs" style={{ display: 'flex', gap: '12px', fontSize: '10px', color: '#7d8593', margin: '10px 0' }}>
+                <b style={{ color: '#f47a20' }}>{newsCategoryTabs[0].labels[language]}</b>
+                <span>{newsCategoryTabs[1].labels[language]}</span>
+                <span>{newsCategoryTabs[2].labels[language]}</span>
+              </div>
+
+              {liveAssetTickers.slice(0, 5).map((item) => (
+                <div
+                  className="wire-summary-row"
+                  key={item.symbol}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSearched(item.target)}
+                  title={`클릭하여 ${item.name} 차트 및 퀀트 동기화`}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <img
+                      src={item.logo}
+                      alt={item.symbol}
+                      width={14}
+                      height={14}
+                      style={{ width: '14px', height: '14px', objectFit: 'contain' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span>
+                      {language === 'ko' ? item.nameKo : item.name}
+                      <small>{item.symbol}</small>
+                    </span>
+                  </span>
+                  <b>{item.price}</b>
+                  <strong style={{ color: item.isUp ? '#09a58e' : '#e34f5a' }}>{item.change}</strong>
+                </div>
+              ))}
+            </aside>
           </div>
         </section>
       )}
@@ -5036,7 +5532,11 @@ def signal(tick):
         <div className="bot-console-body">
           <aside className="bot-console-sidebar">
             <div className="bot-console-brand">
-              <span className="bot-mark"><Bot size={16} /></span>
+              <img
+                src="/brand-logo.png"
+                alt="AETHER Brand Logo"
+                className="w-[26px] h-[26px] object-contain rounded-[6px]"
+              />
               <strong>AETHER</strong>
             </div>
             <div className="bot-workspace-select">
@@ -5236,7 +5736,7 @@ def signal(tick):
                       {botInstances.find(i => i.id === selectedInstanceId)?.name || 'Strategy Terminal'} ({selectedInstanceId || 'N/A'})
                     </h2>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
-                      {botInstances.find(i => i.id === selectedInstanceId)?.exchange || 'Binance'} · {botInstances.find(i => i.id === selectedInstanceId)?.symbol || searched} · Docker Runtime: ta4j Engine v0.15 (PID: 3419)
+                      {botInstances.find(i => i.id === selectedInstanceId)?.exchange || 'Binance'} · {botInstances.find(i => i.id === selectedInstanceId)?.symbol || searched} · Docker Runtime: AETHER Quant Matrix v2.4 (PID: 3419)
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -5284,7 +5784,7 @@ def signal(tick):
                         <span className="dot-yellow" />
                         <span className="dot-green" />
                       </div>
-                      <span>PS C:\TradingEngine\Docker\instances\{selectedInstanceId}&gt; node --runtime=ta4j-v0.15</span>
+                      <span>PS C:\TradingEngine\Docker\instances\{selectedInstanceId}&gt; node --runtime=aether-quant-v2.4</span>
                     </div>
                     <span style={{ color: '#10b981' }}>● HEL1_ISOLATED_CONTAINER · 49.12.240.118</span>
                   </div>
@@ -6460,7 +6960,7 @@ def signal(tick):
                 <div className="rail-bottom">
                   <div className="flex items-center gap-1.5">
                     <ShieldCheck size={14} className="text-[#f47a20]" />
-                    <span>Qwen-Max Flagship (300B+)</span>
+                    <span>AETHER Autonomous Flagship Core (300B+)</span>
                   </div>
                   <small>AETHER Intelligence OS v2.5 Active</small>
                 </div>

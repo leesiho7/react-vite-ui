@@ -630,6 +630,61 @@ export async function streamResearchChatSSE(
 }
 
 /**
+ * 9-1. [AETHER 스마트 메모리] 세션 완전 초기화 (분석 맥락 리셋)
+ */
+export async function resetResearchMemory(conversationId: string): Promise<boolean> {
+  try {
+    const res = await fetch(API_BASE + '/ai/research-chat/memory/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return !!data.reset;
+    }
+  } catch (err) {
+    console.warn('[API] resetResearchMemory error:', err);
+  }
+  return false;
+}
+
+/**
+ * 9-2. [AETHER 스마트 메모리] 직전 1턴 롤백 안전장치 (오답/환각 되돌리기)
+ */
+export async function rollbackResearchMemory(conversationId: string): Promise<boolean> {
+  try {
+    const res = await fetch(API_BASE + '/ai/research-chat/memory/rollback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return !!data.rolledBack;
+    }
+  } catch (err) {
+    console.warn('[API] rollbackResearchMemory error:', err);
+  }
+  return false;
+}
+
+/**
+ * 9-3. [AETHER 스마트 메모리] 세션 상태 및 영구 앵커 진단 조회
+ */
+export async function getResearchMemoryStatus(conversationId: string): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/ai/research-chat/memory/status?conversationId=${encodeURIComponent(conversationId)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] getResearchMemoryStatus error:', err);
+  }
+  return { active: false, messageCount: 0 };
+}
+
+/**
  * 10. [3번 & 4번 기능] 실시간 멀티채널 뉴스 및 AI 호재/악재 감성 분석 피드 조회
  */
 export async function fetchNewsChannel(
