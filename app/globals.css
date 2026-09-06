@@ -2390,3 +2390,40 @@ samp,
   color: #f47a20 !important;
 }
 
+/* ── AETHER Premium Signup Modal Styles ── */
+.signup-backdrop { min-height:100vh; display:grid; place-items:center; padding:36px 24px; background:rgba(12,16,22,.72); font-family:'Noto Sans KR','Noto Sans SC',Arial,sans-serif; }
+.signup-modal { width:min(960px,100%); display:grid; grid-template-columns:1fr 480px; overflow:hidden; border-radius:8px; background:#fff; box-shadow:0 28px 90px rgba(0,0,0,.35); }
+.signup-visual { position:relative; min-height:640px; overflow:hidden; padding:30px 34px; color:#fff; background:radial-gradient(circle at 54% 65%,rgba(244,122,32,.95),transparent 31%),linear-gradient(145deg,#080b10,#171a1f 58%,#3a1908); }
+.signup-visual::before,.signup-visual::after { content:''; position:absolute; border:1px solid rgba(255,176,103,.38); border-radius:50%; transform:rotate(-18deg); }
+.signup-visual::before { width:480px; height:105px; left:10%; top:57%; box-shadow:0 0 0 15px rgba(244,122,32,.12),0 0 0 30px rgba(244,122,32,.08); }
+.signup-visual::after { width:550px; height:110px; left:0; top:62%; opacity:.65; }
+.signup-logo { position:relative; z-index:3; color:#fff; font:700 22px Arial,sans-serif; letter-spacing:-.06em; text-decoration:none; }
+.signup-visual-copy { position:relative; z-index:3; margin-top:120px; }
+.signup-visual-copy>span { color:#ff9d5d; font:9px var(--font-mono),monospace; letter-spacing:.16em; }
+.signup-visual-copy h1 { margin:16px 0 10px; font:500 clamp(38px,5vw,56px)/.95 Arial,sans-serif; letter-spacing:-.07em; }
+.signup-visual-copy em { color:#ff9d5d; font-style:normal; }
+.signup-visual-copy p { max-width:260px; color:#c4cbd1; font:12px/1.6 var(--font-sans),sans-serif; }
+.signup-orbit { position:absolute; z-index:2; left:50%; top:55%; width:210px; height:210px; transform:translate(-50%,-50%); border:2px solid rgba(255,176,103,.72); border-radius:50%; box-shadow:0 0 0 13px rgba(255,145,55,.11),0 0 0 28px rgba(255,145,55,.07); }
+.signup-orbit-mark { position:absolute; inset:54px; display:grid; place-items:center; border:2px solid #ffd0a8; border-radius:35%; color:#fff; background:linear-gradient(145deg,#f47a20,#7d2b08); box-shadow:0 15px 28px rgba(0,0,0,.35); font:700 60px Arial,sans-serif; }
+.orbit-line { position:absolute; left:50%; top:-25px; width:2px; height:260px; background:linear-gradient(transparent,#ffad70,transparent); transform:rotate(58deg); }
+.orbit-line-two { transform:rotate(-58deg); opacity:.6; }
+.signup-visual-footer { position:absolute; z-index:3; bottom:27px; left:34px; color:#9ea8b0; font:8px var(--font-mono),monospace; letter-spacing:.08em; }
+.signup-form-panel { position:relative; padding:70px 40px 34px; background:#fff; }
+.signup-close { position:absolute; top:20px; right:20px; display:grid; place-items:center; width:34px; height:34px; border-radius:50%; color:#8a96a0; background:#f5f6f7; font:22px Arial,sans-serif; text-decoration:none; cursor:pointer; }
+.signup-form-panel h2 { margin:12px 0 30px; color:#17191f; font:700 25px var(--font-sans),sans-serif; }
+.signup-google { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:15px; border:0; border-radius:7px; background:#2b3949; color:#fff; font:600 14px var(--font-sans),sans-serif; cursor:pointer; }
+.signup-google img { width:18px; height:18px; }
+.signup-more { margin:12px 0 26px; color:#f47a20; text-align:center; font:12px var(--font-sans),sans-serif; cursor:pointer; }
+.signup-more span { font-size:18px; }
+.signup-form-panel .auth-divider { margin:0 0 26px; }
+.signup-email-only { color:#7c8790; font:11px var(--font-sans),sans-serif; }
+.signup-email-only input { display:block; width:100%; box-sizing:border-box; margin-top:8px; padding:15px; border:1px solid #cbd1d6; border-radius:8px; outline:0; color:#17191f; background:#fff; font:13px var(--font-sans),sans-serif; }
+.signup-email-only input:focus { border-color:#f47a20; box-shadow:0 0 0 3px rgba(244,122,32,.12); }
+.signup-next { width:100%; margin-top:25px; padding:15px; border:0; border-radius:8px; background:#ffcda9; color:#fff; font:600 14px var(--font-sans),sans-serif; cursor:pointer; }
+.signup-next:hover { background:#f47a20; }
+.signup-login { margin:23px 0 88px; color:#17191f; text-align:center; font:13px var(--font-sans),sans-serif; }
+.signup-login a,.signup-terms a { color:#f47a20; text-decoration:none; }
+.signup-terms { margin:0; color:#9aa3aa; text-align:center; font:11px/1.55 var(--font-sans),sans-serif; }
+@media (max-width:760px) { .signup-backdrop { display:block; min-height:100vh; padding:0; }.signup-modal { display:block; width:100%; min-height:100vh; border-radius:0; }.signup-visual { min-height:245px; padding:22px; }.signup-visual-copy { margin-top:45px; }.signup-visual-copy h1 { font-size:38px; }.signup-orbit { width:140px; height:140px; left:auto; right:4%; top:55%; }.signup-orbit-mark { inset:37px; font-size:40px; }.signup-visual::before { width:300px; top:62%; }.signup-visual::after { width:350px; top:67%; }.signup-visual-footer { left:22px; bottom:18px; }.signup-form-panel { padding:38px 22px 28px; }.signup-login { margin-bottom:55px; } }
+
+
