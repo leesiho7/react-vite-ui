@@ -5,7 +5,12 @@ import {
   HiveMindBattle,
   ArenaStrategyItem,
   SocialLoginRequest,
-  AuthResponse
+  AuthResponse,
+  AiDebateResponse,
+  AutoTuneResponse,
+  PatternInsight,
+  VisionChartAnalysisRequest,
+  VisionChartAnalysisResponse
 } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
@@ -1335,30 +1340,9 @@ export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]
 /**
  * 22. AI Vision 차트 사진 시각 판독 & AETHER 시계열 프랙탈 분석 API
  */
-export interface VisionChartAnalysisRequest {
-  symbol: string;
-  imageBase64: string;
-  prompt?: string;
-  timeframe?: string;
-}
-
-export interface VisionChartAnalysisResponse {
-  success: boolean;
-  symbol: string;
-  analysisMarkdown: string;
-  identifiedPatterns: string[];
-  technicalVerdict: string;
-  supportPrice: number;
-  resistancePrice: number;
-  currentPrice: number;
-  modelUsed: string;
-  processingTimeMs: number;
-  analyzedAt: string;
-}
-
 export async function fetchVisionChartAnalysis(req: VisionChartAnalysisRequest): Promise<VisionChartAnalysisResponse | null> {
   try {
-    const res = await fetch(`${API_BASE}/ai/vision-analyze`, {
+    const res = await fetch(`${API_BASE}/ai/vision-scan`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req)
@@ -1371,4 +1355,59 @@ export async function fetchVisionChartAnalysis(req: VisionChartAnalysisRequest):
   }
   return null;
 }
+
+/**
+ * 23. [혁신 1] FastDTW 기반 '유사 차트 오버레이' 고스트 궤적 조회 API
+ */
+export async function fetchFractalGhost(symbol = 'BTCUSDT', timeFrame = 'H1', limit = 30): Promise<PatternInsight | null> {
+  try {
+    const res = await fetch(`${API_BASE}/quant/fractal-ghost?symbol=${symbol}&timeFrame=${timeFrame}&limit=${limit}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchFractalGhost:', err);
+  }
+  return null;
+}
+
+/**
+ * 24. [혁신 2] 멀티 에이전트 3인 'AI 투자의견 토론' (Debate Arena) API
+ */
+export async function fetchAiDebate(symbol = 'BTCUSDT'): Promise<AiDebateResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/ai/debate?symbol=${symbol}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchAiDebate:', err);
+  }
+  return null;
+}
+
+/**
+ * 25. [혁신 4] 노코드 퀀트 파라미터 오토튜너 & 1-클릭 복사 API
+ */
+export async function fetchAutoTune(payload: {
+  symbol?: string;
+  timeFrame?: string;
+  candleLimit?: number;
+  optimizationMetric?: string;
+}): Promise<AutoTuneResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/quant/auto-tune`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] Fallback for fetchAutoTune:', err);
+  }
+  return null;
+}
+
 

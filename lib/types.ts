@@ -14,6 +14,11 @@ export interface QuantitativeSignal {
   bollingerLower: number;
   suggestedAction: ActionType;
   quantScore: number;
+  vwap?: number;
+  atr?: number;
+  atrTrailingStop?: number;
+  orderbookImbalance?: number;
+  fundingRate?: number;
   signalsSummary: string[];
 }
 
@@ -34,6 +39,8 @@ export interface PatternInsight {
   historicalWinRate: number;
   expectedReturn5Day: number;
   patternSummary: string;
+  ghostHistoryPrices?: number[];
+  ghostFuturePrices?: number[];
 }
 
 export interface PersonaAdvice {
@@ -168,4 +175,82 @@ export interface RichNewsItem {
   impactPercent: number;
   link?: string;
 }
+
+// ── 혁신 기능 2: 3인 AI 투자의견 토론 (Debate Arena) ──
+export interface DebateMessage {
+  personaId: string;
+  name: string;
+  title: string;
+  avatar: string;
+  stance: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  content: string;
+  metrics: string[];
+  targetPrice?: string;
+}
+
+export interface AiDebateResponse {
+  symbol: string;
+  timestamp: string;
+  consensusScore: number;
+  consensusVerdict: string;
+  bullRatio: number;
+  bearRatio: number;
+  suggestedAction: string;
+  keyTakeaway: string;
+  recommendedTrailingStop?: number;
+  targetPriceRange?: string;
+  dialogue: DebateMessage[];
+}
+
+// ── 혁신 기능 3: 비전 차트 즉시 스캔 (Vision Chart Scan) ──
+export interface VisionChartAnalysisRequest {
+  imageBase64: string;
+  symbol?: string;
+  timeFrame?: string;
+  prompt?: string;
+}
+
+export interface VisionChartAnalysisResponse {
+  success: boolean;
+  symbol: string;
+  analysisMarkdown: string;
+  identifiedPatterns: string[];
+  technicalVerdict: string;
+  supportPrice?: number;
+  resistancePrice?: number;
+  currentPrice?: number;
+  modelUsed?: string;
+  processingTimeMs?: number;
+  analyzedAt?: string;
+}
+
+// ── 혁신 기능 4: 노코드 퀀트 파라미터 오토튜너 & 1-클릭 복사 ──
+export interface AutoTuneResult {
+  rank: number;
+  label: string;
+  config: any;
+  backtest: any;
+  sharpeRatio: number;
+  winRate: number;
+  maxDrawdown: number;
+  profitFactor: number;
+  grossReturn: number;
+  totalTrades: number;
+}
+
+export interface AutoTuneResponse {
+  symbol: string;
+  optimizationMetric: string;
+  evaluatedCount: number;
+  bestConfig: any;
+  bestSharpeRatio: number;
+  bestWinRate: number;
+  bestProfitFactor: number;
+  bestMaxDrawdown: number;
+  bestTotalReturn: number;
+  topCandidates: AutoTuneResult[];
+  oneClickBotConfigJson: string;
+  tuningSummary: string;
+}
+
 

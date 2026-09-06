@@ -42,11 +42,14 @@ import {
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
 import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
+import { AiDebateArenaCard } from '../components/AiDebateArenaCard'
+import { VisionChartScanModal } from '../components/VisionChartScanModal'
+import { QuantAutoTunerModal } from '../components/QuantAutoTunerModal'
 
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 type Language = keyof typeof languageLabels
 
-export function getSymbolLogo(nameOrTicker: string): string {
+function getSymbolLogo(nameOrTicker: string): string {
   const sym = (nameOrTicker || '').toUpperCase()
   if (sym.includes('BTC') || sym === 'BITCOIN') return 'https://financialmodelingprep.com/image-stock/BTCUSD.png'
   if (sym.includes('ETH') || sym === 'ETHEREUM') return 'https://financialmodelingprep.com/image-stock/ETHUSD.png'
@@ -953,6 +956,8 @@ export default function Page() {
   const [marketCopilotLoading, setMarketCopilotLoading] = useState(false)
   const [marketMessages, setMarketMessages] = useState<{ role: 'user' | 'assistant'; text: string; time: string }[]>([])
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(false)
+  const [visionScanOpen, setVisionScanOpen] = useState(false)
+  const [autoTunerOpen, setAutoTunerOpen] = useState(false)
   const [articleModalOpen, setArticleModalOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
@@ -2809,7 +2814,7 @@ export default function Page() {
                     </div>
                   )}
                 </div>
-                <div className="chart-intervals">
+                <div className="chart-intervals" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                   {['1m', '5m', '15m', '1h', '4h', '1D', '1W', '1M'].map((int) => (
                     <button
                       key={int}
@@ -2820,6 +2825,52 @@ export default function Page() {
                       {int}
                     </button>
                   ))}
+                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setVisionScanOpen(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: 'rgba(59, 130, 246, 0.15)',
+                        color: '#3b82f6',
+                        border: '1px solid rgba(59, 130, 246, 0.35)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title="차트 캡처 스크린샷 붙여넣기(Ctrl+V) 즉시 AI 진단"
+                    >
+                      <span>📷</span>
+                      <span>{language === 'ko' ? '차트 비전 스캔' : 'Vision Scan'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAutoTunerOpen(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: 'rgba(245, 158, 11, 0.15)',
+                        color: '#d97706',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title="노코드 퀀트 파라미터 그리드 탐색 및 1-클릭 카피"
+                    >
+                      <span>⚡</span>
+                      <span>{language === 'ko' ? '퀀트 오토튜너' : 'Auto-Tuner'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -2831,6 +2882,10 @@ export default function Page() {
                 latestKline={latestKline}
                 interval={marketChartInterval}
               />
+
+              <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+                <AiDebateArenaCard symbol={marketActiveSymbol.includes('NVDA') ? 'NVDA' : (marketActiveSymbol.split(' ')[0] + 'USDT')} />
+              </div>
 
               <div className="trade-lower">
                 <section className="orderbook-panel">
@@ -7547,6 +7602,17 @@ def signal(tick):
         <span>DATA FOR DECISION MAKERS · NOT FINANCIAL ADVICE</span>
         <span>STATUS: OPERATIONAL (WEBSOCKET LIVE)</span>
       </footer>
+
+      <VisionChartScanModal
+        isOpen={visionScanOpen}
+        onClose={() => setVisionScanOpen(false)}
+        defaultSymbol={marketActiveSymbol.includes('NVDA') ? 'NVDA' : (marketActiveSymbol.split(' ')[0] + 'USDT')}
+      />
+      <QuantAutoTunerModal
+        isOpen={autoTunerOpen}
+        onClose={() => setAutoTunerOpen(false)}
+        defaultSymbol={marketActiveSymbol.includes('NVDA') ? 'NVDA' : (marketActiveSymbol.split(' ')[0] + 'USDT')}
+      />
     </main>
     </>
   )

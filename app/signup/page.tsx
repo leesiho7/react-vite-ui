@@ -433,56 +433,53 @@ export default function SignupPage() {
   return (
     <main className="signup-backdrop">
       <div className="signup-modal">
-        {/* Visual Brand Left Panel */}
-        <div className="signup-visual">
+        {/* Visual Brand Left Section */}
+        <section className="signup-visual">
           <Link href="/" className="signup-logo">
             AETHER
           </Link>
 
-          <div className="signup-orbit">
-            <div className="orbit-line" />
-            <div className="orbit-line orbit-line-two" />
-            <div className="signup-orbit-mark">A</div>
+          <div className="signup-visual-copy">
+            <span>MARKET INTELLIGENCE</span>
+            <h1>
+              The edge<br />
+              <em>starts here.</em>
+            </h1>
+            <p>실시간 시장 데이터와 분석 도구를 더 빠르게 확인하세요.</p>
           </div>
 
-          <div className="signup-visual-copy">
-            <span>AETHER INTELLIGENCE OS</span>
-            <h1>
-              Build your<br />
-              <em>edge.</em>
-            </h1>
-            <p>
-              기관급 퀀트 데이터, AI 검증 팩트체크 리서치, 24시간 실시간 트레이딩 샌드박스를 경험하세요.
-            </p>
+          <div className="signup-orbit">
+            <div className="signup-orbit-mark">A</div>
+            <span className="orbit-line orbit-line-one" />
+            <span className="orbit-line orbit-line-two" />
           </div>
 
           <div className="signup-visual-footer">
-            AETHER SYSTEM // FREE WORKSPACE // ZERO-PII COMPLIANT
+            AETHER / PRIVATE MARKET WORKSPACE
           </div>
-        </div>
+        </section>
 
-        {/* Form Input Right Panel */}
-        <div className="signup-form-panel">
-          <Link href="/" className="signup-close" title="닫기" aria-label="닫기">
+        {/* Form Panel Right Section */}
+        <section className="signup-form-panel">
+          <Link href="/" className="signup-close" aria-label="홈으로 돌아가기">
             ×
           </Link>
 
-          <h2>회원가입</h2>
+          <span className="overline">NEW ACCOUNT</span>
+          <h2>무료 회원가입</h2>
 
           {/* Google 1-Click Button */}
           <button
-            type="button"
             className="signup-google"
+            type="button"
             onClick={() => handleSocial('GOOGLE')}
             disabled={loading}
           >
             <img
-              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg"
               alt="Google"
-              width={18}
-              height={18}
-            />
-            <span>Google 계정으로 계속하기</span>
+            />{' '}
+            Google로 계속하기
           </button>
 
           {/* Expandable Social / Web3 Options */}
@@ -493,7 +490,7 @@ export default function SignupPage() {
             onClick={() => setShowMore(!showMore)}
             style={{ userSelect: 'none' }}
           >
-            {showMore ? '소셜 및 Web3 옵션 접기' : '더 많은 소셜 및 Web3 계정'} <span>{showMore ? '▴' : '▾'}</span>
+            기타 등록 방법 <span>{showMore ? '▴' : '⌄'}</span>
           </div>
 
           {showMore && (
@@ -560,19 +557,19 @@ export default function SignupPage() {
 
           {/* Auth Divider */}
           <div className="auth-divider">
-            <span>또는 이메일로 가입</span>
+            <span>또는</span>
           </div>
 
-          {/* Email Onboarding Form */}
+          {/* Email Form */}
           <form onSubmit={handleEmailSubmit}>
             <label className="signup-email-only">
-              이메일 주소
+              이메일
               <input
                 type="email"
-                placeholder="name@example.com"
+                required
+                placeholder="이메일 주소를 입력하세요"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 disabled={step === 2}
               />
             </label>
@@ -612,8 +609,8 @@ export default function SignupPage() {
               </div>
             )}
 
-            <button type="submit" className="signup-next" disabled={loading}>
-              {loading ? '처리 중...' : step === 1 ? '다음' : '회원가입 완료'}
+            <button className="signup-next" type="submit" disabled={loading}>
+              {loading ? '가입 처리 중...' : (step === 1 ? '다음' : '가입이 완료되었습니다')}
             </button>
           </form>
 
@@ -635,17 +632,14 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Already have account */}
-          <div className="signup-login">
-            이미 계정이 있으신가요? <Link href="/login">로그인</Link>
-          </div>
-
-          {/* Terms & Privacy */}
-          <p className="signup-terms">
-            가입 시 AETHER의 <Link href="/terms">서비스 이용약관</Link> 및{' '}
-            <Link href="/privacy">개인정보 처리방침</Link>에 동의하게 됩니다.
+          <p className="signup-login">
+            이미 등록하셨나요? <Link href="/login">로그인</Link>
           </p>
-        </div>
+
+          <p className="signup-terms">
+            등록함으로써 귀하는 저희 <a href="#terms">개인정보 처리방침</a>에 동의하고 이를 인정합니다.
+          </p>
+        </section>
       </div>
     </main>
   )
