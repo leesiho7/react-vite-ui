@@ -13,7 +13,7 @@ interface AiDebateArenaCardProps {
 export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: AiDebateArenaCardProps) {
   const [debate, setDebate] = useState<AiDebateResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activePersonaTab, setActivePersonaTab] = useState<'ALL' | 'alex' | 'mina' | 'jhan'>('ALL');
+  const [activePersonaTab, setActivePersonaTab] = useState<'ALL' | 'buffett' | 'simons' | 'dalio'>('ALL');
 
   const loadDebate = async () => {
     setLoading(true);
@@ -32,9 +32,9 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
   }, [symbol]);
 
   const personaMeta: Record<string, { icon: any; color: string; bg: string; border: string }> = {
-    alex: { icon: Shield, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-    mina: { icon: Landmark, color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
-    jhan: { icon: Zap, color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' }
+    buffett: { icon: Shield, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+    simons: { icon: Zap, color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+    dalio: { icon: Landmark, color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' }
   };
 
   const isBullish = (debate?.consensusScore ?? 50) >= 60;
@@ -56,14 +56,14 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>🎙️</span>
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-              멀티 에이전트 AI 투자 토론 배틀 (Debate Arena)
+              월가 3대 거장 AI 끝장 토론 (Wall Street Legends Debate Arena)
             </h3>
             <span style={{ fontSize: '10px', background: '#0f172a', color: '#38bdf8', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
               ROUND-TABLE
             </span>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}>
-            온체인 헤지 리서처(Alex) × 매크로 ETF 전략가(Mina) × 퀀트 엔지니어(J. Han) 3인 실시간 합의
+            워런 버핏 (가치·안전마진) × 짐 시몬스 (퀀트·수학적 엣지) × 레이 달리오 (올웨더·매크로 사이클) 3인 실시간 합의
           </p>
         </div>
 
@@ -187,9 +187,9 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', onApplyTrailingStop }: A
       <div style={{ display: 'flex', gap: '6px', marginTop: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
         {[
           { id: 'ALL', label: '전체 토론 (Round-Table)' },
-          { id: 'alex', label: '🛡️ Alex Chen (파생/온체인)' },
-          { id: 'mina', label: '🏛️ Mina Park (매크로/ETF)' },
-          { id: 'jhan', label: '⚡ J. Han (계량 퀀트/FastDTW)' }
+          { id: 'buffett', label: '👑 워런 버핏 (가치·안전마진)' },
+          { id: 'simons', label: '⚡ 짐 시몬스 (퀀트·수학적 엣지)' },
+          { id: 'dalio', label: '🏛️ 레이 달리오 (올웨더·매크로)' }
         ].map(tab => (
           <button
             key={tab.id}
