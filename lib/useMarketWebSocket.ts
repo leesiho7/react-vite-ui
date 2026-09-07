@@ -211,8 +211,8 @@ export function useMarketWebSocket(symbol: string) {
     const pair = getNormalizedPair(symbol);
     setConnectionStatus('CONNECTING');
 
-    // Binance Combined Stream: Ticker + 100ms Depth10 + 1h Kline
-    const streamUrl = `wss://stream.binance.com:9443/stream?streams=${pair}@ticker/${pair}@depth10@100ms/${pair}@kline_1h`;
+    // Binance Combined Stream: Trade (100ms real-time execution) + Ticker + 100ms Depth10 + 1h Kline
+    const streamUrl = `wss://stream.binance.com:9443/stream?streams=${pair}@trade/${pair}@ticker/${pair}@depth10@100ms/${pair}@kline_1h`;
     
     let ws: WebSocket;
     try {
@@ -233,6 +233,20 @@ export function useMarketWebSocket(symbol: string) {
         const payload = JSON.parse(event.data);
         const stream = payload.stream || '';
         const data = payload.data || {};
+
+        // 0. Live Trade Stream (@trade) - Ultra High-Frequency Real-time Ticks
+        if (stream.endsWith('@trade')) {
+          const current = parseFloat(data.p || '0');
+          if (current > 0) {
+            const prev = prevPriceRef.current;
+            if (current > prev) setTickDirection('UP');
+            else if (current < prev) setTickDirection('DOWN');
+            prevPriceRef.current = current;
+
+            setPrice(current);
+            setPriceFormatted(`$${current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+          }
+        }
 
         // 1. Ticker Stream (@ticker)
         if (stream.endsWith('@ticker')) {

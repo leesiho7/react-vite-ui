@@ -1125,11 +1125,20 @@ export function TerminalTradingChart({
 
         {/* Right Toolbar: Indicators & Theme Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {isLoadingCandles && (
-            <span style={{ fontSize: '10px', color: '#2962ff', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <RefreshCw size={11} className="animate-spin" /> Fetching {activeInterval}…
-            </span>
-          )}
+          <span
+            style={{
+              fontSize: '10px',
+              color: '#2962ff',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              minWidth: '85px',
+              visibility: isLoadingCandles ? 'visible' : 'hidden',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            <RefreshCw size={11} className="animate-spin" /> Fetching {activeInterval}…
+          </span>
 
           <button
             type="button"
@@ -1427,10 +1436,6 @@ export function TerminalTradingChart({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', fontFamily: 'Consolas, monospace' }}>
           <span>% LOG AUTO</span>
           <span>(UTC+9) SEOUL</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#089981' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#089981', display: 'inline-block' }} />
-            <span>BINANCE DIRECT STREAM ACTIVE</span>
-          </div>
         </div>
       </div>
     </div>

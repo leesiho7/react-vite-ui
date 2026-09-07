@@ -1,20 +1,96 @@
 'use client'
 
-import { useState } from 'react'
-import { Bot, ChevronDown, Code2, Filter, MoreHorizontal, Play, Plus, Search, SquareTerminal, SlidersHorizontal, Square, Trash2, X } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Bot, ChevronDown, Code2, Filter, MoreHorizontal, Play, Plus, Search, SquareTerminal, SlidersHorizontal, Square, Trash2, X, RefreshCw } from 'lucide-react'
 import { FinanceNav } from '@/components/FinanceNav'
-
-const bots = [
-  { id: 'qnt-7f3a2c', name: 'BTC momentum alpha', state: 'RUNNING', resource: '1 vCPU · 1 GB', event: '2 min ago', created: '12d ago', pnl: '+8.42%' },
-  { id: 'qnt-19b8e1', name: 'ETH mean reversion', state: 'STOPPED', resource: '1 vCPU · 1 GB', event: '3h ago', created: '28d ago', pnl: '+2.10%' },
-  { id: 'qnt-44c9d0', name: 'SOL volatility scout', state: 'PAUSED', resource: '2 vCPU · 2 GB', event: '1d ago', created: '41d ago', pnl: '-1.28%' },
-]
+import {
+  fetchUserBots,
+  createBotInstanceApi,
+  startBotApi,
+  pauseBotApi,
+  stopBotApi,
+  deleteBotApi
+} from '@/lib/api'
 
 export default function BotPage() {
+  const [bots, setBots] = useState<any[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [showCreate, setShowCreate] = useState(false)
-  const [running, setRunning] = useState<Record<string, boolean>>({ 'qnt-7f3a2c': true })
   const [query, setQuery] = useState('')
-  const filtered = bots.filter((bot) => bot.name.toLowerCase().includes(query.toLowerCase()))
+
+  // Create Bot Form State
+  const [newBotName, setNewBotName] = useState('')
+  const [newExchange, setNewExchange] = useState<'BINANCE' | 'BYBIT'>('BINANCE')
+  const [newSymbol, setNewSymbol] = useState('BTCUSDT')
+  const [newMode, setNewMode] = useState<'BEGINNER' | 'DEVELOPER'>('BEGINNER')
+  const [creating, setCreating] = useState(false)
+
+  const loadBots = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await fetchUserBots(1)
+      if (Array.isArray(data)) {
+        setBots(data)
+      }
+    } catch (e) {
+      console.warn('Failed to load user bots:', e)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadBots()
+  }, [loadBots])
+
+  const handleCreateBot = async () => {
+    if (!newBotName.trim()) return
+    setCreating(true)
+    try {
+      await createBotInstanceApi({
+        userId: 1,
+        botName: newBotName,
+        exchange: newExchange,
+        symbol: newSymbol,
+        mode: newMode
+      })
+      setNewBotName('')
+      setShowCreate(false)
+      await loadBots()
+    } catch (e) {
+      console.warn('Failed to create bot:', e)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleToggleState = async (botId: number, currentStatus: string) => {
+    try {
+      if (currentStatus === 'RUNNING') {
+        await pauseBotApi(botId, 1)
+      } else {
+        await startBotApi(botId, 1)
+      }
+      await loadBots()
+    } catch (e) {
+      console.warn('Failed to toggle bot state:', e)
+    }
+  }
+
+  const handleDeleteBot = async (botId: number) => {
+    if (!confirm('정말로 이 24시간 봇 인스턴스를 삭제하시겠습니까?')) return
+    try {
+      await deleteBotApi(botId, 1)
+      await loadBots()
+    } catch (e) {
+      console.warn('Failed to delete bot:', e)
+    }
+  }
+
+  const filtered = bots.filter((bot) =>
+    (bot.botName || '').toLowerCase().includes(query.toLowerCase()) ||
+    (bot.symbol || '').toLowerCase().includes(query.toLowerCase())
+  )
 
   return (
     <main className="bot-console">
@@ -30,7 +106,7 @@ export default function BotPage() {
             <strong>AETHER</strong>
           </div>
           <div className="bot-workspace-select">
-            Personal <ChevronDown size={14} />
+            Personal Workspace <ChevronDown size={14} />
           </div>
           <label className="bot-side-search">
             <Search size={14} />
@@ -38,13 +114,13 @@ export default function BotPage() {
           </label>
           <nav className="bot-console-nav">
             <a className="active"><Bot size={16} /> 24H Bot Center</a>
-            <a><SquareTerminal size={16} /> Terminal</a>
+            <a href="/"><SquareTerminal size={16} /> Terminal Console</a>
             <a><Code2 size={16} /> Strategies</a>
             <a><SlidersHorizontal size={16} /> Settings</a>
           </nav>
           <div className="bot-side-footer">
-            PRO PLAN<br />
-            <span>1 of 2 instances used</span>
+            PRO INSTANCE POOL<br />
+            <span>{bots.length} of 10 instances used</span>
           </div>
         </aside>
 
@@ -53,7 +129,7 @@ export default function BotPage() {
             <div>
               <span className="bot-console-kicker">AUTONOMOUS TRADING / WORKSPACE</span>
               <h1>24H <em>Bot Center</em></h1>
-              <p>Manage, monitor, and deploy your autonomous trading instances.</p>
+              <p>Manage, monitor, and deploy your autonomous trading instances across Binance & Bybit.</p>
             </div>
             <button className="bot-create-button" onClick={() => setShowCreate(true)}>
               <Plus size={16} /> Create bot
@@ -63,80 +139,185 @@ export default function BotPage() {
           <div className="bot-toolbar">
             <label className="bot-search">
               <Search size={16} />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by bot name or symbol" />
             </label>
-            <button className="bot-tool-button"><Filter size={15} /> Filter</button>
-            <button className="bot-tool-icon" aria-label="Refresh"><SlidersHorizontal size={16} /></button>
+            <button className="bot-tool-button" onClick={loadBots}>
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+            </button>
           </div>
 
           <div className="bot-table-wrap">
             <div className="bot-table-head">
               <span></span>
-              <span>Name</span>
+              <span>Name / Ticker</span>
+              <span>Exchange</span>
               <span>State</span>
-              <span>Resource</span>
-              <span>Last event</span>
-              <span>Created</span>
+              <span>Symbol</span>
+              <span>Win Rate / PnL</span>
               <span>Actions</span>
             </div>
-            {filtered.map((bot) => {
-              const isRunning = !!running[bot.id];
-              return (
-                <div className="bot-table-row" key={bot.id}>
-                  <span className="bot-checkbox"></span>
-                  <div className="bot-name-cell">
-                    <span className="bot-row-icon"><Bot size={15} /></span>
+
+            {loading ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                <RefreshCw size={18} className="animate-spin" style={{ margin: '0 auto 8px' }} />
+                Loading 24H bot instances from backend database...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
+                <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+                <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>활성화된 봇 인스턴스가 0개입니다.</h3>
+                <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '12px' }}>오른쪽 상단의 [+ Create bot] 버튼을 클릭하여 바이낸스/바이비트 자동매매 봇을 새로 생성하세요.</p>
+                <button
+                  type="button"
+                  onClick={() => setShowCreate(true)}
+                  style={{ background: '#f47a20', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  + 첫번째 봇 인스턴스 생성하기
+                </button>
+              </div>
+            ) : (
+              filtered.map((bot) => {
+                const isRunning = bot.status === 'RUNNING'
+                const isPaused = bot.status === 'PAUSED'
+                const ex = bot.exchange || 'BINANCE'
+
+                return (
+                  <div className="bot-table-row" key={bot.instanceId || bot.id}>
+                    <span className="bot-checkbox"></span>
+                    <div className="bot-name-cell">
+                      <span className="bot-row-icon"><Bot size={15} /></span>
+                      <span>
+                        <strong>{bot.botName}</strong>
+                        <small>ID #{bot.instanceId || bot.id}</small>
+                      </span>
+                    </div>
                     <span>
-                      <strong>{bot.name}</strong>
-                      <small>{bot.id}</small>
+                      <b style={{
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        background: ex === 'BYBIT' ? '#fff7ed' : '#f0fdf4',
+                        color: ex === 'BYBIT' ? '#c2410c' : '#15803d',
+                        border: `1px solid ${ex === 'BYBIT' ? '#ffedd5' : '#bbf7d0'}`
+                      }}>
+                        {ex}
+                      </b>
                     </span>
+                    <span className={`bot-state ${isRunning ? 'is-running' : isPaused ? 'is-paused' : ''}`}>
+                      <i />{isRunning ? 'Running' : isPaused ? 'Paused' : 'Stopped'}
+                    </span>
+                    <span className="bot-resource">{bot.symbol || 'BTCUSDT'}</span>
+                    <span className="bot-event" style={{ color: (bot.winRatePct || 0) >= 50 ? '#059669' : '#dc2626', fontWeight: 700 }}>
+                      {(bot.winRatePct || 0).toFixed(1)}% ({bot.totalTrades || 0} trades)
+                    </span>
+                    <div className="bot-row-actions">
+                      <button
+                        onClick={() => handleToggleState(bot.instanceId || bot.id, bot.status)}
+                        aria-label={isRunning ? 'Pause bot' : 'Start bot'}
+                        title={isRunning ? 'Pause' : 'Start'}
+                      >
+                        {isRunning ? <Square size={15} /> : <Play size={16} />}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBot(bot.instanceId || bot.id)}
+                        aria-label="Delete bot"
+                        title="Delete bot"
+                        style={{ color: '#ef4444' }}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
-                  <span className={`bot-state ${isRunning ? 'is-running' : ''}`}>
-                    <i />{isRunning ? 'Running' : bot.state[0] + bot.state.slice(1).toLowerCase()}
-                  </span>
-                  <span className="bot-resource">{bot.resource}</span>
-                  <span className="bot-event">{bot.event}</span>
-                  <span className="bot-created">{bot.created}</span>
-                  <div className="bot-row-actions">
-                    <button
-                      onClick={() => setRunning((prev) => ({ ...prev, [bot.id]: !isRunning }))}
-                      aria-label={isRunning ? 'Stop bot' : 'Start bot'}
-                      title={isRunning ? 'Stop' : 'Start'}
-                    >
-                      {isRunning ? <Square size={15} /> : <Play size={16} />}
-                    </button>
-                    <button aria-label="Open terminal" title="Terminal">
-                      <SquareTerminal size={16} />
-                    </button>
-                    <button aria-label="More actions" title="More">
-                      <MoreHorizontal size={17} />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
 
           <div className="bot-table-footer">
-            <span>{filtered.length} bot instances</span>
-            <button>25 per page <ChevronDown size={14} /></button>
+            <span>{filtered.length} active bot instances in DB</span>
+            <button>10 per page <ChevronDown size={14} /></button>
           </div>
         </section>
       </div>
 
+      {/* Create Bot Modal */}
       {showCreate && (
         <div className="bot-create-overlay" role="dialog" aria-modal="true">
-          <div className="bot-create-card">
+          <div className="bot-create-card" style={{ width: '440px', maxWidth: '100%' }}>
             <button className="bot-modal-close" onClick={() => setShowCreate(false)} aria-label="Close">
               <X size={18} />
             </button>
             <span className="bot-console-kicker">NEW INSTANCE</span>
             <h2>Create trading bot</h2>
-            <p>Deploy an isolated 24H strategy runtime.</p>
-            <input placeholder="Bot name" />
-            <button className="bot-confirm-create" onClick={() => setShowCreate(false)}>
-              Create bot <Plus size={15} />
-            </button>
+            <p>Deploy an isolated 24H strategy runtime for Binance or Bybit.</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  BOT NAME
+                </label>
+                <input
+                  value={newBotName}
+                  onChange={(e) => setNewBotName(e.target.value)}
+                  placeholder="e.g. Bybit Volatility Alpha v1"
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    EXCHANGE
+                  </label>
+                  <select
+                    value={newExchange}
+                    onChange={(e) => setNewExchange(e.target.value as any)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', background: '#fff' }}
+                  >
+                    <option value="BINANCE">Binance (바이낸스)</option>
+                    <option value="BYBIT">Bybit (바이비트)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    SYMBOL
+                  </label>
+                  <select
+                    value={newSymbol}
+                    onChange={(e) => setNewSymbol(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', background: '#fff' }}
+                  >
+                    <option value="BTCUSDT">BTC/USDT</option>
+                    <option value="ETHUSDT">ETH/USDT</option>
+                    <option value="SOLUSDT">SOL/USDT</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                  STRATEGY MODE
+                </label>
+                <select
+                  value={newMode}
+                  onChange={(e) => setNewMode(e.target.value as any)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', background: '#fff' }}
+                >
+                  <option value="BEGINNER">BEGINNER (Goldman Risk Guard + RSI + SMA)</option>
+                  <option value="DEVELOPER">DEVELOPER (Python 3.12 Custom Code)</option>
+                </select>
+              </div>
+
+              <button
+                className="bot-confirm-create"
+                disabled={!newBotName.trim() || creating}
+                onClick={handleCreateBot}
+                style={{ marginTop: '10px' }}
+              >
+                {creating ? <RefreshCw size={14} className="animate-spin" /> : <>Deploy Instance <Plus size={15} /></>}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -5,6 +5,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
 import Navbar from './components/Navbar'
+import { useMarketWebSocket } from '@/lib/useMarketWebSocket'
+import { usePopularMarketsData } from '@/lib/usePopularMarketsData'
 import {
   fetchIntegratedDecision,
   fetchHistoricalCandles,
@@ -29,7 +31,14 @@ import {
   sweepAdminEscrowFunds,
   fetchAdminEscrowAuditLogs,
   AdminEscrowAuditLog,
-  fetchVisionChartAnalysis
+  fetchVisionChartAnalysis,
+  fetchUserBots,
+  createBotInstanceApi,
+  startBotApi,
+  pauseBotApi,
+  stopBotApi,
+  deleteBotApi,
+  fetchBotLogsApi
 } from '../lib/api'
 import {
   IntegratedDecisionReport,
@@ -39,10 +48,11 @@ import {
   ArenaStrategyItem,
   AuthResponse
 } from '../lib/types'
-import { useMarketWebSocket } from '../lib/useMarketWebSocket'
 import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
 import { AiDebateArenaCard } from '../components/AiDebateArenaCard'
+import { PolymarketSpeedGameCard } from '../components/PolymarketSpeedGameCard'
+import { Polymarket1HSpeedGameCard } from '../components/Polymarket1HSpeedGameCard'
 import { VisionChartScanModal } from '../components/VisionChartScanModal'
 import { QuantAutoTunerModal } from '../components/QuantAutoTunerModal'
 
@@ -968,6 +978,7 @@ function getAssetTelemetry(symbol: string) {
 }
 
 export default function Page() {
+  const popularMarketsData = usePopularMarketsData()
   const [query, setQuery] = useState('')
   const [period, setPeriod] = useState('4H')
   const [stance, setStance] = useState('BUY')
@@ -1108,6 +1119,8 @@ export default function Page() {
   const [submitted, setSubmitted] = useState(false)
   const [hourlyRemainingSec, setHourlyRemainingSec] = useState(2430)
   const [lockedBasePrice, setLockedBasePrice] = useState<string | null>(null)
+
+
 
   // AI Agent Studio (Multi-turn Sessions & Copilot) State
   const [agentSessions, setAgentSessions] = useState<AgentSession[]>([])
@@ -1468,11 +1481,11 @@ export default function Page() {
 
   // Bot Hosting & Developer Sandbox State
   const [botMode, setBotMode] = useState<'GENERAL' | 'DEVELOPER'>('GENERAL')
-  const [botRunning, setBotRunning] = useState(false)
+  const [botRunning, setBotRunning] = useState(true)
   const [riskSlider, setRiskSlider] = useState(35)
   const [telegramLinked, setTelegramLinked] = useState(false)
   const [licenseToken, setLicenseToken] = useState<string | null>(null)
-  const [telegramDeepLink, setTelegramDeepLink] = useState<string>('https://t.me/AetherQuantOfficialBot')
+  const [telegramDeepLink, setTelegramDeepLink] = useState<string>('https://t.me/MyQuantOfficial_bot')
   const [pythonCode, setPythonCode] = useState<string>(
     '# Strategy runs in an isolated 24/7 Docker Sandbox\n# Connect signals through Spring Boot API\ndef on_market_tick(tick):\n    rsi = tick.get("rsi", 50.0)\n    if rsi < 30.0:\n        return {"action": "BUY", "risk": 0.35, "reason": "RSI Oversold"}\n    elif rsi > 70.0:\n        return {"action": "SELL", "risk": 0.35, "reason": "RSI Overbought"}\n    return {"action": "HOLD", "risk": 0.35}'
   )
@@ -1684,9 +1697,13 @@ export default function Page() {
   }, [botInstances, botConsoleQuery])
 
   const handleToggleBotInstance = (botId: string) => {
+    const targetBot = botInstances.find(inst => inst.id === botId)
+    if (!targetBot) return
+    const nextStatus = targetBot.status === 'RUNNING' ? 'STOPPED' : 'RUNNING'
+    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+    
     setBotInstances(prev => prev.map(inst => {
       if (inst.id === botId) {
-        const nextStatus = inst.status === 'RUNNING' ? 'STOPPED' : 'RUNNING'
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
         setInstanceLogs(l => [
           ...l.slice(-15),
@@ -1704,10 +1721,25 @@ export default function Page() {
       }
       return inst
     }))
+
+    if (targetBot.rawId) {
+      if (nextStatus === 'RUNNING') {
+        startBotApi(Number(targetBot.rawId), uId)
+      } else {
+        stopBotApi(Number(targetBot.rawId), uId)
+      }
+    }
   }
 
   const handleDeleteBotInstance = (botId: string, botName: string) => {
     if (confirm(`'${botName}' 인스턴스를 격리 해제 및 삭제하시겠습니까?`)) {
+      const targetBot = botInstances.find(inst => inst.id === botId)
+      const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+      
+      if (targetBot?.rawId) {
+        deleteBotApi(Number(targetBot.rawId), uId)
+      }
+
       setBotInstances(prev => prev.filter(inst => inst.id !== botId))
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       setInstanceLogs(l => [
@@ -1726,16 +1758,33 @@ export default function Page() {
     }
   }
 
-  const handleDeployNewBotInstance = () => {
+  const handleDeployNewBotInstance = async () => {
     const name = instanceName.trim() || 'AETHER Alpha Worker'
-    const newId = `qnt-${Math.random().toString(16).slice(2, 8)}`
     const maskedKey = newInstanceApiKey.trim() ? `${newInstanceApiKey.trim().slice(0, 4)}••••••••${newInstanceApiKey.trim().slice(-4)}` : 'API-MASKED'
     const activeToken = newInstanceLicenseKey || licenseToken || 'AETH-ACTIVE-NODE'
+    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+
+    const payload = {
+      userId: uId,
+      botName: name,
+      mode: 'DEVELOPER' as const,
+      exchange: (newInstanceExchange.toUpperCase() === 'BYBIT' ? 'BYBIT' : newInstanceExchange.toUpperCase() === 'UPBIT' ? 'UPBIT' : 'BINANCE') as 'BINANCE' | 'BYBIT' | 'UPBIT',
+      symbol: newInstanceSymbol,
+      timeFrame: '1h',
+      apiKey: newInstanceApiKey.trim() || undefined,
+      apiSecret: newInstanceApiSecret.trim() || undefined
+    }
+
+    const createdResponse = await createBotInstanceApi(payload)
+    const rawId = createdResponse?.instanceId
+    const newId = rawId ? `bot-${rawId}` : `qnt-${Math.random().toString(16).slice(2, 8)}`
+
     const newInst: BotInstanceItem = {
       id: newId,
+      rawId: rawId,
       name,
       status: 'RUNNING',
-      strategy: 'Custom Developer Runtime',
+      strategy: newInstanceStrategy || 'Custom Developer Runtime',
       exchange: newInstanceExchange,
       apiKeyMasked: maskedKey,
       licenseToken: activeToken,
@@ -1765,67 +1814,91 @@ export default function Page() {
     ])
   }
 
-  useEffect(() => {
-    try {
-      if (!licenseToken) {
-        localStorage.removeItem('aether_bot_instances')
-        setBotInstances([])
-        setSelectedInstanceId('')
-        return
-      }
-      const stored = localStorage.getItem('aether_bot_instances')
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setBotInstances(parsed)
-          setSelectedInstanceId(parsed[0].id)
-        }
-      }
-    } catch (e) {}
-  }, [licenseToken])
-
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('aether_bot_instances', JSON.stringify(botInstances))
-      }
-    } catch (e) {}
-  }, [botInstances])
-
   const [instanceStatus, setInstanceStatus] = useState<'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED'>('RUNNING')
   const [instanceUptime, setInstanceUptime] = useState<number>(52140)
-  const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([
-    { time: '00:40:12', tag: 'DOCKER', text: 'Container initialized: hetzner-bot-sandbox-node1 (Python 3.12, AETHER Quant Matrix v2.4)' },
-    { time: '00:40:18', tag: 'NET-IO', text: 'WebSocket stream established with Binance Core (49.12.240.118 -> wss://stream.binance.com)' },
-    { time: '00:40:24', tag: 'SECURITY', text: 'AST static validation passed: 0 dangerous OS calls · memory cap 1024MB enforced' },
-    { time: '00:40:30', tag: 'RUNNER', text: 'Strategy active: AETHER Multi-Fractal + Dynamic Stop-loss Guard armed' }
-  ])
+  const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([])
+
+  useEffect(() => {
+    const syncBotsFromDb = (userId: number) => {
+      fetchUserBots(userId).then((list) => {
+        if (Array.isArray(list) && list.length > 0) {
+          const formatted = list.map((b: any) => ({
+            id: `bot-${b.instanceId || b.id}`,
+            rawId: b.instanceId || b.id,
+            name: b.botName,
+            exchange: b.exchange || 'BINANCE',
+            symbol: b.symbol || 'BTCUSDT',
+            status: b.status || 'RUNNING',
+            heartbeat: b.status === 'RUNNING' ? '1s ago' : 'paused'
+          }))
+          setBotInstances(formatted)
+          
+          // 새로고침 시 항상 DB의 첫 번째 활성 봇 상태로 강제 동기화
+          const active = formatted[0]
+          setSelectedInstanceId(active.id)
+          setInstanceStatus((active.status as any) || 'RUNNING')
+          setBotRunning(active.status === 'RUNNING')
+        }
+      }).catch((err) => {
+        console.warn('Failed to sync bot instances from DB:', err)
+      })
+    }
+
+    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+    syncBotsFromDb(uId)
+  }, [currentUser])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
-    if (instanceStatus === 'RUNNING') {
+    if (instanceStatus === 'RUNNING' && botInstances.length > 0) {
       interval = setInterval(() => {
         setInstanceUptime(prev => prev + 1)
       }, 1000)
     }
     return () => clearInterval(interval)
-  }, [instanceStatus])
+  }, [instanceStatus, botInstances])
 
   useEffect(() => {
-    if (instanceStatus !== 'RUNNING') return
-    const logTimer = setInterval(() => {
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      const sampleLogs = [
-        { tag: 'AETHER-Matrix', text: `Tick processed for ${searched} · Invalidation guard verified` },
-        { tag: 'Docker-Worker', text: `Memory footprint 39.2MB / 1024MB · Execution cycle 12ms (Zero slippage)` },
-        { tag: 'Stream-Receiver', text: `WebSocket tick price updated: ${priceFormatted} · Orderbook balanced` },
-        { tag: 'Quant-Core', text: `Multi-fractal pattern matched 89% · Position sizing 30% armed` },
-      ]
-      const chosen = sampleLogs[Math.floor(Math.random() * sampleLogs.length)]
-      setInstanceLogs(prev => [...prev.slice(-12), { time: timeStr, tag: chosen.tag, text: chosen.text }])
-    }, 4500)
+    if (botInstances.length === 0 || !selectedInstanceId) {
+      setInstanceLogs([])
+      return
+    }
+    const activeBot = botInstances.find(b => b.id === selectedInstanceId)
+    if (!activeBot || !activeBot.rawId) return
+
+    if (activeBot.status && activeBot.status !== instanceStatus) {
+      setInstanceStatus((activeBot.status as any) || 'RUNNING')
+      setBotRunning(activeBot.status === 'RUNNING')
+    }
+
+    const syncLogs = () => {
+      fetchBotLogsApi(Number(activeBot.rawId)).then((data) => {
+        if (data && Array.isArray(data.logs) && data.logs.length > 0) {
+          const formatted = data.logs.map((l: any) => ({
+            time: l.timestamp ? new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            tag: l.logLevel || 'RUNNER',
+            text: l.message || ''
+          })).reverse()
+          setInstanceLogs(formatted)
+        } else {
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          const exName = activeBot.exchange || 'BINANCE'
+          setInstanceLogs([
+            { time: timeStr, tag: 'DOCKER', text: `[PROVISION] Container initialized: ${activeBot.id} (Python 3.12, AETHER Quant Matrix v2.4)` },
+            { time: timeStr, tag: 'NET-IO', text: `[WEBSOCKET] Stream established with ${exName} Core (${activeBot.symbol})` },
+            { time: timeStr, tag: 'SECURITY', text: `[AST-SCAN] Static validation passed · Memory cap 1024MB enforced` },
+            { time: timeStr, tag: 'RUNNER', text: `[ACTIVE] Strategy active for ${activeBot.name} · Signal engine armed` }
+          ])
+        }
+      }).catch((err) => {
+        console.warn('Failed to fetch bot logs:', err)
+      })
+    }
+
+    syncLogs()
+    const logTimer = setInterval(syncLogs, 3000)
     return () => clearInterval(logTimer)
-  }, [instanceStatus, searched, priceFormatted])
+  }, [botInstances, selectedInstanceId, instanceStatus])
 
   const updateInstanceStatusInList = (id: string, newStatus: 'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED') => {
     setBotInstances(prev => prev.map(inst => {
@@ -1841,21 +1914,32 @@ export default function Page() {
   }
 
   const handleStartInstance = () => {
+    if (botInstances.length === 0) return
     setInstanceStatus('RUNNING')
     setBotRunning(true)
     updateInstanceStatusInList(selectedInstanceId, 'RUNNING')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[RESUME] Virtual Cloud Container resumed execution loop.' }])
+    const activeBot = botInstances.find(b => b.id === selectedInstanceId)
+    if (activeBot?.rawId) {
+      startBotApi(Number(activeBot.rawId), currentUser?.userId ? Number(currentUser.userId) : 1)
+    }
   }
 
   const handlePauseInstance = () => {
+    if (botInstances.length === 0) return
     setInstanceStatus('PAUSED')
     updateInstanceStatusInList(selectedInstanceId, 'PAUSED')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[PAUSE] Trading execution loop paused by user. Open positions are guarded.' }])
+    const activeBot = botInstances.find(b => b.id === selectedInstanceId)
+    if (activeBot?.rawId) {
+      pauseBotApi(Number(activeBot.rawId), currentUser?.userId ? Number(currentUser.userId) : 1)
+    }
   }
 
   const handleRebootInstance = () => {
+    if (botInstances.length === 0) return
     setInstanceStatus('REBOOTING')
     updateInstanceStatusInList(selectedInstanceId, 'REBOOTING')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -1869,11 +1953,16 @@ export default function Page() {
   }
 
   const handleStopInstance = () => {
+    if (botInstances.length === 0) return
     setInstanceStatus('STOPPED')
     setBotRunning(false)
     updateInstanceStatusInList(selectedInstanceId, 'STOPPED')
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[STOP] Container stopped. Cold-standby ready.' }])
+    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[SHUTDOWN] Virtual Cloud Container stopped gracefully.' }])
+    const activeBot = botInstances.find(b => b.id === selectedInstanceId)
+    if (activeBot?.rawId) {
+      stopBotApi(Number(activeBot.rawId), currentUser?.userId ? Number(currentUser.userId) : 1)
+    }
   }
 
   const formatUptimeStr = (sec: number) => {
@@ -2246,7 +2335,7 @@ export default function Page() {
     fetchUserLicenseToken(1).then((lic) => {
       if (lic && lic.isActive) {
         setLicenseToken(lic.tokenString)
-        setTelegramDeepLink(lic.telegramDeepLink || `https://t.me/AetherQuantOfficialBot?start=${lic.tokenString}`)
+        setTelegramDeepLink(lic.telegramDeepLink || `https://t.me/MyQuantOfficial_bot?start=${lic.tokenString}`)
         setTelegramLinked(lic.telegramLinked || false)
       }
     }).catch((e) => console.log('License fetch fallback:', e))
@@ -2748,17 +2837,9 @@ export default function Page() {
               </a>
             </div>
             <div className="symbol-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '12px' }}>
-              {[
-                { name: 'BTC / USD', ticker: 'BTC', logo: 'https://financialmodelingprep.com/image-stock/BTCUSD.png', price: '$78,418.00', change: '+2.84%', tag: language === 'ko' ? '디지털 골드 · 기축' : 'Digital Gold · Reserve' },
-                { name: 'ETH / USD', ticker: 'ETH', logo: 'https://financialmodelingprep.com/image-stock/ETHUSD.png', price: '$3,842.17', change: '+1.62%', tag: language === 'ko' ? '스마트 컨트랙트 허브' : 'Layer 1 Smart Contracts' },
-                { name: 'SOL / USD', ticker: 'SOL', logo: 'https://financialmodelingprep.com/image-stock/SOLUSD.png', price: '$182.64', change: '-0.48%', tag: language === 'ko' ? '초고속 DeFi 생태계' : 'High-Throughput DeFi' },
-                { name: 'S&P 500', ticker: 'SPX', logo: 'https://financialmodelingprep.com/image-stock/SPY.png', price: '5,842.91', change: '+0.37%', tag: language === 'ko' ? '미국 대형주 500 지수' : 'US S&P 500 Benchmark' },
-                { name: 'NASDAQ 100', ticker: 'NDX', logo: 'https://financialmodelingprep.com/image-stock/QQQ.png', price: '20,118.44', change: '+0.61%', tag: language === 'ko' ? '나스닥 빅테크 100 지수' : 'NASDAQ 100 Tech' },
-                { name: 'GOLD', ticker: 'XAU', logo: 'https://financialmodelingprep.com/image-stock/GLD.png', price: '$2,348.70', change: '-0.12%', tag: language === 'ko' ? '실물 금 안전자산' : 'Physical Gold Commodity' },
-                { name: 'NVDA', ticker: 'NVDA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', tag: language === 'ko' ? 'AI 반도체 거인' : 'AI Semiconductor Giant' },
-                { name: 'TSLA', ticker: 'TSLA', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', tag: language === 'ko' ? '자율주행·로보택시' : 'Autonomous Driving' }
-              ].map((item, i) => {
+              {popularMarketsData.map((item, i) => {
                 const isSelected = marketActiveSymbol === item.name || (item.ticker === 'NVDA' && marketActiveSymbol === 'NVDA')
+                const tag = language === 'ko' ? item.tagKo : item.tagEn
                 return (
                   <button
                     key={item.name}
@@ -2776,9 +2857,9 @@ export default function Page() {
                     </div>
                     <span className="symbol-copy">
                       <strong style={{ fontSize: '11.5px', fontFamily: 'var(--font-sans)' }}>{item.name}</strong>
-                      <small style={{ fontSize: '9px', color: '#8a92a2', fontFamily: 'var(--font-sans)' }}>{item.tag}</small>
+                      <small style={{ fontSize: '9px', color: '#8a92a2', fontFamily: 'var(--font-sans)' }}>{tag}</small>
                     </span>
-                    <b className={item.change.startsWith('+') ? 'up' : 'down'} style={{ fontSize: '10px' }}>{item.change}</b>
+                    <b className={item.isUp ? 'up' : 'down'} style={{ fontSize: '10px' }}>{item.change}</b>
                     <span className="symbol-price" style={{ fontSize: '12px' }}>
                       {isSelected && priceFormatted !== '—' ? priceFormatted : item.price}
                     </span>
@@ -3518,15 +3599,11 @@ def signal(tick):
               <button>All markets <ChevronDown size={14} /></button>
             </div>
             <div className="snapshot-grid">
-              {[
-                ['S&P 500', '5,842.91', '+0.37%'],
-                ['NASDAQ 100', '20,118.44', '+0.61%'],
-                ['GOLD', '$2,348.70', '-0.12%']
-              ].map(([name, price, change]) => (
-                <div className="snapshot-card" key={name}>
-                  <span>{name}</span>
-                  <strong>{price}</strong>
-                  <b className={change.startsWith('+') ? 'up' : 'down'}>{change}</b>
+              {popularMarketsData.slice(3, 6).map((item) => (
+                <div className="snapshot-card" key={item.name}>
+                  <span>{item.name}</span>
+                  <strong>{item.price}</strong>
+                  <b className={item.isUp ? 'up' : 'down'}>{item.change}</b>
                   <div className="mini-bars">
                     <i /><i /><i /><i /><i />
                   </div>
@@ -3555,9 +3632,9 @@ def signal(tick):
               </div>
               <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: "var(--font-sans)", fontWeight: 800, letterSpacing: '-0.03em' }}>
                 {language === 'ko' ? (
-                  <>10연승. <span style={{ color: '#0f766e', fontWeight: 800 }}>단 한 번의 보상 클레임 (One claim).</span></>
+                  <>10연승. <span style={{ color: '#f47a20', fontWeight: 800 }}>단 한 번의 보상 클레임 (One claim).</span></>
                 ) : (
-                  <>10 wins. <span style={{ color: '#0f766e', fontWeight: 800 }}>One claim.</span></>
+                  <>10 wins. <span style={{ color: '#f47a20', fontWeight: 800 }}>One claim.</span></>
                 )}
               </h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
@@ -3628,6 +3705,17 @@ def signal(tick):
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* ── 5-Min Speed Game Card ── */}
+          <div style={{ margin: '24px 0' }}>
+            <PolymarketSpeedGameCard
+              symbol={searched}
+              basePrice={numericBasePrice}
+              currentPrice={latestHistoryPrice}
+              priceDelta={priceDelta}
+              priceDeltaPct={priceDeltaPct}
+            />
           </div>
 
           {/* 1번 Layer: AI Quant vs Human Crowd Live Consensus Ratio */}
@@ -3820,406 +3908,50 @@ def signal(tick):
             </div>
           </div>
 
-          {/* 2번 Layer: 1-Hour Fixed Strike Price UP vs DOWN Prediction Cards */}
-          <div style={{ marginTop: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#18334a' }}>
-                  [LAYER 2] ROUND #{round} 1H 기준 고정가 업&다운 ({searched})
-                </span>
-                <span style={{ fontSize: '10px', background: '#0b131e', color: '#f59e0b', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>
-                  1H 캔들 시작가(기준점): ${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
-                <span style={{ fontSize: '10px', color: '#64748b' }}>
-                  (실시간 현재가: <strong style={{ color: isUpWinning ? '#059669' : '#dc2626' }}>${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>)
-                </span>
-              </div>
-
-              {/* 15-Minute Lockout Status Badge */}
-              <div>
-                {(hourlyRemainingSec <= 900) ? (
-                  <span style={{ fontSize: '9px', background: '#fffbeb', color: '#b45309', padding: '3px 8px', borderRadius: '3px', fontWeight: 700, border: '1px solid #fde68a' }}>
-                    [15M SETTLEMENT WATCH] 마감 15분 전 신규 예측 마감 (실시간 관전 모드)
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '9px', background: '#ecfdf5', color: '#047857', padding: '3px 8px', borderRadius: '3px', fontWeight: 700, border: '1px solid #a7f3d0' }}>
-                    [SUBMISSIONS OPEN] 매 정각 45분 전(XX:44:59)까지 예측 제출 가능
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* ── Polymarket-Style Live Oscillating Strike Arena Chart ── */}
-            <div style={{ background: '#0b131e', border: '1px solid #1e293b', borderRadius: '6px', padding: '16px 20px', margin: '0 0 16px', color: '#ffffff' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#94a3b8', letterSpacing: '.06em' }}>
-                    LIVE 1H STRIKE OSCILLATION ARENA
-                  </span>
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '3px',
-                    background: isUpWinning ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                    color: isUpWinning ? '#34d399' : '#f87171',
-                    border: `1px solid ${isUpWinning ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
-                  }}>
-                    {isUpWinning ? `[UP WINNING] +$${priceDelta.toFixed(2)} (+${priceDeltaPct.toFixed(2)}%)` : `[DOWN WINNING] -$${Math.abs(priceDelta).toFixed(2)} (${priceDeltaPct.toFixed(2)}%)`}
-                  </span>
-                </div>
-                <div style={{ fontSize: '10px', color: '#94a3b8', fontFamily: "var(--font-mono)" }}>
-                  1H OPEN STRIKE: <strong style={{ color: '#f59e0b' }}>${numericBasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-                  <span style={{ margin: '0 8px', color: '#475569' }}>|</span>
-                  CURRENT TICK: <strong style={{ color: isUpWinning ? '#34d399' : '#f87171' }}>${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
-                </div>
-              </div>
-
-              {/* SVG Oscillating Wave Canvas */}
-              <div style={{ position: 'relative', width: '100%', height: '140px', background: '#070d17', borderRadius: '4px', overflow: 'hidden', border: '1px solid #1e293b' }}>
-                {/* Upper UP ZONE Tag */}
-                <div style={{ position: 'absolute', top: '8px', left: '12px', fontSize: '8.5px', fontWeight: 700, color: 'rgba(52, 211, 153, 0.45)', letterSpacing: '.08em', pointerEvents: 'none' }}>
-                  ▲ UP WINNING ZONE (&gt; STRIKE BASELINE)
-                </div>
-                {/* Lower DOWN ZONE Tag */}
-                <div style={{ position: 'absolute', bottom: '8px', left: '12px', fontSize: '8.5px', fontWeight: 700, color: 'rgba(248, 113, 113, 0.45)', letterSpacing: '.08em', pointerEvents: 'none' }}>
-                  ▼ DOWN WINNING ZONE (&lt; STRIKE BASELINE)
-                </div>
-
-                {/* SVG Visual */}
-                <svg viewBox="0 0 640 140" style={{ width: '100%', height: '100%', display: 'block' }} preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="strikeUpGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00d395" stopOpacity="0.28" />
-                      <stop offset="100%" stopColor="#00d395" stopOpacity="0.0" />
-                    </linearGradient>
-                    <linearGradient id="strikeDownGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#ff4d6d" stopOpacity="0.0" />
-                      <stop offset="100%" stopColor="#ff4d6d" stopOpacity="0.28" />
-                    </linearGradient>
-                    <filter id="polyGlow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feGaussianBlur stdDeviation="3" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-
-                  {/* Horizontal Center Strike Base Line (Polymarket Dotted Axis) */}
-                  <line
-                    x1="0"
-                    y1="70"
-                    x2="640"
-                    y2="70"
-                    stroke="#f59e0b"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                    opacity="0.8"
-                  />
-
-                  {(() => {
-                    const hist = strikePriceHistory.length > 0 ? strikePriceHistory : [numericBasePrice, numericCurrentPrice];
-                    const minP = Math.min(...hist, numericBasePrice * 0.9985);
-                    const maxP = Math.max(...hist, numericBasePrice * 1.0015);
-                    const pRange = (maxP - minP) || 1;
-
-                    const pts = hist.map((val, i) => {
-                      const x = (i / (hist.length - 1 || 1)) * 640;
-                      const y = Math.max(12, Math.min(128, 140 - ((val - minP) / pRange) * 140));
-                      return { x, y };
-                    });
-
-                    // Cubic Bezier Spline generator for organic undulating snake wave
-                    const getCubicSpline = (pList: Array<{ x: number; y: number }>) => {
-                      if (pList.length === 0) return '';
-                      if (pList.length === 1) return `M ${pList[0].x} ${pList[0].y}`;
-                      let d = `M ${pList[0].x.toFixed(1)} ${pList[0].y.toFixed(1)}`;
-                      for (let i = 0; i < pList.length - 1; i++) {
-                        const p0 = pList[i === 0 ? 0 : i - 1];
-                        const p1 = pList[i];
-                        const p2 = pList[i + 1];
-                        const p3 = pList[i + 2] || p2;
-
-                        const cp1x = p1.x + (p2.x - p0.x) / 5.2;
-                        const cp1y = p1.y + (p2.y - p0.y) / 5.2;
-                        const cp2x = p2.x - (p3.x - p1.x) / 5.2;
-                        const cp2y = p2.y - (p3.y - p1.y) / 5.2;
-
-                        d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
-                      }
-                      return d;
-                    };
-
-                    const splineD = getCubicSpline(pts);
-                    const areaD = pts.length > 0 ? `${splineD} L 640 140 L 0 140 Z` : '';
-                    const lastPt = pts[pts.length - 1] || { x: 640, y: 70 };
-                    const strokeColor = isUpWinning ? '#00d395' : '#ff4d6d';
-                    const glowColor = isUpWinning ? 'rgba(0, 211, 149, 0.45)' : 'rgba(255, 77, 109, 0.45)';
-
-                    return (
-                      <g key="poly-snake-wave">
-                        {/* Shaded Area Under Curve */}
-                        <path
-                          d={areaD}
-                          fill={isUpWinning ? 'url(#strikeUpGrad)' : 'url(#strikeDownGrad)'}
-                        />
-
-                        {/* Snake Body Outer Neon Glow Layer */}
-                        <path
-                          d={splineD}
-                          fill="none"
-                          stroke={glowColor}
-                          strokeWidth="6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-
-                        {/* Snake Body Core High-Definition Solid Line */}
-                        <path
-                          d={splineD}
-                          fill="none"
-                          stroke={strokeColor}
-                          strokeWidth="2.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-
-                        {/* Vertical Crosshair Line at Current Tick */}
-                        <line
-                          x1={lastPt.x}
-                          y1="0"
-                          x2={lastPt.x}
-                          y2="140"
-                          stroke={strokeColor}
-                          strokeWidth="1"
-                          strokeDasharray="2 3"
-                          opacity="0.35"
-                        />
-
-                        {/* Horizontal Price Ray from Head to Right Edge */}
-                        <line
-                          x1={lastPt.x}
-                          y1={lastPt.y}
-                          x2="640"
-                          y2={lastPt.y}
-                          stroke={strokeColor}
-                          strokeWidth="1"
-                          strokeDasharray="3 3"
-                          opacity="0.5"
-                        />
-
-                        {/* High-Frequency Inner Sonar Radar Ping (Fast Pulse) */}
-                        <circle
-                          cx={lastPt.x}
-                          cy={lastPt.y}
-                          r="4"
-                          fill="none"
-                          stroke={strokeColor}
-                          strokeWidth="1.8"
-                        >
-                          <animate attributeName="r" values="3;18" dur="0.85s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.9;0" dur="0.85s" repeatCount="indefinite" />
-                        </circle>
-
-                        {/* Atmospheric Outer Sonar Radar Ring (Broad Pulse) */}
-                        <circle
-                          cx={lastPt.x}
-                          cy={lastPt.y}
-                          r="6"
-                          fill="none"
-                          stroke={strokeColor}
-                          strokeWidth="1.2"
-                          opacity="0.6"
-                        >
-                          <animate attributeName="r" values="6;32" dur="1.5s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.6;0" dur="1.5s" repeatCount="indefinite" />
-                        </circle>
-
-                        {/* Solid Bouncing Snake Head Core Dot */}
-                        <circle
-                          cx={lastPt.x}
-                          cy={lastPt.y}
-                          r="5.5"
-                          fill={strokeColor}
-                          stroke="#ffffff"
-                          strokeWidth="2"
-                        />
-
-                        {/* Floating Live Price Pin Tooltip (Moves Dynamically with Head) */}
-                        <g transform={`translate(${Math.min(lastPt.x - 98, 515)}, ${Math.max(10, Math.min(112, lastPt.y - 24))})`}>
-                          <rect
-                            x="0"
-                            y="0"
-                            width="94"
-                            height="20"
-                            rx="3"
-                            fill="#070d17"
-                            stroke={strokeColor}
-                            strokeWidth="1.2"
-                            opacity="0.95"
-                          />
-                          <text
-                            x="47"
-                            y="14"
-                            textAnchor="middle"
-                            fill={strokeColor}
-                            fontSize="9.5"
-                            fontWeight="700"
-                            fontFamily="var(--font-mono)"
-                          >
-                            ${latestHistoryPrice.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                          </text>
-                        </g>
-                      </g>
-                    );
-                  })()}
-                </svg>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              {/* UP Card */}
-              <button
-                type="button"
-                onClick={() => handleSelectPredictionDirection('UP')}
-                disabled={(hourlyRemainingSec <= 900 && !submitted) || submitted}
-                style={{
-                  border: prediction === 'UP' ? '2px solid #059669' : '1px solid #cbd5e1',
-                  background: prediction === 'UP' ? '#f0fdf4' : (hourlyRemainingSec <= 900 && !submitted) ? '#f8fafc' : '#ffffff',
-                  boxShadow: prediction === 'UP' ? '0 0 0 1px #059669, 0 4px 12px rgba(5, 150, 105, 0.12)' : 'none',
-                  padding: '20px 24px',
-                  borderRadius: '6px',
-                  textAlign: 'left',
-                  cursor: (hourlyRemainingSec <= 900 && !submitted) || submitted ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  opacity: (hourlyRemainingSec <= 900 && !submitted) ? 0.7 : 1,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '13px', color: '#059669', fontWeight: 700, background: '#e6f4ea', padding: '2px 6px', borderRadius: '3px' }}>[UP]</span>
-                    <strong style={{ fontSize: '15px', color: '#059669' }}>PREDICT UP (상승)</strong>
-                    {prediction === 'UP' && (
-                      <span style={{ fontSize: '9px', background: '#059669', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
-                        선택됨
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ margin: '6px 0 0', fontSize: '10.5px', color: '#475569' }}>
-                    1시간 뒤 캔들 종가가 기준 고정가(<strong>{lockedBasePrice || priceFormatted}</strong>)보다 <strong>상승</strong>할 것으로 예측
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
-                  <strong style={{ fontSize: '18px', color: '#059669' }}>
-                    {effectiveBullPct}%
-                  </strong>
-                </div>
-              </button>
-
-              {/* DOWN Card */}
-              <button
-                type="button"
-                onClick={() => handleSelectPredictionDirection('DOWN')}
-                disabled={(hourlyRemainingSec <= 900 && !submitted) || submitted}
-                style={{
-                  border: prediction === 'DOWN' ? '2px solid #dc2626' : '1px solid #cbd5e1',
-                  background: prediction === 'DOWN' ? '#fef2f2' : (hourlyRemainingSec <= 900 && !submitted) ? '#f8fafc' : '#ffffff',
-                  boxShadow: prediction === 'DOWN' ? '0 0 0 1px #dc2626, 0 4px 12px rgba(220, 38, 38, 0.12)' : 'none',
-                  padding: '20px 24px',
-                  borderRadius: '6px',
-                  textAlign: 'left',
-                  cursor: (hourlyRemainingSec <= 900 && !submitted) || submitted ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  opacity: (hourlyRemainingSec <= 900 && !submitted) ? 0.7 : 1,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '13px', color: '#dc2626', fontWeight: 700, background: '#fce8e6', padding: '2px 6px', borderRadius: '3px' }}>[DOWN]</span>
-                    <strong style={{ fontSize: '15px', color: '#dc2626' }}>PREDICT DOWN (하락)</strong>
-                    {prediction === 'DOWN' && (
-                      <span style={{ fontSize: '9px', background: '#dc2626', color: '#fff', padding: '2px 6px', borderRadius: '3px', fontWeight: 700 }}>
-                        선택됨
-                      </span>
-                    )}
-                  </div>
-                  <p style={{ margin: '6px 0 0', fontSize: '10.5px', color: '#475569' }}>
-                    1시간 뒤 캔들 종가가 기준 고정가(<strong>{lockedBasePrice || priceFormatted}</strong>)보다 <strong>하락</strong>할 것으로 예측
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '9px', color: '#64748b', display: 'block' }}>군중 지지율</span>
-                  <strong style={{ fontSize: '18px', color: '#dc2626' }}>
-                    {effectiveBearPct}%
-                  </strong>
-                </div>
-              </button>
-            </div>
-
-            {/* Real Submission Button */}
-            <div style={{ marginTop: '16px' }}>
-              <button
-                className="primary-button"
-                style={{
-                  width: '100%',
-                  height: '46px',
-                  background: submitted ? '#1e293b' : (hourlyRemainingSec <= 900) ? '#475569' : prediction ? (prediction === 'UP' ? '#059669' : '#dc2626') : '#94a3b8',
-                  color: '#ffffff',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '.06em',
-                  cursor: (!prediction || submitted || hourlyRemainingSec <= 900) ? 'not-allowed' : 'pointer',
-                  borderRadius: '4px',
-                  transition: 'all 0.2s ease'
-                }}
-                disabled={!prediction || submitted || (hourlyRemainingSec <= 900 && !submitted)}
-                onClick={async () => {
-                  if (!prediction || submitted || hourlyRemainingSec <= 900) return
-                  setSubmitted(true)
-                  const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
-                  const now = new Date()
-                  const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
-                  const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
-                  try {
-                    localStorage.setItem(streakKey, JSON.stringify({
-                      humanWins,
-                      round,
-                      submitted: true,
-                      prediction,
-                      roundHourTag: currentHourTag,
-                      submittedAt: Date.now(),
-                      basePrice: numericBasePrice
-                    }))
-                    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
-                    await submitPredictionApi({
-                      userId: uId,
-                      symbol: rawSymbol,
-                      predictionType: 'DIRECTION_1H',
-                      predictedDirection: prediction
-                    })
-                  } catch (e) {
-                    console.warn('submit prediction error:', e)
-                  }
-                }}
-              >
-                {submitted
-                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 예측 제출 완료 (실시간 정산 관전 중)`
-                  : (hourlyRemainingSec <= 900)
-                  ? `🔒 ROUND #${round} 마감 15분 전 락아웃 (신규 예측 마감 · 실시간 관전 모드 · 다음 정각 라운드 대기)`
-                  : prediction
-                  ? `ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 1시간 예측 제출하기 (10연승 도전)`
-                  : '위 카드에서 예측 방향(UP 또는 DOWN)을 먼저 선택해주세요'}
-              </button>
-            </div>
-          </div>
+          {/* 2번 Layer: 1-Hour Fixed Strike Price UP vs DOWN Prediction (Clean Speed Card Layout) */}
+          <Polymarket1HSpeedGameCard
+            searched={searched}
+            numericBasePrice={numericBasePrice}
+            latestHistoryPrice={latestHistoryPrice}
+            priceDelta={priceDelta}
+            priceDeltaPct={priceDeltaPct}
+            round={round}
+            prediction={prediction}
+            submitted={submitted}
+            hourlyRemainingSec={hourlyRemainingSec}
+            effectiveBullPct={effectiveBullPct}
+            effectiveBearPct={effectiveBearPct}
+            userId={currentUser?.userId ? Number(currentUser.userId) : 1}
+            onSelectPrediction={(dir) => handleSelectPredictionDirection(dir)}
+            onSubmitPrediction={async () => {
+              if (!prediction || submitted || hourlyRemainingSec <= 900) return
+              setSubmitted(true)
+              const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
+              const now = new Date()
+              const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
+              const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
+              try {
+                localStorage.setItem(streakKey, JSON.stringify({
+                  humanWins,
+                  round,
+                  submitted: true,
+                  prediction,
+                  roundHourTag: currentHourTag,
+                  submittedAt: Date.now(),
+                  basePrice: numericBasePrice
+                }))
+                const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+                await submitPredictionApi({
+                  userId: uId,
+                  symbol: rawSymbol,
+                  predictionType: 'DIRECTION_1H',
+                  predictedDirection: prediction
+                })
+              } catch (e) {
+                console.warn('submit prediction error:', e)
+              }
+            }}
+          />
         </section>
       )}
 
@@ -4841,7 +4573,7 @@ def signal(tick):
                 </h3>
                 <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', lineHeight: 1.5, fontFamily: "var(--font-sans)" }}>
                   {language === 'ko'
-                    ? '대표님의 텔레그램(@AetherQuantOfficialBot)으로 봇 구동 라이선스 키가 즉시 발송되었습니다. 아래 발급된 키로 거래소 API를 연동하여 24시간 봇을 가동하세요.'
+                    ? '대표님의 텔레그램(@MyQuantOfficial_bot)으로 봇 구동 라이선스 키가 즉시 발송되었습니다. 아래 발급된 키로 거래소 API를 연동하여 24시간 봇을 가동하세요.'
                     : 'Your bot license key has been transmitted to your Telegram. Use this key to provision your 24/7 cloud quant worker.'}
                 </p>
 
@@ -4889,7 +4621,7 @@ def signal(tick):
                     onClick={handleConnectTelegram}
                   >
                     <ExternalLink size={13} style={{ display: 'inline', marginRight: '6px' }} />
-                    텔레그램(@AetherQuantOfficialBot)에서 키 & 알림 확인하기 ↗
+                    텔레그램(@MyQuantOfficial_bot)에서 키 & 알림 확인하기 ↗
                   </button>
                 </div>
               </div>
@@ -6071,7 +5803,7 @@ def signal(tick):
                     onClick={handleTestSandbox}
                     disabled={sandboxLoading}
                   >
-                    {sandboxLoading ? '백엔드 AST 분석 및 연산 중…' : '▶ 파이썬 백테스트 실행 (1,000 캔들)'}
+                    {sandboxLoading ? '8,000봉 AST 분석 및 퀀트 연산 중…' : '▶ 퀀트 엔진 백테스트 실행 (8,000 캔들 · 딥 벡터 시뮬레이션)'}
                   </button>
                   <button
                     type="button"
@@ -6431,7 +6163,7 @@ def signal(tick):
                     className="bot-tool-button"
                     onClick={handleConnectTelegram}
                   >
-                    <ExternalLink size={14} /> 텔레그램(@AetherQuantOfficialBot) 연동
+                    <ExternalLink size={14} /> 텔레그램(@MyQuantOfficial_bot) 연동
                   </button>
                 </div>
               </div>
@@ -6476,7 +6208,7 @@ def signal(tick):
                       </div>
                       <div>
                         <strong style={{ fontSize: '15px', color: '#0f172a', display: 'block' }}>
-                          @AetherQuantOfficialBot
+                          @MyQuantOfficial_bot
                         </strong>
                         <small style={{ color: '#64748b', fontSize: '11px' }}>
                           AETHER 공식 인증 퀀트 디스패처 · End-to-End 암호화 전송
@@ -7375,69 +7107,7 @@ def signal(tick):
 
       {(activeTopView === 'trade') && (
         <>
-        {/* ── Hall of Fame (Verified Top Analysts) ── */}
-        <section className="expert-directory panel">
-        <div className="panel-heading">
-          <span><Diamond /> HALL OF FAME · TOP ANALYSTS</span>
-          <span className="status-tag">SEASON 1 LIVE QUALIFIERS</span>
-        </div>
-        <div className="directory-intro">
-          <div>
-            <span className="overline">VERIFIED LEADERBOARD</span>
-            <h2>Prove your alpha. Claim your seat in the Hall of Fame.</h2>
-            <p>실제 팩트체크된 퀀트 분석과 24H 예측 승률로 누구나 명예의 전당에 도전할 수 있습니다. 100% 검증된 실적으로만 평가됩니다.</p>
-          </div>
-          <button className="text-button" onClick={() => alert('누구나 분석글 작성 및 24H 예측 리그 참여로 명예의 전당 순위에 오를 수 있습니다!')}>
-            CHALLENGE RANKING ↗
-          </button>
-        </div>
-        <div className="expert-grid">
-          {experts.map((expert, idx) => {
-            const displayName = expert.nickname || expert.username || 'Analyst'
-            const role = expert.role || 'Quant Analyst'
-            const score = expert.reputationScore || (98 - idx * 3)
-            const posts = expert.postCount || expert.posts || (120 - idx * 20)
-            const followerNum = typeof expert.followerCount === 'number' ? expert.followerCount : (12400 - idx * 3000)
-            const followers = followerNum >= 1000 ? `${(followerNum / 1000).toFixed(1)}K` : followerNum
-            const tone = expert.tone || (idx === 0 ? 'navy' : idx === 1 ? 'green' : 'blue')
-            const initials = displayName.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
-            const rankLabel = `#0${idx + 1}`
-
-            return (
-              <article className="expert-card" key={expert.userId || displayName}>
-                <div className={`expert-avatar ${tone}`}>{initials}</div>
-                <div className="expert-main">
-                  <div className="expert-name-row">
-                    <div>
-                      <strong>
-                        <span style={{ color: '#2b866d', marginRight: '6px', fontSize: '10px', fontWeight: 'bold' }}>{rankLabel}</span>
-                        {displayName}
-                      </strong>
-                      <span>{role}</span>
-                    </div>
-                    <button
-                      className={`follow-button ${expert.isFollowedByMe ? 'following' : ''}`}
-                      onClick={() => handleFollow(expert.userId || (idx + 1))}
-                    >
-                      {expert.isFollowedByMe ? 'FOLLOWING ✓' : 'FOLLOW +'}
-                    </button>
-                  </div>
-                  <div className="expert-stats">
-                    <span>REPUTATION <b>{score}P</b></span>
-                    <span>POSTS <b>{posts}</b></span>
-                    <span>FOLLOWERS <b>{followers}</b></span>
-                  </div>
-                  <div className="expert-note">
-                    <span>HONOR STATUS</span>
-                    <strong>Verified Top Analyst · Season 1 Ranked</strong>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
-      </section>
-      </>
+        </>
       )}
 
       {/* ── Institutional Media Intelligence Wire ── */}
