@@ -824,11 +824,10 @@ export default function TradePage() {
           </div>
         </section>
 
-        <footer className="market-footer">
-          <span>Quotes are indicative and may be delayed. Not financial advice.</span>
-          <span>
-            <span className="market-live-dot" /> DATA FEED NOMINAL
-          </span>
+        <footer className="market-footer" style={{ width: '100%', display: 'block', borderTop: '1px solid #1e293b', paddingTop: '16px', marginTop: '24px', textAlign: 'center' }}>
+          <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>
+            ⚠️ DISCLAIMER: AETHER 터미널이 제공하는 차익거래 및 펀딩비 데이터는 정보 제공 목적으로만 사용되며, 금융 투자 조언이 아닙니다. 모든 트레이딩의 최종 책임은 본인에게 있습니다.
+          </p>
         </footer>
       </div>
     </main>

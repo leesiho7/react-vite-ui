@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
@@ -34,7 +34,11 @@ export function CryptoArbitrageDashboard() {
     <section className="arb-section"><div className="arb-section-heading"><div><span className="arb-kicker">01 / MARKET MAP</span><h2>Exchange Spread <em>Heatmap</em></h2></div><div className="arb-filter">{['ALL','CONNECTED','Binance','Bybit'].map((item) => <button key={item} className={filter === item ? 'selected' : ''} onClick={() => setFilter(item)}>{item}</button>)}</div></div><div className="arb-table"><div className="arb-table-row arb-table-head"><span>EXCHANGE</span><span>STATUS</span><span>BTC / USDT</span><span>ETH / USDT</span><span>SOL / USDT</span><span>XRP / USDT</span><span /></div>{visibleExchanges.map((exchange) => <div className="arb-table-row" key={exchange.name}><span className="arb-exchange"><b>{exchange.mark}</b>{exchange.name}</span><span className={`arb-connection ${exchange.status.toLowerCase()}`}><i />{exchange.status}</span>{[exchange.btc, exchange.eth, exchange.sol, exchange.xrp].map((value) => <span className={value.startsWith('-') ? 'negative' : 'positive'} key={value}>{value}</span>)}<ExternalLink size={13} /></div>)}</div></section>
     <section className="arb-best-route"><div><span className="arb-kicker">HIGHEST CAPTURED SPREAD</span><h2>Upbit <ArrowUp size={17} /> Binance</h2><p>{pair} · gross spread before fees</p></div><strong>+0.44%</strong><div className="arb-route-meta"><span>EST. NET <b>+0.31%</b></span><span>DEPTH <b>$2.4M</b></span><span>CONFIDENCE <b>HIGH</b></span></div><button>OPEN ROUTE <ArrowUp size={14} /></button></section>
     <section className="arb-terminal-section"><div className="arb-section-heading"><div><span className="arb-kicker">02 / MICROSTRUCTURE</span><h2>{pair} <em>Orderbook</em></h2></div><div className="arb-live-label"><span className="arb-dot" /> BINANCE L2 · 100ms</div></div><div className="arb-terminal"><OrderLevels title="ASKS / SELL" levels={asks} tone="ask" /><div className="arb-mid-price"><small>MARK PRICE</small><strong>68,392.10</strong><span>+2.84%</span><hr /><small>SPREAD</small><b>$30.80 · 0.045%</b></div><OrderLevels title="BIDS / BUY" levels={bids} tone="bid" /><div className="arb-tape"><div className="arb-column-title"><span>TRADE TAPE</span><span>PRICE</span><span>SIZE</span></div>{tape.map(([time,price,size,side]) => <div className="arb-tape-row" key={time}><span>{time}</span><b className={side === 'BUY' ? 'positive' : 'negative'}>{price}</b><span>{size}</span></div>)}</div></div></section>
-    <footer className="arb-footer"><span>DATA IS FOR RESEARCH ONLY · NO EXECUTION HAS BEEN REQUESTED</span><span>PUBLIC FEED FALLBACK ACTIVE · <Link href="/login">SIGN IN FOR PRIVATE ENGINES</Link></span></footer>
+    <footer className="arb-footer" style={{ width: '100%', display: 'block', borderTop: '1px solid #1e293b', paddingTop: '16px', marginTop: '24px', textAlign: 'center' }}>
+      <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>
+        ⚠️ DISCLAIMER: AETHER 터미널이 제공하는 차익거래 및 펀딩비 데이터는 정보 제공 목적으로만 사용되며, 금융 투자 조언이 아닙니다. 모든 트레이딩의 최종 책임은 본인에게 있습니다.
+      </p>
+    </footer>
   </main>
 }
 

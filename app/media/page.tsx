@@ -429,9 +429,10 @@ export default function MediaPage() {
         </aside>
       </div>
 
-      <footer className="media-footer">
-        <span>CONTENT IS DISPLAYED VIA OFFICIAL PUBLISHER LINKS AND EMBEDS.</span>
-        <Link href="/">{t.back}</Link>
+      <footer className="media-footer" style={{ width: '100%', display: 'block', borderTop: '1px solid #1e293b', paddingTop: '16px', marginTop: '24px', textAlign: 'center' }}>
+        <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>
+          ⚠️ DISCLAIMER: AETHER 터미널이 제공하는 차익거래 및 펀딩비 데이터는 정보 제공 목적으로만 사용되며, 금융 투자 조언이 아닙니다. 모든 트레이딩의 최종 책임은 본인에게 있습니다.
+        </p>
       </footer>
     </main>
   )
