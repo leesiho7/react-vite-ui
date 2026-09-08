@@ -62,23 +62,23 @@ export default function ProfilePage() {
 
           <div className="profile-form">
             {currentUser ? (
-              <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '4px', marginBottom: '18px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '11.5px' }}>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px' }}>계정 ID (Username)</span>
-                    <strong style={{ color: '#18334a' }}>{currentUser.username}</strong>
+              <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', padding: '16px', borderRadius: '6px', marginBottom: '18px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '14px', fontSize: '11.5px' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '9.5px', marginBottom: '3px' }}>계정 ID</span>
+                    <strong style={{ color: '#18334a', display: 'block', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser.username}</strong>
                   </div>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px' }}>활동 닉네임 (Nickname)</span>
-                    <strong style={{ color: '#f47a20' }}>{currentUser.nickname || '-'}</strong>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '9.5px', marginBottom: '3px' }}>활동 닉네임</span>
+                    <strong style={{ color: '#f47a20', display: 'block', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser.nickname || '-'}</strong>
                   </div>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px' }}>회원 권한 (Role)</span>
-                    <strong style={{ color: '#0f766e' }}>{currentUser.role || 'ROLE_USER'}</strong>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '9.5px', marginBottom: '3px' }}>회원 권한</span>
+                    <strong style={{ color: '#0f766e', display: 'block', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser.role || 'ROLE_USER'}</strong>
                   </div>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px' }}>평판 점수 (Reputation)</span>
-                    <strong style={{ color: '#f59e0b' }}>{currentUser.reputationScore || 100} PTS</strong>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '9.5px', marginBottom: '3px' }}>평판 점수</span>
+                    <strong style={{ color: '#b45309', display: 'block', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser.reputationScore || 100} PTS</strong>
                   </div>
                 </div>
               </div>
