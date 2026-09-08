@@ -583,7 +583,7 @@ const mediaCopy = {
   },
   ko: {
     overline: '글로벌 기관 및 가상자산 미디어 인텔리전스',
-    title: <>시장의 핵심을<br /><em>1분 만에 꿰뚫다.</em></>,
+    title: <>시장의 핵심을<br /><em style={{ color: '#f47a20', fontStyle: 'normal' }}>1분 만에 꿰뚫다.</em></>,
     intro: '잡음 가득한 유튜브 찌라시 대신, 공신력 있는 외신과 기관 마스터클래스의 엑기스만 추출하여 차트와 즉시 연동하세요.',
     status: '와이어 상태',
     indexed: '8개 출처 인덱싱',

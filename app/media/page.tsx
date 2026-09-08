@@ -60,9 +60,9 @@ const copy = {
     overline: '시장 인텔리전스 와이어',
     title: (
       <>
-        소음 없는
+        시장의 핵심을
         <br />
-        <em>시장 맥락.</em>
+        <em style={{ color: '#f47a20', fontStyle: 'normal' }}>1분 만에 꿰뚫다.</em>
       </>
     ),
     intro: '공식 출처의 금융 뉴스와 영상 인텔리전스를 한 화면에서 확인하세요.',
