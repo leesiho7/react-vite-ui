@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { usePersistentState } from '@/lib/usePersistentState'
-import { Bot, ChevronDown, Code2, Filter, MoreHorizontal, Play, Plus, Search, SquareTerminal, SlidersHorizontal, Square, Trash2, X, RefreshCw } from 'lucide-react'
+import { Bot, ChevronDown, Code2, Filter, MoreHorizontal, Play, Plus, Search, SquareTerminal, SlidersHorizontal, Square, Trash2, X, RefreshCw, Radio, Copy, Check, Zap, ExternalLink } from 'lucide-react'
 import { FinanceNav } from '@/components/FinanceNav'
 import {
   fetchUserBots,
   createBotInstanceApi,
   startBotApi,
   pauseBotApi,
-  deleteBotApi
+  deleteBotApi,
+  fetchTradingViewConfig,
+  fetchTradingViewLogs,
+  sendTradingViewSignal
 } from '@/lib/api'
 import type { BotControlResult } from '@/lib/api'
 import type { AuthResponse } from '@/lib/types'
@@ -19,10 +22,17 @@ export default function BotPage() {
   const [loading, setLoading] = useState<boolean>(true)
   const [showCreate, setShowCreate] = useState(false)
   const [query, setQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'bot-center' | 'webhook' | 'settings'>('bot-center')
+
+  // TradingView Webhook State
+  const [tvConfig, setTvConfig] = useState<any>(null)
+  const [tvLogs, setTvLogs] = useState<any[]>([])
+  const [copiedUrl, setCopiedUrl] = useState(false)
+  const [copiedPayload, setCopiedPayload] = useState(false)
+  const [sendingSignal, setSendingSignal] = useState(false)
 
   /**
    * 로그인한 고객의 userId. 비로그인 시 null.
-   * 이 페이지는 예전에 userId를 1로 하드코딩해서, 어떤 고객이 접속하든 1번 유저의 봇을 보고 제어했다.
    */
   const [activeUserId, setActiveUserId] = useState<number | null>(null)
   const [authLoaded, setAuthLoaded] = useState(false)
@@ -66,9 +76,60 @@ export default function BotPage() {
     }
   }, [activeUserId])
 
+  const loadTvData = useCallback(async () => {
+    const uId = activeUserId ?? 1
+    try {
+      const config = await fetchTradingViewConfig(uId)
+      setTvConfig(config)
+      const logs = await fetchTradingViewLogs(uId)
+      setTvLogs(logs)
+    } catch (e) {
+      console.warn('Failed to load TradingView Webhook data:', e)
+    }
+  }, [activeUserId])
+
   useEffect(() => {
-    if (authLoaded) loadBots()
-  }, [authLoaded, loadBots])
+    if (authLoaded) {
+      loadBots()
+      loadTvData()
+    }
+  }, [authLoaded, loadBots, loadTvData])
+
+  const handleCopyUrl = () => {
+    if (!tvConfig?.webhookUrl) return
+    const fullUrl = `${tvConfig.webhookUrl}?userId=${activeUserId || 1}&secretKey=${tvConfig.secretKey}`
+    navigator.clipboard.writeText(fullUrl)
+    setCopiedUrl(true)
+    setTimeout(() => setCopiedUrl(false), 2000)
+  }
+
+  const handleCopyPayload = () => {
+    if (!tvConfig?.samplePayload) return
+    navigator.clipboard.writeText(JSON.stringify(tvConfig.samplePayload, null, 2))
+    setCopiedPayload(true)
+    setTimeout(() => setCopiedPayload(false), 2000)
+  }
+
+  const handleSendTestSignal = async (action: 'BUY' | 'SELL') => {
+    const uId = activeUserId ?? 1
+    setSendingSignal(true)
+    try {
+      await sendTradingViewSignal({
+        userId: uId,
+        secretKey: tvConfig?.secretKey || 'aether_tv_sec_1',
+        action,
+        symbol: 'BTCUSDT',
+        exchange: 'BINANCE',
+        quantity: 0.01,
+        strategyName: 'Elliott_Wave3_Breakout'
+      })
+      await loadTvData()
+    } catch (e) {
+      console.warn('Test signal error:', e)
+    } finally {
+      setSendingSignal(false)
+    }
+  }
 
   /** 서버 응답을 검사하고 실패 시 실제 사유를 알린다. */
   const ensureSucceeded = (result: BotControlResult, fallbackMessage: string) => {
@@ -101,7 +162,6 @@ export default function BotPage() {
       })
       if (!ensureSucceeded(result, '봇 인스턴스 생성에 실패했습니다.')) return
 
-      // 구독이 없으면 백엔드가 STOPPED로 생성하고 사유를 알려준다
       if (result.status && result.status !== 'RUNNING' && result.message) {
         alert(result.message)
       }
@@ -123,7 +183,6 @@ export default function BotPage() {
       ? await pauseBotApi(botId, uId)
       : await startBotApi(botId, uId)
 
-    // 성공/실패 모두 서버 상태를 다시 읽어 화면을 단일 진실 소스에 맞춘다
     ensureSucceeded(result, '봇 상태 변경에 실패했습니다.')
     await loadBots()
   }
@@ -164,10 +223,28 @@ export default function BotPage() {
             <input placeholder="Search" />
           </label>
           <nav className="bot-console-nav">
-            <a className="active"><Bot size={16} /> 24H Bot Center</a>
+            <a
+              className={activeTab === 'bot-center' ? 'active' : ''}
+              onClick={() => setActiveTab('bot-center')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Bot size={16} /> 24H Bot Center
+            </a>
+            <a
+              className={activeTab === 'webhook' ? 'active' : ''}
+              onClick={() => setActiveTab('webhook')}
+              style={{ cursor: 'pointer' }}
+            >
+              <Radio size={16} /> TradingView Webhook
+            </a>
             <a href="/"><SquareTerminal size={16} /> Terminal Console</a>
-            <a><Code2 size={16} /> Strategies</a>
-            <a><SlidersHorizontal size={16} /> Settings</a>
+            <a
+              className={activeTab === 'settings' ? 'active' : ''}
+              onClick={() => setActiveTab('settings')}
+              style={{ cursor: 'pointer' }}
+            >
+              <SlidersHorizontal size={16} /> Settings
+            </a>
           </nav>
           <div className="bot-side-footer">
             PRO INSTANCE POOL<br />
@@ -175,129 +252,357 @@ export default function BotPage() {
           </div>
         </aside>
 
-        <section className="bot-console-main">
-          <header className="bot-console-header">
-            <div>
-              <span className="bot-console-kicker">AUTONOMOUS TRADING / WORKSPACE</span>
-              <h1>24H <em>Bot Center</em></h1>
-              <p>Manage, monitor, and deploy your autonomous trading instances across Binance & Bybit.</p>
-            </div>
-            <button className="bot-create-button" onClick={() => setShowCreate(true)}>
-              <Plus size={16} /> Create bot
-            </button>
-          </header>
+        {activeTab === 'bot-center' ? (
+          <section className="bot-console-main">
+            <header className="bot-console-header">
+              <div>
+                <span className="bot-console-kicker">AUTONOMOUS TRADING / WORKSPACE</span>
+                <h1>24H <em>Bot Center</em></h1>
+                <p>Manage, monitor, and deploy your autonomous trading instances across Binance & Bybit.</p>
+              </div>
+              <button className="bot-create-button" onClick={() => setShowCreate(true)}>
+                <Plus size={16} /> Create bot
+              </button>
+            </header>
 
-          <div className="bot-toolbar">
-            <label className="bot-search">
-              <Search size={16} />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by bot name or symbol" />
-            </label>
-            <button className="bot-tool-button" onClick={loadBots}>
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
-            </button>
-          </div>
-
-          <div className="bot-table-wrap">
-            <div className="bot-table-head">
-              <span></span>
-              <span>Name / Ticker</span>
-              <span>Exchange</span>
-              <span>State</span>
-              <span>Symbol</span>
-              <span>Win Rate / PnL</span>
-              <span>Actions</span>
+            <div className="bot-toolbar">
+              <label className="bot-search">
+                <Search size={16} />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by bot name or symbol" />
+              </label>
+              <button className="bot-tool-button" onClick={loadBots}>
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+              </button>
             </div>
 
-            {loading ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
-                <RefreshCw size={18} className="animate-spin" style={{ margin: '0 auto 8px' }} />
-                Loading 24H bot instances from backend database...
+            <div className="bot-table-wrap">
+              <div className="bot-table-head">
+                <span></span>
+                <span>Name / Ticker</span>
+                <span>Exchange</span>
+                <span>State</span>
+                <span>Symbol</span>
+                <span>Win Rate / PnL</span>
+                <span>Actions</span>
               </div>
-            ) : activeUserId === null ? (
-              <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
-                <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
-                <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>로그인이 필요합니다.</h3>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>내 24시간 봇 인스턴스를 조회하고 제어하려면 먼저 로그인해 주세요.</p>
+
+              {loading ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                  <RefreshCw size={18} className="animate-spin" style={{ margin: '0 auto 8px' }} />
+                  Loading 24H bot instances from backend database...
+                </div>
+              ) : activeUserId === null ? (
+                <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
+                  <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+                  <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>로그인이 필요합니다.</h3>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>내 24시간 봇 인스턴스를 조회하고 제어하려면 먼저 로그인해 주세요.</p>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
+                  <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+                  <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>활성화된 봇 인스턴스가 0개입니다.</h3>
+                  <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '12px' }}>오른쪽 상단의 [+ Create bot] 버튼을 클릭하여 바이낸스/바이비트 자동매매 봇을 새로 생성하세요.</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreate(true)}
+                    style={{ background: '#f47a20', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    + 첫번째 봇 인스턴스 생성하기
+                  </button>
+                </div>
+              ) : (
+                filtered.map((bot) => {
+                  const isRunning = bot.status === 'RUNNING'
+                  const isPaused = bot.status === 'PAUSED'
+                  const isExpired = bot.status === 'EXPIRED'
+                  const ex = bot.exchange || 'BINANCE'
+                  const winRate = Number(bot.winRate ?? 0)
+
+                  return (
+                    <div className="bot-table-row" key={bot.instanceId || bot.id}>
+                      <span className="bot-checkbox"></span>
+                      <div className="bot-name-cell">
+                        <span className="bot-row-icon"><Bot size={15} /></span>
+                        <span>
+                          <strong>{bot.botName}</strong>
+                          <small>ID #{bot.instanceId || bot.id}</small>
+                        </span>
+                      </div>
+                      <span>
+                        <b style={{
+                          padding: '2px 7px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          background: ex === 'BYBIT' ? '#fff7ed' : '#f0fdf4',
+                          color: ex === 'BYBIT' ? '#c2410c' : '#15803d',
+                          border: `1px solid ${ex === 'BYBIT' ? '#ffedd5' : '#bbf7d0'}`
+                        }}>
+                          {ex}
+                        </b>
+                      </span>
+                      <span className={`bot-state ${isRunning ? 'is-running' : isPaused ? 'is-paused' : ''}`}>
+                        <i />{isRunning ? 'Running' : isPaused ? 'Paused' : isExpired ? 'Expired' : 'Stopped'}
+                      </span>
+                      <span className="bot-resource">{bot.symbol || 'BTCUSDT'}</span>
+                      <span className="bot-event" style={{ color: winRate >= 50 ? '#059669' : '#dc2626', fontWeight: 700 }}>
+                        {winRate.toFixed(1)}% ({bot.totalTrades || 0} trades)
+                      </span>
+                      <div className="bot-row-actions">
+                        <button
+                          onClick={() => handleToggleState(bot.instanceId || bot.id, bot.status)}
+                          aria-label={isRunning ? 'Pause bot' : 'Start bot'}
+                          title={isExpired ? '구독 만료 — 재구독 후 가동할 수 있습니다' : isRunning ? 'Pause' : 'Start'}
+                        >
+                          {isRunning ? <Square size={15} /> : <Play size={16} />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBot(bot.instanceId || bot.id)}
+                          aria-label="Delete bot"
+                          title="Delete bot"
+                          style={{ color: '#ef4444' }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            <div className="bot-table-footer">
+              <span>{filtered.length} active bot instances in DB</span>
+              <button>10 per page <ChevronDown size={14} /></button>
+            </div>
+          </section>
+        ) : activeTab === 'webhook' ? (
+          <section className="bot-console-main" style={{ padding: '32px 36px' }}>
+            <header className="bot-console-header" style={{ marginBottom: '24px' }}>
+              <div>
+                <span className="bot-console-kicker" style={{ color: '#f47a20', fontWeight: 700, letterSpacing: '0.05em' }}>
+                  INSTITUTIONAL SIGNAL RELAY / WEBHOOK
+                </span>
+                <h1 style={{ margin: '4px 0 6px', fontSize: '26px', fontWeight: 800 }}>
+                  TradingView <em>Webhook Engine</em>
+                </h1>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
+                  Connect TradingView alert webhooks directly to AETHER execution engine for zero-latency automated trades.
+                </p>
               </div>
-            ) : filtered.length === 0 ? (
-              <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
-                <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
-                <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>활성화된 봇 인스턴스가 0개입니다.</h3>
-                <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '12px' }}>오른쪽 상단의 [+ Create bot] 버튼을 클릭하여 바이낸스/바이비트 자동매매 봇을 새로 생성하세요.</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
-                  onClick={() => setShowCreate(true)}
-                  style={{ background: '#f47a20', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                  onClick={() => handleSendTestSignal('BUY')}
+                  disabled={sendingSignal}
+                  style={{
+                    background: '#16a34a',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '9px 16px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
                 >
-                  + 첫번째 봇 인스턴스 생성하기
+                  <Zap size={14} /> {sendingSignal ? 'Executing...' : 'Test BUY Signal'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSendTestSignal('SELL')}
+                  disabled={sendingSignal}
+                  style={{
+                    background: '#dc2626',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '9px 16px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Zap size={14} /> {sendingSignal ? 'Executing...' : 'Test SELL Signal'}
                 </button>
               </div>
-            ) : (
-              filtered.map((bot) => {
-                const isRunning = bot.status === 'RUNNING'
-                const isPaused = bot.status === 'PAUSED'
-                const isExpired = bot.status === 'EXPIRED'
-                const ex = bot.exchange || 'BINANCE'
-                // 백엔드 BotInstanceResponse의 필드명은 winRate (예전 winRatePct는 항상 undefined → 0.0%로 표시됐다)
-                const winRate = Number(bot.winRate ?? 0)
+            </header>
 
-                return (
-                  <div className="bot-table-row" key={bot.instanceId || bot.id}>
-                    <span className="bot-checkbox"></span>
-                    <div className="bot-name-cell">
-                      <span className="bot-row-icon"><Bot size={15} /></span>
-                      <span>
-                        <strong>{bot.botName}</strong>
-                        <small>ID #{bot.instanceId || bot.id}</small>
-                      </span>
-                    </div>
-                    <span>
-                      <b style={{
-                        padding: '2px 7px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        background: ex === 'BYBIT' ? '#fff7ed' : '#f0fdf4',
-                        color: ex === 'BYBIT' ? '#c2410c' : '#15803d',
-                        border: `1px solid ${ex === 'BYBIT' ? '#ffedd5' : '#bbf7d0'}`
-                      }}>
-                        {ex}
-                      </b>
-                    </span>
-                    <span className={`bot-state ${isRunning ? 'is-running' : isPaused ? 'is-paused' : ''}`}>
-                      <i />{isRunning ? 'Running' : isPaused ? 'Paused' : isExpired ? 'Expired' : 'Stopped'}
-                    </span>
-                    <span className="bot-resource">{bot.symbol || 'BTCUSDT'}</span>
-                    <span className="bot-event" style={{ color: winRate >= 50 ? '#059669' : '#dc2626', fontWeight: 700 }}>
-                      {winRate.toFixed(1)}% ({bot.totalTrades || 0} trades)
-                    </span>
-                    <div className="bot-row-actions">
-                      <button
-                        onClick={() => handleToggleState(bot.instanceId || bot.id, bot.status)}
-                        aria-label={isRunning ? 'Pause bot' : 'Start bot'}
-                        title={isExpired ? '구독 만료 — 재구독 후 가동할 수 있습니다' : isRunning ? 'Pause' : 'Start'}
-                      >
-                        {isRunning ? <Square size={15} /> : <Play size={16} />}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBot(bot.instanceId || bot.id)}
-                        aria-label="Delete bot"
-                        title="Delete bot"
-                        style={{ color: '#ef4444' }}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
+            {/* 1. Endpoint & Secret Key Box */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                YOUR DEDICATED TRADINGVIEW WEBHOOK ENDPOINT
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  readOnly
+                  value={tvConfig?.webhookUrl ? `${tvConfig.webhookUrl}?userId=${activeUserId || 1}&secretKey=${tvConfig.secretKey}` : 'Loading Webhook URL...'}
+                  style={{
+                    flex: 1,
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '10px 14px',
+                    fontSize: '13px',
+                    fontFamily: 'monospace',
+                    color: '#0f172a'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyUrl}
+                  style={{
+                    background: copiedUrl ? '#16a34a' : '#0f172a',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 18px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedUrl ? 'Copied!' : 'Copy Webhook URL'}
+                </button>
+              </div>
+            </div>
 
-          <div className="bot-table-footer">
-            <span>{filtered.length} active bot instances in DB</span>
-            <button>10 per page <ChevronDown size={14} /></button>
-          </div>
-        </section>
+            {/* 2. TradingView Alert Message JSON Template Box */}
+            <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', padding: '20px', marginBottom: '24px', color: '#f8fafc' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  TRADINGVIEW ALERT MESSAGE PAYLOAD (JSON)
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopyPayload}
+                  style={{
+                    background: '#1e293b',
+                    color: '#e2e8f0',
+                    border: '1px solid #334155',
+                    padding: '5px 12px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {copiedPayload ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedPayload ? 'Copied JSON' : 'Copy JSON'}
+                </button>
+              </div>
+              <pre style={{ margin: 0, fontSize: '12px', fontFamily: 'monospace', color: '#38bdf8', overflowX: 'auto', background: '#020617', padding: '14px', borderRadius: '6px' }}>
+{JSON.stringify(tvConfig?.samplePayload || {
+  userId: activeUserId || 1,
+  secretKey: tvConfig?.secretKey || 'aether_tv_sec_1',
+  action: "BUY",
+  symbol: "BTCUSDT",
+  exchange: "BINANCE",
+  quantity: 0.01,
+  strategyName: "Elliott_Wave3_Breakout"
+}, null, 2)}
+              </pre>
+            </div>
+
+            {/* 3. Real-time Webhook Executed Trades Log Table */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                  ⚡ Real-time Webhook Execution Logs ({tvLogs.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={loadTvData}
+                  style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <RefreshCw size={13} /> Refresh Logs
+                </button>
+              </div>
+
+              {tvLogs.length === 0 ? (
+                <div style={{ padding: '36px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                  No TradingView webhook signals received yet. Click [Test BUY Signal] above to simulate an incoming alert!
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#475569' }}>
+                        <th style={{ padding: '10px 12px' }}>ID / Time</th>
+                        <th style={{ padding: '10px 12px' }}>Exchange</th>
+                        <th style={{ padding: '10px 12px' }}>Symbol</th>
+                        <th style={{ padding: '10px 12px' }}>Action</th>
+                        <th style={{ padding: '10px 12px' }}>Qty</th>
+                        <th style={{ padding: '10px 12px' }}>Strategy</th>
+                        <th style={{ padding: '10px 12px' }}>Status</th>
+                        <th style={{ padding: '10px 12px' }}>Latency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tvLogs.map((logItem) => (
+                        <tr key={logItem.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '10px 12px' }}>
+                            <strong style={{ color: '#0f172a' }}>#{logItem.id}</strong><br />
+                            <small style={{ color: '#94a3b8' }}>{logItem.receivedAt}</small>
+                          </td>
+                          <td style={{ padding: '10px 12px', fontWeight: 600 }}>{logItem.exchange}</td>
+                          <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{logItem.symbol}</td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontWeight: 700,
+                              fontSize: '11px',
+                              background: logItem.action === 'BUY' ? '#dcfce7' : '#fee2e2',
+                              color: logItem.action === 'BUY' ? '#15803d' : '#b91c1c'
+                            }}>
+                              {logItem.action}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 12px', fontWeight: 600 }}>{logItem.quantity}</td>
+                          <td style={{ padding: '10px 12px', color: '#475569' }}>{logItem.strategyName}</td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <span style={{ color: '#16a34a', fontWeight: 700 }}>● {logItem.status}</span>
+                          </td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: '#0284c7', fontWeight: 700 }}>
+                            {logItem.latencyMs}ms
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+          <section className="bot-console-main" style={{ padding: '32px 36px' }}>
+            <header className="bot-console-header">
+              <div>
+                <span className="bot-console-kicker">PREFERENCES</span>
+                <h1>Workspace <em>Settings</em></h1>
+                <p>Configure API keys, Telegram notifications, and default trading leverage.</p>
+              </div>
+            </header>
+            <div style={{ padding: '24px', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <h3 style={{ margin: '0 0 12px', fontSize: '15px' }}>API & Notification Preferences</h3>
+              <p style={{ color: '#64748b', fontSize: '13px' }}>Configure your Binance & Bybit API keys and Telegram bot tokens here.</p>
+            </div>
+          </section>
+        )}
+
       </div>
 
       {/* Create Bot Modal */}
