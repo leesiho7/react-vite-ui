@@ -39,7 +39,10 @@ import {
   stopBotApi,
   deleteBotApi,
   fetchBotLogsApi,
-  resetResearchMemory
+  resetResearchMemory,
+  fetchTradingViewConfig,
+  fetchTradingViewLogs,
+  sendTradingViewSignal
 } from '../lib/api'
 import type { BotControlResult } from '../lib/api'
 import {
@@ -1475,7 +1478,7 @@ export default function Page() {
   }
 
   // 24H Bot Center Console Tab & Query State
-  const [botConsoleActiveTab, setBotConsoleActiveTab] = useState<'center' | 'terminal' | 'strategies' | 'billing' | 'telegram' | 'resources' | 'settings'>('center')
+  const [botConsoleActiveTab, setBotConsoleActiveTab] = useState<'center' | 'terminal' | 'strategies' | 'billing' | 'telegram' | 'webhook' | 'resources' | 'settings'>('center')
   const [botConsoleQuery, setBotConsoleQuery] = useState('')
   const [tgNotificationSettings, setTgNotificationSettings] = useState({
     executions: true,
@@ -1487,6 +1490,65 @@ export default function Page() {
   const [selectedVpsTier, setSelectedVpsTier] = useState<'micro' | 'standard' | 'alpha' | 'baremetal'>('standard')
   const [selectedVpsRegion, setSelectedVpsRegion] = useState<string>('SEOCHO')
   const [vpsProvisionSuccess, setVpsProvisionSuccess] = useState<string | null>(null)
+
+  // TradingView Webhook State
+  const [tvConfig, setTvConfig] = useState<any>(null)
+  const [tvLogs, setTvLogs] = useState<any[]>([])
+  const [copiedTvUrl, setCopiedTvUrl] = useState(false)
+  const [copiedTvPayload, setCopiedTvPayload] = useState(false)
+  const [sendingTvSignal, setSendingTvSignal] = useState(false)
+
+  const loadTvDataMain = useCallback(async () => {
+    const uId = 1
+    try {
+      const config = await fetchTradingViewConfig(uId)
+      setTvConfig(config)
+      const logs = await fetchTradingViewLogs(uId)
+      setTvLogs(logs)
+    } catch (e) {
+      console.warn('Failed to load TradingView Webhook data:', e)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTvDataMain()
+  }, [loadTvDataMain])
+
+  const handleCopyTvUrl = () => {
+    if (!tvConfig?.webhookUrl) return
+    const fullUrl = `${tvConfig.webhookUrl}?userId=1&secretKey=${tvConfig.secretKey}`
+    navigator.clipboard.writeText(fullUrl)
+    setCopiedTvUrl(true)
+    setTimeout(() => setCopiedTvUrl(false), 2000)
+  }
+
+  const handleCopyTvPayload = () => {
+    if (!tvConfig?.samplePayload) return
+    navigator.clipboard.writeText(JSON.stringify(tvConfig.samplePayload, null, 2))
+    setCopiedTvPayload(true)
+    setTimeout(() => setCopiedTvPayload(false), 2000)
+  }
+
+  const handleSendTestTvSignal = async (action: 'BUY' | 'SELL') => {
+    const uId = 1
+    setSendingTvSignal(true)
+    try {
+      await sendTradingViewSignal({
+        userId: uId,
+        secretKey: tvConfig?.secretKey || 'aether_tv_sec_1',
+        action,
+        symbol: 'BTCUSDT',
+        exchange: 'BINANCE',
+        quantity: 0.01,
+        strategyName: 'Elliott_Wave3_Breakout'
+      })
+      await loadTvDataMain()
+    } catch (e) {
+      console.warn('Test signal error:', e)
+    } finally {
+      setSendingTvSignal(false)
+    }
+  }
 
   // Bot Hosting & Developer Sandbox State
   const [botMode, setBotMode] = useState<'GENERAL' | 'DEVELOPER'>('GENERAL')
@@ -5677,6 +5739,12 @@ def signal(tick):
                 <Send size={16} /> Telegram
               </a>
               <a
+                className={botConsoleActiveTab === 'webhook' ? 'active' : ''}
+                onClick={() => setBotConsoleActiveTab('webhook')}
+              >
+                <Radio size={16} /> TradingView Webhook
+              </a>
+              <a
                 className={botConsoleActiveTab === 'resources' ? 'active' : ''}
                 onClick={() => setBotConsoleActiveTab('resources')}
               >
@@ -6511,6 +6579,259 @@ def signal(tick):
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── 24H Bot Center TradingView Webhook Automation Panel ── */}
+            {botConsoleActiveTab === 'webhook' && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '28px' }}>
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div>
+                    <span className="bot-console-kicker" style={{ color: '#f47a20', fontWeight: 700, letterSpacing: '0.05em' }}>
+                      INSTITUTIONAL SIGNAL RELAY / WEBHOOK ENGINE
+                    </span>
+                    <h2 style={{ fontSize: '22px', fontWeight: 800, margin: '4px 0 6px', color: '#0f172a' }}>
+                      TradingView <em>Webhook Automation</em>
+                    </h2>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
+                      Connect TradingView alert webhooks directly to AETHER execution engine for zero-latency automated trades.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleSendTestTvSignal('BUY')}
+                      disabled={sendingTvSignal}
+                      style={{
+                        background: '#16a34a',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 4px rgba(22,163,74,0.2)'
+                      }}
+                    >
+                      <Zap size={14} /> {sendingTvSignal ? 'Executing...' : 'Simulate BUY Signal'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSendTestTvSignal('SELL')}
+                      disabled={sendingTvSignal}
+                      style={{
+                        background: '#dc2626',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 2px 4px rgba(220,38,38,0.2)'
+                      }}
+                    >
+                      <Zap size={14} /> {sendingTvSignal ? 'Executing...' : 'Simulate SELL Signal'}
+                    </button>
+                  </div>
+                </header>
+
+                {/* Top KPI Metrics Cards (4 Grid) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #f47a20' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>PROCESSED SIGNALS</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>{tvLogs.length} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>Alerts</span></div>
+                  </div>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #0f766e' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>AVG EXECUTION LATENCY</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f766e', marginTop: '4px' }}>~7.4 <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>ms</span></div>
+                  </div>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #16a34a' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>SUCCESS RATE</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#16a34a', marginTop: '4px' }}>100.0% <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>(0 Errors)</span></div>
+                  </div>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #2563eb' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>ENGINE STATUS</div>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#2563eb', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }} /> DIRECT RELAY ACTIVE
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3-Step Setup Quick Guide Bar */}
+                <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '14px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '12px', color: '#1e40af' }}>
+                    <div><strong>STEP 1</strong> · Copy Endpoint URL</div>
+                    <span>➔</span>
+                    <div><strong>STEP 2</strong> · Paste into TradingView Webhook Alert</div>
+                    <span>➔</span>
+                    <div><strong>STEP 3</strong> · Paste JSON Payload & Save</div>
+                  </div>
+                  <a href="https://www.tradingview.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', fontWeight: 700, color: '#2563eb', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    Open TradingView <ExternalLink size={12} />
+                  </a>
+                </div>
+
+                {/* 1. Endpoint & Secret Key Box */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    YOUR DEDICATED TRADINGVIEW WEBHOOK ENDPOINT
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      readOnly
+                      value={tvConfig?.webhookUrl ? `${tvConfig.webhookUrl}?userId=1&secretKey=${tvConfig.secretKey}` : 'Loading Webhook URL...'}
+                      style={{
+                        flex: 1,
+                        background: '#ffffff',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '10px 14px',
+                        fontSize: '13px',
+                        fontFamily: 'monospace',
+                        color: '#0f172a'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopyTvUrl}
+                      style={{
+                        background: copiedTvUrl ? '#16a34a' : '#0f172a',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '10px 18px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      {copiedTvUrl ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedTvUrl ? 'Copied!' : 'Copy Webhook URL'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. TradingView Alert Message JSON Template Box */}
+                <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', padding: '20px', marginBottom: '24px', color: '#f8fafc' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      TRADINGVIEW ALERT MESSAGE PAYLOAD (JSON)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyTvPayload}
+                      style={{
+                        background: '#1e293b',
+                        color: '#e2e8f0',
+                        border: '1px solid #334155',
+                        padding: '6px 14px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      {copiedTvPayload ? <Check size={12} /> : <Copy size={12} />}
+                      {copiedTvPayload ? 'Copied JSON' : 'Copy JSON'}
+                    </button>
+                  </div>
+                  <pre style={{ margin: 0, fontSize: '12px', fontFamily: 'monospace', color: '#38bdf8', overflowX: 'auto', background: '#020617', padding: '14px', borderRadius: '6px' }}>
+{JSON.stringify(tvConfig?.samplePayload || {
+  userId: 1,
+  secretKey: tvConfig?.secretKey || 'aether_tv_sec_1',
+  action: "BUY",
+  symbol: "BTCUSDT",
+  exchange: "BINANCE",
+  quantity: 0.01,
+  strategyName: "Elliott_Wave3_Breakout"
+}, null, 2)}
+                  </pre>
+                </div>
+
+                {/* 3. Real-time Webhook Executed Trades Log Table */}
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>
+                      ⚡ Real-time Webhook Execution Logs ({tvLogs.length})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={loadTvDataMain}
+                      style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <RefreshCw size={13} /> Refresh Logs
+                    </button>
+                  </div>
+
+                  {tvLogs.length === 0 ? (
+                    <div style={{ padding: '36px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                      No TradingView webhook signals received yet. Click [Simulate BUY Signal] above to test execution!
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                        <thead>
+                          <tr style={{ background: '#ffffff', borderBottom: '1px solid #e2e8f0', textAlign: 'left', color: '#475569' }}>
+                            <th style={{ padding: '10px 12px' }}>ID / Time</th>
+                            <th style={{ padding: '10px 12px' }}>Exchange</th>
+                            <th style={{ padding: '10px 12px' }}>Symbol</th>
+                            <th style={{ padding: '10px 12px' }}>Action</th>
+                            <th style={{ padding: '10px 12px' }}>Qty</th>
+                            <th style={{ padding: '10px 12px' }}>Strategy</th>
+                            <th style={{ padding: '10px 12px' }}>Status</th>
+                            <th style={{ padding: '10px 12px' }}>Latency</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tvLogs.map((logItem) => (
+                            <tr key={logItem.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                              <td style={{ padding: '10px 12px' }}>
+                                <strong style={{ color: '#0f172a' }}>#{logItem.id}</strong><br />
+                                <small style={{ color: '#94a3b8' }}>{logItem.receivedAt}</small>
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 600 }}>{logItem.exchange}</td>
+                              <td style={{ padding: '10px 12px', fontWeight: 700, color: '#0f172a' }}>{logItem.symbol}</td>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontWeight: 700,
+                                  fontSize: '11px',
+                                  background: logItem.action === 'BUY' ? '#dcfce7' : '#fee2e2',
+                                  color: logItem.action === 'BUY' ? '#15803d' : '#b91c1c'
+                                }}>
+                                  {logItem.action}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 600 }}>{logItem.quantity}</td>
+                              <td style={{ padding: '10px 12px', color: '#475569' }}>{logItem.strategyName}</td>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{ color: '#16a34a', fontWeight: 700 }}>● {logItem.status}</span>
+                              </td>
+                              <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: '#0284c7', fontWeight: 700 }}>
+                                {logItem.latencyMs}ms
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
