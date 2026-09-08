@@ -3142,18 +3142,8 @@ export default function Page() {
                     </div>
                   )}
                 </div>
-                <div className="chart-intervals" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  {['1m', '5m', '15m', '1h', '4h', '1D', '1W', '1M'].map((int) => (
-                    <button
-                      key={int}
-                      className={marketChartInterval === int ? 'selected' : ''}
-                      onClick={() => setMarketChartInterval(int)}
-                      style={{ fontFamily: 'var(--font-sans)' }}
-                    >
-                      {int}
-                    </button>
-                  ))}
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+                <div className="chart-intervals" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     <button
                       type="button"
                       onClick={() => setVisionScanOpen(true)}
