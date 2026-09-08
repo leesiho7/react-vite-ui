@@ -601,6 +601,19 @@ export default function Navbar({
                   <div className="text-[9px] text-[#94a3b8]">실시간 김프 스캐너</div>
                 </div>
               </button>
+
+              <Link
+                href="/profile"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer text-decoration-none"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <UserRound size={16} className="text-[#f47a20]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">MY PROFILE</div>
+                  <div className="text-[9px] text-[#94a3b8]">계정 및 TRC-20 지갑</div>
+                </div>
+              </Link>
             </div>
 
             {/* 다국어 언어 변경 & 프로 업그레이드 액션 바 */}
