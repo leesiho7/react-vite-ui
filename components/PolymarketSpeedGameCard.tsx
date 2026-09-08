@@ -79,6 +79,18 @@ export function PolymarketSpeedGameCard({
     return { line: linePointsStr, linePath, areaPath, targetY: clampedTargetY }
   }, [history, animatedPrice, targetPrice, livePrice])
 
+  // Get current logged-in user key for user-isolated streak tracking
+  const getUserStreakKey = () => {
+    try {
+      const session = localStorage.getItem('auth_session')
+      if (session) {
+        const user = JSON.parse(session)
+        if (user.username) return `aether_5m_streak_${user.username}`
+      }
+    } catch (e) {}
+    return 'aether_5m_streak_guest'
+  }
+
   const handleSettle = (overridePrice?: number) => {
     const curr = stateRef.current
     const userChoice = curr.choice ?? choice
@@ -100,7 +112,8 @@ export function PolymarketSpeedGameCard({
     setChoice(null)
 
     try {
-      localStorage.setItem('aether_5m_streak', JSON.stringify({
+      const storageKey = getUserStreakKey()
+      localStorage.setItem(storageKey, JSON.stringify({
         wins: newWins,
         round: nextRound,
         choice: null,
@@ -115,18 +128,25 @@ export function PolymarketSpeedGameCard({
   useEffect(() => {
     setMounted(true)
     try {
-      const saved = localStorage.getItem('aether_5m_streak')
+      const storageKey = getUserStreakKey()
+      const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (typeof parsed.wins === 'number') setFiveMinWins(parsed.wins)
-        if (typeof parsed.round === 'number') setRound(parsed.round)
-        if (parsed.choice === 'up' || parsed.choice === 'down') setChoice(parsed.choice)
-        if (typeof parsed.submitted === 'boolean') setSubmitted(parsed.submitted)
+        setFiveMinWins(typeof parsed.wins === 'number' ? parsed.wins : 0)
+        setRound(typeof parsed.round === 'number' ? parsed.round : 1)
+        setChoice(parsed.choice === 'up' || parsed.choice === 'down' ? parsed.choice : null)
+        setSubmitted(typeof parsed.submitted === 'boolean' ? parsed.submitted : false)
         if (typeof parsed.remainingSec === 'number' && parsed.savedAt) {
           const elapsedSec = Math.floor((Date.now() - parsed.savedAt) / 1000)
           const newRemaining = Math.max(1, parsed.remainingSec - elapsedSec)
           setRemainingSec(newRemaining)
         }
+      } else {
+        // 계정 변경 시 기존 승수 초기화
+        setFiveMinWins(0)
+        setRound(1)
+        setChoice(null)
+        setSubmitted(false)
       }
     } catch (e) {
       console.warn('Failed to load 5m streak:', e)
@@ -388,7 +408,8 @@ export function PolymarketSpeedGameCard({
             if (!choice || submitted || remainingSec <= 60) return
             setSubmitted(true)
             try {
-              localStorage.setItem('aether_5m_streak', JSON.stringify({
+              const storageKey = getUserStreakKey()
+              localStorage.setItem(storageKey, JSON.stringify({
                 wins: fiveMinWins,
                 round,
                 choice,
