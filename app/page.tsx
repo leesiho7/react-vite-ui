@@ -7615,17 +7615,11 @@ def signal(tick):
       {/* ── Institutional Media Intelligence Wire ── */}
       {(activeTopView === 'media') && (
         <section className="media-section" id="media-wire" style={{ padding: '36px 0 20px', borderTop: '1px solid var(--line)' }}>
-        <div className="media-hero" style={{ padding: '24px 0 36px' }}>
+        <div className="media-hero" style={{ padding: '24px 0 36px', gridTemplateColumns: '1fr' }}>
           <div>
             <span className="overline"><Radio size={12} /> {mediaCopy[language].overline}</span>
             <h1>{mediaCopy[language].title}</h1>
             <p>{mediaCopy[language].intro}</p>
-          </div>
-          <div className="media-hero-status">
-            <span className="live-dot" />
-            <strong>{mediaCopy[language].status}</strong>
-            <b>{mediaCopy[language].indexed}</b>
-            <small>{mediaCopy[language].statusNote}</small>
           </div>
         </div>
 
