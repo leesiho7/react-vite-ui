@@ -19,6 +19,7 @@ interface SpeedGame1HProps {
   userId?: number
   onSelectPrediction?: (direction: 'UP' | 'DOWN') => void
   onSubmitPrediction?: () => void
+  onRestoreActivePrediction?: (active: any) => void
 }
 
 export function Polymarket1HSpeedGameCard({
@@ -33,9 +34,10 @@ export function Polymarket1HSpeedGameCard({
   hourlyRemainingSec = 2430,
   effectiveBullPct = 50,
   effectiveBearPct = 50,
-  userId = 1,
+  userId,
   onSelectPrediction,
-  onSubmitPrediction
+  onSubmitPrediction,
+  onRestoreActivePrediction
 }: SpeedGame1HProps) {
   const [mounted, setMounted] = useState(false)
 
@@ -54,11 +56,13 @@ export function Polymarket1HSpeedGameCard({
   // 페이지/배포 리로드 시 백엔드 DB에서 현재 활성화된 예측 상태 자동 조회 및 복원
   useEffect(() => {
     setMounted(true)
+    if (!userId) return
     const rawSymbol = symbol.replace('/USD', '').replace('/USDT', '') + 'USDT'
     fetchActivePrediction(userId, rawSymbol).then((active) => {
       if (active && active.status === 'PENDING') {
         const dir = (active.predictedDirection === 'BULL' || active.predictedDirection === 'UP') ? 'UP' : 'DOWN'
         onSelectPrediction?.(dir)
+        onRestoreActivePrediction?.(active)
       }
     }).catch((err) => {
       console.warn('Failed to restore active prediction from DB:', err)

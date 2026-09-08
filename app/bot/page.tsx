@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { usePersistentState } from '@/lib/usePersistentState'
 import { Bot, ChevronDown, Code2, Filter, MoreHorizontal, Play, Plus, Search, SquareTerminal, SlidersHorizontal, Square, Trash2, X, RefreshCw } from 'lucide-react'
 import { FinanceNav } from '@/components/FinanceNav'
 import {
@@ -8,9 +9,10 @@ import {
   createBotInstanceApi,
   startBotApi,
   pauseBotApi,
-  stopBotApi,
   deleteBotApi
 } from '@/lib/api'
+import type { BotControlResult } from '@/lib/api'
+import type { AuthResponse } from '@/lib/types'
 
 export default function BotPage() {
   const [bots, setBots] = useState<any[]>([])
@@ -18,17 +20,42 @@ export default function BotPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [query, setQuery] = useState('')
 
-  // Create Bot Form State
-  const [newBotName, setNewBotName] = useState('')
-  const [newExchange, setNewExchange] = useState<'BINANCE' | 'BYBIT'>('BINANCE')
-  const [newSymbol, setNewSymbol] = useState('BTCUSDT')
-  const [newMode, setNewMode] = useState<'BEGINNER' | 'DEVELOPER'>('BEGINNER')
+  /**
+   * 로그인한 고객의 userId. 비로그인 시 null.
+   * 이 페이지는 예전에 userId를 1로 하드코딩해서, 어떤 고객이 접속하든 1번 유저의 봇을 보고 제어했다.
+   */
+  const [activeUserId, setActiveUserId] = useState<number | null>(null)
+  const [authLoaded, setAuthLoaded] = useState(false)
+
+  // Create Bot Form State (Draft saved in localStorage)
+  const [newBotName, setNewBotName] = usePersistentState('draft_bot_name', '')
+  const [newExchange, setNewExchange] = usePersistentState<'BINANCE' | 'BYBIT'>('draft_bot_exchange', 'BINANCE')
+  const [newSymbol, setNewSymbol] = usePersistentState('draft_bot_symbol', 'BTCUSDT')
+  const [newMode, setNewMode] = usePersistentState<'BEGINNER' | 'DEVELOPER'>('draft_bot_mode', 'BEGINNER')
   const [creating, setCreating] = useState(false)
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('auth_session')
+      const user: AuthResponse | null = stored ? JSON.parse(stored) : null
+      setActiveUserId(user?.userId ? Number(user.userId) : null)
+    } catch (e) {
+      console.warn('Failed to read auth session:', e)
+      setActiveUserId(null)
+    } finally {
+      setAuthLoaded(true)
+    }
+  }, [])
+
   const loadBots = useCallback(async () => {
+    if (activeUserId === null) {
+      setBots([])
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
-      const data = await fetchUserBots(1)
+      const data = await fetchUserBots(activeUserId)
       if (Array.isArray(data)) {
         setBots(data)
       }
@@ -37,23 +64,47 @@ export default function BotPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [activeUserId])
 
   useEffect(() => {
-    loadBots()
-  }, [loadBots])
+    if (authLoaded) loadBots()
+  }, [authLoaded, loadBots])
+
+  /** 서버 응답을 검사하고 실패 시 실제 사유를 알린다. */
+  const ensureSucceeded = (result: BotControlResult, fallbackMessage: string) => {
+    if (result?.success) return true
+    alert(result?.message || fallbackMessage)
+    return false
+  }
+
+  const requireActiveUserId = () => {
+    if (activeUserId === null) {
+      alert('봇 인스턴스를 제어하려면 로그인이 필요합니다.')
+      return null
+    }
+    return activeUserId
+  }
 
   const handleCreateBot = async () => {
     if (!newBotName.trim()) return
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
     setCreating(true)
     try {
-      await createBotInstanceApi({
-        userId: 1,
+      const result = await createBotInstanceApi({
+        userId: uId,
         botName: newBotName,
         exchange: newExchange,
         symbol: newSymbol,
         mode: newMode
       })
+      if (!ensureSucceeded(result, '봇 인스턴스 생성에 실패했습니다.')) return
+
+      // 구독이 없으면 백엔드가 STOPPED로 생성하고 사유를 알려준다
+      if (result.status && result.status !== 'RUNNING' && result.message) {
+        alert(result.message)
+      }
       setNewBotName('')
       setShowCreate(false)
       await loadBots()
@@ -65,26 +116,26 @@ export default function BotPage() {
   }
 
   const handleToggleState = async (botId: number, currentStatus: string) => {
-    try {
-      if (currentStatus === 'RUNNING') {
-        await pauseBotApi(botId, 1)
-      } else {
-        await startBotApi(botId, 1)
-      }
-      await loadBots()
-    } catch (e) {
-      console.warn('Failed to toggle bot state:', e)
-    }
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
+    const result = currentStatus === 'RUNNING'
+      ? await pauseBotApi(botId, uId)
+      : await startBotApi(botId, uId)
+
+    // 성공/실패 모두 서버 상태를 다시 읽어 화면을 단일 진실 소스에 맞춘다
+    ensureSucceeded(result, '봇 상태 변경에 실패했습니다.')
+    await loadBots()
   }
 
   const handleDeleteBot = async (botId: number) => {
     if (!confirm('정말로 이 24시간 봇 인스턴스를 삭제하시겠습니까?')) return
-    try {
-      await deleteBotApi(botId, 1)
-      await loadBots()
-    } catch (e) {
-      console.warn('Failed to delete bot:', e)
-    }
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
+    const result = await deleteBotApi(botId, uId)
+    if (!ensureSucceeded(result, '봇 인스턴스 삭제에 실패했습니다.')) return
+    await loadBots()
   }
 
   const filtered = bots.filter((bot) =>
@@ -162,6 +213,12 @@ export default function BotPage() {
                 <RefreshCw size={18} className="animate-spin" style={{ margin: '0 auto 8px' }} />
                 Loading 24H bot instances from backend database...
               </div>
+            ) : activeUserId === null ? (
+              <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
+                <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+                <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>로그인이 필요합니다.</h3>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>내 24시간 봇 인스턴스를 조회하고 제어하려면 먼저 로그인해 주세요.</p>
+              </div>
             ) : filtered.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
                 <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
@@ -179,7 +236,10 @@ export default function BotPage() {
               filtered.map((bot) => {
                 const isRunning = bot.status === 'RUNNING'
                 const isPaused = bot.status === 'PAUSED'
+                const isExpired = bot.status === 'EXPIRED'
                 const ex = bot.exchange || 'BINANCE'
+                // 백엔드 BotInstanceResponse의 필드명은 winRate (예전 winRatePct는 항상 undefined → 0.0%로 표시됐다)
+                const winRate = Number(bot.winRate ?? 0)
 
                 return (
                   <div className="bot-table-row" key={bot.instanceId || bot.id}>
@@ -204,17 +264,17 @@ export default function BotPage() {
                       </b>
                     </span>
                     <span className={`bot-state ${isRunning ? 'is-running' : isPaused ? 'is-paused' : ''}`}>
-                      <i />{isRunning ? 'Running' : isPaused ? 'Paused' : 'Stopped'}
+                      <i />{isRunning ? 'Running' : isPaused ? 'Paused' : isExpired ? 'Expired' : 'Stopped'}
                     </span>
                     <span className="bot-resource">{bot.symbol || 'BTCUSDT'}</span>
-                    <span className="bot-event" style={{ color: (bot.winRatePct || 0) >= 50 ? '#059669' : '#dc2626', fontWeight: 700 }}>
-                      {(bot.winRatePct || 0).toFixed(1)}% ({bot.totalTrades || 0} trades)
+                    <span className="bot-event" style={{ color: winRate >= 50 ? '#059669' : '#dc2626', fontWeight: 700 }}>
+                      {winRate.toFixed(1)}% ({bot.totalTrades || 0} trades)
                     </span>
                     <div className="bot-row-actions">
                       <button
                         onClick={() => handleToggleState(bot.instanceId || bot.id, bot.status)}
                         aria-label={isRunning ? 'Pause bot' : 'Start bot'}
-                        title={isRunning ? 'Pause' : 'Start'}
+                        title={isExpired ? '구독 만료 — 재구독 후 가동할 수 있습니다' : isRunning ? 'Pause' : 'Start'}
                       >
                         {isRunning ? <Square size={15} /> : <Play size={16} />}
                       </button>

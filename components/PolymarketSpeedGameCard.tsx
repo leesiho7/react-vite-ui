@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
 
 interface SpeedGameProps {
@@ -79,6 +79,39 @@ export function PolymarketSpeedGameCard({
     return { line: linePointsStr, linePath, areaPath, targetY: clampedTargetY }
   }, [history, animatedPrice, targetPrice, livePrice])
 
+  const handleSettle = (overridePrice?: number) => {
+    const curr = stateRef.current
+    const userChoice = curr.choice ?? choice
+    const checkPrice = overridePrice ?? curr.animatedPrice ?? animatedPrice
+    const baseTarget = curr.targetPrice ?? targetPrice
+    const currentWins = curr.fiveMinWins ?? fiveMinWins
+    const currentRound = curr.round ?? round
+
+    if (!userChoice) return
+
+    // 유저 선택(UP/DOWN)에 따른 베이스라인 가격 비교 정산
+    const isWin = userChoice === 'up' ? checkPrice >= baseTarget : checkPrice < baseTarget
+    const newWins = isWin ? Math.min(10, currentWins + 1) : 0
+    const nextRound = isWin ? (currentWins + 1 >= 10 ? 1 : currentRound + 1) : 1
+
+    setFiveMinWins(newWins)
+    setRound(nextRound)
+    setSubmitted(false)
+    setChoice(null)
+
+    try {
+      localStorage.setItem('aether_5m_streak', JSON.stringify({
+        wins: newWins,
+        round: nextRound,
+        choice: null,
+        submitted: false,
+        lastSettledAt: Date.now()
+      }))
+    } catch (e) {
+      console.warn('Failed to save 5m streak:', e)
+    }
+  }
+
   useEffect(() => {
     setMounted(true)
     try {
@@ -87,17 +120,33 @@ export function PolymarketSpeedGameCard({
         const parsed = JSON.parse(saved)
         if (typeof parsed.wins === 'number') setFiveMinWins(parsed.wins)
         if (typeof parsed.round === 'number') setRound(parsed.round)
+        if (parsed.choice === 'up' || parsed.choice === 'down') setChoice(parsed.choice)
+        if (typeof parsed.submitted === 'boolean') setSubmitted(parsed.submitted)
+        if (typeof parsed.remainingSec === 'number' && parsed.savedAt) {
+          const elapsedSec = Math.floor((Date.now() - parsed.savedAt) / 1000)
+          const newRemaining = Math.max(1, parsed.remainingSec - elapsedSec)
+          setRemainingSec(newRemaining)
+        }
       }
     } catch (e) {
       console.warn('Failed to load 5m streak:', e)
     }
   }, [])
 
-  // 5분(300초) 실시간 카운트다운 타이머
+  const stateRef = useRef({ submitted, choice, animatedPrice, targetPrice, fiveMinWins, round })
+  useEffect(() => {
+    stateRef.current = { submitted, choice, animatedPrice, targetPrice, fiveMinWins, round }
+  }, [submitted, choice, animatedPrice, targetPrice, fiveMinWins, round])
+
+  // 5분(300초) 실시간 카운트다운 타이머 (빈 의존성 배열로 1초마다 정확히 차감)
   useEffect(() => {
     const interval = setInterval(() => {
       setRemainingSec((prev) => {
         if (prev <= 1) {
+          const curr = stateRef.current
+          if (curr.submitted) {
+            handleSettle(curr.animatedPrice)
+          }
           return 300
         }
         return prev - 1
@@ -105,8 +154,6 @@ export function PolymarketSpeedGameCard({
     }, 1000)
     return () => clearInterval(interval)
   }, [])
-
-  if (!mounted) return null
 
   const format5MCountdown = (sec: number) => {
     const m = Math.floor(sec / 60)
@@ -121,20 +168,7 @@ export function PolymarketSpeedGameCard({
   const displayDeltaPct = displayBase ? (displayDelta / displayBase) * 100 : 0
   const isUpWinning = displayDelta >= 0
 
-  const handleSettle = () => {
-    const isWin = true // 시뮬레이션 즉시 정산 승리
-    const newWins = isWin ? Math.min(10, fiveMinWins + 1) : 0
-    const nextRound = isWin && fiveMinWins + 1 >= 10 ? 1 : round + 1
-    setFiveMinWins(newWins)
-    setRound(nextRound)
-    setSubmitted(false)
-    setChoice(null)
-    try {
-      localStorage.setItem('aether_5m_streak', JSON.stringify({ wins: newWins, round: nextRound }))
-    } catch (e) {
-      console.warn('Failed to save 5m streak:', e)
-    }
-  }
+  if (!mounted) return null
 
   const strokeColor = '#f47a20'
   const gradientStopColor = '#f47a20'
@@ -167,7 +201,7 @@ export function PolymarketSpeedGameCard({
           {submitted && (
             <button
               type="button"
-              onClick={handleSettle}
+              onClick={() => handleSettle()}
               style={{ fontSize: '9px', background: '#059669', color: '#fff', border: 'none', padding: '3px 8px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer' }}
             >
               🔄 5분 라운드 즉시 정산
@@ -245,7 +279,10 @@ export function PolymarketSpeedGameCard({
             type="button"
             className={`speed-vote ${choice === 'up' ? 'selected up' : ''}`}
             disabled={submitted || remainingSec <= 60}
-            onClick={() => setChoice('up')}
+            onClick={() => {
+              if (submitted || remainingSec <= 60) return
+              setChoice('up')
+            }}
           >
             <span className="vote-icon">▲</span>
             <span>Predict Up (5M)</span>
@@ -255,7 +292,10 @@ export function PolymarketSpeedGameCard({
             type="button"
             className={`speed-vote ${choice === 'down' ? 'selected down' : ''}`}
             disabled={submitted || remainingSec <= 60}
-            onClick={() => setChoice('down')}
+            onClick={() => {
+              if (submitted || remainingSec <= 60) return
+              setChoice('down')
+            }}
           >
             <span className="vote-icon">▼</span>
             <span>Predict Down (5M)</span>
@@ -343,19 +383,26 @@ export function PolymarketSpeedGameCard({
             cursor: (!choice || submitted || remainingSec <= 60) ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s ease'
           }}
-          disabled={!choice || submitted || (remainingSec <= 60 && !submitted)}
+          disabled={!choice || submitted || remainingSec <= 60}
           onClick={() => {
             if (!choice || submitted || remainingSec <= 60) return
             setSubmitted(true)
             try {
-              localStorage.setItem('aether_5m_streak', JSON.stringify({ wins: fiveMinWins, round, submitted: true }))
+              localStorage.setItem('aether_5m_streak', JSON.stringify({
+                wins: fiveMinWins,
+                round,
+                choice,
+                submitted: true,
+                remainingSec,
+                savedAt: Date.now()
+              }))
             } catch (e) {
               console.warn('Failed to save 5m streak:', e)
             }
           }}
         >
           {submitted
-            ? `ROUND #${round} [${choice === 'up' ? '상승(UP)' : '하락(DOWN)'}] 5분 예측 제출 완료 (실시간 정산 관전 중)`
+            ? `ROUND #${round} [${choice === 'up' ? '상승(UP)' : '하락(DOWN)'}] 5분 예측 제출 완료 (🔒 변경 불가 · 실시간 관전 중)`
             : (remainingSec <= 60)
             ? `ROUND #${round} 마감 1분 전 락아웃 (신규 예측 마감 · 실시간 관전 모드)`
             : choice

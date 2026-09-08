@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useRef, useEffect } from 'react'
+import { usePersistentState } from '@/lib/usePersistentState'
 import {
   Maximize2,
   ArrowUpRight,
@@ -278,8 +279,8 @@ export const registeredSymbols: AssetProfile[] = [
 export const symbols = registeredSymbols.map(s => [s.name, s.price, s.change, s.type])
 
 export default function TradePage() {
-  const [active, setActive] = useState('BTC / USD')
-  const [activeTab, setActiveTab] = useState('Overview')
+  const [active, setActive] = usePersistentState('trade_active_symbol', 'BTC / USD')
+  const [activeTab, setActiveTab] = usePersistentState('trade_active_tab', 'Overview')
   const [activeInterval, setActiveInterval] = useState('1W')
   const [activeCopilotTab, setActiveCopilotTab] = useState<'INSIGHTS' | 'GUIDE' | 'CODE'>('INSIGHTS')
   const [mobilePanel, setMobilePanel] = useState<'chart' | 'book' | 'ai'>('chart')

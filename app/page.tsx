@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
@@ -38,8 +38,10 @@ import {
   pauseBotApi,
   stopBotApi,
   deleteBotApi,
-  fetchBotLogsApi
+  fetchBotLogsApi,
+  resetResearchMemory
 } from '../lib/api'
+import type { BotControlResult } from '../lib/api'
 import {
   IntegratedDecisionReport,
   CandleData,
@@ -731,17 +733,24 @@ const assetAliases: Record<string, string> = {
   '현대차': '005380.KS', '현대자동차': '005380.KS'
 }
 
+/**
+ * 인스턴스 가동 상태.
+ * EXPIRED는 구독 만료로 백엔드가 전이시킨 상태로, 재구독 전에는 START가 거부된다.
+ */
+export type InstanceRunState = 'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED' | 'EXPIRED'
+
 export interface BotInstanceItem {
   id: string
   name: string
-  strategy: string
-  status: 'RUNNING' | 'PAUSED' | 'STOPPED' | string
-  region: string
+  strategy?: string
+  status: InstanceRunState | string
+  region?: string
   exchange?: string
   apiKeyMasked?: string
   licenseToken?: string
   heartbeat?: string
   symbol?: string
+  rawId?: any
   uptime?: string
   pnl?: string
   isPositive?: boolean
@@ -749,7 +758,7 @@ export interface BotInstanceItem {
   ip?: string
 }
 
-export const SUPPORTED_ASSETS_REGISTRY = [
+const SUPPORTED_ASSETS_REGISTRY = [
   { symbol: 'BTC/USD', raw: 'BTCUSDT', name: '비트코인 (Bitcoin)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'ETH/USD', raw: 'ETHUSDT', name: '이더리움 (Ethereum)', category: '가상자산 (Major Crypto)', flag: '🪙' },
   { symbol: 'SOL/USD', raw: 'SOLUSDT', name: '솔라나 (Solana)', category: '가상자산 (Major Crypto)', flag: '🪙' },
@@ -1684,76 +1693,127 @@ export default function Page() {
   const [newInstanceLicenseKey, setNewInstanceLicenseKey] = useState<string>('')
   const [newInstanceStrategy, setNewInstanceStrategy] = useState<string>('RSI + Bollinger Multi-Fractal')
 
+  const [instanceStatus, setInstanceStatus] = useState<InstanceRunState>('STOPPED')
+  const [instanceUptime, setInstanceUptime] = useState<number>(52140)
+  const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([])
+
+  /**
+   * 로그인한 고객의 userId. 비로그인 시 null.
+   * 예전처럼 1번 유저로 폴백하면 게스트가 1번 테넌트의 봇을 보고 제어하게 되므로 절대 폴백하지 않는다.
+   */
+  const activeUserId = useMemo(
+    () => (currentUser?.userId ? Number(currentUser.userId) : null),
+    [currentUser]
+  )
+
+  const appendInstanceLog = useCallback((tag: string, text: string) => {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    setInstanceLogs(prev => [...prev.slice(-15), { time, tag, text }])
+  }, [])
+
+  /** 목록/선택된 인스턴스의 상태를 한 번에 반영한다. */
+  const applyInstanceStatus = useCallback((botId: string, nextStatus: InstanceRunState) => {
+    setBotInstances(prev => prev.map(inst =>
+      inst.id === botId
+        ? {
+            ...inst,
+            status: nextStatus,
+            heartbeat: nextStatus === 'RUNNING' ? '실시간 (1s ago)' : nextStatus === 'PAUSED' ? 'paused' : 'standby'
+          }
+        : inst
+    ))
+    if (selectedInstanceId === botId) {
+      setInstanceStatus(nextStatus)
+      setBotRunning(nextStatus === 'RUNNING')
+    }
+  }, [selectedInstanceId])
+
+  /** 서버 응답을 검사하고 실패 시 실제 사유를 사용자에게 알린다. */
+  const ensureBotControlSucceeded = useCallback((result: BotControlResult, fallbackMessage: string) => {
+    if (result?.success) return true
+    alert(result?.message || fallbackMessage)
+    return false
+  }, [])
+
+  /** 로그인 + 선택된 인스턴스가 있을 때만 제어 버튼을 활성화한다. */
+  const canControlInstance = activeUserId !== null && selectedInstanceId !== ''
+
+  /** 봇 제어 전 로그인 여부를 확인하고 userId를 돌려준다. */
+  const requireActiveUserId = useCallback(() => {
+    if (activeUserId === null) {
+      alert('봇 인스턴스를 제어하려면 로그인이 필요합니다.')
+      return null
+    }
+    return activeUserId
+  }, [activeUserId])
+
   const filteredBotInstances = useMemo(() => {
     if (!botConsoleQuery.trim()) return botInstances
     const q = botConsoleQuery.toLowerCase()
     return botInstances.filter((bot) =>
-      bot.name.toLowerCase().includes(q) ||
-      bot.id.toLowerCase().includes(q) ||
-      bot.symbol.toLowerCase().includes(q) ||
-      bot.exchange.toLowerCase().includes(q) ||
-      bot.strategy.toLowerCase().includes(q)
+      (bot.name || '').toLowerCase().includes(q) ||
+      (bot.id || '').toLowerCase().includes(q) ||
+      (bot.symbol || '').toLowerCase().includes(q) ||
+      (bot.exchange || '').toLowerCase().includes(q) ||
+      (bot.strategy || '').toLowerCase().includes(q)
     )
   }, [botInstances, botConsoleQuery])
 
-  const handleToggleBotInstance = (botId: string) => {
+  const handleToggleBotInstance = async (botId: string) => {
     const targetBot = botInstances.find(inst => inst.id === botId)
     if (!targetBot) return
-    const nextStatus = targetBot.status === 'RUNNING' ? 'STOPPED' : 'RUNNING'
-    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
-    
-    setBotInstances(prev => prev.map(inst => {
-      if (inst.id === botId) {
-        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        setInstanceLogs(l => [
-          ...l.slice(-15),
-          { time: timeStr, tag: 'DOCKER', text: `[STATE-CHANGE] Instance ${inst.name} (${inst.id}) transitioned to ${nextStatus}.` }
-        ])
-        if (selectedInstanceId === botId) {
-          setInstanceStatus(nextStatus)
-          setBotRunning(nextStatus === 'RUNNING')
-        }
-        return {
-          ...inst,
-          status: nextStatus,
-          heartbeat: nextStatus === 'RUNNING' ? '실시간 (1s ago)' : 'standby'
-        }
-      }
-      return inst
-    }))
 
-    if (targetBot.rawId) {
-      if (nextStatus === 'RUNNING') {
-        startBotApi(Number(targetBot.rawId), uId)
-      } else {
-        stopBotApi(Number(targetBot.rawId), uId)
-      }
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
+    const prevStatus = targetBot.status as InstanceRunState
+    const nextStatus: InstanceRunState = prevStatus === 'RUNNING' ? 'STOPPED' : 'RUNNING'
+
+    applyInstanceStatus(botId, nextStatus)
+    appendInstanceLog('DOCKER', `[STATE-CHANGE] Instance ${targetBot.name} (${targetBot.id}) transitioned to ${nextStatus}.`)
+
+    if (!targetBot.rawId) return
+
+    const result = nextStatus === 'RUNNING'
+      ? await startBotApi(Number(targetBot.rawId), uId)
+      : await stopBotApi(Number(targetBot.rawId), uId)
+
+    if (!ensureBotControlSucceeded(result, '봇 상태 변경에 실패했습니다.')) {
+      applyInstanceStatus(botId, prevStatus) // 서버가 거부 → 낙관적 변경 롤백
+      appendInstanceLog('SYSTEM', `[REJECTED] ${result.message || '서버가 상태 변경을 거부했습니다.'}`)
+      return
     }
+
+    // 서버가 확정한 상태를 최종 반영 (단일 진실 소스)
+    applyInstanceStatus(botId, (result.status as InstanceRunState) || nextStatus)
   }
 
-  const handleDeleteBotInstance = (botId: string, botName: string) => {
-    if (confirm(`'${botName}' 인스턴스를 격리 해제 및 삭제하시겠습니까?`)) {
-      const targetBot = botInstances.find(inst => inst.id === botId)
-      const uId = currentUser?.userId ? Number(currentUser.userId) : 1
-      
-      if (targetBot?.rawId) {
-        deleteBotApi(Number(targetBot.rawId), uId)
-      }
+  const handleDeleteBotInstance = async (botId: string, botName: string) => {
+    if (!confirm(`'${botName}' 인스턴스를 격리 해제 및 삭제하시겠습니까?`)) return
 
-      setBotInstances(prev => prev.filter(inst => inst.id !== botId))
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      setInstanceLogs(l => [
-        ...l.slice(-15),
-        { time: timeStr, tag: 'DOCKER', text: `[DESTROY] Instance container ${botId} (${botName}) successfully purged.` }
-      ])
-      if (selectedInstanceId === botId) {
-        const remaining = botInstances.filter(i => i.id !== botId)
-        if (remaining.length > 0) {
-          setSelectedInstanceId(remaining[0].id)
-          setInstanceStatus(remaining[0].status)
-        } else {
-          setSelectedInstanceId('')
-        }
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
+    const targetBot = botInstances.find(inst => inst.id === botId)
+
+    if (targetBot?.rawId) {
+      const result = await deleteBotApi(Number(targetBot.rawId), uId)
+      if (!ensureBotControlSucceeded(result, '봇 인스턴스 삭제에 실패했습니다.')) return
+    }
+
+    setBotInstances(prev => prev.filter(inst => inst.id !== botId))
+    appendInstanceLog('DOCKER', `[DESTROY] Instance container ${botId} (${botName}) successfully purged.`)
+
+    if (selectedInstanceId === botId) {
+      const remaining = botInstances.filter(i => i.id !== botId)
+      if (remaining.length > 0) {
+        setSelectedInstanceId(remaining[0].id)
+        setInstanceStatus(remaining[0].status as InstanceRunState)
+        setBotRunning(remaining[0].status === 'RUNNING')
+      } else {
+        setSelectedInstanceId('')
+        setInstanceStatus('STOPPED')
+        setBotRunning(false)
       }
     }
   }
@@ -1762,7 +1822,11 @@ export default function Page() {
     const name = instanceName.trim() || 'AETHER Alpha Worker'
     const maskedKey = newInstanceApiKey.trim() ? `${newInstanceApiKey.trim().slice(0, 4)}••••••••${newInstanceApiKey.trim().slice(-4)}` : 'API-MASKED'
     const activeToken = newInstanceLicenseKey || licenseToken || 'AETH-ACTIVE-NODE'
-    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
+    const uId = requireActiveUserId()
+    if (uId === null) {
+      setInstanceCreating(false)
+      return
+    }
 
     const payload = {
       userId: uId,
@@ -1776,14 +1840,21 @@ export default function Page() {
     }
 
     const createdResponse = await createBotInstanceApi(payload)
-    const rawId = createdResponse?.instanceId
+    if (!ensureBotControlSucceeded(createdResponse, '봇 인스턴스 생성에 실패했습니다.')) {
+      setInstanceCreating(false)
+      return
+    }
+
+    const rawId = createdResponse.instanceId
     const newId = rawId ? `bot-${rawId}` : `qnt-${Math.random().toString(16).slice(2, 8)}`
+    // 구독이 없으면 백엔드가 STOPPED로 생성하므로 서버가 알려준 상태를 그대로 따른다
+    const createdStatus = (createdResponse.status as InstanceRunState) || 'RUNNING'
 
     const newInst: BotInstanceItem = {
       id: newId,
       rawId: rawId,
       name,
-      status: 'RUNNING',
+      status: createdStatus,
       strategy: newInstanceStrategy || 'Custom Developer Runtime',
       exchange: newInstanceExchange,
       apiKeyMasked: maskedKey,
@@ -1797,56 +1868,68 @@ export default function Page() {
     }
     setBotInstances(prev => [newInst, ...prev])
     setSelectedInstanceId(newId)
-    setInstanceStatus('RUNNING')
-    setBotRunning(true)
+    setInstanceStatus(createdStatus)
+    setBotRunning(createdStatus === 'RUNNING')
     setInstanceName('')
     setNewInstanceApiKey('')
     setNewInstanceApiSecret('')
     setInstanceCreating(false)
-    
+
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     setInstanceLogs(prev => [
       ...prev,
       { time: timeStr, tag: 'DOCKER', text: `[PROVISION] New container ${newId} initialized for ${newInstanceExchange} (${newInstanceSymbol})` },
       { time: timeStr, tag: 'NET-IO', text: `[API-AUTH] Authenticated with ${newInstanceExchange} Key (${maskedKey})` },
       { time: timeStr, tag: 'LICENSE', text: `[TELEGRAM] License key verified: ${activeToken}` },
-      { time: timeStr, tag: 'RUNNER', text: `[ACTIVE] ${newInstanceStrategy} automated execution loop started.` }
+      createdStatus === 'RUNNING'
+        ? { time: timeStr, tag: 'RUNNER', text: `[ACTIVE] ${newInstanceStrategy} automated execution loop started.` }
+        : { time: timeStr, tag: 'SYSTEM', text: `[STANDBY] ${createdResponse.message || '가동하려면 24시간 호스팅 구독이 필요합니다.'}` }
     ])
+
+    if (createdStatus !== 'RUNNING' && createdResponse.message) {
+      alert(createdResponse.message)
+    }
   }
 
-  const [instanceStatus, setInstanceStatus] = useState<'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED'>('RUNNING')
-  const [instanceUptime, setInstanceUptime] = useState<number>(52140)
-  const [instanceLogs, setInstanceLogs] = useState<Array<{ time: string; tag: string; text: string }>>([])
-
   useEffect(() => {
-    const syncBotsFromDb = (userId: number) => {
-      fetchUserBots(userId).then((list) => {
-        if (Array.isArray(list) && list.length > 0) {
-          const formatted = list.map((b: any) => ({
-            id: `bot-${b.instanceId || b.id}`,
-            rawId: b.instanceId || b.id,
-            name: b.botName,
-            exchange: b.exchange || 'BINANCE',
-            symbol: b.symbol || 'BTCUSDT',
-            status: b.status || 'RUNNING',
-            heartbeat: b.status === 'RUNNING' ? '1s ago' : 'paused'
-          }))
-          setBotInstances(formatted)
-          
-          // 새로고침 시 항상 DB의 첫 번째 활성 봇 상태로 강제 동기화
-          const active = formatted[0]
-          setSelectedInstanceId(active.id)
-          setInstanceStatus((active.status as any) || 'RUNNING')
-          setBotRunning(active.status === 'RUNNING')
-        }
-      }).catch((err) => {
-        console.warn('Failed to sync bot instances from DB:', err)
-      })
+    // 비로그인 상태에서는 어떤 테넌트의 봇도 불러오지 않는다
+    if (activeUserId === null) {
+      setBotInstances([])
+      setSelectedInstanceId('')
+      setInstanceStatus('STOPPED')
+      setBotRunning(false)
+      return
     }
 
-    const uId = currentUser?.userId ? Number(currentUser.userId) : 1
-    syncBotsFromDb(uId)
-  }, [currentUser])
+    fetchUserBots(activeUserId).then((list) => {
+      if (!Array.isArray(list) || list.length === 0) {
+        setBotInstances([])
+        setSelectedInstanceId('')
+        setInstanceStatus('STOPPED')
+        setBotRunning(false)
+        return
+      }
+
+      const formatted = list.map((b: any) => ({
+        id: `bot-${b.instanceId || b.id}`,
+        rawId: b.instanceId || b.id,
+        name: b.botName,
+        exchange: b.exchange || 'BINANCE',
+        symbol: b.symbol || 'BTCUSDT',
+        status: (b.status || 'STOPPED') as InstanceRunState,
+        heartbeat: b.status === 'RUNNING' ? '1s ago' : b.status === 'PAUSED' ? 'paused' : 'standby'
+      }))
+      setBotInstances(formatted)
+
+      // 새로고침 시 DB(서버)의 상태를 단일 진실 소스로 삼아 강제 동기화
+      const active = formatted[0]
+      setSelectedInstanceId(active.id)
+      setInstanceStatus(active.status)
+      setBotRunning(active.status === 'RUNNING')
+    }).catch((err) => {
+      console.warn('Failed to sync bot instances from DB:', err)
+    })
+  }, [activeUserId])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -1900,69 +1983,99 @@ export default function Page() {
     return () => clearInterval(logTimer)
   }, [botInstances, selectedInstanceId, instanceStatus])
 
-  const updateInstanceStatusInList = (id: string, newStatus: 'RUNNING' | 'PAUSED' | 'REBOOTING' | 'STOPPED') => {
-    setBotInstances(prev => prev.map(inst => {
-      if (inst.id === id) {
-        return {
-          ...inst,
-          status: newStatus,
-          heartbeat: newStatus === 'RUNNING' ? '1s ago' : newStatus === 'PAUSED' ? 'paused' : 'standby'
-        }
-      }
-      return inst
-    }))
-  }
-
-  const handleStartInstance = () => {
+  /**
+   * 터미널 제어 버튼 공통 처리.
+   * 낙관적으로 UI를 먼저 바꾸되, 서버가 거부하면 이전 상태로 롤백하고 사유를 알린다.
+   * (예전에는 응답을 무시해서 화면만 RUNNING이 되고 새로고침하면 STOPPED로 되돌아갔다)
+   */
+  const runInstanceControl = async (
+    optimisticStatus: InstanceRunState,
+    log: { tag: string; text: string },
+    call: (rawId: number, userId: number) => Promise<BotControlResult>,
+    fallbackMessage: string
+  ) => {
     if (botInstances.length === 0) return
-    setInstanceStatus('RUNNING')
-    setBotRunning(true)
-    updateInstanceStatusInList(selectedInstanceId, 'RUNNING')
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[RESUME] Virtual Cloud Container resumed execution loop.' }])
+
     const activeBot = botInstances.find(b => b.id === selectedInstanceId)
-    if (activeBot?.rawId) {
-      startBotApi(Number(activeBot.rawId), currentUser?.userId ? Number(currentUser.userId) : 1)
+    if (!activeBot) return
+
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
+    const prevStatus = activeBot.status as InstanceRunState
+
+    applyInstanceStatus(activeBot.id, optimisticStatus)
+    appendInstanceLog(log.tag, log.text)
+
+    if (!activeBot.rawId) return
+
+    const result = await call(Number(activeBot.rawId), uId)
+
+    if (!ensureBotControlSucceeded(result, fallbackMessage)) {
+      applyInstanceStatus(activeBot.id, prevStatus)
+      appendInstanceLog('SYSTEM', `[REJECTED] ${result.message || fallbackMessage}`)
+      return
     }
+
+    applyInstanceStatus(activeBot.id, (result.status as InstanceRunState) || optimisticStatus)
   }
 
-  const handlePauseInstance = () => {
+  const handleStartInstance = () =>
+    runInstanceControl(
+      'RUNNING',
+      { tag: 'SYSTEM', text: '[RESUME] Virtual Cloud Container resumed execution loop.' },
+      startBotApi,
+      '봇 가동에 실패했습니다.'
+    )
+
+  const handlePauseInstance = () =>
+    runInstanceControl(
+      'PAUSED',
+      { tag: 'SYSTEM', text: '[PAUSE] Trading execution loop paused by user. Open positions are guarded.' },
+      pauseBotApi,
+      '봇 일시 정지에 실패했습니다.'
+    )
+
+  const handleStopInstance = () =>
+    runInstanceControl(
+      'STOPPED',
+      { tag: 'SYSTEM', text: '[SHUTDOWN] Virtual Cloud Container stopped gracefully.' },
+      stopBotApi,
+      '봇 중지에 실패했습니다.'
+    )
+
+  /** REBOOT은 실제로 서버에 stop → start를 순차 요청한다. (예전에는 UI만 바뀌는 연출이었다) */
+  const handleRebootInstance = async () => {
     if (botInstances.length === 0) return
-    setInstanceStatus('PAUSED')
-    updateInstanceStatusInList(selectedInstanceId, 'PAUSED')
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[PAUSE] Trading execution loop paused by user. Open positions are guarded.' }])
+
     const activeBot = botInstances.find(b => b.id === selectedInstanceId)
-    if (activeBot?.rawId) {
-      pauseBotApi(Number(activeBot.rawId), currentUser?.userId ? Number(currentUser.userId) : 1)
-    }
-  }
+    if (!activeBot?.rawId) return
 
-  const handleRebootInstance = () => {
-    if (botInstances.length === 0) return
-    setInstanceStatus('REBOOTING')
-    updateInstanceStatusInList(selectedInstanceId, 'REBOOTING')
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'DOCKER', text: '[REBOOT] Rebooting container sandbox (Graceful SIGTERM)...' }])
-    setTimeout(() => {
-      setInstanceStatus('RUNNING')
-      updateInstanceStatusInList(selectedInstanceId, 'RUNNING')
-      const restartTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      setInstanceLogs(prev => [...prev, { time: restartTime, tag: 'DOCKER', text: '[READY] Container sandbox rebooted successfully (PID: 3419, Python 3.12 active).' }])
-    }, 1500)
-  }
+    const uId = requireActiveUserId()
+    if (uId === null) return
 
-  const handleStopInstance = () => {
-    if (botInstances.length === 0) return
-    setInstanceStatus('STOPPED')
-    setBotRunning(false)
-    updateInstanceStatusInList(selectedInstanceId, 'STOPPED')
-    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    setInstanceLogs(prev => [...prev, { time: timeStr, tag: 'SYSTEM', text: '[SHUTDOWN] Virtual Cloud Container stopped gracefully.' }])
-    const activeBot = botInstances.find(b => b.id === selectedInstanceId)
-    if (activeBot?.rawId) {
-      stopBotApi(Number(activeBot.rawId), currentUser?.userId ? Number(currentUser.userId) : 1)
+    const prevStatus = activeBot.status as InstanceRunState
+    const rawId = Number(activeBot.rawId)
+
+    applyInstanceStatus(activeBot.id, 'REBOOTING')
+    appendInstanceLog('DOCKER', '[REBOOT] Rebooting container sandbox (Graceful SIGTERM)...')
+
+    const stopResult = await stopBotApi(rawId, uId)
+    if (!ensureBotControlSucceeded(stopResult, '봇 재시작(중지 단계)에 실패했습니다.')) {
+      applyInstanceStatus(activeBot.id, prevStatus)
+      return
     }
+
+    const startResult = await startBotApi(rawId, uId)
+    if (!ensureBotControlSucceeded(startResult, '봇 재시작(가동 단계)에 실패했습니다.')) {
+      // 중지는 성공했으므로 서버의 실제 상태(STOPPED)를 반영한다
+      applyInstanceStatus(activeBot.id, (stopResult.status as InstanceRunState) || 'STOPPED')
+      appendInstanceLog('SYSTEM', `[REJECTED] ${startResult.message || '재가동이 거부되었습니다.'}`)
+      return
+    }
+
+    applyInstanceStatus(activeBot.id, (startResult.status as InstanceRunState) || 'RUNNING')
+    appendInstanceLog('DOCKER', '[READY] Container sandbox rebooted successfully (Python 3.12 active).')
   }
 
   const formatUptimeStr = (sec: number) => {
@@ -2302,13 +2415,15 @@ export default function Page() {
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
     fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
 
-    // Fetch user real DB prediction streak if authenticated
+    // Fetch user real DB prediction streak if authenticated (preserve ongoing local round if higher)
     if (currentUser?.userId) {
       fetchUserPredictionStats(Number(currentUser.userId)).then((stats) => {
         if (stats && typeof stats.currentStreak === 'number') {
-          const streak = stats.currentStreak
-          setHumanWins(streak)
-          setRound(Math.min(streak + 1, 10))
+          const dbStreak = stats.currentStreak
+          if (dbStreak > 0) {
+            setHumanWins((prev) => Math.max(prev, dbStreak))
+            setRound((prev) => Math.max(prev, Math.min(dbStreak + 1, 10)))
+          }
         }
       }).catch((e) => console.log('User streak fetch fallback:', e))
     }
@@ -2332,13 +2447,15 @@ export default function Page() {
     }, 10000)
 
     // Check user license token & telegram linkage
-    fetchUserLicenseToken(1).then((lic) => {
-      if (lic && lic.isActive) {
-        setLicenseToken(lic.tokenString)
-        setTelegramDeepLink(lic.telegramDeepLink || `https://t.me/MyQuantOfficial_bot?start=${lic.tokenString}`)
-        setTelegramLinked(lic.telegramLinked || false)
-      }
-    }).catch((e) => console.log('License fetch fallback:', e))
+    if (currentUser?.userId) {
+      fetchUserLicenseToken(Number(currentUser.userId)).then((lic) => {
+        if (lic && lic.isActive) {
+          setLicenseToken(lic.tokenString)
+          setTelegramDeepLink(lic.telegramDeepLink || `https://t.me/MyQuantOfficial_bot?start=${lic.tokenString}`)
+          setTelegramLinked(lic.telegramLinked || false)
+        }
+      }).catch((e) => console.log('License fetch fallback:', e))
+    }
 
     return () => clearInterval(escrowPollTimer)
   }, [searched, period, language])
@@ -2476,22 +2593,35 @@ export default function Page() {
 
   // 5. 10연승 $10 USDT Claim 온체인 자동 출금
   const handleClaimStreakPayout = async () => {
+    if (!currentUser?.userId) {
+      alert('🔒 10연승 보상을 신청하려면 먼저 로그인해 주세요.')
+      return
+    }
     if (!claimAddress.trim()) {
       alert('출금받으실 지갑 주소를 입력해주세요.')
       return
     }
     setClaimLoading(true)
     try {
+      const uId = Number(currentUser.userId)
       const res = await claimStreakReward({
-        userId: 1,
+        userId: uId,
         destinationAddress: claimAddress.trim(),
         network: claimNetwork
       })
       if (res && res.success) {
         setClaimSuccessData(res)
+        // 보상 수령 성공 시 프론트엔드 연승 상태도 0승으로 초기화하여 중복 신청 방지
+        setHumanWins(0)
+        setRound(1)
+        setSubmitted(false)
+        setPrediction(null)
+        const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
+        localStorage.removeItem(streakKey)
+
         fetchEscrowPoolStatus().then((pool) => pool && setEscrowPool(pool)).catch(() => {})
       } else {
-        alert(res?.message || '출금 처리 실패')
+        alert(res?.message || '출금 처리에 실패했습니다.')
       }
     } catch (err) {
       alert('출금 요청 중 오류가 발생했습니다.')
@@ -3921,34 +4051,55 @@ def signal(tick):
             hourlyRemainingSec={hourlyRemainingSec}
             effectiveBullPct={effectiveBullPct}
             effectiveBearPct={effectiveBearPct}
-            userId={currentUser?.userId ? Number(currentUser.userId) : 1}
+            userId={currentUser?.userId ? Number(currentUser.userId) : undefined}
             onSelectPrediction={(dir) => handleSelectPredictionDirection(dir)}
+            onRestoreActivePrediction={(active) => {
+              if (active && active.status === 'PENDING') {
+                const dir = (active.predictedDirection === 'BULL' || active.predictedDirection === 'UP') ? 'UP' : 'DOWN'
+                setPrediction(dir)
+                setSubmitted(true)
+              }
+            }}
             onSubmitPrediction={async () => {
+              if (!currentUser?.userId) {
+                alert('🔒 1시간 방향성 예측을 제출하려면 로그인이 필요합니다.')
+                return
+              }
               if (!prediction || submitted || hourlyRemainingSec <= 900) return
-              setSubmitted(true)
+
               const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
               const now = new Date()
               const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
               const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
+              const uId = Number(currentUser.userId)
+
               try {
-                localStorage.setItem(streakKey, JSON.stringify({
-                  humanWins,
-                  round,
-                  submitted: true,
-                  prediction,
-                  roundHourTag: currentHourTag,
-                  submittedAt: Date.now(),
-                  basePrice: numericBasePrice
-                }))
-                const uId = currentUser?.userId ? Number(currentUser.userId) : 1
-                await submitPredictionApi({
+                const res = await submitPredictionApi({
                   userId: uId,
                   symbol: rawSymbol,
                   predictionType: 'DIRECTION_1H',
                   predictedDirection: prediction
                 })
-              } catch (e) {
-                console.warn('submit prediction error:', e)
+
+                if (res && res.success) {
+                  setSubmitted(true)
+                  localStorage.setItem(streakKey, JSON.stringify({
+                    humanWins,
+                    round,
+                    submitted: true,
+                    prediction,
+                    roundHourTag: currentHourTag,
+                    submittedAt: Date.now(),
+                    basePrice: numericBasePrice
+                  }))
+                  alert(`🎉 ROUND #${round} [${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'}] 1시간 예측 제출이 완료되었습니다! (실시간 정산 관전 중)`)
+                } else {
+                  setSubmitted(false)
+                  alert(res?.message || '예측 제출에 실패했습니다.')
+                }
+              } catch (e: any) {
+                setSubmitted(false)
+                alert('예측 제출 중 통신 오류가 발생했습니다: ' + (e?.message || ''))
               }
             }}
           />
@@ -5308,9 +5459,9 @@ def signal(tick):
                         >
                           {language === 'ko' ? '기사 전문 리포트' : 'READ BRIEF'}
                         </button>
-                        {activeNews.link && (
+                        {(activeNews as any).link && (
                           <a
-                            href={activeNews.link}
+                            href={(activeNews as any).link}
                             target="_blank"
                             rel="noreferrer"
                             className="secondary-button"
@@ -5330,7 +5481,7 @@ def signal(tick):
                 {currentNewsList.slice(0, 6).map((item) => (
                   <button
                     className={`media-card ${activeNews.title === item.title ? 'active' : ''}`}
-                    key={item.title + (item.link || '')}
+                    key={item.title + ((item as any).link || '')}
                     onClick={() => selectNews(item)}
                     style={{
                       background: '#fff',
@@ -5613,7 +5764,8 @@ def signal(tick):
                           key={bot.id}
                           onClick={() => {
                             setSelectedInstanceId(bot.id)
-                            setInstanceStatus(bot.status)
+                            setInstanceStatus(bot.status as InstanceRunState)
+                            setBotRunning(bot.status === 'RUNNING')
                           }}
                           style={{ cursor: 'pointer', background: isSelected ? '#f8fafc' : undefined }}
                         >
@@ -5625,8 +5777,12 @@ def signal(tick):
                               <small>{bot.id} · {bot.exchange} ({bot.symbol})</small>
                             </span>
                           </div>
-                          <span className={`bot-state ${isRunning ? 'is-running' : ''}`}>
-                            <i />{isRunning ? 'Running' : bot.status === 'PAUSED' ? 'Paused' : bot.status === 'REBOOTING' ? 'Rebooting' : 'Stopped'}
+                          <span className={`bot-state ${isRunning ? 'is-running' : bot.status === 'PAUSED' ? 'is-paused' : ''}`}>
+                            <i />{isRunning ? 'Running'
+                              : bot.status === 'PAUSED' ? 'Paused'
+                              : bot.status === 'REBOOTING' ? 'Rebooting'
+                              : bot.status === 'EXPIRED' ? 'Expired'
+                              : 'Stopped'}
                           </span>
                           <span className="bot-resource">{bot.specs}</span>
                           <span className="bot-event">{bot.heartbeat}</span>
@@ -5642,7 +5798,7 @@ def signal(tick):
                             <button
                               onClick={() => {
                                 setSelectedInstanceId(bot.id)
-                                setInstanceStatus(bot.status)
+                                setInstanceStatus(bot.status as any)
                                 setBotConsoleActiveTab('terminal')
                               }}
                               aria-label="Open terminal"
@@ -5687,7 +5843,8 @@ def signal(tick):
                     <button
                       className="instance-ctrl-btn primary"
                       onClick={handleStartInstance}
-                      disabled={instanceStatus === 'RUNNING' || instanceStatus === 'REBOOTING'}
+                      disabled={!canControlInstance || instanceStatus === 'RUNNING' || instanceStatus === 'REBOOTING'}
+                      title={canControlInstance ? undefined : '봇을 제어하려면 로그인이 필요합니다.'}
                       style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#0f766e', color: '#fff', border: 0, cursor: 'pointer' }}
                     >
                       ▶ START / RESUME
@@ -5695,7 +5852,8 @@ def signal(tick):
                     <button
                       className="instance-ctrl-btn"
                       onClick={handlePauseInstance}
-                      disabled={instanceStatus !== 'RUNNING'}
+                      disabled={!canControlInstance || instanceStatus !== 'RUNNING'}
+                      title={canControlInstance ? undefined : '봇을 제어하려면 로그인이 필요합니다.'}
                       style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', cursor: 'pointer' }}
                     >
                       ⏸ PAUSE BOT
@@ -5703,7 +5861,8 @@ def signal(tick):
                     <button
                       className="instance-ctrl-btn"
                       onClick={handleRebootInstance}
-                      disabled={instanceStatus === 'REBOOTING'}
+                      disabled={!canControlInstance || instanceStatus === 'REBOOTING'}
+                      title={canControlInstance ? undefined : '봇을 제어하려면 로그인이 필요합니다.'}
                       style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', cursor: 'pointer' }}
                     >
                       🔄 REBOOT
@@ -5711,7 +5870,8 @@ def signal(tick):
                     <button
                       className="instance-ctrl-btn danger"
                       onClick={handleStopInstance}
-                      disabled={instanceStatus === 'STOPPED'}
+                      disabled={!canControlInstance || instanceStatus === 'STOPPED' || instanceStatus === 'EXPIRED'}
+                      title={canControlInstance ? undefined : '봇을 제어하려면 로그인이 필요합니다.'}
                       style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5', cursor: 'pointer' }}
                     >
                       ⏹ STOP
@@ -7071,12 +7231,12 @@ def signal(tick):
                     { label: '🛡️ 1,000만원 3단계 분할 매수 티켓', prompt: `1,000만 원 예산으로 ${currentSession?.symbol || searched} 3단계 분할 매수 집행 티켓을 발행해줘. 최대 손실은 50만 원 한도야.` },
                     { label: '⚖️ 켈리 공식(Kelly) 최적 자본배분', prompt: `${currentSession?.symbol || searched} 현재가 기준 켈리 공식으로 최적 투입 자본금과 1/2차 익절 목표가를 계산해줘.` },
                     { label: '🔄 선물 펀딩비 차익거래 델타 뉴트럴', prompt: `현물 매수 + 선물 1배 숏 델타 뉴트럴 펀딩비 수취 전략의 수익률 계산 공식과 리스크 관리 매뉴얼을 정리해줘.` }
-                  ] : researchMode === 'MASTER' ? [
+                  ] : (researchMode as string) === 'MASTER' ? [
                     { label: '🏛️ 월가 3대 거장 끝장 토론: 버핏 vs 시몬스 vs 달리오', prompt: `${currentSession?.symbol || searched} 현재 국면을 두고 워런 버핏(가치·안전마진), 짐 시몬스(퀀트·수학적 엣지), 레이 달리오(올웨더·매크로) 3인의 끝장 토론과 1.5-ATR 손절선 합의를 도출해줘.` },
                     { label: '📊 워런 버핏 13F 기관 포트폴리오 & $277B 현금', prompt: `버크셔 해서웨이(Berkshire Hathaway)의 최신 13F 공시 데이터와 $277B 현금 보유 전략이 시사하는 시장 사이클 관점을 심층 분석해줘.` },
                     { label: '📜 역사적 데자뷔 타임머신: 과거 급락/폭등장 팩트', prompt: `현재 시장 심리와 가격 흐름이 과거 50년 역사 중 어떤 사건(2021년 5월 급락 or 2020년 3월 등)과 가장 유사한지 역사적 데자뷔를 복기해줘.` },
                     { label: '🛡️ 뇌동매매 & FOMO 긴급 처방전: 멘탈 수칙', prompt: `급등/급락에 따른 충동 매매(FOMO)를 막기 위한 긴급 손실 시뮬레이션과 지금 당장 지켜야 할 3대 멘탈 가디언 수칙을 처방해줘.` }
-                  ] : researchMode === 'AGENT' ? [
+                  ] : (researchMode as string) === 'AGENT' ? [
                     { label: '⚡ 자율 도구 연쇄 실행(ReAct): 복합 분석', prompt: `${currentSession?.symbol || searched}에 대해 ① 글로벌 외신 실시간 수급 팩트체크 도구, ② AETHER 퀀트 모멘텀 매트릭스 도구, ③ AETHER 시계열 프랙탈 엔진을 순차 자율 실행(ReAct)하여, 각 도구의 실행 추론 과정(Tool Execution Trace)과 종합 투자 집행 전략을 수립해줘.` },
                     { label: '🤖 듀얼 궤적 더블 컨펌(Double Confirmed) 자율 검증', prompt: `${currentSession?.symbol || searched}에 대해 ① 시계열 프랙탈 엔진 도구와 ② 딥러닝 파동 신경망 도구를 자율 동시 호출하여, 두 궤적이 동일 방향을 가리키는지(Double Confirmed) 상호 교차 검증하고 앙상블 확신도 기반 최적 진입 티켓을 발행해줘.` },
                     { label: '🤖 4단계 자율 퀀트 오케스트레이션: 집행 티켓', prompt: `외신 팩트체크부터 프랙탈 패턴 매칭, 24개 파라미터 그리드 가상 시뮬레이션까지 4단계 도구를 자율 연쇄 호출(Orchestration)하여, ${currentSession?.symbol || searched} 최적 진입가와 1.5-ATR 동적 트레일링 스탑 집행 티켓을 산출해줘.` },
