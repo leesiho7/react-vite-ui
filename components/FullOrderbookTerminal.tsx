@@ -669,9 +669,9 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                background: '#10b981',
+                background: '#0284c7',
                 color: '#ffffff',
-                padding: '4px 8px',
+                padding: '3px 8px',
                 fontSize: '10px',
                 fontWeight: 700,
                 borderRadius: '3px',
@@ -679,8 +679,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                 alignItems: 'center',
                 gap: '5px'
               }}>
-                <Flame size={13} />
-                👑 GLOBAL BEST ARBITRAGE ROUTE
+                GLOBAL BEST ARBITRAGE ROUTE
               </div>
               <div style={{ color: '#f8fafc', fontSize: '12.5px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                 <span style={{ color: '#cbd5e1' }}>최적 매수: </span>
