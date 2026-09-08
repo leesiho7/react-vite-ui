@@ -5272,6 +5272,17 @@ def signal(tick):
             </button>
           </div>
           <FullOrderbookTerminal defaultSymbol="BTCUSDT" />
+          
+          {/* ── Footer ── */}
+          <footer className="arb-footer" style={{ marginTop: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span>DATA IS FOR RESEARCH ONLY · DUAL WEBSOCKET STREAMING ACTIVE</span>
+              <span>INSTITUTIONAL L2 DEPTH · <a href="/login" style={{ color: '#38bdf8', textDecoration: 'none' }}>SIGN IN FOR PRIVATE ENGINES</a></span>
+            </div>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
+              ⚠️ DISCLAIMER: AETHER 터미널이 제공하는 차익거래 및 펀딩비 데이터는 정보 제공 목적으로만 사용되며, 금융 투자 조언이 아닙니다. 모든 트레이딩의 최종 책임은 본인에게 있습니다.
+            </p>
+          </footer>
         </section>
       )}
 
