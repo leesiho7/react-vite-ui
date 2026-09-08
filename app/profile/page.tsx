@@ -56,8 +56,8 @@ export default function ProfilePage() {
         <section className="profile-content">
           <div>
             <span className="eyebrow"><span className="diamond">◆</span> USER ACCOUNT INFORMATION</span>
-            <h1>Member<br /><em>Profile & Settings.</em></h1>
-            <p>회원 계정 정보 및 10-Win League 에스크로 출금용 지갑 주소를 관리합니다.</p>
+            <h1>Member<br /><em style={{ color: '#f47a20', fontStyle: 'normal' }}>Profile & Settings.</em></h1>
+            <p>회원 계정 정보 및 10-Win League 에스크로 출금용 TRC-20 지갑 주소를 관리합니다.</p>
           </div>
 
           <div className="profile-form">
@@ -70,7 +70,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <span style={{ color: '#64748b', display: 'block', fontSize: '10px' }}>활동 닉네임 (Nickname)</span>
-                    <strong style={{ color: '#0284c7' }}>{currentUser.nickname}</strong>
+                    <strong style={{ color: '#f47a20' }}>{currentUser.nickname || '-'}</strong>
                   </div>
                   <div>
                     <span style={{ color: '#64748b', display: 'block', fontSize: '10px' }}>회원 권한 (Role)</span>
@@ -84,17 +84,17 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div style={{ background: '#fffbeb', border: '1px solid #fde68a', padding: '14px', borderRadius: '4px', marginBottom: '18px', color: '#b45309', fontSize: '11.5px' }}>
-                로그인되어 있지 않습니다. <Link href="/login" style={{ fontWeight: 700, textDecoration: 'underline' }}>로그인</Link> 또는 <Link href="/signup" style={{ fontWeight: 700, textDecoration: 'underline' }}>회원가입</Link>을 진행해 주세요.
+                로그인되어 있지 않습니다. <Link href="/login" style={{ color: '#f47a20', fontWeight: 700, textDecoration: 'underline' }}>로그인</Link> 또는 <Link href="/signup" style={{ color: '#f47a20', fontWeight: 700, textDecoration: 'underline' }}>회원가입</Link>을 진행해 주세요.
               </div>
             )}
 
             <label>
-              REWARD DESTINATION WALLET ADDRESS (에스크로 $10 USDT 수령 지갑)
+              REWARD DESTINATION WALLET ADDRESS (TRC-20 USDT 수령 지갑 주소)
               <input
                 value={wallet}
                 onChange={(event) => { setWallet(event.target.value); setSaved(false) }}
-                placeholder="0x... Polygon / BSC 지갑 주소 입력"
-                aria-label="Wallet address"
+                placeholder="본인의 TRC-20 (Tron 네트워크) USDT 지갑 주소를 입력하세요 (T...)"
+                aria-label="TRC-20 Wallet address"
               />
             </label>
 
@@ -103,8 +103,9 @@ export default function ProfilePage() {
                 className="primary-button"
                 disabled={!wallet.trim() || !currentUser}
                 onClick={handleSaveWallet}
+                style={{ background: '#f47a20', color: '#ffffff' }}
               >
-                {saved ? 'ADDRESS SAVED ✓' : 'SAVE WALLET ADDRESS'} <span>↗</span>
+                {saved ? 'ADDRESS SAVED ✓' : 'SAVE TRC-20 WALLET'} <span>↗</span>
               </button>
               {currentUser && (
                 <button
@@ -122,7 +123,7 @@ export default function ProfilePage() {
               본 서비스는 개인정보 최소수집 원칙을 준수하며, 비밀번호나 민감정보를 절대 외부에 노출하지 않습니다.
             </p>
             <p className="profile-warning">
-              온체인 출금 지갑 주소는 오타가 없는지 반드시 확인해 주세요. 블록체인 전송은 취소할 수 없습니다.
+              본인의 TRC-20 (Tron 네트워크) 지갑 주소가 맞는지 오타를 반드시 확인해 주세요. 블록체인 전송은 취소할 수 없습니다.
             </p>
           </div>
         </section>
