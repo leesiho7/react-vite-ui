@@ -18,7 +18,8 @@ import {
   Sparkles,
   Zap,
   ShieldCheck,
-  ArrowUpRight
+  ArrowUpRight,
+  Tv
 } from 'lucide-react'
 
 interface NavbarProps {
@@ -502,7 +503,7 @@ export default function Navbar({
             </div>
 
             {/* 주요 메뉴 카드 그리드 */}
-            <div className="grid grid-template-columns grid-cols-2 gap-2.5 mb-4">
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
               <button
                 type="button"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
@@ -513,7 +514,7 @@ export default function Navbar({
                   else if (onToggleEvent) onToggleEvent();
                 }}
               >
-                <Award size={16} className="text-[#10b981]" />
+                <Award size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.league}</div>
                   <div className="text-[9px] text-[#94a3b8]">10연승 실시간 랭킹</div>
@@ -530,7 +531,7 @@ export default function Navbar({
                   else if (onToggleNews) onToggleNews();
                 }}
               >
-                <Radio size={16} className="text-[#38bdf8]" />
+                <Radio size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.news}</div>
                   <div className="text-[9px] text-[#94a3b8]">AI 팩트체크 속보</div>
@@ -547,7 +548,7 @@ export default function Navbar({
                   else if (onToggleTrade) onToggleTrade();
                 }}
               >
-                <TrendingUp size={16} className="text-[#38bdf8]" />
+                <TrendingUp size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.trade}</div>
                   <div className="text-[9px] text-[#94a3b8]">실시간 마켓/차트</div>
@@ -564,7 +565,7 @@ export default function Navbar({
                   else handleBotScroll();
                 }}
               >
-                <Bot size={16} className="text-[#f47a20]" />
+                <Bot size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.bots}</div>
                   <div className="text-[9px] text-[#94a3b8]">24H 자율 봇센터</div>
@@ -581,10 +582,26 @@ export default function Navbar({
                   else if (onToggleResearch) onToggleResearch();
                 }}
               >
-                <BrainCircuit size={16} className="text-[#a855f7]" />
+                <BrainCircuit size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.research}</div>
                   <div className="text-[9px] text-[#94a3b8]">AI 퀀트 리서치</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('media');
+                }}
+              >
+                <Tv size={16} className="text-[#94a3b8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.media}</div>
+                  <div className="text-[9px] text-[#94a3b8]">미디어 데스크</div>
                 </div>
               </button>
 
@@ -598,7 +615,7 @@ export default function Navbar({
                   else if (onToggleArbitrage) onToggleArbitrage();
                 }}
               >
-                <RefreshCw size={16} className="text-[#f59e0b]" />
+                <RefreshCw size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.arbitrage}</div>
                   <div className="text-[9px] text-[#94a3b8]">실시간 김프 스캐너</div>
@@ -611,7 +628,7 @@ export default function Navbar({
                 className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer text-decoration-none"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <UserRound size={16} className="text-[#f47a20]" />
+                <UserRound size={16} className="text-[#94a3b8]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">MY PROFILE</div>
                   <div className="text-[9px] text-[#94a3b8]">계정 및 TRC-20 지갑</div>
