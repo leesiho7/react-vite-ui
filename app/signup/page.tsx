@@ -449,8 +449,8 @@ export default function SignupPage() {
           </div>
 
           <div className="signup-orbit">
-            <div className="signup-orbit-mark" style={{ padding: '12px' }}>
-              <img src="/brand-logo.png" alt="AETHER Official Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <div className="signup-orbit-mark" style={{ padding: '10px' }}>
+              <img src="/brand-logo.png" alt="AETHER Official Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))' }} />
             </div>
             <span className="orbit-line orbit-line-one" />
             <span className="orbit-line orbit-line-two" />

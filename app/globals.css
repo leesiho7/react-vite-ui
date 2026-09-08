@@ -2404,7 +2404,7 @@ samp,
 .signup-visual-copy em { color:#ff9d5d; font-style:normal; }
 .signup-visual-copy p { max-width:260px; color:#c4cbd1; font:12px/1.6 var(--font-sans),sans-serif; }
 .signup-orbit { position:absolute; z-index:2; left:50%; top:55%; width:210px; height:210px; transform:translate(-50%,-50%); border:2px solid rgba(255,176,103,.72); border-radius:50%; box-shadow:0 0 0 13px rgba(255,145,55,.11),0 0 0 28px rgba(255,145,55,.07); }
-.signup-orbit-mark { position:absolute; inset:54px; display:grid; place-items:center; border:2px solid #ffd0a8; border-radius:35%; color:#fff; background:linear-gradient(145deg,#f47a20,#7d2b08); box-shadow:0 15px 28px rgba(0,0,0,.35); font:700 60px Arial,sans-serif; }
+.signup-orbit-mark { position:absolute; inset:42px; display:grid; place-items:center; border:2px solid #ffd0a8; border-radius:24px; color:#fff; background:linear-gradient(145deg,#f47a20,#7d2b08); box-shadow:0 15px 28px rgba(0,0,0,.35); overflow:hidden; }
 .orbit-line { position:absolute; left:50%; top:-25px; width:2px; height:260px; background:linear-gradient(transparent,#ffad70,transparent); transform:rotate(58deg); }
 .orbit-line-two { transform:rotate(-58deg); opacity:.6; }
 .signup-visual-footer { position:absolute; z-index:3; bottom:27px; left:34px; color:#9ea8b0; font:8px var(--font-mono),monospace; letter-spacing:.08em; }
