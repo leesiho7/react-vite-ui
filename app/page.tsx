@@ -7501,12 +7501,12 @@ def signal(tick):
                   onChange={e => setAgentInputPrompt(e.target.value)}
                   onPaste={handleChatPaste}
                   onKeyDown={e => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
                       handleSendAgentMessage()
                     }
                   }}
-                  placeholder={`${currentSession?.symbol || searched}의 온체인 수급, 팩트체크, 지표 분석을 질문하거나 차트 캡처 사진을 Ctrl+V로 붙여넣으세요...`}
+                  placeholder={`${currentSession?.symbol || searched}의 온체인 수급, 팩트체크, 지표 분석을 질문하거나 차트 캡처 사진을 붙여넣으세요...`}
                   disabled={agentThinking}
                 />
 
@@ -7535,7 +7535,7 @@ def signal(tick):
                   </div>
 
                   <div className="composer-send">
-                    <span>{agentInputPrompt.length} chars · Cmd+Enter</span>
+                    <span className="hidden sm:inline">{agentInputPrompt.length} chars · Enter 전송</span>
                     <button
                       type="button"
                       className="send-research"

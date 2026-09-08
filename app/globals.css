@@ -1875,6 +1875,9 @@ samp,
   .snapshot-grid { grid-template-columns:1fr; }
   .market-footer { display:block; line-height:1.8; }
   .market-live-dot { display:inline-block; }
+  .research-shell-light { grid-template-columns:1fr !important; }
+  .research-rail-light { display:none; }
+  .research-composer-light .send-research { width:38px; height:38px; }
 }
 
 /* ── Trade Page Lower Panel (L2 Order Book & Execution Card) ── */
