@@ -5252,19 +5252,6 @@ def signal(tick):
       {/* ── Real-time Cross-Exchange Arbitrage & L2 Orderbook Terminal ── */}
       {(activeTopView === 'arbitrage') && (
         <section className="arbitrage-section" id="arbitrage-terminal" style={{ margin: '24px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', background: '#0b131e', padding: '12px 18px', borderRadius: '4px', border: '1px solid #1e293b' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontSize: '12px', fontWeight: 'bold' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }} />
-              <span>CROSS-EXCHANGE ARBITRAGE & L2 ORDERBOOK TERMINAL</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleSelectTopView('trade')}
-              style={{ background: 'transparent', border: '1px solid #334155', color: '#94a3b8', padding: '4px 10px', fontSize: '11px', borderRadius: '3px', cursor: 'pointer' }}
-            >
-              닫기 ✕
-            </button>
-          </div>
           <FullOrderbookTerminal defaultSymbol="BTCUSDT" />
         </section>
       )}
