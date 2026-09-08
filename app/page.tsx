@@ -6937,141 +6937,181 @@ def signal(tick):
                   </div>
                 </div>
 
-                {/* VPS 상품군 티어 그리드 (4개 티어) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                {/* VPS 상품군 티어 그리드 (유저 스크린샷 5개 상품 실측 데이터) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                   {[
                     {
-                      id: 'micro',
-                      name: 'Micro Node',
-                      kicker: 'STARTER QUANT',
+                      id: 'vps-100l-ssd',
+                      name: 'VPS 100L SSD',
+                      kicker: 'ENTRY QUANT',
+                      price: '$19',
+                      period: '/ month',
+                      vcpu: '1 Core',
+                      ram: '1 GB',
+                      storage: '100 GB SSD',
+                      bandwidth: '1000 GB',
+                      portSpeed: '1 Gbps',
+                      os: 'Linux OS',
+                      desc: '경량 트레이딩 봇 & 단일 알고리즘 구동용 스터디 노드',
+                      featured: false
+                    },
+                    {
+                      id: 'vps-200l-ssd',
+                      name: 'VPS 200L SSD',
+                      kicker: 'FEATURED',
+                      price: '$39',
+                      period: '/ month',
+                      vcpu: '2 Core',
+                      ram: '2 GB',
+                      storage: '100 GB SSD',
+                      bandwidth: '1000 GB',
+                      portSpeed: '1 Gbps',
+                      os: 'Linux OS',
+                      desc: '24H 봇 인스턴스 & Python 샌드박스 구동 최적화 전용 노드',
+                      featured: true
+                    },
+                    {
+                      id: 'vps-400l-ssd',
+                      name: 'VPS 400L SSD',
+                      kicker: 'MID-TIER QUANT',
+                      price: '$49',
+                      period: '/ month',
+                      vcpu: '4 Core',
+                      ram: '4 GB',
+                      storage: '100 GB SSD',
+                      bandwidth: '1000 GB',
+                      portSpeed: '1 Gbps',
+                      os: 'Linux OS',
+                      desc: '다중 알고리즘 봇 & 실시간 지표 연산용 호스팅 노드',
+                      featured: false
+                    },
+                    {
+                      id: 'vps-100-nvme',
+                      name: 'VPS 100 NVME',
+                      kicker: 'NVME HIGH SPEED',
+                      price: '$39',
+                      period: '/ month',
                       vcpu: '1 vCPU',
-                      ram: '1 GB ECC',
-                      disk: '25 GB NVMe',
-                      traffic: '20 TB / 1Gbps',
-                      resellerPrice: '$4.50',
-                      retailPrice: '$7.00',
-                      desc: '단일 봇 및 경량 알고리즘 전용 독립 노드',
-                      recommended: false
+                      ram: '2 GB RAM',
+                      storage: 'From 100GB NVMe',
+                      bandwidth: '1000 GB Bandwidth',
+                      portSpeed: '1Gbps Port Network',
+                      os: 'Linux / Windows OS',
+                      desc: '고속 NVMe I/O 전용 데이터베이스 & 스캐너 노드',
+                      featured: false
                     },
                     {
-                      id: 'standard',
-                      name: 'Standard Quant Node',
-                      kicker: 'MOST POPULAR',
+                      id: 'vps-200-nvme',
+                      name: 'VPS 200 NVME',
+                      kicker: 'FEATURED HFT',
+                      price: '$69',
+                      period: '/ month',
                       vcpu: '2 vCPU',
-                      ram: '4 GB ECC',
-                      disk: '50 GB NVMe',
-                      traffic: '무제한 / 1Gbps',
-                      resellerPrice: '$9.80',
-                      retailPrice: '$15.00',
-                      desc: '파이썬 AST 샌드박스 + 봇 3개 병렬 구동 최적화',
-                      recommended: true
-                    },
-                    {
-                      id: 'alpha',
-                      name: 'Alpha High-Frequency Node',
-                      kicker: 'HFT & HEDGE FUND',
-                      vcpu: '4 vCPU',
-                      ram: '8 GB ECC',
-                      disk: '100 GB NVMe',
-                      traffic: '무제한 / 10Gbps 직결',
-                      resellerPrice: '$19.50',
-                      retailPrice: '$30.00',
-                      desc: '서브밀리초 코로케이션 및 빅데이터 백테스팅',
-                      recommended: false
-                    },
-                    {
-                      id: 'baremetal',
-                      name: 'Dedicated Cluster',
-                      kicker: 'ENTERPRISE CLUSTER',
-                      vcpu: '8 vCPU',
-                      ram: '32 GB ECC',
-                      disk: '500 GB NVMe RAID',
-                      traffic: '무제한 / 전용 10Gbps',
-                      resellerPrice: '$49.00',
-                      retailPrice: '$79.00',
-                      desc: '완전 물리 격리 베어메탈 · 봇 50개 대량 인프라',
-                      recommended: false
+                      ram: '4 GB RAM',
+                      storage: 'From 100GB NVMe',
+                      bandwidth: '1000 GB Bandwidth',
+                      portSpeed: '1Gbps Port Network',
+                      os: 'Linux / Windows OS',
+                      desc: '고성능 NVMe 초저지연 HFT 코로케이션 최적화 노드',
+                      featured: true
                     }
                   ].map((tier) => {
-                    const isSelected = selectedVpsTier === tier.id
+                    const isSelected = selectedVpsTier === tier.id || (selectedVpsTier === 'standard' && tier.id === 'vps-200l-ssd')
                     return (
                       <div
                         key={tier.id}
                         onClick={() => setSelectedVpsTier(tier.id as any)}
                         style={{
-                          border: isSelected ? '2px solid #f47a20' : '1px solid #dedfe4',
-                          background: isSelected ? '#fffaf5' : '#ffffff',
-                          borderRadius: '10px',
-                          padding: '20px',
+                          border: tier.featured ? '2px solid #dc2626' : isSelected ? '2px solid #f47a20' : '1px solid #dedfe4',
+                          background: tier.featured ? '#fff5f5' : isSelected ? '#fffaf5' : '#ffffff',
+                          borderRadius: '12px',
+                          padding: '20px 18px',
                           cursor: 'pointer',
                           position: 'relative',
                           transition: 'all 0.15s ease',
                           display: 'flex',
                           flexDirection: 'column',
-                          justifyContent: 'space-between'
+                          justifyContent: 'space-between',
+                          boxShadow: tier.featured ? '0 4px 14px rgba(220,38,38,0.12)' : 'none'
                         }}
                       >
-                        {tier.recommended && (
+                        {tier.featured && (
                           <span style={{
                             position: 'absolute',
-                            top: '-10px',
+                            top: '-12px',
                             right: '16px',
-                            background: '#f47a20',
+                            background: '#dc2626',
                             color: '#ffffff',
                             fontSize: '9px',
                             fontWeight: 800,
-                            padding: '3px 8px',
-                            borderRadius: '10px',
-                            letterSpacing: '0.04em'
+                            padding: '4px 10px',
+                            borderRadius: '12px',
+                            letterSpacing: '0.06em'
                           }}>
-                            BEST VALUE
+                            FEATURED
                           </span>
                         )}
 
                         <div>
-                          <span style={{ fontSize: '9.5px', color: '#ea580c', fontWeight: 800, letterSpacing: '0.06em' }}>
+                          <span style={{ fontSize: '9.5px', color: tier.featured ? '#dc2626' : '#ea580c', fontWeight: 800, letterSpacing: '0.06em' }}>
                             {tier.kicker}
                           </span>
-                          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '4px 0 8px', color: '#0f172a' }}>
+                          <h3 style={{ fontSize: '17px', fontWeight: 800, margin: '4px 0 8px', color: '#0f172a' }}>
                             {tier.name}
                           </h3>
 
-                          <div style={{ margin: '10px 0 14px' }}>
-                            <span style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', fontFamily: 'var(--font-mono)' }}>
-                              {tier.resellerPrice}
+                          <div style={{ margin: '10px 0 14px', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                            <span style={{ fontSize: '30px', fontWeight: 900, color: '#0f172a', fontFamily: 'var(--font-mono)' }}>
+                              {tier.price}
                             </span>
-                            <span style={{ fontSize: '11px', color: '#64748b' }}> /월 (파트너 공급가)</span>
-                            <div style={{ fontSize: '11px', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
-                              기준 소비자가: {tier.retailPrice}
-                            </div>
+                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{tier.period}</span>
                           </div>
 
-                          <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 14px', lineHeight: 1.4 }}>
+                          <p style={{ fontSize: '11px', color: '#64748b', margin: '0 0 14px', lineHeight: 1.4 }}>
                             {tier.desc}
                           </p>
 
-                          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px', fontSize: '11px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Cpu size={12} color="#f47a20" /> {tier.vcpu}
+                          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 18px', fontSize: '11.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckCircle2 size={13} color={tier.featured ? '#dc2626' : '#f47a20'} /> <strong>vCPU:</strong> {tier.vcpu}
                             </li>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Layers size={12} color="#f47a20" /> {tier.ram}
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckCircle2 size={13} color={tier.featured ? '#dc2626' : '#f47a20'} /> <strong>RAM:</strong> {tier.ram}
                             </li>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Server size={12} color="#f47a20" /> {tier.disk}
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckCircle2 size={13} color={tier.featured ? '#dc2626' : '#f47a20'} /> <strong>SSD Storage:</strong> {tier.storage}
                             </li>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Zap size={12} color="#f47a20" /> {tier.traffic}
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckCircle2 size={13} color={tier.featured ? '#dc2626' : '#f47a20'} /> <strong>Bandwidth:</strong> {tier.bandwidth}
                             </li>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <CheckCircle2 size={13} color={tier.featured ? '#dc2626' : '#f47a20'} /> <strong>Port Speed:</strong> {tier.portSpeed}
+                            </li>
+                            {tier.os && (
+                              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <CheckCircle2 size={13} color={tier.featured ? '#dc2626' : '#f47a20'} /> <strong>OS:</strong> {tier.os}
+                              </li>
+                            )}
                           </ul>
                         </div>
 
                         <button
                           type="button"
-                          className={isSelected ? 'bot-create-button' : 'bot-tool-button'}
-                          style={{ width: '100%', justifyContent: 'center' }}
+                          style={{
+                            width: '100%',
+                            background: tier.featured ? '#dc2626' : '#0f172a',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '11px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            letterSpacing: '0.04em',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
                         >
-                          {isSelected ? '선택됨 (노드 활성화)' : '상품 선택'}
+                          CUSTOMIZE
                         </button>
                       </div>
                     )
