@@ -409,10 +409,11 @@ export default function Navbar({
         <button
           type="button"
           style={{ background: 'transparent', border: 'none' }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${tradeOpen ? 'text-[#f47a20]' : 'text-[#8b929e] hover:text-[#f47a20]'}`}
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${activeView === 'trade' || tradeOpen ? 'text-[#f47a20]' : 'text-[#8b929e] hover:text-[#f47a20]'}`}
           onClick={() => {
             setMobileMenuOpen(false);
-            if (onToggleTrade) onToggleTrade();
+            if (onSelectView) onSelectView('trade');
+            else if (onToggleTrade) onToggleTrade();
             else {
               const el = document.getElementById('market-intelligence-terminal') || document.getElementById('trading-console');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -426,10 +427,11 @@ export default function Navbar({
         <button
           type="button"
           style={{ background: 'transparent', border: 'none' }}
-          className="flex flex-col items-center justify-center gap-1 text-[#8b929e] hover:text-[#f47a20] cursor-pointer transition-colors"
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${activeView === 'bots' ? 'text-[#f47a20]' : 'text-[#8b929e] hover:text-[#f47a20]'}`}
           onClick={() => {
             setMobileMenuOpen(false);
-            handleBotScroll();
+            if (onSelectView) onSelectView('bots');
+            else handleBotScroll();
           }}
         >
           <Bot size={19} />
@@ -439,10 +441,11 @@ export default function Navbar({
         <button
           type="button"
           style={{ background: 'transparent', border: 'none' }}
-          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${researchOpen ? 'text-[#f47a20]' : 'text-[#8b929e] hover:text-[#f47a20]'}`}
+          className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${activeView === 'research' || researchOpen ? 'text-[#f47a20]' : 'text-[#8b929e] hover:text-[#f47a20]'}`}
           onClick={() => {
             setMobileMenuOpen(false);
-            if (onToggleResearch) onToggleResearch();
+            if (onSelectView) onSelectView('research');
+            else if (onToggleResearch) onToggleResearch();
             else {
               const el = document.getElementById('research-terminal');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
