@@ -19,7 +19,9 @@ import {
   Zap,
   ShieldCheck,
   ArrowUpRight,
-  Tv
+  Tv,
+  LogIn,
+  UserPlus
 } from 'lucide-react'
 
 interface NavbarProps {
@@ -356,14 +358,12 @@ export default function Navbar({
                 >
                   {menuText.login}
                 </Link>
-                <button
-                  type="button"
-                  style={{ border: 'none' }}
-                  onClick={onOpenDeposit}
-                  className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-[3px] cursor-pointer transition-colors shadow-[0_0_12px_rgba(2,132,199,0.35)] whitespace-nowrap"
+                <Link
+                  href="/signup"
+                  className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-[3px] no-underline transition-colors shadow-[0_0_12px_rgba(2,132,199,0.35)] whitespace-nowrap inline-block"
                 >
                   {menuText.signup}
-                </button>
+                </Link>
               </div>
             )}
           </div>
@@ -632,6 +632,32 @@ export default function Navbar({
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">MY PROFILE</div>
                   <div className="text-[9px] text-[#94a3b8]">계정 및 TRC-20 지갑</div>
+                </div>
+              </Link>
+
+              <Link
+                href="/login"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer text-decoration-none"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <LogIn size={16} className="text-[#94a3b8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.login}</div>
+                  <div className="text-[9px] text-[#94a3b8]">소셜 원클릭 로그인</div>
+                </div>
+              </Link>
+
+              <Link
+                href="/signup"
+                style={{ background: 'rgba(2,132,199,0.15)', border: '1px solid #0284c7' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#38bdf8] transition-colors cursor-pointer text-decoration-none"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <UserPlus size={16} className="text-[#38bdf8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-[#38bdf8] leading-tight">{menuText.signup} (회원가입)</div>
+                  <div className="text-[9px] text-[#94a3b8]">1초 만에 계정 생성</div>
                 </div>
               </Link>
             </div>
