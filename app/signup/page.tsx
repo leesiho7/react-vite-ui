@@ -484,137 +484,66 @@ export default function SignupPage() {
             Google로 계속하기
           </button>
 
-          {/* Expandable Social / Web3 Options */}
-          <div
-            className="signup-more"
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowMore(!showMore)}
-            style={{ userSelect: 'none' }}
-          >
-            기타 등록 방법 <span>{showMore ? '▴' : '⌄'}</span>
-          </div>
-
-          {showMore && (
-            <div className="social-grid social-grid-wide" style={{ marginTop: '-12px', marginBottom: '20px' }}>
-              {/* NAVER */}
-              <button
-                className="social-button"
-                type="button"
-                onClick={() => handleSocial('NAVER')}
-                disabled={loading}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#03C75A" style={{ flexShrink: 0 }}>
-                  <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/>
-                </svg>
-                <strong style={{ flex: 1, fontSize: '11px' }}>NAVER</strong>
-                <span>↗</span>
-              </button>
-
-              {/* KAKAO */}
-              <button
-                className="social-button"
-                type="button"
-                onClick={() => handleSocial('KAKAO')}
-                disabled={loading}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="#3C1E1E" style={{ flexShrink: 0 }}>
-                  <path d="M12 3C6.477 3 2 6.477 2 10.77c0 2.766 1.84 5.19 4.613 6.538l-.94 3.447c-.083.305.263.545.516.357l4.133-2.736c.554.062 1.112.094 1.678.094 5.523 0 10-3.477 10-7.7A7.26 7.26 0 0 0 12 3z"/>
-                </svg>
-                <strong style={{ flex: 1, fontSize: '11px' }}>KAKAO</strong>
-                <span>↗</span>
-              </button>
-
-              {/* APPLE */}
-              <button
-                className="social-button"
-                type="button"
-                onClick={() => handleSocial('APPLE')}
-                disabled={loading}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#000000', color: '#ffffff', borderColor: '#000000' }}
-              >
-                <svg width="15" height="15" viewBox="0 0 170 170" fill="#ffffff" style={{ flexShrink: 0 }}>
-                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.63-13.98-5.27-8.17-9.58-17.75-12.92-28.75-3.34-11-5.01-21.84-5.01-32.52 0-14.07 3.57-25.75 10.7-35.03 7.14-9.28 16.14-13.98 27.01-14.1 4.79 0 10.15 1.25 16.08 3.76 5.94 2.51 9.77 3.82 11.51 3.94 1.3.12 5.12-1.25 11.45-4.11 6.34-2.86 11.83-4.2 16.48-4.01 12.08.62 21.84 5.34 29.28 14.17-10.7 6.47-15.93 15.34-15.69 26.6.24 8.76 3.63 16.15 10.18 22.18 6.54 6.02 14.3 9.4 23.27 10.13-2.22 6.64-4.87 13.06-7.94 19.26zM119.22 31.84c0-7.23 2.65-14.07 7.95-20.52 5.3-6.45 11.8-10.45 19.51-12.01.62 3.12.72 5.86.3 8.22-.62 3.59-2.09 7.15-4.42 10.67-2.33 3.52-5.18 6.45-8.56 8.79-3.38 2.34-6.85 3.86-10.41 4.56-.37-.73-.77-1.92-1.37-3.71-.97-3.9-1.2-6.57-1.2-8.02z" />
-                </svg>
-                <strong style={{ flex: 1, fontSize: '11px', color: '#ffffff' }}>APPLE</strong>
-                <span style={{ color: '#888888' }}>↗</span>
-              </button>
-
-              {/* METAMASK */}
-              <button
-                className="social-button"
-                type="button"
-                onClick={() => handleSocial('METAMASK')}
-                disabled={loading}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff7ed', borderColor: '#fdba74' }}
-              >
-                <span style={{ fontSize: '13px' }}>🦊</span>
-                <strong style={{ flex: 1, fontSize: '11px', color: '#c2410c' }}>METAMASK</strong>
-                <span style={{ color: '#c2410c' }}>↗</span>
-              </button>
-            </div>
-          )}
-
-          {/* Auth Divider */}
-          <div className="auth-divider">
-            <span>또는</span>
-          </div>
-
-          {/* Email Form */}
-          <form onSubmit={handleEmailSubmit}>
-            <label className="signup-email-only">
-              이메일
-              <input
-                type="email"
-                required
-                placeholder="이메일 주소를 입력하세요"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={step === 2}
-              />
-            </label>
-
-            {step === 2 && (
-              <div style={{ marginTop: '14px', display: 'grid', gap: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>이메일: <strong>{email}</strong></span>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    style={{ background: 'none', border: 'none', color: '#f47a20', fontSize: '11px', cursor: 'pointer', padding: 0 }}
-                  >
-                    변경
-                  </button>
-                </div>
-                <label className="signup-email-only">
-                  비밀번호 설정
-                  <input
-                    type="password"
-                    placeholder="8자 이상 안전한 비밀번호"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </label>
-                <label className="signup-email-only">
-                  닉네임 (선택)
-                  <input
-                    type="text"
-                    placeholder={email.split('@')[0] || '퀀트투자자'}
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                  />
-                </label>
-              </div>
-            )}
-
-            <button className="signup-next" type="submit" disabled={loading}>
-              {loading ? '가입 처리 중...' : (step === 1 ? '다음' : '가입이 완료되었습니다')}
+          {/* Social / Web3 Register Grid (Full Display) */}
+          <div className="social-grid social-grid-wide" style={{ marginTop: '16px', marginBottom: '24px', display: 'grid', gap: '10px' }}>
+            {/* NAVER */}
+            <button
+              className="social-button"
+              type="button"
+              onClick={() => handleSocial('NAVER')}
+              disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#03C75A', color: '#ffffff', borderColor: '#03C75A', borderRadius: '6px' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" style={{ flexShrink: 0 }}>
+                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"/>
+              </svg>
+              <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left' }}>네이버로 가입하기</strong>
+              <span>↗</span>
             </button>
-          </form>
+
+            {/* KAKAO */}
+            <button
+              className="social-button"
+              type="button"
+              onClick={() => handleSocial('KAKAO')}
+              disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#FEE500', color: '#000000', borderColor: '#FEE500', borderRadius: '6px' }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="#000000" style={{ flexShrink: 0 }}>
+                <path d="M12 3C6.477 3 2 6.477 2 10.77c0 2.766 1.84 5.19 4.613 6.538l-.94 3.447c-.083.305.263.545.516.357l4.133-2.736c.554.062 1.112.094 1.678.094 5.523 0 10-3.477 10-7.7A7.26 7.26 0 0 0 12 3z"/>
+              </svg>
+              <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left' }}>카카오로 가입하기</strong>
+              <span>↗</span>
+            </button>
+
+            {/* APPLE */}
+            <button
+              className="social-button"
+              type="button"
+              onClick={() => handleSocial('APPLE')}
+              disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#000000', color: '#ffffff', borderColor: '#000000', borderRadius: '6px' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 170 170" fill="#ffffff" style={{ flexShrink: 0 }}>
+                <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.58-7.7-11.63-13.98-5.27-8.17-9.58-17.75-12.92-28.75-3.34-11-5.01-21.84-5.01-32.52 0-14.07 3.57-25.75 10.7-35.03 7.14-9.28 16.14-13.98 27.01-14.1 4.79 0 10.15 1.25 16.08 3.76 5.94 2.51 9.77 3.82 11.51 3.94 1.3.12 5.12-1.25 11.45-4.11 6.34-2.86 11.83-4.2 16.48-4.01 12.08.62 21.84 5.34 29.28 14.17-10.7 6.47-15.93 15.34-15.69 26.6.24 8.76 3.63 16.15 10.18 22.18 6.54 6.02 14.3 9.4 23.27 10.13-2.22 6.64-4.87 13.06-7.94 19.26zM119.22 31.84c0-7.23 2.65-14.07 7.95-20.52 5.3-6.45 11.8-10.45 19.51-12.01.62 3.12.72 5.86.3 8.22-.62 3.59-2.09 7.15-4.42 10.67-2.33 3.52-5.18 6.45-8.56 8.79-3.38 2.34-6.85 3.86-10.41 4.56-.37-.73-.77-1.92-1.37-3.71-.97-3.9-1.2-6.57-1.2-8.02z" />
+              </svg>
+              <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left', color: '#ffffff' }}>Apple로 가입하기</strong>
+              <span style={{ color: '#888888' }}>↗</span>
+            </button>
+
+            {/* METAMASK */}
+            <button
+              className="social-button"
+              type="button"
+              onClick={() => handleSocial('METAMASK')}
+              disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#fff7ed', borderColor: '#fdba74', borderRadius: '6px' }}
+            >
+              <span style={{ fontSize: '15px' }}>🦊</span>
+              <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left', color: '#c2410c' }}>MetaMask 지갑 연결</strong>
+              <span style={{ color: '#c2410c' }}>↗</span>
+            </button>
+          </div>
 
           {feedback && (
             <div
