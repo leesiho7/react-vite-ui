@@ -736,7 +736,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
           <div style={{ padding: '18px 20px', background: '#0b131e', borderBottom: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', letterSpacing: '.06em', fontWeight: 600 }}>
-                📊 5대 거래소 실시간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 상단 오더북 자동 전환)
+                5대 거래소 실시간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 상단 오더북 자동 전환)
               </span>
               <span style={{ fontSize: '9px', color: '#64748b' }}>
                 🟢 +0.4% 이상 초록색 (수익 기회) · 🇰🇷 업비트 환율(1,440 KRW/USD) 김프 자동 산출
