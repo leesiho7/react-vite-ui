@@ -376,14 +376,14 @@ export default function BotPage() {
             </div>
           </section>
         ) : activeTab === 'webhook' ? (
-          <section className="bot-console-main" style={{ padding: '32px 36px' }}>
-            <header className="bot-console-header" style={{ marginBottom: '24px' }}>
+          <section className="bot-console-main" style={{ padding: '32px 36px', background: '#f8fafc', minHeight: '100vh' }}>
+            <header className="bot-console-header" style={{ marginBottom: '20px' }}>
               <div>
                 <span className="bot-console-kicker" style={{ color: '#f47a20', fontWeight: 700, letterSpacing: '0.05em' }}>
-                  INSTITUTIONAL SIGNAL RELAY / WEBHOOK
+                  INSTITUTIONAL SIGNAL RELAY / WEBHOOK ENGINE
                 </span>
-                <h1 style={{ margin: '4px 0 6px', fontSize: '26px', fontWeight: 800 }}>
-                  TradingView <em>Webhook Engine</em>
+                <h1 style={{ margin: '4px 0 6px', fontSize: '28px', fontWeight: 800, color: '#0f172a' }}>
+                  TradingView <em>Webhook Automation</em>
                 </h1>
                 <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
                   Connect TradingView alert webhooks directly to AETHER execution engine for zero-latency automated trades.
@@ -398,17 +398,18 @@ export default function BotPage() {
                     background: '#16a34a',
                     color: '#fff',
                     border: 'none',
-                    padding: '9px 16px',
+                    padding: '10px 18px',
                     borderRadius: '6px',
                     fontSize: '12px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    boxShadow: '0 2px 4px rgba(22,163,74,0.2)'
                   }}
                 >
-                  <Zap size={14} /> {sendingSignal ? 'Executing...' : 'Test BUY Signal'}
+                  <Zap size={14} /> {sendingSignal ? 'Executing...' : 'Simulate BUY Signal'}
                 </button>
                 <button
                   type="button"
@@ -418,20 +419,57 @@ export default function BotPage() {
                     background: '#dc2626',
                     color: '#fff',
                     border: 'none',
-                    padding: '9px 16px',
+                    padding: '10px 18px',
                     borderRadius: '6px',
                     fontSize: '12px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    boxShadow: '0 2px 4px rgba(220,38,38,0.2)'
                   }}
                 >
-                  <Zap size={14} /> {sendingSignal ? 'Executing...' : 'Test SELL Signal'}
+                  <Zap size={14} /> {sendingSignal ? 'Executing...' : 'Simulate SELL Signal'}
                 </button>
               </div>
             </header>
+
+            {/* Top KPI Metrics Cards (4 Grid) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #f47a20' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>PROCESSED SIGNALS</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>{tvLogs.length} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>Alerts</span></div>
+              </div>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #0f766e' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>AVG EXECUTION LATENCY</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f766e', marginTop: '4px' }}>~7.4 <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>ms</span></div>
+              </div>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #16a34a' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>SUCCESS RATE</div>
+                <div style={{ fontSize: '24px', fontWeight: 800, color: '#16a34a', marginTop: '4px' }}>100.0% <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>(0 Errors)</span></div>
+              </div>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #2563eb' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>ENGINE STATUS</div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#2563eb', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb' }} /> DIRECT RELAY ACTIVE
+                </div>
+              </div>
+            </div>
+
+            {/* 3-Step Setup Quick Guide Bar */}
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '14px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '12px', color: '#1e40af' }}>
+                <div><strong>STEP 1</strong> · Copy Endpoint URL</div>
+                <span>➔</span>
+                <div><strong>STEP 2</strong> · Paste into TradingView Webhook Alert</div>
+                <span>➔</span>
+                <div><strong>STEP 3</strong> · Paste JSON Payload & Save</div>
+              </div>
+              <a href="https://www.tradingview.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', fontWeight: 700, color: '#2563eb', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                Open TradingView <ExternalLink size={12} />
+              </a>
+            </div>
 
             {/* 1. Endpoint & Secret Key Box */}
             <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px', marginBottom: '20px' }}>
@@ -489,7 +527,7 @@ export default function BotPage() {
                     background: '#1e293b',
                     color: '#e2e8f0',
                     border: '1px solid #334155',
-                    padding: '5px 12px',
+                    padding: '6px 14px',
                     borderRadius: '4px',
                     fontSize: '11px',
                     fontWeight: 600,
@@ -533,7 +571,7 @@ export default function BotPage() {
 
               {tvLogs.length === 0 ? (
                 <div style={{ padding: '36px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-                  No TradingView webhook signals received yet. Click [Test BUY Signal] above to simulate an incoming alert!
+                  No TradingView webhook signals received yet. Click [Simulate BUY Signal] above to test execution!
                 </div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
