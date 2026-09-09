@@ -76,7 +76,9 @@ function getSymbolLogo(nameOrTicker: string): string {
   if (sym.includes('ADA') || sym === 'CARDANO') return 'https://financialmodelingprep.com/image-stock/ADAUSD.png'
   if (sym.includes('S&P') || sym.includes('SPX') || sym.includes('500') || sym.includes('SPY')) return 'https://financialmodelingprep.com/image-stock/SPY.png'
   if (sym.includes('NASDAQ') || sym.includes('NDX') || sym.includes('QQQ')) return 'https://financialmodelingprep.com/image-stock/QQQ.png'
+  if (sym.includes('HSI') || sym.includes('HANG SENG') || sym.includes('항생')) return 'https://financialmodelingprep.com/image-stock/HSI.png'
   if (sym.includes('GOLD') || sym.includes('XAU') || sym === 'GLD') return 'https://financialmodelingprep.com/image-stock/GLD.png'
+  if (sym.includes('GOOGL') || sym.includes('GOOGLE') || sym.includes('ALPHABET')) return 'https://financialmodelingprep.com/image-stock/GOOGL.png'
   if (sym.includes('NVDA')) return 'https://financialmodelingprep.com/image-stock/NVDA.png'
   if (sym.includes('TSLA')) return 'https://financialmodelingprep.com/image-stock/TSLA.png'
   if (sym.includes('AAPL')) return 'https://financialmodelingprep.com/image-stock/AAPL.png'
@@ -90,6 +92,8 @@ function getSymbolTicker(name: string): string {
   if (s.includes('NASDAQ') || s.includes('NDX')) return 'NDX'
   if (s.includes('GOLD') || s.includes('XAU')) return 'GOLD'
   if (s.includes('S&P') || s.includes('SPX') || s.includes('500')) return 'SPX'
+  if (s.includes('HSI') || s.includes('HANG SENG') || s.includes('항생')) return 'HSI'
+  if (s.includes('GOOGL') || s.includes('GOOGLE')) return 'GOOGL'
   if (s.includes('NVDA')) return 'NVDA'
   if (s.includes('TSLA')) return 'TSLA'
   if (s.includes('AAPL')) return 'AAPL'
@@ -106,6 +110,8 @@ function getBenchmarkPrice(name: string): number {
     case 'NDX': return 29544.15
     case 'GOLD': return 4476.60
     case 'SPX': return 7718.60
+    case 'HSI': return 20428.80
+    case 'GOOGL': return 178.20
     case 'NVDA': return 230.36
     case 'TSLA': return 354.08
     case 'AAPL': return 319.97
@@ -3176,6 +3182,8 @@ export default function Page() {
                         { name: 'S&P 500', ticker: 'SPX', price: '5,842.91', change: '+0.37%', tag: '미국 대형주 500 지수' },
                         { name: 'NASDAQ 100', ticker: 'NDX', price: '20,118.44', change: '+0.61%', tag: '나스닥 빅테크 100 지수' },
                         { name: 'GOLD', ticker: 'XAU', price: '$2,348.70', change: '-0.12%', tag: '실물 금 안전자산' },
+                        { name: 'GOOGL', ticker: 'GOOGL', price: '$178.20', change: '+1.88%', tag: '알파벳·제미나이 AI' },
+                        { name: 'HSI Hang Seng', ticker: 'HSI', price: '20,428.80', change: '+1.24%', tag: '홍콩 항생 대표 지수' },
                         { name: 'NVDA', ticker: 'NVDA', price: '$138.50', change: '+2.45%', tag: 'AI 반도체 거인' },
                         { name: 'TSLA', ticker: 'TSLA', price: '$218.40', change: '-1.71%', tag: '자율주행·로보택시' },
                         { name: 'AMZN', ticker: 'AMZN', price: '$214.80', change: '+1.35%', tag: '클라우드·E-커머스 공룡' },
