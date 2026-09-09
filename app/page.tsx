@@ -3100,7 +3100,10 @@ export default function Page() {
             <div
               ref={popularMarketsScrollRef}
               style={{
-                display: 'flex',
+                display: 'grid',
+                gridTemplateRows: 'repeat(2, auto)',
+                gridAutoFlow: 'column',
+                gridAutoColumns: 'minmax(230px, 260px)',
                 gap: '10px',
                 overflowX: 'auto',
                 paddingBottom: '6px',
@@ -3122,7 +3125,7 @@ export default function Page() {
                       setSearched(item.ticker)
                     }}
                     style={{
-                      flex: '0 0 230px',
+                      width: '100%',
                       padding: '10px 12px',
                       minHeight: '74px',
                       alignItems: 'center',
