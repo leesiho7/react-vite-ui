@@ -3996,11 +3996,7 @@ def signal(tick):
           {/* ── 5-Min Speed Game Card ── */}
           <div style={{ margin: '24px 0' }}>
             <PolymarketSpeedGameCard
-              symbol={searched}
-              basePrice={numericBasePrice}
-              currentPrice={latestHistoryPrice}
-              priceDelta={priceDelta}
-              priceDeltaPct={priceDeltaPct}
+              symbol="BTC/USD"
             />
           </div>
 
