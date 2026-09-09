@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { ArrowUpRight, ExternalLink, Play, Radio, Search, SlidersHorizontal } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
 type Language = 'en' | 'ko' | 'cn'
