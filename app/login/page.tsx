@@ -61,16 +61,18 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('google_custom_client_id') : null)
 
-    if (clientId && typeof window !== 'undefined' && (window as any).google?.accounts?.oauth2) {
+    if (clientId) {
       triggerGooglePopup(clientId)
     } else {
-      handleInstantSocial('GOOGLE')
+      setFeedback('구글 Client ID 환경 변수가 설정되지 않았습니다. .env.local을 확인해 주세요.')
+      setIsError(true)
     }
   }
 
   const triggerGooglePopup = (clientId: string) => {
     if (typeof window === 'undefined' || !(window as any).google?.accounts?.oauth2) {
-      handleInstantSocial('GOOGLE')
+      setFeedback('구글 인증 모듈을 로딩 중입니다. 1~2초 후 다시 시도해 주세요.')
+      setIsError(true)
       return
     }
 
@@ -128,7 +130,9 @@ export default function LoginPage() {
 
       client.requestAccessToken()
     } catch (e: any) {
-      handleInstantSocial('GOOGLE')
+      setFeedback('구글 로그인 팝업 호출 실패: ' + (e?.message || ''))
+      setIsError(true)
+      setLoading(false)
     }
   }
 
