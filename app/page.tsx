@@ -1099,6 +1099,54 @@ export default function Page() {
 
   const copilotQuickChips = useMemo(() => {
     const cleanSym = getSymbolTicker(marketActiveSymbol)
+    if (language === 'en') {
+      return [
+        {
+          label: '🎯 Target Entry & Plan',
+          icon: <Sparkles size={11} className="text-[#a855f7]" />,
+          prompt: `Provide target entry prices, scaling-in points, and take-profit targets for ${cleanSym} from a copilot perspective.`
+        },
+        {
+          label: '⚡ 1.5-ATR Trailing Stop',
+          icon: <ShieldCheck size={11} className="text-[#f47a20]" />,
+          prompt: `Guide 1.5-ATR dynamic trailing stop and loss-cut threshold for ${cleanSym} based on 14-ATR and weekly VWAP.`
+        },
+        {
+          label: '📊 On-Chain & L2 Imbalance',
+          icon: <Layers size={11} className="text-[#38bdf8]" />,
+          prompt: `Analyze large on-chain whale accumulation and real-time L2 orderbook buy/sell imbalance ratio for ${cleanSym}.`
+        },
+        {
+          label: '🤖 Autonomous ReAct Ticket',
+          icon: <Bot size={11} className="text-[#10b981]" />,
+          prompt: `Issue an optimal execution ticket for ${cleanSym} using autonomous multi-tool ReAct workflow from news fact-checks to fractal matching.`
+        }
+      ]
+    }
+    if (language === 'cn') {
+      return [
+        {
+          label: '🎯 实战建仓/分批点位',
+          icon: <Sparkles size={11} className="text-[#a855f7]" />,
+          prompt: `从副驾驶视角简明提供 ${cleanSym} 当前价格下的实战一/二次分批建仓点位与目标价。`
+        },
+        {
+          label: '⚡ 1.5-ATR 动态追踪止损',
+          icon: <ShieldCheck size={11} className="text-[#f47a20]" />,
+          prompt: `基于 14-ATR 与周 VWAP 指引 ${cleanSym} 的 1.5-ATR 动态追踪止损与止损/止盈基准线。`
+        },
+        {
+          label: '📊 链上巨鲸 ↔ 订单簿 L2',
+          icon: <Layers size={11} className="text-[#38bdf8]" />,
+          prompt: `分析 ${cleanSym} 的大型链上巨鲸资金流与实时订单簿买/卖失衡比例。`
+        },
+        {
+          label: '🤖 自主量化 ReAct 执行工单',
+          icon: <Bot size={11} className="text-[#10b981]" />,
+          prompt: `利用自主多工具 (ReAct) 从外媒事实核查到分形模式匹配，为 ${cleanSym} 开出最佳执行工单。`
+        }
+      ]
+    }
     return [
       {
         label: '🎯 실전 진입/분할 타점',
@@ -1121,7 +1169,7 @@ export default function Page() {
         prompt: `${cleanSym}에 대해 외신 팩트체크부터 프랙탈 패턴 매칭, 딥러닝 파동 신경망까지 자율 다중 도구(ReAct)로 최적 집행 티켓을 발행해줘.`
       }
     ]
-  }, [marketActiveSymbol])
+  }, [marketActiveSymbol, language])
   const [orderbookOpen, setOrderbookOpen] = useState(true)
   const [forkedStrategy, setForkedStrategy] = useState<string | null>(null)
   const [researchMode, setResearchMode] = useState<'INSIGHT' | 'GUIDE' | 'CODING'>('INSIGHT')
