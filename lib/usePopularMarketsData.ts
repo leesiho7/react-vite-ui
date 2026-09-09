@@ -23,7 +23,9 @@ const DEFAULT_POPULAR_MARKETS: PopularMarketItem[] = [
   { name: 'NVDA', ticker: 'NVDA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', tagKo: 'AI 반도체 거인', tagEn: 'AI Semiconductor Giant', isUp: true },
   { name: 'TSLA', ticker: 'TSLA', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', tagKo: '자율주행·로보택시', tagEn: 'Autonomous Driving', isUp: false },
   { name: 'AMZN', ticker: 'AMZN', logo: 'https://financialmodelingprep.com/image-stock/AMZN.png', price: '$214.80', change: '+1.35%', tagKo: '클라우드·E-커머스 공룡', tagEn: 'Cloud & E-Commerce Giant', isUp: true },
-  { name: 'SPACEX', ticker: 'SPACEX', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$135.00', change: '+4.12%', tagKo: '민간 우주탐사·스타링크', tagEn: 'Space Exploration & Starlink', isUp: true }
+  { name: 'SPACEX', ticker: 'SPACEX', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$135.00', change: '+4.12%', tagKo: '민간 우주탐사·스타링크', tagEn: 'Space Exploration & Starlink', isUp: true },
+  { name: '005930.KS', ticker: '005930', logo: 'https://financialmodelingprep.com/image-stock/005930.KS.png', price: '₩56,200', change: '+0.89%', tagKo: '글로벌 메모리·파운드리', tagEn: 'Global Memory & Foundry', isUp: true },
+  { name: '000660.KS', ticker: '000660', logo: 'https://financialmodelingprep.com/image-stock/000660.KS.png', price: '₩186,500', change: '+2.14%', tagKo: 'HBM3E 고대역폭 메모리', tagEn: 'HBM3E Leader', isUp: true }
 ];
 
 export function usePopularMarketsData() {

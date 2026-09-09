@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
+import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
 import Navbar from './components/Navbar'
 import { useMarketWebSocket } from '@/lib/useMarketWebSocket'
 import { usePopularMarketsData } from '@/lib/usePopularMarketsData'
@@ -1741,6 +1741,16 @@ export default function Page() {
     hourlyKline
   } = useMarketWebSocket(searched)
 
+  // Ref for Popular Markets horizontal scroll navigation
+  const popularMarketsScrollRef = useRef<HTMLDivElement>(null)
+
+  const handleScrollPopularMarkets = (direction: 'left' | 'right') => {
+    if (popularMarketsScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -320 : 320
+      popularMarketsScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
+
   // AWS / Hetzner Cloud Virtual Instance Sandbox State (Clean Real State - Initialized empty)
   const defaultRealBots: BotInstanceItem[] = []
 
@@ -3027,10 +3037,72 @@ export default function Page() {
           </nav>
 
           <section className="popular-section">
-            <div className="section-heading">
-              <h2 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '주요 인기 마켓' : language === 'cn' ? '热门市场' : 'Popular markets'} <ArrowUpRight size={18} /></h2>
+            <div className="section-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h2 style={{ fontFamily: 'var(--font-sans)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {language === 'ko' ? '주요 인기 마켓' : language === 'cn' ? '热门市场' : 'Popular markets'} <ArrowUpRight size={16} style={{ color: '#f47a20' }} />
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleScrollPopularMarkets('left')}
+                  title="이전 마켓"
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    color: '#64748b',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#0f172a'; e.currentTarget.style.background = '#f8fafc' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = '#ffffff' }}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleScrollPopularMarkets('right')}
+                  title="다음 마켓"
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    color: '#64748b',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.color = '#0f172a'; e.currentTarget.style.background = '#f8fafc' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#64748b'; e.currentTarget.style.background = '#ffffff' }}
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
-            <div className="symbol-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '12px' }}>
+
+            <div
+              ref={popularMarketsScrollRef}
+              style={{
+                display: 'flex',
+                gap: '10px',
+                overflowX: 'auto',
+                paddingBottom: '6px',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
+              className="popular-scroll-container"
+            >
               {popularMarketsData.map((item, i) => {
                 const isSelected = marketActiveSymbol === item.name || (item.ticker === 'NVDA' && marketActiveSymbol === 'NVDA')
                 const tag = language === 'ko' ? item.tagKo : item.tagEn
@@ -3043,18 +3115,25 @@ export default function Page() {
                       setMarketActiveSymbol(item.name)
                       setSearched(item.ticker)
                     }}
-                    style={{ padding: '12px 14px', minHeight: '84px', alignItems: 'center', fontFamily: 'var(--font-sans)' }}
+                    style={{
+                      flex: '0 0 230px',
+                      padding: '10px 12px',
+                      minHeight: '74px',
+                      alignItems: 'center',
+                      fontFamily: 'var(--font-sans)',
+                      margin: 0
+                    }}
                   >
-                    <span className="symbol-rank" style={{ fontSize: '10px' }}>{String(i + 1).padStart(2, '0')}</span>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                      <img src={item.logo} alt={item.name} style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+                    <span className="symbol-rank" style={{ fontSize: '9.5px' }}>{String(i + 1).padStart(2, '0')}</span>
+                    <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                      <img src={item.logo} alt={item.name} style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                     </div>
                     <span className="symbol-copy">
-                      <strong style={{ fontSize: '11.5px', fontFamily: 'var(--font-sans)' }}>{item.name}</strong>
-                      <small style={{ fontSize: '9px', color: '#8a92a2', fontFamily: 'var(--font-sans)' }}>{tag}</small>
+                      <strong style={{ fontSize: '11px', fontFamily: 'var(--font-sans)' }}>{item.name}</strong>
+                      <small style={{ fontSize: '8.5px', color: '#8a92a2', fontFamily: 'var(--font-sans)' }}>{tag}</small>
                     </span>
-                    <b className={item.isUp ? 'up' : 'down'} style={{ fontSize: '10px' }}>{item.change}</b>
-                    <span className="symbol-price" style={{ fontSize: '12px' }}>
+                    <b className={item.isUp ? 'up' : 'down'} style={{ fontSize: '9.5px' }}>{item.change}</b>
+                    <span className="symbol-price" style={{ fontSize: '11.5px' }}>
                       {isSelected && priceFormatted !== '—' ? priceFormatted : item.price}
                     </span>
                   </button>
