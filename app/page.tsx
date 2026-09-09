@@ -3967,14 +3967,16 @@ def signal(tick):
               <h2 style={{ fontSize: '32px', margin: '10px 0 6px', color: '#0b131e', fontFamily: "var(--font-sans)", fontWeight: 800, letterSpacing: '-0.03em' }}>
                 {language === 'ko' ? (
                   <>10연승. <span style={{ color: '#f47a20', fontWeight: 800 }}>단 한 번의 보상 클레임 (One claim).</span></>
+                ) : language === 'cn' ? (
+                  <>10连胜. <span style={{ color: '#f47a20', fontWeight: 800 }}>仅限一次领奖 (One claim).</span></>
                 ) : (
                   <>10 wins. <span style={{ color: '#f47a20', fontWeight: 800 }}>One claim.</span></>
                 )}
               </h2>
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
-                <strong>[LAYER 1] AI vs 인간 배틀:</strong> AETHER 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결<br />
-                <strong>[LAYER 2] 1시간 기준 고정가 정산:</strong> 라운드 시작 시 고정된 <strong>1H 기준가</strong> 대비 1시간 캔들 종가의 <strong>상승(UP) / 하락(DOWN)</strong> 예측<br className="desktop-only" />
-                배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 <strong>$10.00 USDT</strong>가 즉시 지급됩니다.
+                <strong>[LAYER 1] {language === 'en' ? 'AI vs Human Battle:' : language === 'cn' ? 'AI vs 人类对决:' : 'AI vs 인간 배틀:'}</strong> {language === 'en' ? 'Real-time market direction contest between AETHER quant model and global trader consensus' : language === 'cn' ? 'AETHER 量化算法与全球交易员群体智慧的实时市场方向对决' : 'AETHER 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결'}<br />
+                <strong>[LAYER 2] {language === 'en' ? '1-Hour Fixed Strike Settlement:' : language === 'cn' ? '1小时基准价结算:' : '1시간 기준 고정가 정산:'}</strong> {language === 'en' ? 'Predict UP / DOWN based on 1H fixed strike price' : language === 'cn' ? '基于 1 小时固定基准价预测 1 小时 K 线收盘价上涨(UP) / 下跌(DOWN)' : '라운드 시작 시 고정된 1H 기준가 대비 1시간 캔들 종가의 상승(UP) / 하락(DOWN) 예측'}<br className="desktop-only" />
+                {language === 'en' ? 'Achieve 10 consecutive wins to claim $10.00 USDT directly from the Smart Escrow pool.' : language === 'cn' ? '达成无赔率纯粹 10 连胜，即可从智能托管池中即时领取 $10.00 USDT。' : '배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 $10.00 USDT가 즉시 지급됩니다.'}
               </p>
             </div>
 
@@ -4017,10 +4019,10 @@ def signal(tick):
                       letterSpacing: '.03em',
                       transition: 'all 0.15s ease'
                     }}
-                    title="최고 관리자(leesiho58@gmail.com) 전용 에스크로 예치금 설정 및 긴급 자금 회수 콘솔"
+                    title="최고 관리자 전용 에스크로 관리"
                   >
                     <span>👑</span>
-                    <span>관리자 에스크로 콘솔 ⚙️</span>
+                    <span>{language === 'en' ? 'Admin Escrow Console ⚙️' : language === 'cn' ? '管理员托管控制台 ⚙️' : '관리자 에스크로 콘솔 ⚙️'}</span>
                   </button>
                 ) : (
                   <div style={{ marginTop: '6px', fontSize: '8px', color: '#94a3b8', textAlign: 'center', background: '#f1f5f9', padding: '2px 4px', borderRadius: '2px', fontWeight: 600 }}>
@@ -4053,16 +4055,16 @@ def signal(tick):
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#18334a' }}>
-                  [LAYER 1] 실시간 군중 합의율 (Human Market Consensus)
+                  [LAYER 1] {language === 'en' ? 'Live Crowd Market Consensus' : language === 'cn' ? '实时群体共识率' : '실시간 군중 합의율'}
                 </span>
                 <span style={{ fontSize: '9px', color: '#64748b' }}>
                   {effectiveTotalVotes > 0
-                    ? `총 ${effectiveTotalVotes}명 실시간 참여 중 ${prediction ? `(내 예측: ${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'} 반영)` : ''}`
-                    : '현재 라운드 첫 번째 예측자를 기다리는 중입니다'}
+                    ? (language === 'en' ? `${effectiveTotalVotes} participants active ${prediction ? `(My Vote: ${prediction})` : ''}` : language === 'cn' ? `共 ${effectiveTotalVotes} 人实时参与 ${prediction ? `(我的预测: ${prediction})` : ''}` : `총 ${effectiveTotalVotes}명 실시간 참여 중 ${prediction ? `(내 예측: ${prediction === 'UP' ? '상승(UP)' : '하락(DOWN)'} 반영)` : ''}`)
+                    : (language === 'en' ? 'Awaiting first prediction of this round' : language === 'cn' ? '等待本轮首位预测者' : '현재 라운드 첫 번째 예측자를 기다리는 중입니다')}
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#475569' }}>
-                AI 퀀트 모델 예측: <strong style={{ color: (battle?.aiDecision || 'BULLISH') === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle?.aiDecision || 'BULLISH'}</strong> (신뢰도: {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
+                {language === 'en' ? 'AI Quant Model Forecast:' : language === 'cn' ? 'AI 量化模型预测:' : 'AI 퀀트 모델 예측:'} <strong style={{ color: (battle?.aiDecision || 'BULLISH') === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle?.aiDecision || 'BULLISH'}</strong> ({language === 'en' ? 'Conf:' : language === 'cn' ? '置信度:' : '신뢰도:'} {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
               </div>
             </div>
 
@@ -4081,7 +4083,7 @@ def signal(tick):
                   transition: 'width 0.4s ease'
                 }}
               >
-                UP {effectiveBullPct}% {prediction === 'UP' && '★ (내 투표)'} (상승 예측)
+                UP {effectiveBullPct}% {prediction === 'UP' && '★'} ({language === 'en' ? 'Bullish' : language === 'cn' ? '看涨预测' : '상승 예측'})
               </div>
               <div
                 style={{
@@ -4097,7 +4099,7 @@ def signal(tick):
                   transition: 'width 0.4s ease'
                 }}
               >
-                DOWN {effectiveBearPct}% {prediction === 'DOWN' && '★ (내 투표)'} (하락 예측)
+                DOWN {effectiveBearPct}% {prediction === 'DOWN' && '★'} ({language === 'en' ? 'Bearish' : language === 'cn' ? '看跌预测' : '하락 예측'})
               </div>
             </div>
           </div>
@@ -4106,9 +4108,9 @@ def signal(tick):
           <div style={{ margin: '22px 0', padding: '16px 20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <strong style={{ fontSize: '12px', color: '#18334a' }}>10연승 연승 트래커 (Streak Milestone)</strong>
+                <strong style={{ fontSize: '12px', color: '#18334a' }}>{language === 'en' ? 'Streak Milestone Tracker' : language === 'cn' ? '10连胜里程碑追踪' : '10연승 연승 트래커 (Streak Milestone)'}</strong>
                 <span style={{ fontSize: '9.5px', color: '#64748b' }}>
-                  현재 <b>{humanWins} / 10</b> 승 달성 ({10 - humanWins}승 남음)
+                  {language === 'en' ? `Current: ${humanWins} / 10 Wins (${10 - humanWins} left)` : language === 'cn' ? `当前: ${humanWins} / 10 胜 (还剩 ${10 - humanWins} 胜)` : `현재 ${humanWins} / 10 승 달성 (${10 - humanWins}승 남음)`}
                 </span>
                 {submitted && (
                   <button
