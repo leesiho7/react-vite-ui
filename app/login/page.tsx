@@ -61,7 +61,7 @@ export default function LoginPage() {
               provider: 'NAVER',
               providerId: token.slice(-10),
               email: `naver_user_${token.slice(-6)}@naver.com`,
-              nickname: `네이버_초록개미_${token.slice(-4)}`
+              nickname: `Naver_Investor_${token.slice(-4)}`
             })
             if (res.success) {
               setFeedback(`🎉 [${res.nickname}] 님, 네이버 공식 계정 로그인 성공!`)
@@ -371,8 +371,8 @@ export default function LoginPage() {
     }
 
     const nicknameMap: Record<string, string> = {
-      NAVER: `네이버_초록개미_${storedId.slice(-4)}`,
-      KAKAO: `카카오_라이언_${storedId.slice(-4)}`,
+      NAVER: `Naver_Investor_${storedId.slice(-4)}`,
+      KAKAO: `Kakao_Trader_${storedId.slice(-4)}`,
       GOOGLE: `구글_알파퀀트_${storedId.slice(-4)}`,
       APPLE: `애플_시리우스_${storedId.slice(-4)}`,
       METAMASK: `0x${storedId.slice(-4)}...9E`
