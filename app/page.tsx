@@ -5849,9 +5849,6 @@ def signal(tick):
                     <h1>24H <em>Bot Center</em></h1>
                     <p>Manage, monitor, and deploy your autonomous trading instances.</p>
                   </div>
-                  <button className="bot-create-button" onClick={() => setInstanceCreating(true)}>
-                    <Plus size={16} /> Create bot
-                  </button>
                 </header>
 
                 <div className="bot-toolbar">
@@ -5875,7 +5872,7 @@ def signal(tick):
                     <SlidersHorizontal size={16} />
                   </button>
                   <button className="bot-create-button" onClick={handleOpenBotCreateModal}>
-                    <Plus size={15} /> 봇 인스턴스 생성하기
+                    <Plus size={15} /> Create bot
                   </button>
                 </div>
 
