@@ -3024,9 +3024,6 @@ export default function Page() {
           <section className="popular-section">
             <div className="section-heading">
               <h2 style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '주요 인기 마켓' : language === 'cn' ? '热门市场' : 'Popular markets'} <ArrowUpRight size={18} /></h2>
-              <a href="/trade" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#8a92a2', textDecoration: 'none', fontSize: '10px', fontFamily: 'var(--font-sans)' }}>
-                {language === 'ko' ? '대화면 단독 터미널' : language === 'cn' ? '全屏独立终端' : 'Full Standalone Terminal'} <ArrowUpRight size={13} />
-              </a>
             </div>
             <div className="symbol-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: '12px' }}>
               {popularMarketsData.map((item, i) => {
@@ -3267,7 +3264,7 @@ export default function Page() {
                     <i style={{ background: '#10b981' }} /> {language === 'ko' ? '자동화 알고리즘 준비 완료' : 'Ready for Automated Execution'}
                   </div>
                   <p>{language === 'ko' ? '거래소 API를 연동하여 24시간 퀀트 봇을 가동하세요. AI가 진입 근거를 상세히 제시합니다.' : 'Connect your exchange account to place trades. AI can explain the setup before execution.'}</p>
-                  <a href="/trade" className="outline-button" style={{ textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>
+                  <a href="#trading-console" className="outline-button" style={{ textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>
                     {language === 'ko' ? '거래소 API 연동' : 'CONNECT EXCHANGE'} <ArrowUpRight size={14} />
                   </a>
                 </section>

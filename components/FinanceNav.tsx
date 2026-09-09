@@ -24,7 +24,7 @@ export interface FinanceNavItem {
 
 const defaultItems: FinanceNavItem[] = [
   { key: 'overview', label: 'OVERVIEW', href: '/', icon: BarChart2 },
-  { key: 'trade', label: 'TRADE', href: '/trade', icon: TrendingUp },
+  { key: 'trade', label: 'TRADE', href: '/#market-intelligence-terminal', icon: TrendingUp },
   { key: 'bot', label: '24H BOT', href: '/#trading-console', icon: Bot },
   { key: 'research', label: 'RESEARCH', href: '/#research-terminal', icon: Cpu },
   { key: 'league', label: 'LEAGUE', href: '/#ten-win-league', icon: Award },
