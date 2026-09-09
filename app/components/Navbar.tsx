@@ -160,7 +160,7 @@ export default function Navbar({
     media: language === 'ko' ? '미디어 데스크' : language === 'cn' ? '媒体工作台' : 'Media Desk',
     arbitrage: language === 'ko' ? '김프 / 아비트라지' : language === 'cn' ? '泡菜溢价/套利' : 'Arbitrage',
     login: language === 'ko' ? '로그인' : language === 'cn' ? '登录' : 'Login',
-    signup: language === 'ko' ? '1초 시작' : language === 'cn' ? '1秒开始' : 'Get Started',
+    signup: language === 'ko' ? '회원가입' : language === 'cn' ? '注册' : 'Sign Up',
     logout: language === 'ko' ? '로그아웃' : language === 'cn' ? '退出' : 'Logout',
     pulse: language === 'ko' ? '실시간 펄스' : language === 'cn' ? '实时脉冲' : 'Live Pulse'
   }
@@ -656,8 +656,8 @@ export default function Navbar({
               >
                 <UserPlus size={16} className="text-[#38bdf8]" />
                 <div>
-                  <div className="text-[11px] font-bold text-[#38bdf8] leading-tight">{menuText.signup} (회원가입)</div>
-                  <div className="text-[9px] text-[#94a3b8]">1초 만에 계정 생성</div>
+                  <div className="text-[11px] font-bold text-[#38bdf8] leading-tight">{menuText.signup}</div>
+                  <div className="text-[9px] text-[#94a3b8]">공식 계정 생성</div>
                 </div>
               </Link>
             </div>
