@@ -5878,9 +5878,6 @@ def signal(tick):
                     <Plus size={15} /> 봇 인스턴스 생성하기
                   </button>
                 </div>
-                <p className="bot-panel-desc">
-                  실시간 신호 및 분산 알고리즘 제어를 위해 바이낸스 및 바이비트에 직접 연결되는 독립 컨테이너를 관리합니다.
-                </p>
 
                 <div className="bot-table-wrap">
                   <div className="bot-table-head">
