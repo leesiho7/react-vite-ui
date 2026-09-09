@@ -354,15 +354,9 @@ export default function Navbar({
               <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-[#27272a]">
                 <Link
                   href="/login"
-                  className="hidden sm:inline-block px-3 py-1.5 text-[11px] font-semibold text-[#d4d4d8] hover:text-white no-underline whitespace-nowrap"
+                  className="px-3 sm:px-4 py-1.5 text-[11px] sm:text-[12px] font-bold bg-[#f47a20] hover:bg-[#ea580c] text-white rounded-[3px] no-underline transition-colors shadow-[0_0_12px_rgba(244,122,32,0.35)] whitespace-nowrap inline-block"
                 >
                   {menuText.login}
-                </Link>
-                <Link
-                  href="/signup"
-                  className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-[3px] no-underline transition-colors shadow-[0_0_12px_rgba(2,132,199,0.35)] whitespace-nowrap inline-block"
-                >
-                  {menuText.signup}
                 </Link>
               </div>
             )}
@@ -637,27 +631,14 @@ export default function Navbar({
 
               <Link
                 href="/login"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
-                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer text-decoration-none"
+                style={{ background: 'rgba(244,122,32,0.15)', border: '1px solid #f47a20' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#ff944d] transition-colors cursor-pointer text-decoration-none"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <LogIn size={16} className="text-[#94a3b8]" />
+                <LogIn size={16} className="text-[#f47a20]" />
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.login}</div>
-                  <div className="text-[9px] text-[#94a3b8]">소셜 원클릭 로그인</div>
-                </div>
-              </Link>
-
-              <Link
-                href="/signup"
-                style={{ background: 'rgba(2,132,199,0.15)', border: '1px solid #0284c7' }}
-                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#38bdf8] transition-colors cursor-pointer text-decoration-none"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <UserPlus size={16} className="text-[#38bdf8]" />
-                <div>
-                  <div className="text-[11px] font-bold text-[#38bdf8] leading-tight">{menuText.signup}</div>
-                  <div className="text-[9px] text-[#94a3b8]">공식 계정 생성</div>
+                  <div className="text-[9px] text-[#94a3b8]">소셜 공식 계정 로그인</div>
                 </div>
               </Link>
             </div>
