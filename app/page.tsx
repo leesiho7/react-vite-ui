@@ -80,6 +80,8 @@ function getSymbolLogo(nameOrTicker: string): string {
   if (sym.includes('NVDA')) return 'https://financialmodelingprep.com/image-stock/NVDA.png'
   if (sym.includes('TSLA')) return 'https://financialmodelingprep.com/image-stock/TSLA.png'
   if (sym.includes('AAPL')) return 'https://financialmodelingprep.com/image-stock/AAPL.png'
+  if (sym.includes('AMZN') || sym.includes('AMAZON')) return 'https://financialmodelingprep.com/image-stock/AMZN.png'
+  if (sym.includes('SPACEX') || sym.includes('SPACE')) return 'https://financialmodelingprep.com/image-stock/TSLA.png'
   return `https://financialmodelingprep.com/image-stock/${sym.replace(/[^A-Z0-9]/g, '')}.png`
 }
 
@@ -91,6 +93,8 @@ function getSymbolTicker(name: string): string {
   if (s.includes('NVDA')) return 'NVDA'
   if (s.includes('TSLA')) return 'TSLA'
   if (s.includes('AAPL')) return 'AAPL'
+  if (s.includes('AMZN') || s.includes('AMAZON')) return 'AMZN'
+  if (s.includes('SPACEX')) return 'SPACEX'
   if (s.includes('005930') || s.includes('삼성')) return '005930'
   if (s.includes('000660') || s.includes('하이닉스')) return '000660'
   return s.split(' ')[0].split('/')[0].trim()
@@ -105,6 +109,8 @@ function getBenchmarkPrice(name: string): number {
     case 'NVDA': return 230.36
     case 'TSLA': return 354.08
     case 'AAPL': return 319.97
+    case 'AMZN': return 214.80
+    case 'SPACEX': return 135.00
     case 'ETH': return 3450.00
     case 'SOL': return 180.00
     case 'XRP': return 2.15
@@ -3093,6 +3099,8 @@ export default function Page() {
                         { name: 'GOLD', ticker: 'XAU', price: '$2,348.70', change: '-0.12%', tag: '실물 금 안전자산' },
                         { name: 'NVDA', ticker: 'NVDA', price: '$138.50', change: '+2.45%', tag: 'AI 반도체 거인' },
                         { name: 'TSLA', ticker: 'TSLA', price: '$218.40', change: '-1.71%', tag: '자율주행·로보택시' },
+                        { name: 'AMZN', ticker: 'AMZN', price: '$214.80', change: '+1.35%', tag: '클라우드·E-커머스 공룡' },
+                        { name: 'SPACEX', ticker: 'SPACEX', price: '$135.00', change: '+4.12%', tag: '민간 우주탐사·스타링크' },
                         { name: 'AAPL', ticker: 'AAPL', price: '$224.20', change: '+1.63%', tag: '애플 인텔리전스' },
                         { name: 'XRP / USD', ticker: 'XRP', price: '$2.15', change: '+5.12%', tag: '국경 간 결제' },
                         { name: 'BNB / USD', ticker: 'BNB', price: '$648.20', change: '+0.95%', tag: '바이낸스 생태계' },

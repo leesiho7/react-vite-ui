@@ -21,7 +21,9 @@ const DEFAULT_POPULAR_MARKETS: PopularMarketItem[] = [
   { name: 'NASDAQ 100', ticker: 'NDX', logo: 'https://financialmodelingprep.com/image-stock/QQQ.png', price: '$20,118.44', change: '+0.61%', tagKo: '나스닥 빅테크 100 지수', tagEn: 'NASDAQ 100 Tech', isUp: true },
   { name: 'GOLD', ticker: 'XAU', logo: 'https://financialmodelingprep.com/image-stock/GLD.png', price: '$2,348.70', change: '-0.12%', tagKo: '실물 금 안전자산', tagEn: 'Physical Gold Commodity', isUp: false },
   { name: 'NVDA', ticker: 'NVDA', logo: 'https://financialmodelingprep.com/image-stock/NVDA.png', price: '$138.50', change: '+2.45%', tagKo: 'AI 반도체 거인', tagEn: 'AI Semiconductor Giant', isUp: true },
-  { name: 'TSLA', ticker: 'TSLA', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', tagKo: '자율주행·로보택시', tagEn: 'Autonomous Driving', isUp: false }
+  { name: 'TSLA', ticker: 'TSLA', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$218.40', change: '-1.71%', tagKo: '자율주행·로보택시', tagEn: 'Autonomous Driving', isUp: false },
+  { name: 'AMZN', ticker: 'AMZN', logo: 'https://financialmodelingprep.com/image-stock/AMZN.png', price: '$214.80', change: '+1.35%', tagKo: '클라우드·E-커머스 공룡', tagEn: 'Cloud & E-Commerce Giant', isUp: true },
+  { name: 'SPACEX', ticker: 'SPACEX', logo: 'https://financialmodelingprep.com/image-stock/TSLA.png', price: '$135.00', change: '+4.12%', tagKo: '민간 우주탐사·스타링크', tagEn: 'Space Exploration & Starlink', isUp: true }
 ];
 
 export function usePopularMarketsData() {
