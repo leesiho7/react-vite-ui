@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowUpRight, ExternalLink, Play, Radio, Search, SlidersHorizontal } from 'lucide-react'
+import Navbar from '../components/Navbar'
 
 type Language = 'en' | 'ko' | 'cn'
 
@@ -228,7 +228,13 @@ export default function MediaPage() {
   )
 
   return (
-    <main className="terminal-shell media-shell wire-news-shell">
+    <>
+      <Navbar
+        language={language}
+        onLanguageChange={(lang) => setLanguage(lang)}
+        activeView="media"
+      />
+      <main className="terminal-shell media-shell wire-news-shell" style={{ marginTop: '10px' }}>
       <header className="topbar media-topbar">
         <Link href="/" className="brand-lockup">
           <span className="brand-mark">A</span>
@@ -435,5 +441,6 @@ export default function MediaPage() {
         </p>
       </footer>
     </main>
+    </>
   )
 }
