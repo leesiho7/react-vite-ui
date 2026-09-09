@@ -7406,7 +7406,6 @@ def signal(tick):
           {/* Header Intro inside main page */}
           <div className="research-intro-light" style={{ padding: '36px 20px 20px', borderBottom: '1px solid #f1f5f9' }}>
             <div className="terminal-kicker">
-              <Sparkles size={13} className="text-[#f47a20]" />
               <span>{language === 'en' ? 'Institutional Market Intelligence' : language === 'cn' ? '机构级市场研报终端' : 'Institutional Market Intelligence'}</span>
             </div>
 
