@@ -1794,14 +1794,19 @@ export default function Page() {
   /** 로그인 + 선택된 인스턴스가 있을 때만 제어 버튼을 활성화한다. */
   const canControlInstance = activeUserId !== null && selectedInstanceId !== ''
 
-  /** 봇 제어 전 로그인 여부를 확인하고 userId를 돌려준다. */
+  /** 봇 제어 및 생성 전 로그인 여부를 확인하고 userId를 돌려준다. */
   const requireActiveUserId = useCallback(() => {
     if (activeUserId === null) {
-      alert('봇 인스턴스를 제어하려면 로그인이 필요합니다.')
+      alert('봇 인스턴스를 생성하거나 제어하려면 로그인이 필요합니다.')
       return null
     }
     return activeUserId
   }, [activeUserId])
+
+  const handleOpenBotCreateModal = useCallback(() => {
+    if (requireActiveUserId() === null) return
+    setInstanceCreating(true)
+  }, [requireActiveUserId])
 
   const filteredBotInstances = useMemo(() => {
     if (!botConsoleQuery.trim()) return botInstances
@@ -4798,7 +4803,7 @@ def signal(tick):
                     onClick={() => {
                       setNewInstanceLicenseKey(depositSuccessResult.licenseToken)
                       setDepositModalOpen(false)
-                      setInstanceCreating(true)
+                      handleOpenBotCreateModal()
                     }}
                   >
                     발급된 키로 24/7 봇 인스턴스 생성하기 ↗
@@ -5759,17 +5764,21 @@ def signal(tick):
                   >
                     <SlidersHorizontal size={16} />
                   </button>
+                  <button className="bot-create-button" onClick={handleOpenBotCreateModal}>
+                    <Plus size={15} /> 봇 인스턴스 생성하기
+                  </button>
                 </div>
+                <p className="bot-panel-desc">
+                  실시간 신호 및 분산 알고리즘 제어를 위해 바이낸스 및 바이비트에 직접 연결되는 독립 컨테이너를 관리합니다.
+                </p>
 
                 <div className="bot-table-wrap">
                   <div className="bot-table-head">
-                    <span></span>
-                    <span>Name</span>
-                    <span>State</span>
-                    <span>Resource</span>
-                    <span>Last event</span>
-                    <span>Uptime</span>
-                    <span>Actions</span>
+                    <span>NAME</span>
+                    <span>EXCHANGE / PAIR</span>
+                    <span>STATUS</span>
+                    <span>LAST SIGNAL</span>
+                    <span>ACTIONS</span>
                   </div>
 
                   {filteredBotInstances.length === 0 ? (
@@ -5780,7 +5789,7 @@ def signal(tick):
                       <p style={{ fontSize: '11px', color: '#64748b', maxWidth: '460px', margin: '0 auto 16px', lineHeight: 1.6 }}>
                         새로운 거래소(Binance, Bybit, Upbit, OKX) API Key를 연동하고 24시간 무중단 알고리즘 봇을 배포하세요.
                       </p>
-                      <button className="bot-create-button" style={{ margin: '0 auto' }} onClick={() => setInstanceCreating(true)}>
+                      <button className="bot-create-button" style={{ margin: '0 auto' }} onClick={handleOpenBotCreateModal}>
                         <Plus size={15} /> 봇 인스턴스 생성하기
                       </button>
                     </div>
@@ -6210,7 +6219,7 @@ def signal(tick):
                         className="bot-create-button"
                         onClick={() => {
                           setNewInstanceLicenseKey(depositSuccessResult.licenseToken)
-                          setInstanceCreating(true)
+                          handleOpenBotCreateModal()
                         }}
                       >
                         <Plus size={15} /> 발급된 키로 24H 봇 생성하기

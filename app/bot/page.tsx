@@ -140,10 +140,15 @@ export default function BotPage() {
 
   const requireActiveUserId = () => {
     if (activeUserId === null) {
-      alert('봇 인스턴스를 제어하려면 로그인이 필요합니다.')
+      alert('봇 인스턴스를 생성하거나 제어하려면 로그인이 필요합니다.')
       return null
     }
     return activeUserId
+  }
+
+  const handleOpenCreate = () => {
+    if (requireActiveUserId() === null) return
+    setShowCreate(true)
   }
 
   const handleCreateBot = async () => {
@@ -260,7 +265,7 @@ export default function BotPage() {
                 <h1>24H <em>Bot Center</em></h1>
                 <p>Manage, monitor, and deploy your autonomous trading instances across Binance & Bybit.</p>
               </div>
-              <button className="bot-create-button" onClick={() => setShowCreate(true)}>
+              <button className="bot-create-button" onClick={handleOpenCreate}>
                 <Plus size={16} /> Create bot
               </button>
             </header>
@@ -304,7 +309,7 @@ export default function BotPage() {
                   <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '12px' }}>오른쪽 상단의 [+ Create bot] 버튼을 클릭하여 바이낸스/바이비트 자동매매 봇을 새로 생성하세요.</p>
                   <button
                     type="button"
-                    onClick={() => setShowCreate(true)}
+                    onClick={handleOpenCreate}
                     style={{ background: '#f47a20', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
                   >
                     + 첫번째 봇 인스턴스 생성하기
