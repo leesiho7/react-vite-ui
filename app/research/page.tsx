@@ -666,9 +666,9 @@ export default function ResearchPage() {
         mockToolCalls,
         targetSessionId
       )
-    } catch (err) {
+    } catch (err: any) {
       if (typingTimerRef.current) clearInterval(typingTimerRef.current)
-      const errorText = '⚠️ Qwen-Max 및 퀀트 엔진 연결 중 일시적인 지연이 발생했습니다. 잠시 후 다시 시도해 주세요.'
+      const errorText = `❌ **[스프링부트 백엔드 AI 연결 오류]**\n\n${err?.message || '스프링부트 서버에 연결할 수 없습니다. 백엔드 가동 상태를 확인해주세요.'}`
       setCurrentMessages(prev =>
         prev.map(m => (m.id === agentMsgId ? { ...m, content: errorText, isStreaming: false } : m))
       )

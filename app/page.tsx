@@ -1078,8 +1078,8 @@ export default function Page() {
       })
       const text = res.reply || res.answer || `[${cleanSym} 퀀트 코파일럿] 실시간 호가 기준 상방 모멘텀 테스트 유효.`
       setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
-    } catch (err) {
-      setMarketMessages(prev => [...prev, { role: 'assistant', text: `[${cleanSym} 퀀트 코파일럿] 실시간 호가 기준 상방 모멘텀 테스트 유효.`, time: now }])
+    } catch (err: any) {
+      setMarketMessages(prev => [...prev, { role: 'assistant', text: `❌ [백엔드 AI 오류] ${err?.message || '스프링부트 백엔드 서버 연결 실패'}`, time: now }])
     } finally {
       setMarketCopilotLoading(false)
     }
@@ -1417,19 +1417,13 @@ export default function Page() {
               updatedAt: '방금 전'
             } : s));
           },
-          onError: async (err) => {
-            console.warn('[SSE] Stream fallback to static sendResearchChat:', err);
-            const fallbackResp = await sendResearchChat({
-              prompt: userPromptText,
-              symbol: extractAssetSymbol(`${userPromptText} ${curSess.symbol}`, curSess.symbol),
-              mode: curSess.mode,
-              language,
-              history: updatedMessages.map(m => ({ role: m.role, content: m.content }))
-            });
-            const rep = fallbackResp?.reply || fallbackResp?.answer || '분석 완료';
+          onError: async (err: any) => {
+            console.error('[SSE Error]:', err);
+            setAgentThinking(false);
+            const errText = `❌ **[스프링부트 백엔드 AI 서버 연결 오류]**\n\n백엔드 서버에 연결할 수 없습니다. (스프링부트 서버 가동 상태를 확인해주세요.)\n\n\`\`\`text\n${err?.message || 'Connection refused or server offline'}\n\`\`\``;
             setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
               ...s,
-              messages: s.messages.map(m => m.id === agentMsgId ? { ...m, content: rep } : m),
+              messages: s.messages.map(m => m.id === agentMsgId ? { ...m, content: errText } : m),
               updatedAt: '방금 전'
             } : s));
           }

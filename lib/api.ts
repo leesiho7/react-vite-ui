@@ -33,168 +33,11 @@ export async function fetchIntegratedDecision(
     if (res.ok) {
       return await res.json();
     }
-  } catch (err) {
-    console.warn('[API] Fallback for fetchIntegratedDecision:', err);
+    throw new Error(`[HTTP ${res.status}] 백엔드 응답 실패`);
+  } catch (err: any) {
+    console.error('[API Error] fetchIntegratedDecision failed:', err);
+    throw new Error(`스프링부트 백엔드 AI 서버 연결 실패: ${err.message || '백엔드 서버가 가동 중인지 확인해주세요.'}`);
   }
-
-  // Multilingual Standalone Fallbacks (EN / CN / KO)
-  if (locale === 'en') {
-    return {
-      symbol,
-      finalAction: 'STRONG_BUY',
-      totalScore: 0.82,
-      divergenceRisk: 'Normal: Technical indicators and institutional news sentiment are strongly aligned.',
-      decisionReason: 'AETHER quantitative indicators (0.65), institutional macro sentiment (0.88), and fractal historical win rate (80%) support upside momentum.',
-      quantSignal: {
-        symbol,
-        currentPrice: 67842.10,
-        rsi: 62.4,
-        rsiStatus: 'Bullish Expansion',
-        goldenCross: true,
-        deadCross: false,
-        sma20: 64200.0,
-        sma50: 61800.0,
-        bollingerUpper: 71200.0,
-        bollingerMiddle: 65500.0,
-        bollingerLower: 59800.0,
-        suggestedAction: 'BUY',
-        quantScore: 0.65,
-        signalsSummary: ['20/50 SMA Golden Cross confirmed', 'RSI stable above 60', 'Upper Bollinger band walk in progress']
-      },
-      qualInsight: {
-        symbol,
-        sentiment: 'BULLISH',
-        sentimentScore: 0.88,
-        confidence: 0.92,
-        macroSummary: 'U.S. Spot ETF saw +$480M net institutional inflow; whale wallet outflows reduce exchange sell pressure.',
-        keyHeadlines: [
-          'Bloomberg Terminal: Institutional ETF capital inflows accelerate to $480M single-day record',
-          'On-chain Intelligence: 14,200 BTC moved off exchanges to cold custody'
-        ],
-        riskFactors: 'Watch for short-term rejection liquidity near the $71,200 psychological resistance.'
-      },
-      patternInsight: {
-        patternName: 'Bullish Flag Breakout (Fractal Match 89%)',
-        mostSimilarPeriod: '2023-10-16 (U.S. ETF Breakout Cycle)',
-        similarityScore: 0.89,
-        historicalWinRate: 0.80,
-        expectedReturn5Day: 0.064,
-        patternSummary: 'In 4 out of 5 historical instances (80% win rate), price expanded +6.4% within 5 trading days.'
-      },
-      agentReflection: 'Reflection: Aligned momentum-sentiment setups yield an 83% win rate in backtested regimes.',
-      personaAdvice: {
-        warrenBuffett: 'If the network utility and institutional adoption continue expanding, ignore short-term volatility.',
-        jimSimons: 'RSI at 62 with moving averages in ascending alignment yields positive mathematical expectation (1:2.8 R:R).',
-        rayDalio: 'Macro liquidity cycles favor digital store-of-value, but always preserve a 20% dry-powder cash reserve.'
-      },
-      generatedAt: new Date().toISOString()
-    };
-  }
-
-  if (locale === 'cn') {
-    return {
-      symbol,
-      finalAction: 'STRONG_BUY',
-      totalScore: 0.82,
-      divergenceRisk: '正常：技术面量化指标与宏观机构情绪高度契合。',
-      decisionReason: 'AETHER量化指标(0.65)、机构新闻情绪(0.88)及历史分形胜率(80%)共同支撑强劲上行动能。',
-      quantSignal: {
-        symbol,
-        currentPrice: 67842.10,
-        rsi: 62.4,
-        rsiStatus: '多头扩张',
-        goldenCross: true,
-        deadCross: false,
-        sma20: 64200.0,
-        sma50: 61800.0,
-        bollingerUpper: 71200.0,
-        bollingerMiddle: 65500.0,
-        bollingerLower: 59800.0,
-        suggestedAction: 'BUY',
-        quantScore: 0.65,
-        signalsSummary: ['20/50 SMA 形成金叉', 'RSI 稳守 60 上方', '布林带上轨多头形态']
-      },
-      qualInsight: {
-        symbol,
-        sentiment: 'BULLISH',
-        sentimentScore: 0.88,
-        confidence: 0.92,
-        macroSummary: '美国现货ETF单日净流入4.8亿美元，链上巨鲸冷钱包转账减少抛售压力。',
-        keyHeadlines: [
-          '彭博终端：机构ETF资金加速净流入，单日规模超4.8亿美元',
-          '链上数据：14,200枚BTC转入冷钱包储备，交易所现货供给吃紧'
-        ],
-        riskFactors: '关注71,200美元强阻力位的短期获利回吐压力。'
-      },
-      patternInsight: {
-        patternName: '看涨旗形突破 (分形匹配度 89%)',
-        mostSimilarPeriod: '2023-10-16 (ETF 首次突破行情)',
-        similarityScore: 0.89,
-        historicalWinRate: 0.80,
-        expectedReturn5Day: 0.064,
-        patternSummary: '历史类似5次分形中4次(胜率80%)在5个交易日内平均进一步上涨+6.4%。'
-      },
-      agentReflection: '模型复盘：量化与宏观同向共振时，顺势分批入场胜率达83%。',
-      personaAdvice: {
-        warrenBuffett: '只要底层网络效应与基本面稳固，就无须理会市场短期噪音。',
-        jimSimons: 'RSI 62且均线多头排列构成统计学正期望值，建议设置 1:2.8 盈亏比。',
-        rayDalio: '全球流动性环境改善，但仍需保持20%现金储备以防范极端波动。'
-      },
-      generatedAt: new Date().toISOString()
-    };
-  }
-
-  // Default: Korean (KO)
-  return {
-    symbol,
-    finalAction: 'STRONG_BUY',
-    totalScore: 0.82,
-    divergenceRisk: '정상: 기술적 지표와 거시 외신 분위기가 강력한 동조를 이룹니다.',
-    decisionReason: 'AETHER 정량 지표(0.65), 외신 감성(0.88), 과거 프랙탈 패턴 승률(80%) 3박자가 강력한 상승 추세를 지지함',
-    quantSignal: {
-      symbol,
-      currentPrice: 67842.10,
-      rsi: 62.4,
-      rsiStatus: 'Neutral-to-bullish',
-      goldenCross: true,
-      deadCross: false,
-      sma20: 64200.0,
-      sma50: 61800.0,
-      bollingerUpper: 71200.0,
-      bollingerMiddle: 65500.0,
-      bollingerLower: 59800.0,
-      suggestedAction: 'BUY',
-      quantScore: 0.65,
-      signalsSummary: ['20/50 SMA 골든크로스 발생', 'RSI 60선 안착', '볼린저 밴드 상단 밴드워킹']
-    },
-    qualInsight: {
-      symbol,
-      sentiment: 'BULLISH',
-      sentimentScore: 0.88,
-      confidence: 0.92,
-      macroSummary: '미국 현물 ETF 4.8억 달러 대규모 기관 순유입 및 고래 지갑 외부 이체 지속',
-      keyHeadlines: [
-        '블룸버그 터미널: 비트코인 현물 ETF 하루 4.8억 달러 순유입 기록',
-        '온체인 데이터: 14,200 BTC 외부 콜드월렛 이체로 거래소 매도 압력 급감'
-      ],
-      riskFactors: '주요 심리적 저항선(71,200달러) 도달 시 단기 차익 실현 매물 주시'
-    },
-    patternInsight: {
-      patternName: '상승 깃발형 돌파 (프랙탈 매칭 89%)',
-      mostSimilarPeriod: '2023-10-16 (비트코인 1차 상승 돌파기)',
-      similarityScore: 0.89,
-      historicalWinRate: 0.80,
-      expectedReturn5Day: 0.064,
-      patternSummary: '과거 유사 패턴 5건 중 4건(승률 80%)에서 5일 내 평균 +6.4% 추가 상승'
-    },
-    agentReflection: '과거 복기: 지표-뉴스 동조 국면에서 추세 추종 시 승률 83% 달성 (분할 매수 유효)',
-    personaAdvice: {
-      warrenBuffett: '네트워크 효과와 내재 가치가 견고하다면 시장의 단기 소음과 가격 변동에 일희일비하지 마라.',
-      jimSimons: 'RSI 62 및 20/50 SMA 정배열은 통계적으로 유의미한 상방 우위(Edge)를 제공함. 손익비 1:2.5 타겟 설정 권고.',
-      rayDalio: '글로벌 거시 유동성 환경은 우호적이나, 테일 리스크에 대비해 20%의 현금 안전 버퍼를 항시 확보하라.'
-    },
-    generatedAt: new Date().toISOString()
-  };
 }
 
 /**
@@ -613,10 +456,6 @@ export async function sendResearchChat(payload: {
   horizon?: string;
   history?: Array<{ role: string; content: string }>;
 }): Promise<any> {
-  const sym = (payload.symbol || 'BTCUSDT').toUpperCase();
-  const lang = payload.language || 'ko';
-  const mode = payload.mode || 'INSIGHT';
-
   try {
     const res = await fetch(API_BASE + '/ai/research-chat', {
       method: 'POST',
@@ -630,65 +469,11 @@ export async function sendResearchChat(payload: {
         return data;
       }
     }
-  } catch (err) {
-    console.warn('[API] /ai/research-chat timed out or error (switching to fast quant report):', err);
+    throw new Error(`[HTTP ${res.status}] 백엔드 AI 응답 실패`);
+  } catch (err: any) {
+    console.error('[API Error] sendResearchChat failed:', err);
+    throw new Error(`스프링부트 백엔드 AI 서버 연결 실패: ${err.message || '백엔드 서버가 가동 중인지 확인해주세요.'}`);
   }
-
-  // High-fidelity full-bodied fallback report generator
-  const isKo = lang === 'ko';
-  const isCn = lang === 'cn';
-  const nowStr = new Date().toLocaleString('ko-KR');
-
-  const reportBody = isKo ? `### 🏛️ [AETHER INSTITUTIONAL QUANT REPORT: ${sym}]
-**분석 일시:** ${nowStr} (KST) | **분석 엔진:** AETHER Intelligence OS & Fractal Engine™ | **상태:** 실시간 퀀트 매트릭스 동기화 완료
-
----
-
-#### 📊 1. ${sym} 시장 미시구조 및 퀀트 지표 진단
-• **실시간 시장 체결가:** 호가 오더북 내 정상 수렴 구간 유지
-• **모멘텀 강도 (RSI 14):** 54.2 (중립 안정권) — 단기 과열이 해소된 건전한 축적(Accumulation) 국면
-• **주요 이동평균선:** 20일선 및 50일선 지지선 유효
-• **변동성 채널:** 볼린저밴드 상/하단 레인지 내 추세 수렴 지속
-
-#### 🔄 2. AETHER 시계열 빅데이터 프랙탈 패턴 매칭
-• **역사상 최다 유사 파동:** 과거 주요 기관 진입 파동과 88.5% 형상 일치
-• **통계적 5일 후 승률:** **80.0%** (평균 기대 수익률: **+6.2%**)
-• **패턴 구조 판독:** 지지선 기반 상방 채널 돌파 및 박스권 상단 테스트 유효
-
-#### 🌐 3. 실시간 시장 수급 및 매크로 크로스체크
-• **기관 수급 동향:** 스마트머니 온체인 지갑 순유입 기조 유지로 견고한 하방 지지력 확보
-• **파생상품 레버리지 진단:** 선물 펀딩비율 안정권 유지로 대규모 연쇄 청산 리스크 제한적
-
-#### 🎯 4. 실전 가용 자본 배분 & 주문 집행 가이드
-• **1차 정찰 진입 (30%):** 현재 가격대 부근 초기 분할 포지션 구축
-• **2차 가중 분할 (40%):** 20일 이동평균선 지지선 도달 시 비중 확대
-• **3차 확증 돌파 (30%):** 1차 저항선 상방 돌파 및 거래량 안착 시 불타기 완성
-• **🚨 무효화 손절선 (SL):** 주요 지지선 -2.5% 이탈 시 즉시 기계적 손절
-• **손익비 (Risk/Reward):** 1:2.8 구조 (하방 리스크 -2.5% vs 상방 기대 수익 +7.0%)` : `### 🏛️ [AETHER INSTITUTIONAL QUANT REPORT: ${sym}]
-**Timestamp:** ${new Date().toUTCString()} | **Engine:** AETHER Intelligence OS & Fractal Engine™
-
-#### 📊 1. Market Micro-Structure & Momentum Signals
-• **Market Status:** Balanced within volatility channel
-• **RSI (14):** 54.2 (Neutral Momentum)
-• **Key Moving Averages:** 20 & 50 EMA Support Intact
-
-#### 🔄 2. AETHER Fractal Pattern Matching
-• **Similarity Score:** 88.5%
-• **5-Day Historical Win Rate:** 80.0% (Expected Return: +6.2%)
-
-#### 🎯 3. Actionable Risk-Managed Allocation
-• **Scale-In:** 30% Initial / 40% Support Dip / 30% Breakout
-• **Stop-Loss:** Invalidation below key support (-2.5%)`;
-
-  return {
-    reply: reportBody,
-    answer: reportBody,
-    symbol: sym,
-    intentVerdict: 'BUY',
-    recommendation: '적극 분할 매수 (Institutional Scale-In)',
-    confidenceScore: 0.88,
-    entryQualityScore: 86
-  };
 }
 
 /**
