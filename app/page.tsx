@@ -5888,13 +5888,17 @@ def signal(tick):
                   {filteredBotInstances.length === 0 ? (
                     <div style={{ padding: '36px 20px', textAlign: 'center', background: '#f8fafc' }}>
                       <strong style={{ fontSize: '13px', color: '#18334a', display: 'block', marginBottom: '6px' }}>
-                        등록된 24H 봇 인스턴스가 없습니다
+                        {language === 'en' ? 'No 24H bot instances registered' : language === 'cn' ? '暂无已注册的 24H 机器人实例' : '등록된 24H 봇 인스턴스가 없습니다'}
                       </strong>
                       <p style={{ fontSize: '11px', color: '#64748b', maxWidth: '460px', margin: '0 auto 16px', lineHeight: 1.6 }}>
-                        새로운 거래소(Binance, Bybit, Upbit, OKX) API Key를 연동하고 24시간 무중단 알고리즘 봇을 배포하세요.
+                        {language === 'en'
+                          ? 'Connect API Keys for exchanges (Binance, Bybit, Upbit, OKX) and deploy 24/7 autonomous trading bots.'
+                          : language === 'cn'
+                          ? '绑定交易所 (Binance, Bybit, Upbit, OKX) API Key，部署 24/7 不间断算法机器人。'
+                          : '새로운 거래소(Binance, Bybit, Upbit, OKX) API Key를 연동하고 24시간 무중단 알고리즘 봇을 배포하세요.'}
                       </p>
                       <button className="bot-create-button" style={{ margin: '0 auto' }} onClick={handleOpenBotCreateModal}>
-                        <Plus size={15} /> 봇 인스턴스 생성하기
+                        <Plus size={15} /> {language === 'en' ? 'Create bot' : language === 'cn' ? '创建机器人实例' : '봇 인스턴스 생성하기'}
                       </button>
                     </div>
                   ) : (
@@ -6252,13 +6256,17 @@ def signal(tick):
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                       <strong style={{ fontSize: '15px', color: '#0f172a' }}>AETHER CORE</strong>
-                      <span style={{ fontSize: '18px', fontWeight: 800, color: '#f47a20', fontFamily: 'var(--font-mono)' }}>$7.00 <small style={{ fontSize: '11px', color: '#94a3b8' }}>/ 30일</small></span>
+                      <span style={{ fontSize: '18px', fontWeight: 800, color: '#f47a20', fontFamily: 'var(--font-mono)' }}>$7.00 <small style={{ fontSize: '11px', color: '#94a3b8' }}>/ {language === 'en' ? '30 Days' : language === 'cn' ? '30天' : '30일'}</small></span>
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
-                      단일 봇 24시간 클라우드 자동매매 · Hetzner HEL1 독립 컨테이너 · 텔레그램 1:1 라이선스 발급
+                      {language === 'en'
+                        ? 'Single bot 24/7 cloud automated trading · Dedicated Hetzner HEL1 container · Telegram 1:1 license'
+                        : language === 'cn'
+                        ? '单机器人 24 小时云端自动交易 · Hetzner HEL1 独立容器 · 提Telegram 1:1 许可证发放'
+                        : '단일 봇 24시간 클라우드 자동매매 · Hetzner HEL1 독립 컨테이너 · 텔레그램 1:1 라이선스 발급'}
                     </p>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: upgradePlan === 'CORE' ? '#ea580c' : '#94a3b8' }}>
-                      {upgradePlan === 'CORE' ? '● 선택된 플랜' : '○ 선택하기'}
+                      {upgradePlan === 'CORE' ? (language === 'en' ? '● Selected Plan' : language === 'cn' ? '● 已选方案' : '● 선택된 플랜') : (language === 'en' ? '○ Select' : language === 'cn' ? '○ 选择' : '○ 선택하기')}
                     </span>
                   </div>
 
@@ -6274,14 +6282,18 @@ def signal(tick):
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>AETHER PRO (추천)</strong>
-                      <span style={{ fontSize: '18px', fontWeight: 800, color: '#f47a20', fontFamily: 'var(--font-mono)' }}>$13.00 <small style={{ fontSize: '11px', color: '#94a3b8' }}>/ 30일</small></span>
+                      <strong style={{ fontSize: '15px', color: '#0f172a' }}>AETHER PRO ({language === 'en' ? 'Recommended' : language === 'cn' ? '推荐' : '추천'})</strong>
+                      <span style={{ fontSize: '18px', fontWeight: 800, color: '#f47a20', fontFamily: 'var(--font-mono)' }}>$13.00 <small style={{ fontSize: '11px', color: '#94a3b8' }}>/ {language === 'en' ? '30 Days' : language === 'cn' ? '30天' : '30일'}</small></span>
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px', lineHeight: 1.5 }}>
-                      최대 2개 봇 동시 가동 · 무제한 샌드박스 백테스트 · 심층 AI 리서치 및 우선 WebSocket
+                      {language === 'en'
+                        ? 'Up to 2 bots running concurrently · Unlimited sandbox backtesting · Deep AI Research & Priority WebSocket'
+                        : language === 'cn'
+                        ? '最多 2 个机器人同时运行 · 无限制沙盒回测 · 深度 AI 研报与优先 WebSocket'
+                        : '최대 2개 봇 동시 가동 · 무제한 샌드박스 백테스트 · 심층 AI 리서치 및 우선 WebSocket'}
                     </p>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: upgradePlan === 'PRO' ? '#ea580c' : '#94a3b8' }}>
-                      {upgradePlan === 'PRO' ? '● 선택된 플랜' : '○ 선택하기'}
+                      {upgradePlan === 'PRO' ? (language === 'en' ? '● Selected Plan' : language === 'cn' ? '● 已选方案' : '● 선택된 플랜') : (language === 'en' ? '○ Select' : language === 'cn' ? '○ 选择' : '○ 선택하기')}
                     </span>
                   </div>
                 </div>
