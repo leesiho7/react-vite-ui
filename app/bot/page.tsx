@@ -306,14 +306,7 @@ export default function BotPage() {
                 <div style={{ padding: '48px 24px', textAlign: 'center', color: '#64748b', fontSize: '13px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #e2e8f0', margin: '16px' }}>
                   <Bot size={32} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
                   <h3 style={{ margin: '0 0 4px', fontSize: '15px', color: '#0f172a', fontWeight: 700 }}>활성화된 봇 인스턴스가 0개입니다.</h3>
-                  <p style={{ margin: '0 0 16px', color: '#64748b', fontSize: '12px' }}>오른쪽 상단의 [+ Create bot] 버튼을 클릭하여 바이낸스/바이비트 자동매매 봇을 새로 생성하세요.</p>
-                  <button
-                    type="button"
-                    onClick={handleOpenCreate}
-                    style={{ background: '#f47a20', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    + 첫번째 봇 인스턴스 생성하기
-                  </button>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>오른쪽 상단의 [+ Create bot] 버튼을 클릭하여 바이낸스/바이비트 자동매매 봇을 새로 생성하세요.</p>
                 </div>
               ) : (
                 filtered.map((bot) => {
