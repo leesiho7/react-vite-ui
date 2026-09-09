@@ -59,7 +59,9 @@ export default function LoginPage() {
 
   // 1. 구글 OAuth 2.0
   const handleGoogleLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || (typeof window !== 'undefined' ? localStorage.getItem('google_custom_client_id') : null)
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      (typeof window !== 'undefined' ? localStorage.getItem('google_custom_client_id') : null) ||
+      '669961423219-ahgoht4mskq3dhbua5ilckg9lhlvsacc.apps.googleusercontent.com'
 
     if (clientId) {
       triggerGooglePopup(clientId)
