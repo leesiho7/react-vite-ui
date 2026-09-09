@@ -7423,7 +7423,6 @@ def signal(tick):
             </p>
 
             <div className="model-selector" title="Alibaba Cloud DashScope Flagship 300B+ Cloud GPU Engine">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
               <span>Engine:</span>
               <strong className="text-[#f47a20] font-semibold">Qwen-Max (Alibaba Cloud Flagship)</strong>
               <span className="text-[9px] font-mono text-[#94A3B8]">· 300B+ Params</span>
