@@ -27,7 +27,7 @@ export interface KlineUpdate {
 export function isTraditionalAsset(sym: string): boolean {
   if (!sym) return false;
   const s = sym.toUpperCase().replace('/USD', '').replace('/USDT', '').replace(/\s+/g, '').trim();
-  return ['NDX', 'NASDAQ', 'GOLD', 'XAU', 'GC=F', 'SPX', 'SP500', 'S&P', 'NVDA', 'TSLA', 'AAPL', '005930', '000660', 'AMZN'].some(k => s.includes(k) || s === k);
+  return ['NDX', 'NASDAQ', 'GOLD', 'XAU', 'GC=F', 'SPX', 'SP500', 'S&P', 'NVDA', 'TSLA', 'AAPL', 'AMZN', 'GOOGL', 'GOOGLE', 'SPACEX', '005930', '000660'].some(k => s.includes(k) || s === k);
 }
 
 export function getCleanTicker(sym: string): string {
@@ -39,8 +39,11 @@ export function getCleanTicker(sym: string): string {
   if (s.includes('NVDA')) return 'NVDA';
   if (s.includes('TSLA')) return 'TSLA';
   if (s.includes('AAPL')) return 'AAPL';
-  if (s.includes('005930') || s.includes('삼성')) return '005930';
-  if (s.includes('000660') || s.includes('하이닉스')) return '000660';
+  if (s.includes('AMZN') || s.includes('AMAZON')) return 'AMZN';
+  if (s.includes('GOOGL') || s.includes('GOOGLE')) return 'GOOGL';
+  if (s.includes('SPACEX')) return 'SPACEX';
+  if (s.includes('005930') || s.includes('삼성')) return '005930.KS';
+  if (s.includes('000660') || s.includes('하이닉스')) return '000660.KS';
   return s.split('/')[0].replace(/\s+/g, '').trim();
 }
 
@@ -112,7 +115,7 @@ export function useMarketWebSocket(symbol: string) {
         prevPriceRef.current = current;
 
         setPrice(current);
-        const prefix = ticker === '005930' || ticker === '000660' ? '₩' : '$';
+        const prefix = ticker.startsWith('005930') || ticker.startsWith('000660') ? '₩' : '$';
         setPriceFormatted(`${prefix}${current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 
         const changePct = first.open > 0 ? ((current - first.open) / first.open) * 100 : 0;
