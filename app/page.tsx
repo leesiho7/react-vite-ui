@@ -1747,6 +1747,9 @@ export default function Page() {
     hourlyKline
   } = useMarketWebSocket(searched)
 
+  // Market Category Tab Filter State ('Overview' | 'Crypto' | 'Indices' | 'Stocks' | 'Commodities')
+  const [activeMarketCategory, setActiveMarketCategory] = useState<string>('Overview')
+
   // Ref for Popular Markets horizontal scroll navigation
   const popularMarketsScrollRef = useRef<HTMLDivElement>(null)
 
@@ -3014,7 +3017,7 @@ export default function Page() {
           <nav className="asset-tabs">
             {(language === 'ko'
               ? [
-                  { key: 'Overview', label: '오버뷰' },
+                  { key: 'Overview', label: '전체 (오버뷰)' },
                   { key: 'Crypto', label: '가상자산' },
                   { key: 'Indices', label: '글로벌 지수' },
                   { key: 'Stocks', label: '빅테크·주식' },
@@ -3022,7 +3025,7 @@ export default function Page() {
                 ]
               : language === 'cn'
               ? [
-                  { key: 'Overview', label: '概览' },
+                  { key: 'Overview', label: '全部概览' },
                   { key: 'Crypto', label: '加密资产' },
                   { key: 'Indices', label: '全球指数' },
                   { key: 'Stocks', label: '科技·股票' },
@@ -3036,7 +3039,13 @@ export default function Page() {
                   { key: 'Commodities', label: 'Commodities' }
                 ]
             ).map((tab) => (
-              <button key={tab.key} className={tab.key === 'Overview' ? 'selected' : ''} style={{ fontFamily: 'var(--font-sans)' }}>
+              <button
+                key={tab.key}
+                type="button"
+                className={activeMarketCategory === tab.key ? 'selected' : ''}
+                onClick={() => setActiveMarketCategory(tab.key)}
+                style={{ fontFamily: 'var(--font-sans)', cursor: 'pointer' }}
+              >
                 {tab.label}
               </button>
             ))}
@@ -3112,7 +3121,16 @@ export default function Page() {
               }}
               className="popular-scroll-container"
             >
-              {popularMarketsData.map((item, i) => {
+              {popularMarketsData
+                .filter((item) => {
+                  if (activeMarketCategory === 'Overview') return true
+                  if (activeMarketCategory === 'Crypto') return item.category === 'CRYPTO'
+                  if (activeMarketCategory === 'Indices') return item.category === 'INDEX'
+                  if (activeMarketCategory === 'Stocks') return item.category === 'STOCKS'
+                  if (activeMarketCategory === 'Commodities') return item.category === 'COMMODITIES'
+                  return true
+                })
+                .map((item, i) => {
                 const isSelected = marketActiveSymbol === item.name || (item.ticker === 'NVDA' && marketActiveSymbol === 'NVDA')
                 const tag = language === 'ko' ? item.tagKo : item.tagEn
                 return (
