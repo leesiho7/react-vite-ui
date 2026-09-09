@@ -1285,7 +1285,7 @@ export default function Page() {
       updatedMessages = [...curSess.messages, userMsg]
       currentSessionId = curSess.id
       currentSymbol = curSess.symbol || searched || 'BTCUSDT'
-      currentMode = curSess.mode || researchMode
+      currentMode = researchMode || curSess.mode
       const isGenericTitle = curSess.title.includes('신규 리서치') || curSess.title.includes('리서치 세션') || curSess.messages.filter(m => m.role === 'user').length === 0
       const dynamicTitle = isGenericTitle ? extractTopicTitle(userPromptText, curSess.symbol) : curSess.title
 

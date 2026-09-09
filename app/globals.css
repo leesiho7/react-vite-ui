@@ -1987,8 +1987,27 @@ samp,
   .research-rail-light { display: none; }
   .research-main-light { padding: 32px 16px 110px; width: 100%; min-width: 0; box-sizing: border-box; }
   .research-intro-light h1 { font-size: clamp(26px, 6.5vw, 36px); letter-spacing: -0.04em; word-break: keep-all; }
-  .prompt-chiplets-bar { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 8px; margin-bottom: 0; width: 100%; -webkit-overflow-scrolling: touch; }
-  .prompt-chiplet { flex-shrink: 0; }
+  .prompt-chiplets-bar {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 10px;
+    padding-left: 4px;
+    padding-right: 16px;
+    margin-bottom: 0;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .prompt-chiplets-bar::-webkit-scrollbar { display: none; }
+  .prompt-chiplet {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
   .research-composer-light { width: 100%; max-width: 100%; margin: 24px 0 0; }
   .research-composer-light textarea { font-size: 14px; }
   .research-bubble-agent { padding: 16px; border-radius: 12px; max-width: 100%; overflow-wrap: break-word; word-break: break-word; }
@@ -2024,6 +2043,9 @@ samp,
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .prompt-chiplet:hover {
