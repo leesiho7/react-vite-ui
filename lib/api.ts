@@ -734,12 +734,12 @@ export async function fetchUserLicenseToken(userId: number): Promise<any> {
   }
 
   return {
-    success: true,
-    isActive: true,
-    tokenString: 'SHA256_MOCK_LICENSE_TOKEN_999',
-    telegramDeepLink: 'https://t.me/MyQuantOfficial_bot?start=SHA256_MOCK_LICENSE_TOKEN_999',
+    success: false,
+    isActive: false,
+    tokenString: null,
+    telegramDeepLink: null,
     telegramLinked: false,
-    remainingDays: 30
+    remainingDays: 0
   };
 }
 
