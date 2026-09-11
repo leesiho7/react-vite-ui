@@ -3949,24 +3949,6 @@ def signal(tick):
           </div>
         )}
 
-          <section className="market-snapshot" style={{ marginTop: '35px' }}>
-            <div className="section-heading">
-              <h2>Market snapshot</h2>
-              <button>All markets <ChevronDown size={14} /></button>
-            </div>
-            <div className="snapshot-grid">
-              {popularMarketsData.slice(3, 6).map((item) => (
-                <div className="snapshot-card" key={item.name}>
-                  <span>{item.name}</span>
-                  <strong>{item.price}</strong>
-                  <b className={item.isUp ? 'up' : 'down'}>{item.change}</b>
-                  <div className="mini-bars">
-                    <i /><i /><i /><i /><i />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
 
         </section>
       )}

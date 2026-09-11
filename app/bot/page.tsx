@@ -46,6 +46,8 @@ export default function BotPage() {
   const [newApiKey, setNewApiKey] = useState('')
   const [newApiSecret, setNewApiSecret] = useState('')
   const [newPassphrase, setNewPassphrase] = useState('')
+  const [newDemoMode, setNewDemoMode] = useState(false)
+  const [newLeverage, setNewLeverage] = useState(10)
 
   useEffect(() => {
     try {
@@ -168,7 +170,10 @@ export default function BotPage() {
         symbol: newSymbol,
         mode: newMode,
         apiKey: newApiKey,
-        apiSecret: newApiSecret ? `${newApiSecret}:${newPassphrase}` : newApiSecret
+        apiSecret: newApiSecret,
+        apiPassphrase: newPassphrase,
+        demoMode: newDemoMode,
+        leverage: newLeverage
       })
       if (!ensureSucceeded(result, '봇 인스턴스 생성에 실패했습니다.')) return
 
@@ -319,7 +324,9 @@ export default function BotPage() {
                   const isPaused = bot.status === 'PAUSED'
                   const isExpired = bot.status === 'EXPIRED'
                   const ex = bot.exchange || 'BINANCE'
-                  const winRate = Number(bot.winRate ?? 0)
+                  const winRateVal = bot.winRate != null && !isNaN(Number(bot.winRate)) ? Number(bot.winRate) : null
+                  const winRateDisplay = winRateVal !== null ? `${winRateVal.toFixed(1)}%` : 'N/A'
+                  const tradesDisplay = bot.totalTrades != null ? `${bot.totalTrades} trades` : '-'
 
                   return (
                     <div className="bot-table-row" key={bot.instanceId || bot.id}>
@@ -347,8 +354,8 @@ export default function BotPage() {
                         <i />{isRunning ? 'Running' : isPaused ? 'Paused' : isExpired ? 'Expired' : 'Stopped'}
                       </span>
                       <span className="bot-resource">{bot.symbol || 'BTCUSDT'}</span>
-                      <span className="bot-event" style={{ color: winRate >= 50 ? '#059669' : '#dc2626', fontWeight: 700 }}>
-                        {winRate.toFixed(1)}% ({bot.totalTrades || 0} trades)
+                      <span className="bot-event" style={{ color: winRateVal !== null && winRateVal >= 50 ? '#059669' : winRateVal !== null ? '#dc2626' : '#64748b', fontWeight: 700 }}>
+                        {winRateDisplay} ({tradesDisplay})
                       </span>
                       <div className="bot-row-actions">
                         <button
@@ -716,21 +723,53 @@ export default function BotPage() {
                 </select>
               </div>
 
+              {/* Leverage & Demo Mode */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    LEVERAGE (1x - 125x)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={125}
+                    value={newLeverage}
+                    onChange={(e) => setNewLeverage(Number(e.target.value))}
+                    placeholder="10 (0 = Keep exchange default)"
+                    style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    ENVIRONMENT
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '32px', fontSize: '12px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={newDemoMode}
+                      onChange={(e) => setNewDemoMode(e.target.checked)}
+                    />
+                    <span>Demo Mode (Testnet)</span>
+                  </label>
+                </div>
+              </div>
+
               {/* API Key Credentials */}
               <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>🔑 OKX / API CREDENTIALS (FOR REAL ORDERS)</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>🔑 EXCHANGE API CREDENTIALS</span>
                 <input
                   type="password"
                   value={newApiKey}
                   onChange={(e) => setNewApiKey(e.target.value)}
-                  placeholder="OKX API Key (e.g. 26757bfb-...)"
+                  placeholder="API Key (e.g. OKX / Binance / Bybit)"
                   style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
                 />
                 <input
                   type="password"
                   value={newApiSecret}
                   onChange={(e) => setNewApiSecret(e.target.value)}
-                  placeholder="OKX API Secret Key"
+                  placeholder="API Secret Key"
                   style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
                 />
                 <input

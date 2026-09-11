@@ -161,6 +161,9 @@ export interface CreateBotPayload {
   timeFrame?: string;
   apiKey?: string;
   apiSecret?: string;
+  apiPassphrase?: string;
+  demoMode?: boolean;
+  leverage?: number;
   pythonCode?: string;
 }
 
