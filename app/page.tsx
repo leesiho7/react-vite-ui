@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
 import Navbar from './components/Navbar'
-import { useMarketWebSocket } from '@/lib/useMarketWebSocket'
+import { useMarketWebSocket, getCleanTicker, isTraditionalAsset } from '@/lib/useMarketWebSocket'
 import { usePopularMarketsData } from '@/lib/usePopularMarketsData'
 import {
   fetchIntegratedDecision,
@@ -139,143 +139,50 @@ const newsCategoryTabs = [
 type NewsCategoryKey = typeof newsCategoryTabs[number]['key']
 
 // Multilingual News Feeds
-const newsItemsByLang = {
-  en: [
-    {
-      category: 'GEOPOLITICS',
-      source: 'REUTERS GEOPOLITICAL WIRE',
-      tag: 'IRAN',
-      title: 'U.S. launches targeted retaliatory strikes in Iran; troop casualties trigger Middle East war panic as Bitcoin plunges and crude oil surges +5%',
-      snippet: 'Kinetic strike on Iranian military installations fuels Strait of Hormuz blockade fears, sparking massive risk-off liquidation across crypto and tech equities.',
-      rootCauseKo: '미국의 대이란 군사 시설 정밀 보복 공습 및 미군 사상자 발생에 따른 중동 전면전 확전 위기',
-      rootCauseEn: 'U.S. precision military strikes inside Iran causing troop casualties and severe Middle East escalation',
-      causalChainKo: '미-이란 직접 군사 충돌 ➔ 호르무즈 해협 봉쇄 공포로 국제유가(WTI) +5.2% 폭등 ➔ 인플레이션 재점화 및 연준 금리 인하 지연 우려 ➔ 글로벌 기관 안전자산(달러, 금) 현금화 ➔ 레버리지 롱 청산으로 비트코인(-4.8%) 및 글로벌 증시 동반 투매',
-      causalChainEn: 'U.S.-Iran confrontation ➔ Oil supply disruption (WTI +5.2%) ➔ Inflation fears delay Fed cuts ➔ Risk-off liquidation in Bitcoin and equities',
-      marketImpactDetail: '비트코인(BTC): -$3,400 급락 / WTI 원유: +5.2% 폭등 / 금(Gold): +2.1% 강세 / 나스닥선물: -1.9% 약세',
-      impact: '9.8',
-      sentiment: 'BEARISH',
-      tone: 'negative',
-      thumb: 'IRAN',
-      imageUrl: 'https://images.unsplash.com/photo-1519073147904-23e655032ea3?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      category: 'GEOPOLITICS',
-      source: 'FINANCIAL TIMES EUROPE DESK',
-      tag: 'RUSSIA',
-      title: 'Russia-Ukraine missile strikes intensify near European energy grid; NATO borders on high alert as natural gas spikes +8.4%',
-      snippet: 'Strikes on critical trans-European gas pipelines spark winter supply crisis fears, boosting safe-haven dollar demand and pressuring risk-on liquidity.',
-      rootCauseKo: '러시아-우크라이나 전선 장거리 미사일 타격 격화 및 유럽 에너지 인프라 피격에 따른 NATO 안보 긴장 고조',
-      rootCauseEn: 'Escalating long-range missile strikes in Russia-Ukraine war and European energy grid disruption',
-      causalChainKo: '러-우 전선 에너지 인프라 피격 ➔ 유럽 천연가스 +8.4% 급등 및 겨울철 에너지 공급 위기 재점화 ➔ 유로화 약세 및 달러 인덱스 104 돌파 ➔ 글로벌 펀드 신흥국 및 위험자산 비중 축소 ➔ 가상자산 시장 단기 차익 실현 및 보수적 관망세 전환',
-      causalChainEn: 'Energy grid attacks ➔ European natural gas spikes +8.4% ➔ Euro weakness drives USD index higher ➔ Global funds de-risk from equities and crypto',
-      marketImpactDetail: '유럽 천연가스: +8.4% 급등 / 달러인덱스(DXY): 104.2 강세 / 금(XAU): +1.8% 상승 / 비트코인: 박스권 하단 지지선 테스트',
-      impact: '9.2',
-      sentiment: 'BEARISH',
-      tone: 'negative',
-      thumb: 'RUSSIA',
-      imageUrl: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      category: 'GEOPOLITICS',
-      source: 'BLOOMBERG GEOPOLITICS DESK',
-      tag: 'TAIWAN',
-      title: 'Taiwan Strait naval blockade drills trigger TSMC chip disruption panic; Big Tech and crypto slip on supply shock fears',
-      snippet: 'Encirclement exercises around Taiwan raise maritime shipping freeze alarms, dragging down Nvidia, Apple, and broader risk assets.',
-      rootCauseKo: '대만 해협 주변 대규모 군사 봉쇄 훈련 및 첨단 반도체 파운드리 물류 단절 위험',
-      rootCauseEn: 'Military exercises surrounding Taiwan Strait threatening TSMC advanced foundry supply chain',
-      causalChainKo: '대만 해협 해상·항공 봉쇄 훈련 ➔ 글로벌 첨단 칩의 90%를 생산하는 TSMC 공급망 차질 공포 ➔ 엔비디아, 애플, AMD 등 글로벌 빅테크 생산 중단 리스크 ➔ 나스닥 및 아시아 반도체 지수 -2.5% 투매 ➔ 위험자산 전반 유동성 회피 심리로 비트코인 동반 하방 압력',
-      causalChainEn: 'Taiwan Strait maritime blockade risks ➔ TSMC chip disruption panic ➔ Tech giants (Nvidia, Apple) selloff ➔ Broad market liquidity contraction pulls crypto down',
-      marketImpactDetail: '엔비디아(NVDA): -3.2% 하락 / TSMC: -4.1% 급락 / 나스닥: -2.2% 약세 / 글로벌 반도체 공급망 리스크 지수 최고치',
-      impact: '9.6',
-      sentiment: 'BEARISH',
-      tone: 'negative',
-      thumb: 'TAIWAN',
-      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'
-    },
-    { category: 'CRYPTO', source: 'BLOOMBERG TERMINAL', tag: 'BTC', title: 'Bitcoin holds above $67K as institutional ETF net inflows top $480M', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: 'REUTERS TECH', tag: 'NVDA', title: 'NVIDIA signals sustained enterprise demand for next-gen AI superclusters', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: 'BLOOMBERG MARKETS', tag: 'SOL', title: 'Solana decentralized exchange volume hits all-time record amidst liquidity surge', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: 'REUTERS AUTOMOTIVE', tag: 'TSLA', title: 'Tesla autonomous FSD v13 rollout accelerates regulatory approval timeline', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: 'FINANCIAL TIMES', tag: 'ETH', title: 'Ethereum staking deposits reach record quarterly high amidst supply squeeze', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
-    { category: 'MACRO', source: 'CNN BUSINESS', tag: 'MACRO', title: 'Federal Reserve hints at steady rate trajectory amidst resilient economic data', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: 'CNBC MARKETS', tag: 'AAPL', title: 'Apple Intelligence expansion drives record upgrade cycle expectations', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
-    { category: 'MACRO', source: 'WALL STREET JOURNAL', tag: 'MACRO', title: 'Global equity markets rally as corporate earnings exceed Wall Street estimates', impact: '8.1', sentiment: 'BULLISH', tone: 'positive', thumb: 'WSJ', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
-    { category: 'ONCHAIN', source: 'COINDESK ONCHAIN', tag: 'ONCHAIN', title: 'Whale address accumulation reaches 3-month peak with 32,000 BTC net intake', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: 'WHALE', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
-  ],
-  ko: [
-    {
-      category: 'GEOPOLITICS',
-      source: '로이터 외신 긴급 지정학 데스크',
-      tag: 'IRAN',
-      title: '미국의 대이란 군사 시설 정밀 보복 공습 단행… 미군 사상자 발생 및 중동 전면전 위기 고조에 비트코인 급락·국제유가 폭등',
-      snippet: '미군의 이란 군사 기지 전격 타격으로 호르무즈 해협 봉쇄 공포 확산. 안전자산 선호 심리 폭발하며 글로벌 위험자산 연쇄 투매 촉발.',
-      rootCauseKo: '미국의 대이란 군사 시설 정밀 보복 공습 및 미군 사상자 발생에 따른 중동 전면전 확전 위기',
-      rootCauseEn: 'U.S. precision military strikes inside Iran causing troop casualties and severe Middle East escalation',
-      causalChainKo: '미-이란 직접 군사 충돌 ➔ 호르무즈 해협 봉쇄 공포로 국제유가(WTI) +5.2% 폭등 ➔ 인플레이션 재점화 및 연준 금리 인하 지연 우려 ➔ 글로벌 기관 안전자산(달러, 금) 현금화 ➔ 레버리지 롱 청산으로 비트코인(-4.8%) 및 글로벌 증시 동반 투매',
-      causalChainEn: 'U.S.-Iran confrontation ➔ Oil supply disruption (WTI +5.2%) ➔ Inflation fears delay Fed cuts ➔ Risk-off liquidation in Bitcoin and equities',
-      marketImpactDetail: '비트코인(BTC): -$3,400 급락 / WTI 원유: +5.2% 폭등 / 금(Gold): +2.1% 강세 / 나스닥선물: -1.9% 약세',
-      impact: '9.8',
-      sentiment: 'BEARISH',
-      tone: 'negative',
-      thumb: 'IRAN',
-      imageUrl: 'https://images.unsplash.com/photo-1519073147904-23e655032ea3?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      category: 'GEOPOLITICS',
-      source: '파이낸셜타임스 유럽 긴급 타전',
-      tag: 'RUSSIA',
-      title: '러시아-우크라이나 전선 장거리 미사일 타격 격화… 유럽 에너지 인프라 피격에 천연가스 +8.4% 폭등·글로벌 위험회피 확산',
-      snippet: '동유럽 가스 수송 파이프라인 인근 공습으로 겨울철 공급망 위기 재점화. 유로화 급락 및 달러 인덱스 104 돌파로 가상자산 시장 유동성 위축.',
-      rootCauseKo: '러시아-우크라이나 전선 장거리 미사일 타격 격화 및 유럽 에너지 인프라 피격에 따른 NATO 안보 긴장 고조',
-      rootCauseEn: 'Escalating long-range missile strikes in Russia-Ukraine war and European energy grid disruption',
-      causalChainKo: '러-우 전선 에너지 인프라 피격 ➔ 유럽 천연가스 +8.4% 급등 및 겨울철 에너지 공급 위기 재점화 ➔ 유로화 약세 및 달러 인덱스 104 돌파 ➔ 글로벌 펀드 신흥국 및 위험자산 비중 축소 ➔ 가상자산 시장 단기 차익 실현 및 보수적 관망세 전환',
-      causalChainEn: 'Energy grid attacks ➔ European natural gas spikes +8.4% ➔ Euro weakness drives USD index higher ➔ Global funds de-risk from equities and crypto',
-      marketImpactDetail: '유럽 천연가스: +8.4% 급등 / 달러인덱스(DXY): 104.2 강세 / 금(XAU): +1.8% 상승 / 비트코인: 박스권 하단 지지선 테스트',
-      impact: '9.2',
-      sentiment: 'BEARISH',
-      tone: 'negative',
-      thumb: 'RUSSIA',
-      imageUrl: 'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      category: 'GEOPOLITICS',
-      source: '블룸버그 인텔리전스 지정학 데스크',
-      tag: 'TAIWAN',
-      title: '대만 해협 군사 봉쇄 훈련 전격 개시… TSMC 파운드리 차질 공포에 엔비디아·애플 등 빅테크 및 글로벌 증시 동반 하락',
-      snippet: '대만 해상 물류 포위 위협으로 전 세계 첨단 칩 90% 공급망 중단 공포 확산. 나스닥 선물 급락 및 안전자산 쏠림으로 크립토 동반 하락.',
-      rootCauseKo: '대만 해협 주변 대규모 군사 봉쇄 훈련 및 첨단 반도체 파운드리 물류 단절 위험',
-      rootCauseEn: 'Military exercises surrounding Taiwan Strait threatening TSMC advanced foundry supply chain',
-      causalChainKo: '대만 해협 해상·항공 봉쇄 훈련 ➔ 글로벌 첨단 칩의 90%를 생산하는 TSMC 공급망 차질 공포 ➔ 엔비디아, 애플, AMD 등 글로벌 빅테크 생산 중단 리스크 ➔ 나스닥 및 아시아 반도체 지수 -2.5% 투매 ➔ 위험자산 전반 유동성 회피 심리로 비트코인 동반 하방 압력',
-      causalChainEn: 'Taiwan Strait maritime blockade risks ➔ TSMC chip disruption panic ➔ Tech giants (Nvidia, Apple) selloff ➔ Broad market liquidity contraction pulls crypto down',
-      marketImpactDetail: '엔비디아(NVDA): -3.2% 하락 / TSMC: -4.1% 급락 / 나스닥: -2.2% 약세 / 글로벌 반도체 공급망 리스크 지수 최고치',
-      impact: '9.6',
-      sentiment: 'BEARISH',
-      tone: 'negative',
-      thumb: 'TAIWAN',
-      imageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80'
-    },
-    { category: 'CRYPTO', source: '연합인포맥스 속보', tag: 'BTC', title: '비트코인 현물 ETF 4.8억 달러 순유입… 67,000달러 안착 시도', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: '한국경제 증권부', tag: 'NVDA', title: '엔비디아 차세대 AI 인프라 수주 랠리… 글로벌 반도체 동반 강세', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: '블룸버그 코리아', tag: 'SOL', title: '솔라나 DEX 24시간 거래량 역대 최대치 경신… 기관 유동성 집중', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: '로이터 테크', tag: 'TSLA', title: '테슬라 자율주행 FSD v13 글로벌 승인 가속… AI 로보택시 기대감 고조', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: '매일경제 금융', tag: 'ETH', title: '이더리움 스테이킹 참여율 분기 최고치 경신… 거래소 매도 압력 완화', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
-    { category: 'MACRO', source: 'CNN 비즈니스', tag: 'MACRO', title: '미국 연준(Fed) 금리 동결 시사 및 유동성 회복… 글로벌 위험자산 랠리', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: 'CNBC 코리아', tag: 'AAPL', title: '애플 온디바이스 인텔리전스 기기 교체 슈퍼사이클 진입 전망', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
-    { category: 'ONCHAIN', source: 'DART 전자공시 팩트체크', tag: '공시', title: '주요 상장 핀테크 법인 AI 자산배분 인프라 구축 공시 완료', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: '공시', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
-    { category: 'ONCHAIN', source: '블록미디어 온체인', tag: 'ONCHAIN', title: '온체인 고래 지갑 72시간 동안 32,000 BTC 순매집 확인', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: '고래', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
-  ],
-  cn: [
-    { category: 'CRYPTO', source: '金十数据 独家', tag: 'BTC', title: '比特币机构现货ETF单日净流入超4.8亿美元，稳守67,000关口', impact: '8.8', sentiment: 'BULLISH', tone: 'positive', thumb: 'BTC', imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: '财新网 科技前沿', tag: 'NVDA', title: '英伟达下一代企业级AI集群订单激增，半导体供应链全面提振', impact: '9.2', sentiment: 'BULLISH', tone: 'positive', thumb: 'NV', imageUrl: 'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: '彭博商业周刊', tag: 'SOL', title: 'Solana链上DEX单日交易量创历史新高，机构流动性加速涌入', impact: '8.7', sentiment: 'BULLISH', tone: 'positive', thumb: 'SOL', imageUrl: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: '路透社 汽车科技', tag: 'TSLA', title: '特斯拉FSD v13全自动驾驶全球审批加速，无人出租车量产提速', impact: '8.5', sentiment: 'BULLISH', tone: 'positive', thumb: 'TSLA', imageUrl: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=600&q=80' },
-    { category: 'CRYPTO', source: '8BTC 深报道', tag: 'ETH', title: '以太坊质押总量创季度新高，交易所流通量持续净流出', impact: '7.1', sentiment: 'NEUTRAL', tone: 'neutral', thumb: 'ETH', imageUrl: 'https://images.unsplash.com/photo-1622979135225-d2ba269bc1df?auto=format&fit=crop&w=600&q=80' },
-    { category: 'MACRO', source: 'CNN 商业频道', tag: 'MACRO', title: '美联储暗示利率政策保持稳健，全球宏观流动性周期回暖', impact: '8.4', sentiment: 'BULLISH', tone: 'positive', thumb: 'FED', imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=600&q=80' },
-    { category: 'TECH', source: 'CNBC 独家', tag: 'AAPL', title: '苹果AI大模型生态全面落地，供应链迎来超级换机周期', impact: '7.9', sentiment: 'BULLISH', tone: 'positive', thumb: 'AAPL', imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=600&q=80' },
-    { category: 'MACRO', source: '华尔街见闻 宏观', tag: 'MACRO', title: '全球主要权益市场全线上扬，企业盈利超华尔街机构普遍预期', impact: '8.1', sentiment: 'BULLISH', tone: 'positive', thumb: '宏观', imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80' },
-    { category: 'ONCHAIN', source: '金色财经 链上', tag: 'ONCHAIN', title: '链上巨鲸地址72小时内净增持32,000枚比特币，筹码集中度攀升', impact: '9.0', sentiment: 'BULLISH', tone: 'positive', thumb: '链上', imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80' }
-  ]
+// ── [삭제됨] newsItemsByLang — 하드코딩 가짜 속보 3개 언어 세트 ──
+//
+// 실제 언론사 이름("연합인포맥스 속보", "한국경제 증권부", "블룸버그 코리아",
+// "DART 전자공시 팩트체크", "REUTERS GEOPOLITICAL WIRE")으로 존재하지 않는 기사와
+// 창작 수치("ETF 4.8억 달러 순유입", "32,000 BTC 순매집")를 표시했고, impact 점수(8.8/9.2)
+// 까지 붙어 있었다. API 응답이 없을 때의 폴백으로 쓰였기 때문에, 백엔드를 정리해도
+// 화면에는 계속 가짜 속보가 보였다.
+//
+// 이제 수집 결과가 없으면 목록을 비우고 "수집된 속보 없음"을 표시한다.
+// 상세: docs/news-feed-policy.md
+
+export type NewsItem = {
+  category: string
+  source: string
+  tag: string
+  title: string
+  titleOriginal?: string
+  titleKo?: string
+  titleCn?: string
+  snippet?: string
+  snippetKo?: string
+  snippetCn?: string
+  rootCauseKo?: string
+  rootCauseEn?: string
+  causalChainKo?: string
+  causalChainEn?: string
+  marketImpactDetail?: string
+  actionGuideKo?: string
+  actionGuideEn?: string
+  actionGuideCn?: string
+  /** 원문 링크. 없는 항목은 표시하지 않는다 (검증 불가) */
+  link: string
+  /** 발행 시각 표기. 수집 시각을 발행 시각처럼 쓰지 않는다 */
+  timestamp?: string
+  /** 규칙 기반 감성. 없으면 표시하지 않는다 */
+  sentiment?: string
+  tone?: string
+  thumb?: string
+  /** 기사 자체 이미지만. 없으면 undefined -> 텍스트 카드 */
+  imageUrl?: string
+  /** 감성 판정 근거 (KEYWORD_RULE 등). 숫자 점수는 표시하지 않는다 */
+  analysisMethod?: string
 }
+
 
 const mediaStories = [
   {
@@ -634,7 +541,7 @@ const mediaCopy = {
   }
 }
 
-type NewsItem = typeof newsItemsByLang['en'][number]
+// NewsItem 타입은 상단에 명시적으로 정의되어 있다 (하드코딩 배열에서 추론하지 않는다)
 
 function Diamond() {
   return <span className="diamond" aria-hidden="true">◆</span>
@@ -1618,7 +1525,12 @@ export default function Page() {
   const [licenseToken, setLicenseToken] = useState<string | null>(null)
   const [telegramDeepLink, setTelegramDeepLink] = useState<string>('https://t.me/MyQuantOfficial_bot')
   const [pythonCode, setPythonCode] = useState<string>(
-    '# Strategy runs in an isolated 24/7 Docker Sandbox\n# Connect signals through Spring Boot API\ndef on_market_tick(tick):\n    rsi = tick.get("rsi", 50.0)\n    if rsi < 30.0:\n        return {"action": "BUY", "risk": 0.35, "reason": "RSI Oversold"}\n    elif rsi > 70.0:\n        return {"action": "SELL", "risk": 0.35, "reason": "RSI Overbought"}\n    return {"action": "HOLD", "risk": 0.35}'
+    // AETHER 표준 전략 계약: 진입점은 on_market_tick(tick) 하나뿐이고, 지표는 워밍업 전
+    // None 으로 들어온다. tick.get("rsi", 50.0) 은 값이 None 이면 기본값이 적용되지 않아
+    // TypeError 로 죽는다 — 반드시 엔진이 주입한 as_float() 로 읽어야 한다.
+    // 수량은 quantity(기초자산) 또는 risk_usd(명목 USD)만 엔진이 읽는다.
+    // 전체 계약: docs/bot-strategy-contract.md
+    '# -*- coding: utf-8 -*-\n# AETHER 24H strategy — runs in an isolated sandbox worker.\n# Entry point must be on_market_tick(tick). See docs/bot-strategy-contract.md\nfrom typing import Any\n\nRISK_USD = 200.0\n\n\ndef on_market_tick(tick: dict[str, Any]) -> dict[str, Any]:\n    price = as_float(tick.get("price"))\n    rsi = as_float(tick.get("rsi"))\n    if price is None or rsi is None:\n        return {"action": "HOLD", "reason": "indicators warming up"}\n\n    position = position_of(tick)\n    unrealized = pnl_pct(position, price)\n    if position["side"] and unrealized is not None:\n        if unrealized >= 6.0 or unrealized <= -3.0:\n            return {"action": "CLOSE", "reason": "target reached (%.2f%%)" % unrealized}\n        return {"action": "HOLD", "reason": "holding %s" % position["side"]}\n\n    if rsi < 30.0:\n        return {"action": "BUY", "risk_usd": RISK_USD, "reason": "RSI %.1f oversold" % rsi}\n    if rsi > 70.0:\n        return {"action": "SELL", "risk_usd": RISK_USD, "reason": "RSI %.1f overbought" % rsi}\n    return {"action": "HOLD", "reason": "RSI %.1f neutral" % rsi}'
   )
   const [sandboxLog, setSandboxLog] = useState<string | null>(null)
   const [sandboxIsError, setSandboxIsError] = useState(false)
@@ -2552,17 +2464,17 @@ export default function Page() {
         if (language === 'ko' && item.titleKo) displayTitle = item.titleKo
         else if (language === 'cn' && item.titleCn) displayTitle = item.titleCn
 
+        // 원문 링크가 없으면 이 항목은 버린다 (아래 filter). 예전에는 링크가 없을 때
+        // Yahoo 종목 페이지를 붙여서, 기사와 무관한 곳으로 보내며 검증을 불가능하게 만들었다.
         let link = item.link
         if (!link && item.snippet && item.snippet.startsWith('http')) {
           link = item.snippet
         }
-        if (!link) {
-          link = `https://finance.yahoo.com/quote/${item.symbol || 'BTC-USD'}/news`
-        }
 
         return {
           category: cat,
-          source: item.source || 'BLOOMBERG TERMINAL',
+          // 출처를 'BLOOMBERG TERMINAL'로 기본값 처리하지 않는다 (언론사 이름 도용)
+          source: item.source || '출처 미확인',
           tag: item.symbol?.replace('.KS', '').replace('USDT', '') || 'MARKET',
           title: displayTitle,
           titleOriginal: item.title,
@@ -2580,30 +2492,30 @@ export default function Page() {
           actionGuideEn: item.actionGuideEn,
           actionGuideCn: item.actionGuideCn,
           link,
-          impact: String(item.impactPercent ? (item.impactPercent / 10).toFixed(1) : '8.5'),
-          sentiment: item.sentiment || 'BULLISH',
-          tone: item.sentiment === 'BEARISH' ? 'negative' : (item.sentiment === 'NEUTRAL' ? 'neutral' : 'positive'),
+          timestamp: item.timestamp,
+          // 영향도 점수를 만들어 붙이지 않는다. 예전 기본값 '8.5'는 아무 근거가 없었다.
+          sentiment: item.sentiment,
+          analysisMethod: item.analysisMethod,
+          tone: item.sentiment === 'BEARISH' ? 'negative' : (item.sentiment === 'BULLISH' ? 'positive' : 'neutral'),
           thumb: item.symbol?.slice(0, 4) || 'NEWS',
+          // 기사 자체 이미지만. 없으면 undefined -> 텍스트 카드로 렌더링한다
           imageUrl: item.imageUrl || undefined
         } as any
       })
+      // 원문으로 검증할 수 없는 항목은 노출하지 않는다
+      list = list.filter((item: any) => typeof item.link === 'string' && item.link.startsWith('http'))
     } else {
-      list = (newsItemsByLang[language] as any[]).map((item) => ({
-        ...item,
-        titleOriginal: item.title,
-        link: `https://finance.yahoo.com/quote/${item.tag || 'BTC-USD'}/news`
-      }))
+      // 수집 결과가 없으면 비운다. 하드코딩 폴백 속보를 쓰지 않는다.
+      list = []
     }
 
     if (newsCategory === 'ALL') return list
     return list.filter((item) => item.category === newsCategory)
   }, [rawLiveItems, language, newsCategory])
-  const [activeNews, setActiveNews] = useState<NewsItem>(newsItemsByLang['ko'][0])
+  const [activeNews, setActiveNews] = useState<NewsItem | null>(null)
 
   useEffect(() => {
-    if (currentNewsList.length > 0) {
-      setActiveNews(currentNewsList[0])
-    }
+    setActiveNews(currentNewsList.length > 0 ? currentNewsList[0] : null)
   }, [currentNewsList])
 
   // Fetch Backend APIs
@@ -2776,12 +2688,32 @@ export default function Page() {
 
   // 4. 파이썬 코드 샌드박스 백테스트 & 검증
   const handleTestSandbox = async () => {
-    setSandboxLoading(true)
     setTerminalTab('OUTPUT')
+
+    // 봇 엔진은 USDT 마진 크립토 선물 전용이다. 인기 종목 목록에는 주식/지수/원자재가
+    // 섞여 있어서, 예전에는 무엇이 선택돼 있든 'USDT' 를 붙여 보냈다
+    // (삼성전자 005930 -> '005930USDT'). 거래소는 그런 심볼을 모르므로 빈 캔들이
+    // 돌아오고, 사용자에게는 "캔들을 받지 못했습니다 / 네트워크를 확인하세요" 라는
+    // 엉뚱한 진단이 보였다. 요청을 보내기 전에 자산군을 먼저 확인한다.
+    if (isTraditionalAsset(searched)) {
+      setSandboxIsError(true)
+      setSandboxLog(
+        `❌ [지원하지 않는 심볼] ${searched}\n\n` +
+        '24시간 봇 엔진은 USDT 마진 크립토 선물만 거래합니다 ' +
+        '(Binance /fapi · Bybit linear · OKX SWAP).\n' +
+        '주식 · 지수 · 원자재는 이 거래소들에 상장돼 있지 않아 백테스트할 수 없습니다.\n\n' +
+        '상단 검색창에서 크립토 심볼을 선택한 뒤 다시 실행하세요 (예: BTC/USD, ETH/USD, SOL/USD).\n' +
+        '※ 전략 코드 자체는 아직 검증되지 않았습니다.'
+      )
+      return
+    }
+
+    setSandboxLoading(true)
     setSandboxIsError(false)
     setSandboxLog('Running Python 3.12 isolated sandbox container...\nScanning AST tree & Executing strategy ticks...')
     try {
-      const rawSymbol = searched.replace('/USD', '').replace('/USDT', '') + 'USDT'
+      // getCleanTicker 로 기초자산만 뽑고 USDT 를 붙인다 ('BTC/USD' -> 'BTCUSDT').
+      const rawSymbol = `${getCleanTicker(searched)}USDT`
       const res = await testPythonCode({
         pythonCode,
         symbol: rawSymbol,
@@ -2991,17 +2923,20 @@ export default function Page() {
     }
   }
 
-  // Live News Rotator
+  // Live News Rotator — 실제 수집된 목록만 순환한다 (하드코딩 배열 순환 제거)
   useEffect(() => {
+    if (currentNewsList.length === 0) {
+      return
+    }
     const timer = window.setInterval(() => {
       setActiveNews((current) => {
-        const list = newsItemsByLang[language]
-        const idx = list.findIndex((item) => item.title === current.title)
-        return list[(idx + 1) % list.length]
+        if (!current) return currentNewsList[0]
+        const idx = currentNewsList.findIndex((item) => item.title === current.title)
+        return currentNewsList[(idx + 1) % currentNewsList.length]
       })
     }, 4500)
     return () => window.clearInterval(timer)
-  }, [language])
+  }, [currentNewsList])
 
   const copy = {
     en: {
@@ -3629,12 +3564,14 @@ export default function Page() {
                   <span className="signal-tag" style={{ color: '#38bdf8' }}>{language === 'ko' ? '파이썬 3.12 24/7 퀀트 전략' : 'PYTHON QUANT STRATEGY'}</span>
                   <pre style={{ margin: 0, fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#a5f3fc', overflowX: 'auto', lineHeight: 1.45 }}>
 {`# 24H Mean Reversion Strategy (${marketActiveSymbol.replace(' / ', '/')})
-def on_market_tick(tick):
-    rsi = tick.get("rsi", 50.0)
+def on_market_tick(tick: dict) -> dict:
+    rsi = as_float(tick.get("rsi"))
+    if rsi is None:
+        return {"action": "HOLD", "reason": "warming up"}
     if rsi < 32.0:
-        return {"action": "BUY", "risk": 0.35}
-    elif rsi > 68.0:
-        return {"action": "SELL", "risk": 0.35}
+        return {"action": "BUY", "risk_usd": 200.0}
+    if rsi > 68.0:
+        return {"action": "SELL", "risk_usd": 200.0}
     return {"action": "HOLD"}`}
                   </pre>
                   <button
@@ -3903,12 +3840,20 @@ def on_market_tick(tick):
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>PYTHON 3.12 QUANT BOT</span>
                     <pre style={{ margin: '10px 0 0 0', fontSize: '12px', fontFamily: 'var(--font-mono)', color: '#7dd3fc', lineHeight: 1.5, overflowX: 'auto' }}>
 {`# 24H High-Performance Algorithmic Bot (${marketActiveSymbol.replace(' / ', '/')})
-def on_market_tick(tick):
-    rsi = tick.get("rsi", 50.0)
+def on_market_tick(tick: dict) -> dict:
+    rsi = as_float(tick.get("rsi"))
+    position = position_of(tick)
+    if rsi is None:
+        return {"action": "HOLD", "reason": "warming up"}
+    if position["side"]:
+        unrealized = pnl_pct(position, tick.get("price"))
+        if unrealized is not None and unrealized <= -2.5:
+            return {"action": "CLOSE", "reason": "stop loss"}
+        return {"action": "HOLD"}
     if rsi < 32.0:
-        return {"action": "BUY", "size_ratio": 0.35, "stop_loss_pct": -0.025}
-    elif rsi > 68.0:
-        return {"action": "SELL", "size_ratio": 0.35, "take_profit_pct": 0.055}
+        return {"action": "BUY", "risk_usd": 350.0}
+    if rsi > 68.0:
+        return {"action": "SELL", "risk_usd": 350.0}
     return {"action": "HOLD"}`}
                     </pre>
                   </div>
@@ -5606,6 +5551,31 @@ def on_market_tick(tick):
                 </span>
               </div>
 
+              {/* 수집 결과가 없으면 비어 있음을 정직하게 알린다.
+                  예전에는 하드코딩된 가짜 속보로 화면을 채웠다. */}
+              {currentNewsList.length === 0 && (
+                <section
+                  className="panel"
+                  style={{
+                    background: '#fff', border: '1px dashed #cbd5e1', borderRadius: '6px',
+                    padding: '28px 22px', marginBottom: '20px', textAlign: 'center', color: '#687184'
+                  }}
+                >
+                  <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#334155' }}>
+                    {language === 'ko' ? '현재 수집된 속보가 없습니다'
+                      : language === 'cn' ? '暂无已采集的快讯'
+                      : 'No articles collected right now'}
+                  </div>
+                  <div style={{ fontSize: '11px', lineHeight: 1.6 }}>
+                    {language === 'ko'
+                      ? '뉴스 피드 수집에 실패했거나 아직 수신된 기사가 없습니다. 확인되지 않은 기사를 임의로 표시하지 않습니다.'
+                      : language === 'cn'
+                      ? '新闻采集失败或尚无文章。我们不会显示未经核实的内容。'
+                      : 'Feed collection failed or no articles are available yet. Unverified items are never shown.'}
+                  </div>
+                </section>
+              )}
+
               {/* 메인 피처 기사 (실제 뉴스 기사 데이터) */}
               {activeNews && (
                 <section className="media-feature panel" style={{ background: '#fff', border: '1px solid #dfe3eb', borderRadius: '6px', overflow: 'hidden', marginBottom: '20px' }}>
@@ -5631,8 +5601,9 @@ def on_market_tick(tick):
                         {activeNews.tag || 'MARKET WIRE'}
                       </div>
                     )}
+                    {/* 'AI FACT-CHECKED' 배지는 근거가 없어 제거했다. 실제 출처를 표시한다. */}
                     <div style={{ position: 'absolute', bottom: '12px', left: '12px', background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 600 }}>
-                      AI FACT-CHECKED
+                      {activeNews.source}
                     </div>
                   </div>
 
@@ -5641,9 +5612,17 @@ def on_market_tick(tick):
                       <span className="overline" style={{ fontSize: '10px', color: '#f47a20', fontWeight: 700 }}>
                         ★ FEATURED · {activeNews.source} · {activeNews.tag}
                       </span>
-                      <span className={`sentiment ${activeNews.tone}`} style={{ fontSize: '9px', fontWeight: 700 }}>
-                        {activeNews.sentiment}
-                      </span>
+                      {activeNews.sentiment && (
+                        <span className={`sentiment ${activeNews.tone}`} style={{ fontSize: '9px', fontWeight: 700 }}
+                              title={activeNews.analysisMethod === 'KEYWORD_RULE'
+                                ? '키워드 규칙 기반 분류입니다 (AI 모델 점수가 아닙니다)'
+                                : undefined}>
+                          {activeNews.sentiment}
+                          {activeNews.analysisMethod === 'KEYWORD_RULE' && (
+                            <span style={{ fontWeight: 500, opacity: 0.7 }}> · 규칙기반</span>
+                          )}
+                        </span>
+                      )}
                     </div>
 
                     <h2
@@ -5692,9 +5671,11 @@ def on_market_tick(tick):
                     )}
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #edf0f2', paddingTop: '12px' }}>
+                      {/* 'AI IMPACT x/10'은 키워드 카운트를 점수로 위장한 값이어서 제거했다.
+                          대신 검증 가능한 정보(출처, 발행시각)를 표시한다. */}
                       <div className="media-meta" style={{ display: 'flex', gap: '10px', fontSize: '10px', color: '#9aa2b1' }}>
-                        <span>AI IMPACT <strong>{activeNews.impact}/10</strong></span>
                         <span>{activeNews.source}</span>
+                        {activeNews.timestamp && <span>{activeNews.timestamp}</span>}
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
@@ -5726,12 +5707,12 @@ def on_market_tick(tick):
               <section className="media-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                 {currentNewsList.slice(0, 6).map((item) => (
                   <button
-                    className={`media-card ${activeNews.title === item.title ? 'active' : ''}`}
+                    className={`media-card ${activeNews?.title === item.title ? 'active' : ''}`}
                     key={item.title + ((item as any).link || '')}
                     onClick={() => selectNews(item)}
                     style={{
                       background: '#fff',
-                      border: activeNews.title === item.title ? '1.5px solid #f47a20' : '1px solid #dfe3eb',
+                      border: activeNews?.title === item.title ? '1.5px solid #f47a20' : '1px solid #dfe3eb',
                       borderRadius: '6px',
                       overflow: 'hidden',
                       textAlign: 'left',
@@ -5779,7 +5760,8 @@ def on_market_tick(tick):
                         )}
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', marginTop: '10px' }}>
-                        <span style={{ fontSize: '9px', color: '#9aa2b1' }}>IMPACT {item.impact}/10</span>
+                        {/* 'IMPACT x/10' 제거 — 근거 없는 점수였다. 발행시각을 표시한다. */}
+                        <span style={{ fontSize: '9px', color: '#9aa2b1' }}>{(item as any).timestamp || ''}</span>
                         <span className="card-link" style={{ fontSize: '9px', color: '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
                           {language === 'ko' ? '분석' : 'VIEW'} <ArrowUpRight size={11} />
                         </span>

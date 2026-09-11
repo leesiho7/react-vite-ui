@@ -13,7 +13,47 @@ import {
   VisionChartAnalysisResponse
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+/**
+ * 백엔드 API 베이스 URL (항상 `/api` 로 끝난다).
+ *
+ * 백엔드와 프론트엔드를 다른 호스트에 분리 배포하면 이 값을 반드시 넘겨야 한다.
+ * 값이 없으면 브라우저가 자기 자신(localhost:8080)을 호출하므로, 같은 PC 에서
+ * 열었을 때만 우연히 동작한다.
+ *
+ * 두 가지 환경변수를 모두 받아들인다 — docker-compose.yml 은
+ * `NEXT_PUBLIC_API_BASE_URL`(호스트만)을 넘기는데 이 파일은 예전에
+ * `NEXT_PUBLIC_API_URL`(/api 포함)만 읽고 있어서 compose 설정이 조용히 무시됐다.
+ * 어느 쪽으로 줘도, `/api` 가 없으면 붙여서 쓴다.
+ *
+ *   NEXT_PUBLIC_API_URL=https://api.example.com/api
+ *   NEXT_PUBLIC_API_BASE_URL=https://api.example.com
+ */
+function resolveApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!raw || !raw.trim()) {
+    return 'http://localhost:8080/api';
+  }
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
+
+const API_BASE = resolveApiBase();
+
+/**
+ * 로그인/가입 응답 전체가 `auth_session` 으로 localStorage 에 저장되어 있다 (login/signup 페이지 참고).
+ * 그 안의 accessToken 을 꺼내 Authorization 헤더로 돌려준다. 로그인 전이면 빈 객체.
+ */
+function authHeader(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem('auth_session');
+    if (!raw) return {};
+    const session = JSON.parse(raw);
+    return session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {};
+  } catch {
+    return {};
+  }
+}
 
 /**
  * 1. 4대 AI 융합 통합 의사결정 리포트 조회 (다국어 locale 지원: en / ko / cn)
@@ -209,6 +249,24 @@ export async function fetchUserBots(userId: number) {
     }
   } catch (err) {
     console.warn('[API] fetchUserBots fallback error:', err);
+  }
+  return [];
+}
+
+/**
+ * [진단] 봇 목록을 Auto-Repair 없이 조회한다.
+ *
+ * 일반 목록 조회(`fetchUserBots`)는 RUNNING인데 워커가 죽은 봇을 조회 시점에 되살린다.
+ * 중복 인스턴스를 정리하거나 실제 주문 주체를 특정할 때는 이쪽을 써야 한다.
+ */
+export async function inspectUserBots(userId: number) {
+  try {
+    const res = await fetch(`${API_BASE}/bot/instance/user/${userId}/runtime`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] inspectUserBots fallback error:', err);
   }
   return [];
 }
@@ -683,7 +741,7 @@ export async function submitOnChainDeposit(payload: {
   try {
     const res = await fetch(`${API_BASE}/v1/payments/crypto/simulate-deposit`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({
         userId: payload.userId,
         txHash: payload.txHash,
@@ -748,7 +806,9 @@ export async function claimStreakReward(payload: {
  */
 export async function fetchUserLicenseToken(userId: number): Promise<any> {
   try {
-    const res = await fetch(`${API_BASE}/v1/payments/license/${userId}`);
+    const res = await fetch(`${API_BASE}/v1/payments/license/${userId}`, {
+      headers: authHeader()
+    });
     if (res.ok) {
       return await res.json();
     }
