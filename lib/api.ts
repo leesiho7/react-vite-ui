@@ -248,6 +248,29 @@ export async function deleteBotApi(instanceId: number, userId: number): Promise<
   return requestBotControl(`${API_BASE}/bot/instance/${instanceId}?userId=${userId}`, 'DELETE');
 }
 
+/**
+ * [개발자 모드] 전략 코드를 갱신하고 재배포한다.
+ * 가동 중인 봇이면 새 코드로 워커가 다시 뜨고, 로드에 실패하면 서버가 이전 코드로 되돌린다.
+ */
+export async function updateBotCodeApi(instanceId: number, userId: number, pythonCode: string): Promise<BotControlResult> {
+  try {
+    const res = await fetch(`${API_BASE}/bot/instance/${instanceId}/code?userId=${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pythonCode })
+    });
+    const body = await res.json().catch(() => null);
+
+    if (res.ok) {
+      return body ?? { success: true };
+    }
+    return { success: false, message: body?.message || `전략 코드 갱신이 거부되었습니다. (HTTP ${res.status})` };
+  } catch (err) {
+    console.warn('[API] updateBotCodeApi fallback error:', err);
+    return { success: false, message: BOT_CONTROL_NETWORK_ERROR };
+  }
+}
+
 
 
 export async function fetchBotLogsApi(instanceId: number, limit = 50) {

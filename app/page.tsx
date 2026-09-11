@@ -38,6 +38,7 @@ import {
   pauseBotApi,
   stopBotApi,
   deleteBotApi,
+  updateBotCodeApi,
   fetchBotLogsApi,
   resetResearchMemory,
   fetchTradingViewConfig,
@@ -1622,6 +1623,9 @@ export default function Page() {
   const [sandboxLog, setSandboxLog] = useState<string | null>(null)
   const [sandboxIsError, setSandboxIsError] = useState(false)
   const [sandboxLoading, setSandboxLoading] = useState(false)
+  const [redeployLoading, setRedeployLoading] = useState(false)
+  /** 에디터 아래 통합 터미널 패널 탭 — OUTPUT은 백테스트 결과, TERMINAL은 워커 실시간 로그 */
+  const [terminalTab, setTerminalTab] = useState<'OUTPUT' | 'TERMINAL'>('TERMINAL')
 
   // Upgrade & Pro Quant Subscription Modal State
   const [upgradeOpen, setUpgradeOpen] = useState(false)
@@ -2000,7 +2004,10 @@ export default function Page() {
       timeFrame: '1h',
       apiKey: newInstanceApiKey.trim() || undefined,
       apiSecret: newInstanceApiSecret.trim() || undefined,
-      apiPassphrase: exchangeCode === 'OKX' ? newInstancePassphrase.trim() || undefined : undefined
+      apiPassphrase: exchangeCode === 'OKX' ? newInstancePassphrase.trim() || undefined : undefined,
+      // 콘솔 에디터의 전략 코드를 그대로 배포한다. 이걸 빼면 DEVELOPER 봇이 코드 없이
+      // 저장되어 가동 즉시 on_market_tick 부재로 FATAL 이 난다.
+      pythonCode
     }
 
     const createdResponse = await createBotInstanceApi(payload)
@@ -2208,6 +2215,42 @@ export default function Page() {
       stopBotApi,
       '봇 중지에 실패했습니다.'
     )
+
+  /**
+   * DEPLOY는 에디터의 전략 코드를 선택된 인스턴스의 워커에 올린다.
+   * 가동 중이면 서버가 새 코드로 워커를 재기동하고, 로드에 실패하면 이전 코드로 되돌린 뒤
+   * 그 사유를 message로 알려준다. 아래 샌드박스 백테스트와는 분리된 인스턴스 제어 동작이라
+   * 결과도 인스턴스 로그에 남긴다.
+   */
+  const handleDeployCodeToInstance = async () => {
+    if (botInstances.length === 0) return
+
+    const activeBot = botInstances.find(b => b.id === selectedInstanceId)
+    if (!activeBot?.rawId) return
+
+    const uId = requireActiveUserId()
+    if (uId === null) return
+
+    setRedeployLoading(true)
+    setTerminalTab('TERMINAL')
+    appendInstanceLog('DOCKER', `[DEPLOY] Uploading strategy code (${pythonCode.split('\n').length} lines) to worker...`)
+    try {
+      const result = await updateBotCodeApi(Number(activeBot.rawId), uId, pythonCode)
+
+      if (ensureBotControlSucceeded(result, '전략 코드 배포에 실패했습니다.')) {
+        appendInstanceLog('SYSTEM', `[DEPLOY] ${result.message || '새 전략 코드로 재배포되었습니다.'}`)
+      } else {
+        appendInstanceLog('SYSTEM', `[REJECTED] ${result.message || '전략 코드 배포가 거부되었습니다.'}`)
+      }
+
+      // 롤백된 경우에도 서버가 실제 상태를 돌려주므로 그대로 반영한다.
+      if (result.status) {
+        applyInstanceStatus(activeBot.id, result.status as InstanceRunState)
+      }
+    } finally {
+      setRedeployLoading(false)
+    }
+  }
 
   /** REBOOT은 실제로 서버에 stop → start를 순차 요청한다. (예전에는 UI만 바뀌는 연출이었다) */
   const handleRebootInstance = async () => {
@@ -2734,6 +2777,7 @@ export default function Page() {
   // 4. 파이썬 코드 샌드박스 백테스트 & 검증
   const handleTestSandbox = async () => {
     setSandboxLoading(true)
+    setTerminalTab('OUTPUT')
     setSandboxIsError(false)
     setSandboxLog('Running Python 3.12 isolated sandbox container...\nScanning AST tree & Executing strategy ticks...')
     try {
@@ -3585,7 +3629,7 @@ export default function Page() {
                   <span className="signal-tag" style={{ color: '#38bdf8' }}>{language === 'ko' ? '파이썬 3.12 24/7 퀀트 전략' : 'PYTHON QUANT STRATEGY'}</span>
                   <pre style={{ margin: 0, fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#a5f3fc', overflowX: 'auto', lineHeight: 1.45 }}>
 {`# 24H Mean Reversion Strategy (${marketActiveSymbol.replace(' / ', '/')})
-def signal(tick):
+def on_market_tick(tick):
     rsi = tick.get("rsi", 50.0)
     if rsi < 32.0:
         return {"action": "BUY", "risk": 0.35}
@@ -3859,7 +3903,7 @@ def signal(tick):
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>PYTHON 3.12 QUANT BOT</span>
                     <pre style={{ margin: '10px 0 0 0', fontSize: '12px', fontFamily: 'var(--font-mono)', color: '#7dd3fc', lineHeight: 1.5, overflowX: 'auto' }}>
 {`# 24H High-Performance Algorithmic Bot (${marketActiveSymbol.replace(' / ', '/')})
-def signal(tick):
+def on_market_tick(tick):
     rsi = tick.get("rsi", 50.0)
     if rsi < 32.0:
         return {"action": "BUY", "size_ratio": 0.35, "stop_loss_pct": -0.025}
@@ -6078,6 +6122,15 @@ def signal(tick):
                       🔄 REBOOT
                     </button>
                     <button
+                      className="instance-ctrl-btn"
+                      onClick={handleDeployCodeToInstance}
+                      disabled={!canControlInstance || redeployLoading || instanceStatus === 'REBOOTING'}
+                      title={canControlInstance ? '에디터의 전략 코드를 이 인스턴스에 배포합니다 (가동 중이면 재기동)' : '봇을 제어하려면 로그인이 필요합니다.'}
+                      style={{ padding: '8px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                    >
+                      {redeployLoading ? '⏳ DEPLOYING…' : '⇧ DEPLOY CODE'}
+                    </button>
+                    <button
                       className="instance-ctrl-btn danger"
                       onClick={handleStopInstance}
                       disabled={!canControlInstance || instanceStatus === 'STOPPED' || instanceStatus === 'EXPIRED'}
@@ -6086,31 +6139,6 @@ def signal(tick):
                     >
                       ⏹ STOP
                     </button>
-                  </div>
-                </div>
-
-                {/* Live Docker Terminal Logs */}
-                <div className="powershell-terminal-box" style={{ margin: '0 0 16px' }}>
-                  <div className="powershell-titlebar">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="powershell-dots">
-                        <span className="dot-red" />
-                        <span className="dot-yellow" />
-                        <span className="dot-green" />
-                      </div>
-                      <span>PS C:\TradingEngine\Docker\instances\{selectedInstanceId}&gt; node --runtime=aether-quant-v2.4</span>
-                    </div>
-                    <span style={{ color: '#10b981' }}>● HEL1_ISOLATED_CONTAINER · 49.12.240.118</span>
-                  </div>
-
-                  <div className="instance-live-terminal" style={{ background: '#000000', border: 'none', borderRadius: '0', padding: '12px 14px', height: '140px', overflowY: 'auto' }}>
-                    {instanceLogs.map((log, idx) => (
-                      <div key={idx} className="terminal-log-line" style={{ display: 'flex', gap: '8px', fontSize: '10.5px', fontFamily: 'var(--font-mono)', lineHeight: '1.6' }}>
-                        <span className="t-time" style={{ color: '#475569' }}>[{log.time}]</span>
-                        <span className="t-tag" style={{ color: '#10b981', fontWeight: 'bold' }}>[{log.tag}]</span>
-                        <span className="t-text" style={{ color: '#e2e8f0' }}>{log.text}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
@@ -6184,39 +6212,74 @@ def signal(tick):
                   </button>
                 </div>
 
-                {sandboxLog && (
-                  <div style={{ marginTop: '14px', borderTop: '1px solid #1e293b', paddingTop: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{
-                        fontSize: '8px',
-                        fontWeight: 'bold',
-                        padding: '2px 7px',
-                        borderRadius: '2px',
-                        background: sandboxIsError ? '#ef4444' : '#10b981',
-                        color: '#ffffff',
-                        fontFamily: "var(--font-mono)"
-                      }}>
-                        {sandboxIsError ? '● TERMINAL STDERR (FAILED)' : '● TERMINAL STDOUT (PASSED)'}
-                      </span>
-                      <span style={{ fontSize: '9px', color: sandboxIsError ? '#dc2626' : '#059669' }}>
-                        {sandboxIsError ? '파이썬 AST 문법 오류 또는 런타임 예외' : 'Spring Boot 백엔드 AST 백테스팅 검증 성공'}
-                      </span>
+                {/* 통합 터미널 패널 — 에디터와 분리된 독립 영역.
+                    OUTPUT은 백테스트 검증 결과(파이썬 traceback), TERMINAL은 워커 실시간 로그. */}
+                <div style={{ marginTop: '16px', background: '#0b0b0d', border: '1px solid #1f2430', borderRadius: '8px', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#15181f', borderBottom: '1px solid #1f2430', padding: '0 10px' }}>
+                    <div style={{ display: 'flex' }}>
+                      {(['OUTPUT', 'TERMINAL'] as const).map(tab => (
+                        <button
+                          key={tab}
+                          type="button"
+                          onClick={() => setTerminalTab(tab)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            borderBottom: terminalTab === tab ? '2px solid #38bdf8' : '2px solid transparent',
+                            color: terminalTab === tab ? '#e2e8f0' : '#64748b',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            fontFamily: 'var(--font-mono)',
+                            padding: '9px 12px 7px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {tab}
+                          {tab === 'OUTPUT' && sandboxLog && (
+                            <span style={{ marginLeft: '6px', color: sandboxIsError ? '#f87171' : '#4ade80' }}>●</span>
+                          )}
+                        </button>
+                      ))}
                     </div>
+                    <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: instanceStatus === 'RUNNING' ? '#10b981' : '#64748b' }}>
+                      {terminalTab === 'TERMINAL'
+                        ? `● ${instanceStatus} · ${selectedInstanceId || 'NO INSTANCE'}`
+                        : (sandboxIsError ? '● STDERR (FAILED)' : sandboxLog ? '● STDOUT (PASSED)' : '○ IDLE')}
+                    </span>
+                  </div>
+
+                  {terminalTab === 'OUTPUT' ? (
                     <pre style={{
-                      background: sandboxIsError ? '#180707' : '#010f08',
-                      border: sandboxIsError ? '1px solid #ef4444' : '1px solid #10b981',
+                      margin: 0,
+                      background: '#0b0b0d',
                       color: sandboxIsError ? '#fca5a5' : '#50fa7b',
                       padding: '12px 14px',
+                      height: '220px',
+                      overflowY: 'auto',
                       fontSize: '10.5px',
                       lineHeight: '1.6',
-                      borderRadius: '6px',
                       whiteSpace: 'pre-wrap',
-                      fontFamily: "var(--font-mono)"
+                      fontFamily: 'var(--font-mono)'
                     }}>
-                      {sandboxLog}
+                      {sandboxLog || '백테스트를 실행하면 검증 결과와 파이썬 오류(traceback)가 여기에 출력됩니다.'}
                     </pre>
-                  </div>
-                )}
+                  ) : (
+                    <div style={{ background: '#0b0b0d', padding: '12px 14px', height: '220px', overflowY: 'auto' }}>
+                      {instanceLogs.length === 0 ? (
+                        <div style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: '#64748b' }}>
+                          인스턴스를 선택하면 워커의 실시간 로그가 여기에 출력됩니다.
+                        </div>
+                      ) : instanceLogs.map((log, idx) => (
+                        <div key={idx} className="terminal-log-line" style={{ display: 'flex', gap: '8px', fontSize: '10.5px', fontFamily: 'var(--font-mono)', lineHeight: '1.6' }}>
+                          <span className="t-time" style={{ color: '#475569' }}>[{log.time}]</span>
+                          <span className="t-tag" style={{ color: '#10b981', fontWeight: 'bold' }}>[{log.tag}]</span>
+                          <span className="t-text" style={{ color: '#e2e8f0', whiteSpace: 'pre-wrap' }}>{log.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -7415,6 +7478,11 @@ def signal(tick):
                     style={{ marginTop: '4px', marginBottom: 0, fontFamily: 'var(--font-mono)' }}
                   />
                 </label>
+              </div>
+
+              <div style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '5px', background: '#f8fafc', fontSize: '10px', color: '#64748b', lineHeight: 1.5, marginBottom: '12px' }}>
+                콘솔 에디터의 전략 코드 {pythonCode.split('\n').length}줄이 그대로 배포됩니다.{' '}
+                <code style={{ fontFamily: 'var(--font-mono)' }}>on_market_tick(tick)</code> 함수가 없으면 가동 직후 인스턴스 터미널에 오류가 표시됩니다.
               </div>
 
               <button
