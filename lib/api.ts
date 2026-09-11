@@ -54,25 +54,9 @@ export async function fetchHistoricalCandles(
       return await res.json();
     }
   } catch (err) {
-    console.warn('[API] Fallback for fetchHistoricalCandles:', err);
+    console.warn('[API] fetchHistoricalCandles failed:', err);
   }
-
-  const now = Math.floor(Date.now() / 1000);
-  const step = 3600 * 4;
-  let price = 62000;
-  const list: CandleData[] = [];
-  for (let i = limit; i >= 0; i--) {
-    const time = now - i * step;
-    const delta = (Math.random() - 0.48) * 800;
-    const open = price;
-    const close = price + delta;
-    const high = Math.max(open, close) + Math.random() * 400;
-    const low = Math.min(open, close) - Math.random() * 400;
-    const volume = Math.floor(1000 + Math.random() * 5000);
-    price = close;
-    list.push({ timestamp: time, open, high, low, close, volume });
-  }
-  return list;
+  return [];
 }
 
 /**
@@ -172,7 +156,7 @@ export interface CreateBotPayload {
   userId: number;
   botName: string;
   mode?: 'BEGINNER' | 'DEVELOPER';
-  exchange?: 'BINANCE' | 'BYBIT' | 'UPBIT';
+  exchange?: 'BINANCE' | 'BYBIT' | 'UPBIT' | 'OKX';
   symbol?: string;
   timeFrame?: string;
   apiKey?: string;
@@ -331,22 +315,12 @@ export async function socialLogin(payload: SocialLoginRequest): Promise<AuthResp
     if (res.ok) {
       return await res.json();
     }
-  } catch (err) {
-    console.warn('[API] Fallback for socialLogin:', err);
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.message || `[HTTP ${res.status}] 소셜 로그인 실패`);
+  } catch (err: any) {
+    console.error('[API Error] socialLogin failed:', err);
+    throw err;
   }
-
-  return {
-    success: true,
-    message: `${payload.provider} 간편 로그인 완료`,
-    userId: 999,
-    username: `${payload.provider.toLowerCase()}_${payload.providerId}`,
-    nickname: payload.nickname || `${payload.provider}_Investor`,
-    walletAddress: payload.walletAddress || undefined,
-    reputationScore: 100,
-    tokenBalance: 50.0,
-    role: 'ROLE_USER',
-    accessToken: `mock-jwt-token-${payload.providerId}`
-  };
 }
 
 /**
@@ -496,11 +470,16 @@ export async function streamResearchChatSSE(
   }
 ): Promise<void> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout guard
+
     const res = await fetch(API_BASE + '/ai/research-chat/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (!res.ok || !res.body) {
       throw new Error(`SSE streaming failed with status ${res.status}`);

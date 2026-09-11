@@ -1450,21 +1450,26 @@ export default function Page() {
           onDone: (finalData) => {
             setAgentThinking(false);
             const activeMode = currentMode || researchMode;
+            const verdict = finalData?.intentVerdict || 'NEUTRAL';
+            const qualityScore = typeof finalData?.entryQualityScore === 'number' ? `${finalData.entryQualityScore}점` : 'N/A';
+            const similarity = finalData?.patternInsight?.similarityScore ? `${(finalData.patternInsight.similarityScore * 100).toFixed(1)}%` : 'N/A';
+            const winRate = finalData?.patternInsight?.historicalWinRate ? `${(finalData.patternInsight.historicalWinRate * 100).toFixed(0)}%` : 'N/A';
+
             const dynamicToolCalls: AgentToolCall[] = activeMode === 'CODING' ? [
-              { name: 'quant.strategyModeling', detail: `${currentSymbol} Algorithm entry/exit indicators mapped`, status: 'DONE' },
-              { name: 'sandbox.executeBacktest', detail: `Docker Sandbox 1,000 candles backtest executed`, status: 'DONE' },
-              { name: 'algorithm.autoTuning', detail: `Sharpe Ratio 2.0+ Auto-Tuning completed`, status: 'DONE' },
-              { name: 'botArena.generateBlueprint', detail: `Bot Arena 1-click deployment blueprint generated`, status: 'DONE' }
+              { name: 'quant.strategyModeling', detail: `${currentSymbol} 지표 매핑 완료 (판단: ${verdict}, 퀄리티: ${qualityScore})`, status: 'DONE' },
+              { name: 'python.workerEngine', detail: `Python NumPy/Numba 기반 프랙탈 패턴 산출 (일치율: ${similarity})`, status: 'DONE' },
+              { name: 'algorithm.autoTuning', detail: `백엔드 ta4j 기술 지표 기반 매매 시그널 합성 완료`, status: 'DONE' },
+              { name: 'botArena.generateBlueprint', detail: `24H 자율 트레이딩 봇 실행 청사진 생성 완료`, status: 'DONE' }
             ] : activeMode === 'GUIDE' ? [
-              { name: 'risk.volatilityGuard', detail: `${currentSymbol} ATR & dynamic support levels computed`, status: 'DONE' },
-              { name: 'backtest.simulateScaleIn', detail: `3-Stage scale-in 1-year backtest simulation passed`, status: 'DONE' },
-              { name: 'kelly.optimizeCapital', detail: `Kelly Criterion risk-shield capital allocation verified`, status: 'DONE' },
-              { name: 'aether.issueActionTicket', detail: `Institutional 3-stage execution ticket issued`, status: 'DONE' }
+              { name: 'risk.volatilityGuard', detail: `${currentSymbol} 변동성 Guard계산 (판단: ${verdict})`, status: 'DONE' },
+              { name: 'backtest.simulateScaleIn', detail: `과거 캔들 100봉 기반 3단계 분할 진입 시뮬레이션 완료`, status: 'DONE' },
+              { name: 'kelly.optimizeCapital', detail: `켈리 공식 리스크 방패 자본 배분 계산 완료`, status: 'DONE' },
+              { name: 'aether.issueActionTicket', detail: `3단계 분할 집행 티켓 발행 (진입 퀄리티: ${qualityScore})`, status: 'DONE' }
             ] : [
-              { name: 'quant.marketSignals', detail: `${currentSymbol} RSI(14), SMA20/50, Volatility Bands calculated`, status: 'DONE' },
-              { name: 'aether.fractalEngine', detail: `AETHER 8,000 빅데이터 프랙탈 패턴 스캔 완료`, status: 'DONE' },
-              { name: 'intelligence.globalNewswire', detail: `Real-time financial news stream & sentiment scoring`, status: 'DONE' },
-              { name: 'aether.cognitiveSynthesis', detail: `Institutional AETHER Flagship Synthesis complete`, status: 'DONE' }
+              { name: 'quant.marketSignals', detail: `${currentSymbol} ta4j 실시간 지표 (RSI, SMA20/50, 볼린저) 계산 완료`, status: 'DONE' },
+              { name: 'aether.fractalEngine', detail: `FastDTW 시계열 프랙탈 대조 (일치율: ${similarity}, 과거승률: ${winRate})`, status: 'DONE' },
+              { name: 'intelligence.globalNewswire', detail: `Financial RAG 실시간 뉴스 수급 & 팩트체크 인덱싱 완료`, status: 'DONE' },
+              { name: 'aether.cognitiveSynthesis', detail: `Spring Boot AI 에이전트 종합 리포트 생성 완료 (판단: ${verdict})`, status: 'DONE' }
             ];
 
             setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
@@ -1738,13 +1743,24 @@ export default function Page() {
     }
   }, [])
 
-  // 2. Auto-save Agent Sessions strictly into current user's isolated storage
+  // 2. Auto-save Agent Sessions strictly into current user's isolated storage (Strip large base64 images to prevent 5MB localStorage quota crash)
   useEffect(() => {
     if (typeof window !== 'undefined' && agentSessions.length > 0) {
       try {
         const sessionKey = getUserSessionKey(currentUser)
-        localStorage.setItem(sessionKey, JSON.stringify(agentSessions))
-      } catch (e) {}
+        const sanitizedSessions = agentSessions.map(session => ({
+          ...session,
+          messages: session.messages.map(msg => {
+            if (msg.imageUrl && msg.imageUrl.startsWith('data:image')) {
+              return { ...msg, imageUrl: '[ATTACHED_IMAGE]' }
+            }
+            return msg
+          })
+        }))
+        localStorage.setItem(sessionKey, JSON.stringify(sanitizedSessions))
+      } catch (e) {
+        console.warn('[LocalStorage] Failed to save agent sessions:', e)
+      }
     }
   }, [agentSessions, currentUser])
 

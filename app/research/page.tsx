@@ -47,6 +47,7 @@ import {
 } from 'lucide-react'
 import {
   sendResearchChat,
+  streamResearchChatSSE,
   fetchIntegratedDecision,
   fetchLiveFinancialNewsFeed
 } from '../../lib/api'
@@ -91,93 +92,21 @@ interface ChipletConfig {
 
 function getAssetTelemetryFallback(symbol: string) {
   const sym = (symbol || '').toUpperCase()
-  if (sym.includes('005930') || sym.includes('삼성')) {
-    return {
-      name: '삼성전자 (005930.KS)',
-      price: '₩56,200',
-      change: '+0.89%',
-      isUp: true,
-      rsi: '43.2',
-      rsiStatus: 'NEUTRAL',
-      score: '+0.48',
-      supp: '₩55,350',
-      res: '₩58,160',
-      fractalMatch: '84.2%',
-      fractalName: '박스권 횡보 후 지지선 반등',
-      fractalWin: '75%',
-      fractalExp: '+4.2%',
-      news: '삼성전자 HBM3E 12단 퀄테스트 통과 임박 및 반도체 밸류업 공시 수급'
-    }
-  }
-  if (sym.includes('NVDA') || sym.includes('엔비디아')) {
-    return {
-      name: 'NVIDIA (NVDA)',
-      price: '$138.50',
-      change: '+2.45%',
-      isUp: true,
-      rsi: '62.4',
-      rsiStatus: 'BULLISH',
-      score: '+0.84',
-      supp: '$136.40',
-      res: '$145.20',
-      fractalMatch: '91.8%',
-      fractalName: '차세대 칩 수요 상승 깃발형 돌파',
-      fractalWin: '85%',
-      fractalExp: '+8.4%',
-      news: '빅테크 2026 AI 데이터센터 인프라 CAPEX 상향 및 마진율 방어'
-    }
-  }
-  if (sym.includes('SOL') || sym.includes('솔라나')) {
-    return {
-      name: 'Solana (SOL/USD)',
-      price: '$178.50',
-      change: '+4.20%',
-      isUp: true,
-      rsi: '65.8',
-      rsiStatus: 'BULLISH',
-      score: '+0.78',
-      supp: '$172.00',
-      res: '$188.00',
-      fractalMatch: '88.6%',
-      fractalName: 'DEX 유동성 급증 모멘텀 지속형',
-      fractalWin: '82%',
-      fractalExp: '+7.6%',
-      news: '솔라나 온체인 DEX 24H 거래량 사상 최고치 경신 및 고래 지갑 순매수'
-    }
-  }
-  if (sym.includes('ETH') || sym.includes('이더리움')) {
-    return {
-      name: 'Ethereum (ETH/USD)',
-      price: '$2,340.50',
-      change: '+1.85%',
-      isUp: true,
-      rsi: '52.1',
-      rsiStatus: 'NEUTRAL',
-      score: '+0.56',
-      supp: '$2,280.00',
-      res: '$2,420.00',
-      fractalMatch: '82.5%',
-      fractalName: '스테이킹 락업 매물 잠김 수렴형',
-      fractalWin: '78%',
-      fractalExp: '+5.1%',
-      news: '이더리움 스테이킹 참여율 분기 최고치 경신 및 거래소 잔고 최저치'
-    }
-  }
   return {
-    name: 'Bitcoin (BTC/USD)',
-    price: '$78,418.00',
-    change: '+2.41%',
+    name: sym || 'Bitcoin (BTC/USD)',
+    price: '--',
+    change: '0.00%',
     isUp: true,
-    rsi: '58.6',
-    rsiStatus: 'BULLISH',
-    score: '+0.82',
-    supp: '$77,200.00',
-    res: '$81,500.00',
-    fractalMatch: '89.4%',
-    fractalName: '상승 깃발형 돌파 (Bullish Flag)',
-    fractalWin: '80%',
-    fractalExp: '+6.4%',
-    news: '비트코인 현물 ETF 4.8억 달러 기관 순유입 및 선물 미결제약정 증가'
+    rsi: '--',
+    rsiStatus: 'NEUTRAL',
+    score: '--',
+    supp: '--',
+    res: '--',
+    fractalMatch: 'N/A',
+    fractalName: '백엔드 연동 대기 중',
+    fractalWin: 'N/A',
+    fractalExp: '--',
+    news: '스프링부트 백엔드 연결 후 실시간 온체인 및 뉴스 수급이 동동 표시됩니다.'
   }
 }
 
@@ -393,8 +322,43 @@ export default function ResearchPage() {
     return () => { mounted = false }
   }, [selectedSymbol])
 
-  // 가상 세션 도입: 초기 접속 시 DB/메모리에 빈 세션을 강제 생성하지 않고 빈 배열로 시작
+  // ── Session persistence in localStorage ──
   const [sessions, setSessions] = useState<ResearchSession[]>([])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('aether_research_page_sessions')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSessions(parsed)
+          setActiveSessionId(parsed[0].id)
+          setCurrentMessages(parsed[0].messages || [])
+        }
+      }
+    } catch (e) {
+      console.warn('[LocalStorage] Failed to load research sessions:', e)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && sessions.length > 0) {
+      try {
+        const sanitizedSessions = sessions.map(session => ({
+          ...session,
+          messages: session.messages.map(msg => {
+            if (msg.imageUrl && msg.imageUrl.startsWith('data:image')) {
+              return { ...msg, imageUrl: '[ATTACHED_IMAGE]' }
+            }
+            return msg
+          })
+        }))
+        localStorage.setItem('aether_research_page_sessions', JSON.stringify(sanitizedSessions))
+      } catch (e) {
+        console.warn('[LocalStorage] Failed to save research sessions:', e)
+      }
+    }
+  }, [sessions])
 
   const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([])
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -412,7 +376,7 @@ export default function ResearchPage() {
   // 새 리서치 세션 추가 및 시작 (New Research / + 버튼 클릭 시 즉시 생성)
   const handleCreateNewSession = () => {
     if (typingTimerRef.current) clearInterval(typingTimerRef.current)
-    const newId = 'session-' + Date.now()
+    const newId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7)
     const newSession: ResearchSession = {
       id: newId,
       title: '신규 리서치 세션',
@@ -459,6 +423,7 @@ export default function ResearchPage() {
       e.preventDefault()
     }
     setSessions([])
+    localStorage.removeItem('aether_research_page_sessions')
     handleCreateNewSession()
   }
 
@@ -490,74 +455,15 @@ export default function ResearchPage() {
     }
   }
 
-  const startTypewriterStream = (
-    fullText: string,
-    agentMsgId: string,
-    verdict: string,
-    qualityScore: number,
-    toolCalls: ToolCallItem[],
-    sessionId: string
-  ) => {
-    if (typingTimerRef.current) clearInterval(typingTimerRef.current)
-
-    let charIndex = 0
-    const totalLength = fullText.length
-    // Dynamic chunk size: streams fast and smoothly (3-5 chars per 16ms frame)
-    const chunkSize = Math.max(2, Math.floor(totalLength / 180))
-
-    typingTimerRef.current = setInterval(() => {
-      charIndex += chunkSize
-      if (charIndex >= totalLength) {
-        if (typingTimerRef.current) clearInterval(typingTimerRef.current)
-        typingTimerRef.current = null
-
-        setCurrentMessages(prev => {
-          const updated = prev.map(m => {
-            if (m.id === agentMsgId) {
-              return {
-                ...m,
-                content: fullText,
-                isStreaming: false,
-                verdict,
-                qualityScore,
-                toolCalls
-              }
-            }
-            return m
-          })
-          setSessions(sPrev =>
-            sPrev.map(s => (s.id === sessionId ? { ...s, messages: updated } : s))
-          )
-          return updated
-        })
-        setLoading(false)
-        setThinkingStep('')
-      } else {
-        const partialText = fullText.slice(0, charIndex)
-        setCurrentMessages(prev =>
-          prev.map(m => {
-            if (m.id === agentMsgId) {
-              return {
-                ...m,
-                content: partialText,
-                isStreaming: true
-              }
-            }
-            return m
-          })
-        )
-      }
-    }, 16)
-  }
-
-  // ── Lazy Creation (지연 생성): 첫 메시지 전송 시점에 실제 세션 생성 ──
+  // ── Lazy Creation & Real-Time SSE Stream Handler ──
   const handleSendPrompt = async (promptToSend?: string) => {
     const text = (promptToSend || inputPrompt).trim()
     if ((!text && !attachedImage) || loading) return
 
     const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+    const uniqueRand = Math.random().toString(36).substring(2, 7)
     const userMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-user-${Date.now()}-${uniqueRand}`,
       role: 'user',
       content: text || '첨부된 차트 이미지를 바탕으로 지지선/저항선 및 프랙탈 진입 타점을 분석해줘.',
       timestamp: now,
@@ -565,7 +471,7 @@ export default function ResearchPage() {
       imageUrl: attachedImage
     }
 
-    const agentMsgId = `msg-${Date.now() + 1}`
+    const agentMsgId = `msg-agent-${Date.now()}-${uniqueRand}`
     const placeholderAgentMsg: ChatMessage = {
       id: agentMsgId,
       role: 'assistant',
@@ -575,11 +481,10 @@ export default function ResearchPage() {
       isStreaming: true
     }
 
-    // Lazy Creation: 가상 세션(!activeSessionId)일 때 첫 메시지 전송 시 실제 세션 생성
     let targetSessionId = activeSessionId
     const topicTitle = text ? (text.length > 24 ? text.slice(0, 24) + '...' : text) : `${selectedSymbol} 차트 분석`
     if (!targetSessionId) {
-      targetSessionId = `session-${Date.now()}`
+      targetSessionId = `session-${Date.now()}-${uniqueRand}`
       const newSession: ResearchSession = {
         id: targetSessionId,
         title: topicTitle,
@@ -587,7 +492,6 @@ export default function ResearchPage() {
         updatedAt: '방금 전',
         messages: [userMsg]
       }
-      // 이 시점에 비로소 사이드바 History에 등록!
       setSessions(prev => [newSession, ...prev])
       setActiveSessionId(targetSessionId)
     } else {
@@ -613,16 +517,9 @@ export default function ResearchPage() {
     setAttachedImage(null)
     setAttachedImageName('')
     setLoading(true)
-
-    // ── Phase 1 to 4 CoT Reasoning Progression ──
-    setThinkingStep('1/4 단계: 거래소 OHLCV 캔들 및 모멘텀 지표 수집 중...')
+    setThinkingStep('시장의 숨겨진 가격 파동과 차트 매물대를 수집하는 중...')
 
     try {
-      setTimeout(() => setThinkingStep('2/4 단계: AETHER 8,000 시계열 프랙탈 매칭 & 온체인 데이터 대조 중...'), 500)
-      setTimeout(() => setThinkingStep('3/4 단계: AETHER 글로벌 외신 레이더 실시간 팩트체크 인덱싱...'), 1000)
-      setTimeout(() => setThinkingStep('4/4 단계: Qwen-Max 플래그십 (300B+) 기관급 CoT 추론 & 실시간 토큰 스트림 시작...'), 1500)
-
-      // ── Multi-turn Conversation Memory: Pass last 6 messages (3 full turns) ──
       const conversationHistory = currentMessages
         .slice(-6)
         .map(m => ({
@@ -631,25 +528,8 @@ export default function ResearchPage() {
         }))
         .filter(m => m.content.trim().length > 0)
 
-      const response = await sendResearchChat({
-        symbol: selectedSymbol,
-        prompt: text || '첨부된 차트의 패턴과 기술적 지표를 분석해줘.',
-        mode: selectedMode,
-        language,
-        imageUrl: attachedImage || undefined,
-        conversationId: targetSessionId,
-        history: conversationHistory
-      })
-
-      const rawReply = response.reply || response.answer || response.content || response.message || '리서치 결과를 생성할 수 없습니다.'
-      const replyContent = rawReply
-        .replace(/对不起[^\n]*/g, '')
-        .replace(/希望这些信息[^\n]*/g, '')
-        .replace(/请允许我继续用中文[^\n]*/g, '')
-        .replace(/势不可挡[^\n]*/g, '')
-        .replace(/势必继续[^\n]*/g, '');
-
-      const mockToolCalls: ToolCallItem[] = [
+      let accumulated = ''
+      const defaultToolCalls: ToolCallItem[] = [
         { name: '🌐 실시간 뉴스 팩트체크', detail: `${selectedSymbol} 관련 블룸버그·로이터 글로벌 최신 속보 및 공시 팩트체크 검증 완료` },
         { name: '📊 차트 지표 진단', detail: `RSI 과열도(14)=${telemetry.rsi}, 20일 이동평균선 지지선, 볼린저밴드 매수/매도 시그널 계산` },
         { name: '🔄 과거 승률 대조', detail: `과거 8,000개 캔들과 1:1 대조하여 유사 상승 패턴('${telemetry.fractalName}') 승률 ${telemetry.fractalWin} 도출` },
@@ -657,17 +537,78 @@ export default function ResearchPage() {
         { name: '🤖 AI 에이전트 종합 리포트', detail: `Qwen-Max 300B+ 플래그십 자율 퀀트 엔진으로 최종 투자 집행 전략 산출` }
       ]
 
-      // Start the dynamic typewriter stream with chunk-by-chunk typing animation!
-      startTypewriterStream(
-        replyContent,
-        agentMsgId,
-        response.intentVerdict || 'BUY',
-        response.entryQualityScore || 88,
-        mockToolCalls,
-        targetSessionId
-      )
+      await streamResearchChatSSE({
+        symbol: selectedSymbol,
+        prompt: text || '첨부된 차트의 패턴과 기술적 지표를 분석해줘.',
+        mode: selectedMode as any,
+        language,
+        conversationId: targetSessionId,
+        history: conversationHistory
+      }, {
+        onProgress: (prog) => {
+          if (prog?.thought) {
+            setThinkingStep(prog.thought)
+          }
+        },
+        onToken: (token) => {
+          accumulated += token
+          const cleaned = accumulated
+            .replace(/对不起[^\n]*/g, '')
+            .replace(/希望这些信息[^\n]*/g, '')
+            .replace(/请允许我继续用中文[^\n]*/g, '')
+            .replace(/势不可挡[^\n]*/g, '')
+            .replace(/势必继续[^\n]*/g, '')
+
+          setCurrentMessages(prev =>
+            prev.map(m => (m.id === agentMsgId ? { ...m, content: cleaned, isStreaming: true } : m))
+          )
+        },
+        onDone: (finalData) => {
+          const finalContent = accumulated || finalData?.reply || finalData?.answer || '분석 완료'
+          const verdict = finalData?.intentVerdict || 'NEUTRAL'
+          const qualityScore = typeof finalData?.entryQualityScore === 'number' ? `${finalData.entryQualityScore}점` : 'N/A'
+          const similarity = finalData?.patternInsight?.similarityScore ? `${(finalData.patternInsight.similarityScore * 100).toFixed(1)}%` : 'N/A'
+          const winRate = finalData?.patternInsight?.historicalWinRate ? `${(finalData.patternInsight.historicalWinRate * 100).toFixed(0)}%` : 'N/A'
+
+          const dynamicToolCalls: ToolCallItem[] = [
+            { name: '🌐 실시간 뉴스 팩트체크', detail: `${selectedSymbol} 관련 글로벌 최신 속보 및 Financial RAG 인덱싱 검증 완료` },
+            { name: '📊 차트 지표 진단', detail: `ta4j 기술 지표 (RSI, SMA20/50, 볼린저) 계산 완료 (판단: ${verdict}, 퀄리티: ${qualityScore})` },
+            { name: '🔄 과거 승률 대조', detail: `FastDTW 시계열 프랙탈 엔진 대조 (일치율: ${similarity}, 과거 승률: ${winRate})` },
+            { name: '🐍 전략 시뮬레이션·검증', detail: `Spring Boot + Python 연산 노드 기반 백테스트 및 리스크 방패 할당 완료` },
+            { name: '🤖 AI 에이전트 종합 리포트', detail: `Qwen-Max 300B+ 자율 퀀트 엔진 최종 종합 리포트 생성 완료` }
+          ]
+
+          setCurrentMessages(prev => {
+            const nextMsgs = prev.map(m =>
+              m.id === agentMsgId
+                ? {
+                    ...m,
+                    content: finalContent,
+                    isStreaming: false,
+                    verdict,
+                    qualityScore: typeof finalData?.entryQualityScore === 'number' ? finalData.entryQualityScore : undefined,
+                    toolCalls: dynamicToolCalls
+                  }
+                : m
+            )
+            setSessions(sPrev =>
+              sPrev.map(s => (s.id === targetSessionId ? { ...s, messages: nextMsgs } : s))
+            )
+            return nextMsgs
+          })
+          setLoading(false)
+          setThinkingStep('')
+        },
+        onError: (err: any) => {
+          const errorText = `❌ **[스프링부트 백엔드 AI 연결 오류]**\n\n${err?.message || '스프링부트 서버에 연결할 수 없습니다. 백엔드 가동 상태를 확인해주세요.'}`
+          setCurrentMessages(prev =>
+            prev.map(m => (m.id === agentMsgId ? { ...m, content: errorText, isStreaming: false } : m))
+          )
+          setLoading(false)
+          setThinkingStep('')
+        }
+      })
     } catch (err: any) {
-      if (typingTimerRef.current) clearInterval(typingTimerRef.current)
       const errorText = `❌ **[스프링부트 백엔드 AI 연결 오류]**\n\n${err?.message || '스프링부트 서버에 연결할 수 없습니다. 백엔드 가동 상태를 확인해주세요.'}`
       setCurrentMessages(prev =>
         prev.map(m => (m.id === agentMsgId ? { ...m, content: errorText, isStreaming: false } : m))

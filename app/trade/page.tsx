@@ -784,45 +784,7 @@ export default function TradePage() {
           </div>
         )}
 
-        {/* ── Market Snapshot Section ── */}
-        <section className="market-snapshot">
-          <div className="section-heading">
-            <h2>Market snapshot</h2>
-            <button type="button" onClick={() => setSymbolDropdownOpen(true)}>
-              All markets <ChevronDown size={14} />
-            </button>
-          </div>
-          <div className="snapshot-grid">
-            {registeredSymbols.slice(6, 12).map((item) => (
-              <div
-                className="snapshot-card cursor-pointer hover:border-[#f47a20] transition-colors"
-                key={item.name}
-                onClick={() => setActive(item.name)}
-              >
-                <div className="flex items-center gap-2">
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                    <img
-                      src={item.logo}
-                      alt={item.name}
-                      style={{ width: '14px', height: '14px', objectFit: 'contain' }}
-                      onError={(e) => { (e.target as HTMLImageElement).src = getSymbolLogo(item.name); }}
-                    />
-                  </div>
-                  <span>{item.name}</span>
-                </div>
-                <strong>{item.price}</strong>
-                <b className={item.change.startsWith('+') ? 'up' : 'down'}>{item.change}</b>
-                <div className="mini-bars">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+
 
         <footer className="market-footer" style={{ width: '100%', display: 'block', borderTop: '1px solid #1e293b', paddingTop: '16px', marginTop: '24px', textAlign: 'center' }}>
           <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>

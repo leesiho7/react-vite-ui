@@ -37,12 +37,15 @@ export default function BotPage() {
   const [activeUserId, setActiveUserId] = useState<number | null>(null)
   const [authLoaded, setAuthLoaded] = useState(false)
 
-  // Create Bot Form State (Draft saved in localStorage)
-  const [newBotName, setNewBotName] = usePersistentState('draft_bot_name', '')
-  const [newExchange, setNewExchange] = usePersistentState<'BINANCE' | 'BYBIT'>('draft_bot_exchange', 'BINANCE')
-  const [newSymbol, setNewSymbol] = usePersistentState('draft_bot_symbol', 'BTCUSDT')
-  const [newMode, setNewMode] = usePersistentState<'BEGINNER' | 'DEVELOPER'>('draft_bot_mode', 'BEGINNER')
+  // Create Bot Form State
+  const [newBotName, setNewBotName] = useState('')
+  const [newExchange, setNewExchange] = useState<'BINANCE' | 'BYBIT' | 'OKX'>('OKX')
+  const [newSymbol, setNewSymbol] = useState('ETHUSDT')
+  const [newMode, setNewMode] = useState<'BEGINNER' | 'DEVELOPER'>('DEVELOPER')
   const [creating, setCreating] = useState(false)
+  const [newApiKey, setNewApiKey] = useState('')
+  const [newApiSecret, setNewApiSecret] = useState('')
+  const [newPassphrase, setNewPassphrase] = useState('')
 
   useEffect(() => {
     try {
@@ -163,7 +166,9 @@ export default function BotPage() {
         botName: newBotName,
         exchange: newExchange,
         symbol: newSymbol,
-        mode: newMode
+        mode: newMode,
+        apiKey: newApiKey,
+        apiSecret: newApiSecret ? `${newApiSecret}:${newPassphrase}` : newApiSecret
       })
       if (!ensureSucceeded(result, '봇 인스턴스 생성에 실패했습니다.')) return
 
@@ -676,6 +681,7 @@ export default function BotPage() {
                     style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', background: '#fff' }}
                   >
                     <option value="BINANCE">Binance (바이낸스)</option>
+                    <option value="OKX">OKX (오케이엑스)</option>
                     <option value="BYBIT">Bybit (바이비트)</option>
                   </select>
                 </div>
@@ -708,6 +714,32 @@ export default function BotPage() {
                   <option value="BEGINNER">BEGINNER (Goldman Risk Guard + RSI + SMA)</option>
                   <option value="DEVELOPER">DEVELOPER (Python 3.12 Custom Code)</option>
                 </select>
+              </div>
+
+              {/* API Key Credentials */}
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>🔑 OKX / API CREDENTIALS (FOR REAL ORDERS)</span>
+                <input
+                  type="password"
+                  value={newApiKey}
+                  onChange={(e) => setNewApiKey(e.target.value)}
+                  placeholder="OKX API Key (e.g. 26757bfb-...)"
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                />
+                <input
+                  type="password"
+                  value={newApiSecret}
+                  onChange={(e) => setNewApiSecret(e.target.value)}
+                  placeholder="OKX API Secret Key"
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                />
+                <input
+                  type="password"
+                  value={newPassphrase}
+                  onChange={(e) => setNewPassphrase(e.target.value)}
+                  placeholder="OKX Passphrase (API 비밀번호)"
+                  style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }}
+                />
               </div>
 
               <button
