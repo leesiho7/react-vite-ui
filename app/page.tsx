@@ -1835,8 +1835,12 @@ export default function Page() {
   const [newInstanceExchange, setNewInstanceExchange] = useState<string>('Binance')
   const [newInstanceApiKey, setNewInstanceApiKey] = useState<string>('')
   const [newInstanceApiSecret, setNewInstanceApiSecret] = useState<string>('')
+  const [newInstancePassphrase, setNewInstancePassphrase] = useState<string>('')
   const [newInstanceLicenseKey, setNewInstanceLicenseKey] = useState<string>('')
   const [newInstanceStrategy, setNewInstanceStrategy] = useState<string>('RSI + Bollinger Multi-Fractal')
+
+  /** OKX만 key/secret 외에 passphrase를 추가로 요구한다 (OK-ACCESS-PASSPHRASE 헤더). */
+  const isOkxSelected = newInstanceExchange.toUpperCase() === 'OKX'
 
   const [instanceStatus, setInstanceStatus] = useState<InstanceRunState>('STOPPED')
   const [instanceUptime, setInstanceUptime] = useState<number>(52140)
@@ -1978,15 +1982,25 @@ export default function Page() {
       return
     }
 
+    const selectedExchange = newInstanceExchange.toUpperCase()
+    const exchangeCode = (['BYBIT', 'UPBIT', 'OKX'].includes(selectedExchange) ? selectedExchange : 'BINANCE') as 'BINANCE' | 'BYBIT' | 'UPBIT' | 'OKX'
+
+    // OKX는 passphrase가 없으면 모든 비공개 요청이 거부되므로 서버에 보내기 전에 막는다.
+    if (exchangeCode === 'OKX' && newInstanceApiKey.trim() && !newInstancePassphrase.trim()) {
+      alert('OKX는 API Passphrase가 필수입니다. API Key 생성 시 직접 설정한 패스프레이즈를 입력해 주세요.')
+      return
+    }
+
     const payload = {
       userId: uId,
       botName: name,
       mode: 'DEVELOPER' as const,
-      exchange: (newInstanceExchange.toUpperCase() === 'BYBIT' ? 'BYBIT' : newInstanceExchange.toUpperCase() === 'UPBIT' ? 'UPBIT' : 'BINANCE') as 'BINANCE' | 'BYBIT' | 'UPBIT',
+      exchange: exchangeCode,
       symbol: newInstanceSymbol,
       timeFrame: '1h',
       apiKey: newInstanceApiKey.trim() || undefined,
-      apiSecret: newInstanceApiSecret.trim() || undefined
+      apiSecret: newInstanceApiSecret.trim() || undefined,
+      apiPassphrase: exchangeCode === 'OKX' ? newInstancePassphrase.trim() || undefined : undefined
     }
 
     const createdResponse = await createBotInstanceApi(payload)
@@ -2023,6 +2037,7 @@ export default function Page() {
     setInstanceName('')
     setNewInstanceApiKey('')
     setNewInstanceApiSecret('')
+    setNewInstancePassphrase('')
     setInstanceCreating(false)
 
     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -7367,6 +7382,24 @@ def signal(tick):
                   />
                 </label>
               </div>
+
+              {isOkxSelected && (
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155', display: 'block' }}>
+                    API PASSPHRASE <span style={{ color: '#dc2626' }}>*</span>
+                    <input
+                      type="password"
+                      placeholder="OKX API Key 생성 시 직접 설정한 패스프레이즈"
+                      value={newInstancePassphrase}
+                      onChange={(e) => setNewInstancePassphrase(e.target.value)}
+                      style={{ marginTop: '4px', marginBottom: 0, fontFamily: 'var(--font-mono)' }}
+                    />
+                  </label>
+                  <small style={{ display: 'block', marginTop: '4px', fontSize: '10px', color: '#64748b', lineHeight: 1.5 }}>
+                    OKX는 Key/Secret만으로는 인증되지 않습니다. 나중에 조회할 수 없는 값이므로, 분실했다면 API 키를 재발급해 주세요.
+                  </small>
+                </div>
+              )}
 
               <div style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '5px', background: '#f8fafc', fontSize: '10px', color: '#64748b', lineHeight: 1.5, marginBottom: '12px' }}>
                 입력하신 API Key는 Hetzner HEL1 격리 도커 컨테이너 내부 환경변수로만 암호화 저장됩니다. 출금(Withdrawal) 권한이 비활성화된 읽기 및 매매 전용 키만 등록해 주세요.
