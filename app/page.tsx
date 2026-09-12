@@ -46,6 +46,7 @@ import {
   sendTradingViewSignal,
   fetchStrategyResearch,
   approveStrategyResearch,
+  buildStrategyCodeDownloadUrl,
   fetchCopilotWorkspace,
   fetchInvalidationAlerts,
   approveOrderTicket,
@@ -3721,9 +3722,20 @@ export default function Page() {
                                   {c.exclusionReason && (
                                     <p className="strategy-exclusion-note">⚠️ {c.exclusionReason}</p>
                                   )}
-                                  <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
-                                    이 전략으로 봇 생성 (Paper Trading)
-                                  </button>
+                                  <div className="strategy-card-actions">
+                                    <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
+                                      이 전략으로 봇 생성 (Paper Trading)
+                                    </button>
+                                    <a
+                                      className="strategy-download-link"
+                                      href={buildStrategyCodeDownloadUrl({
+                                        archetype: c.archetype,
+                                        symbol: `${getSymbolTicker(marketActiveSymbol)}USDT`
+                                      })}
+                                    >
+                                      코드 다운로드 (.py)
+                                    </a>
+                                  </div>
                                 </>
                               )}
                             </div>
@@ -4068,9 +4080,20 @@ export default function Page() {
                                     {c.exclusionReason && (
                                       <p className="strategy-exclusion-note">⚠️ {c.exclusionReason}</p>
                                     )}
-                                    <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
-                                      이 전략으로 봇 생성 (Paper Trading)
-                                    </button>
+                                    <div className="strategy-card-actions">
+                                      <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
+                                        이 전략으로 봇 생성 (Paper Trading)
+                                      </button>
+                                      <a
+                                        className="strategy-download-link"
+                                        href={buildStrategyCodeDownloadUrl({
+                                          archetype: c.archetype,
+                                          symbol: `${getSymbolTicker(marketActiveSymbol)}USDT`
+                                        })}
+                                      >
+                                        코드 다운로드 (.py)
+                                      </a>
+                                    </div>
                                   </>
                                 )}
                               </div>

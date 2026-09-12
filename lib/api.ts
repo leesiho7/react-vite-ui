@@ -1678,6 +1678,28 @@ export async function approveStrategyResearch(payload: {
   }
 }
 
+/**
+ * 29-2. "코드 다운로드(.py)" — 봇 인스턴스를 만들지 않고, 승인 시 배포될 것과 같은 파이썬 스크립트
+ * 파일만 받는 다운로드 URL을 만든다. 이 요청은 단순 GET 파일 다운로드라 fetch가 아니라
+ * <a href> 네비게이션으로 여는 것을 전제로 한다(응답이 JSON이 아니라 파일 첨부다).
+ */
+export function buildStrategyCodeDownloadUrl(params: {
+  archetype: StrategyArchetypeKey;
+  symbol?: string;
+  timeFrame?: string;
+  exchange?: string;
+  positionSizePct?: number;
+}): string {
+  const query = new URLSearchParams({
+    archetype: params.archetype,
+    symbol: params.symbol || 'BTCUSDT',
+    timeFrame: params.timeFrame || '1h',
+    exchange: params.exchange || 'BINANCE',
+    positionSizePct: String(params.positionSizePct ?? 20.0)
+  });
+  return `${API_BASE}/copilot/strategy-research/export-code?${query.toString()}`;
+}
+
 // ── AI 코파일럿: 포지션 코파일럿 (Position Copilot) ──
 
 /**
