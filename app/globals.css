@@ -1941,6 +1941,7 @@ samp,
 .strategy-candidate-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #172033; margin-bottom: 8px; }
 .recommended-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; color: #f47a20; background: #fff4ec; border: 1px solid #ffd8bd; padding: 2px 6px; border-radius: 10px; }
 .strategy-unreliable { margin: 0; font-size: 11px; color: #b45309; }
+.strategy-exclusion-note { margin: 0 0 8px; font-size: 10px; color: #b45309; background: #fffbeb; border: 1px solid #fde8c9; border-radius: 5px; padding: 4px 7px; }
 .strategy-metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; font-size: 10px; color: #8a92a2; margin-bottom: 8px; }
 .strategy-metrics-grid b { display: block; color: #172033; font-size: 12px; font-family: var(--font-mono); }
 .walkforward-tag { font-size: 9.5px; padding: 5px 8px; border-radius: 6px; margin-bottom: 10px; font-family: var(--font-mono); }

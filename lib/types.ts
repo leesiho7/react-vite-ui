@@ -263,13 +263,17 @@ export type StrategyArchetypeKey =
   | 'MACD_CROSSOVER'
   | 'MA_RIBBON'
   | 'BOLLINGER_SQUEEZE_BREAKOUT'
-  | 'ATR_VOLATILITY_BREAKOUT';
+  | 'ATR_VOLATILITY_BREAKOUT'
+  | 'MULTI_BOTTOM_BREAKOUT'
+  | 'GARTLEY_222';
 
 export interface StrategyCandidateView {
   archetype: StrategyArchetypeKey;
   label: string;
   metricsReliable: boolean;
   reliabilityNote: string;
+  /** 추천(승자) 후보에서 제외된 사유. 표본 부족/워크포워드 비일관 등으로 제외되지 않았으면 null/undefined. */
+  exclusionReason?: string | null;
   totalTrades: number;
   winRate: number;
   profitFactor: number;

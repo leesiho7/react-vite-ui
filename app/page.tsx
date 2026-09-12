@@ -1041,8 +1041,8 @@ export default function Page() {
         ? [
             `심볼: ${effectiveResearchResult.symbol} (${effectiveResearchResult.timeframe})`,
             ...effectiveResearchResult.candidates.map(c => c.metricsReliable
-              ? `- ${c.label}: 승률 ${(c.winRate * 100).toFixed(1)}%, 샤프 ${c.sharpeRatio.toFixed(2)}, MDD ${c.maxDrawdownPct.toFixed(1)}%, 손익비 ${c.profitFactor.toFixed(2)}, 누적수익 ${c.totalReturnPct.toFixed(1)}%, 워크포워드 일관성 ${c.walkForwardConsistent ? 'Y' : 'N'}(${c.walkForwardProfitableSegments}/${c.walkForwardReliableSegments}구간)`
-              : `- ${c.label}: 표본 부족으로 신뢰 불가 (${c.reliabilityNote})`),
+              ? `- ${c.label}: 승률 ${(c.winRate * 100).toFixed(1)}%, 샤프 ${c.sharpeRatio.toFixed(2)}, MDD ${c.maxDrawdownPct.toFixed(1)}%, 손익비 ${c.profitFactor.toFixed(2)}, 누적수익 ${c.totalReturnPct.toFixed(1)}%, 워크포워드 일관성 ${c.walkForwardConsistent ? 'Y' : 'N'}(${c.walkForwardProfitableSegments}/${c.walkForwardReliableSegments}구간)${c.exclusionReason ? ` [${c.exclusionReason}]` : ''}`
+              : `- ${c.label}: ${c.exclusionReason || `표본 부족으로 신뢰 불가 (${c.reliabilityNote})`}`),
             effectiveResearchResult.recommendedArchetype ? `추천 전략: ${effectiveResearchResult.recommendedArchetype}` : '추천 전략: 없음 (조건 미충족)',
             effectiveResearchResult.narrative ? `AI 해설: ${effectiveResearchResult.narrative}` : ''
           ].filter(Boolean).join('\n')
@@ -3703,7 +3703,7 @@ export default function Page() {
                                 {isRecommended && <b className="recommended-badge"><ShieldCheck size={11} /> 추천</b>}
                               </div>
                               {!c.metricsReliable ? (
-                                <p className="strategy-unreliable">⚠️ {c.reliabilityNote}</p>
+                                <p className="strategy-unreliable">⚠️ {c.exclusionReason || c.reliabilityNote}</p>
                               ) : (
                                 <>
                                   <div className="strategy-metrics-grid">
@@ -3718,6 +3718,9 @@ export default function Page() {
                                     워크포워드 {c.walkForwardProfitableSegments}/{c.walkForwardReliableSegments}구간 순이익
                                     {c.walkForwardConsistent ? ' · 일관됨' : ' · 일관되지 않음'}
                                   </div>
+                                  {c.exclusionReason && (
+                                    <p className="strategy-exclusion-note">⚠️ {c.exclusionReason}</p>
+                                  )}
                                   <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
                                     이 전략으로 봇 생성 (Paper Trading)
                                   </button>
@@ -4047,7 +4050,7 @@ export default function Page() {
                                   {isRecommended && <b className="recommended-badge"><ShieldCheck size={11} /> 추천</b>}
                                 </div>
                                 {!c.metricsReliable ? (
-                                  <p className="strategy-unreliable">⚠️ {c.reliabilityNote}</p>
+                                  <p className="strategy-unreliable">⚠️ {c.exclusionReason || c.reliabilityNote}</p>
                                 ) : (
                                   <>
                                     <div className="strategy-metrics-grid">
@@ -4062,6 +4065,9 @@ export default function Page() {
                                       워크포워드 {c.walkForwardProfitableSegments}/{c.walkForwardReliableSegments}구간 순이익
                                       {c.walkForwardConsistent ? ' · 일관됨' : ' · 일관되지 않음'}
                                     </div>
+                                    {c.exclusionReason && (
+                                      <p className="strategy-exclusion-note">⚠️ {c.exclusionReason}</p>
+                                    )}
                                     <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
                                       이 전략으로 봇 생성 (Paper Trading)
                                     </button>
