@@ -1927,6 +1927,48 @@ samp,
 .copilot-composer button { align-self: flex-end; width: 30px; height: 30px; border: 0; background: #f47a20; color: #fff; border-radius: 6px; display: grid; place-items: center; cursor: pointer; }
 .copilot-composer button:hover { background: #ea580c; }
 
+/* ── AI Copilot: 전략 연구·검증 / 포지션 코파일럿 (2-Mode Panel) ── */
+.copilot-scroll-body { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 16px; }
+.copilot-message-warn { background: #fef2f2; color: #b91c1c; }
+.copilot-message-warn p { color: #b91c1c; }
+.copilot-primary-button { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 9px 14px; border: 0; border-radius: 8px; background: #f47a20; color: #fff; font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
+.copilot-primary-button:hover { background: #ea580c; }
+.copilot-primary-button:disabled { background: #fcd9b8; cursor: not-allowed; }
+
+.strategy-candidate-grid { display: flex; flex-direction: column; gap: 10px; margin: 0 20px 16px; }
+.strategy-candidate-card { border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 14px; background: #fff; font-family: var(--font-sans); }
+.strategy-candidate-card.recommended { border-color: #f47a20; background: #fff9f5; box-shadow: 0 0 0 1px rgba(244,122,32,0.15); }
+.strategy-candidate-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #172033; margin-bottom: 8px; }
+.recommended-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; color: #f47a20; background: #fff4ec; border: 1px solid #ffd8bd; padding: 2px 6px; border-radius: 10px; }
+.strategy-unreliable { margin: 0; font-size: 11px; color: #b45309; }
+.strategy-metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 10px; font-size: 10px; color: #8a92a2; margin-bottom: 8px; }
+.strategy-metrics-grid b { display: block; color: #172033; font-size: 12px; font-family: var(--font-mono); }
+.walkforward-tag { font-size: 9.5px; padding: 5px 8px; border-radius: 6px; margin-bottom: 10px; font-family: var(--font-mono); }
+.walkforward-tag.ok { background: #ecfdf5; color: #059669; }
+.walkforward-tag.warn { background: #fef2f2; color: #b91c1c; }
+.strategy-deploy-button { width: 100%; padding: 7px 10px; border: 1px solid #f47a20; border-radius: 6px; background: #fff; color: #f47a20; font-size: 10.5px; font-weight: 700; cursor: pointer; }
+.strategy-deploy-button:hover { background: #fff4ec; }
+
+.copilot-deploy-form { margin: 0 20px 16px; padding: 14px; border: 1px solid #dfe3eb; border-radius: 8px; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; }
+.copilot-deploy-form-head { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; font-weight: 700; color: #172033; }
+.copilot-deploy-form-head button { border: 0; background: transparent; color: #788294; cursor: pointer; }
+.copilot-deploy-form input, .copilot-deploy-form select { padding: 7px 10px; border: 1px solid #dfe3eb; border-radius: 6px; font-size: 11px; background: #fff; color: #172033; }
+.copilot-deploy-result { margin: 0; font-size: 10.5px; color: #09a58e; }
+
+.position-chat-thread { display: flex; flex-direction: column; gap: 8px; margin: 0 20px 12px; }
+.position-bubble-user, .position-bubble-agent { padding: 10px 12px; border-radius: 8px; font-size: 11.5px; line-height: 1.5; }
+.position-bubble-user { background: #fff4ec; color: #172033; align-self: flex-end; max-width: 85%; }
+.position-bubble-agent { background: #f8fafc; color: #172033; border: 1px solid #e1e5eb; }
+.position-bubble-user p, .position-bubble-agent p { margin: 0; }
+.order-ticket-card { margin-top: 8px; padding: 10px; border: 1px solid #ffd8bd; border-radius: 6px; background: #fff9f5; }
+.order-ticket-head { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #172033; margin-bottom: 6px; }
+.order-ticket-metrics { display: flex; gap: 10px; font-size: 9.5px; color: #8a92a2; margin-bottom: 8px; }
+.order-ticket-metrics b { color: #172033; font-family: var(--font-mono); }
+.order-ticket-actions { display: flex; gap: 6px; }
+.order-ticket-actions button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+.order-ticket-actions button:first-child { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+.order-ticket-actions button:last-child { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
 /* ══════════════════════════════════════════════════════════════════════════ */
 /* ── Research Workspace Light Mode System (Signature Orange Accent) ──────── */
 /* ══════════════════════════════════════════════════════════════════════════ */

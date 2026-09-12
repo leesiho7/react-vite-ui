@@ -3,21 +3,31 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { usePersistentState } from '@/lib/usePersistentState'
 import {
-  Maximize2,
   ArrowUpRight,
   Bot,
   BrainCircuit,
   ChevronDown,
   Search,
   Send,
-  Sparkles,
   Check,
-  TrendingUp,
-  Activity,
-  Layers,
+  RefreshCw,
+  Zap,
+  AlertTriangle,
+  ShieldCheck,
   X
 } from 'lucide-react'
 import { FinanceNav } from '@/components/FinanceNav'
+import {
+  fetchStrategyResearch,
+  approveStrategyResearch,
+  fetchCopilotWorkspace,
+  fetchInvalidationAlerts,
+  approveOrderTicket,
+  rejectOrderTicket,
+  sendResearchChat
+} from '@/lib/api'
+import type { StrategyResearchResult, StrategyArchetypeKey, CopilotWorkspaceResponse, InvalidationAlert } from '@/lib/types'
+import type { AuthResponse } from '@/lib/types'
 
 export function getSymbolLogo(nameOrTicker: string): string {
   const sym = (nameOrTicker || '').toUpperCase()
@@ -282,15 +292,38 @@ export default function TradePage() {
   const [active, setActive] = usePersistentState('trade_active_symbol', 'BTC / USD')
   const [activeTab, setActiveTab] = usePersistentState('trade_active_tab', 'Overview')
   const [activeInterval, setActiveInterval] = useState('1W')
-  const [activeCopilotTab, setActiveCopilotTab] = useState<'INSIGHTS' | 'GUIDE' | 'CODE'>('INSIGHTS')
+  const [copilotMode, setCopilotMode] = useState<'RESEARCH' | 'POSITION'>('RESEARCH')
   const [mobilePanel, setMobilePanel] = useState<'chart' | 'book' | 'ai'>('chart')
   const [copilotOpen, setCopilotOpen] = useState(false)
-  const [isCopilotExpanded, setIsCopilotExpanded] = useState(false)
   const [symbolDropdownOpen, setSymbolDropdownOpen] = useState(false)
   const [dropdownSearch, setDropdownSearch] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [sent, setSent] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // 로그인 유저 (없으면 GLOBAL_USER로 백엔드 기본값 사용)
+  const [activeUserId, setActiveUserId] = useState<number | null>(null)
+
+  // ── 전략 연구·검증 ──
+  const [researchLoading, setResearchLoading] = useState(false)
+  const [researchResult, setResearchResult] = useState<StrategyResearchResult | null>(null)
+  const [researchError, setResearchError] = useState<string | null>(null)
+  const [deployArchetype, setDeployArchetype] = useState<StrategyArchetypeKey | null>(null)
+  const [deployBotName, setDeployBotName] = useState('')
+  const [deployExchange, setDeployExchange] = useState<'BINANCE' | 'BYBIT' | 'OKX'>('OKX')
+  const [deployApiKey, setDeployApiKey] = useState('')
+  const [deployApiSecret, setDeployApiSecret] = useState('')
+  const [deployApiPassphrase, setDeployApiPassphrase] = useState('')
+  const [deploying, setDeploying] = useState(false)
+  const [deployResultMsg, setDeployResultMsg] = useState<string | null>(null)
+
+  // ── 포지션 코파일럿 ──
+  const [workspace, setWorkspace] = useState<CopilotWorkspaceResponse | null>(null)
+  const [invalidationAlerts, setInvalidationAlerts] = useState<InvalidationAlert[]>([])
+  const [positionLoading, setPositionLoading] = useState(false)
+  const [positionChatMessages, setPositionChatMessages] = useState<
+    Array<{ role: 'user' | 'assistant'; content: string; orderTicket?: any }>
+  >([])
+  const [positionPrompt, setPositionPrompt] = useState('')
+  const [positionSending, setPositionSending] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -303,6 +336,138 @@ export default function TradePage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('auth_session')
+      const user: AuthResponse | null = stored ? JSON.parse(stored) : null
+      setActiveUserId(user?.userId ? Number(user.userId) : null)
+    } catch (e) {
+      console.warn('Failed to read auth session:', e)
+      setActiveUserId(null)
+    }
+  }, [])
+
+  const loadPositionData = async () => {
+    setPositionLoading(true)
+    try {
+      const uid = activeUserId ? String(activeUserId) : 'GLOBAL_USER'
+      const [ws, alerts] = await Promise.all([
+        fetchCopilotWorkspace(uid),
+        fetchInvalidationAlerts()
+      ])
+      setWorkspace(ws)
+      setInvalidationAlerts(alerts)
+    } catch (e) {
+      console.warn('Failed to load position copilot data:', e)
+    } finally {
+      setPositionLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (copilotMode === 'POSITION') {
+      loadPositionData()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [copilotMode])
+
+  const runStrategyResearch = async () => {
+    setResearchLoading(true)
+    setResearchError(null)
+    setResearchResult(null)
+    setDeployArchetype(null)
+    try {
+      const result = await fetchStrategyResearch(currentAsset.ticker, 'H4')
+      if (result) {
+        setResearchResult(result)
+      } else {
+        setResearchError('전략 리서치 응답을 받지 못했습니다. 백엔드 연결을 확인해 주세요.')
+      }
+    } catch (e) {
+      setResearchError('전략 리서치 요청 중 오류가 발생했습니다.')
+    } finally {
+      setResearchLoading(false)
+    }
+  }
+
+  const openDeployForm = (archetype: StrategyArchetypeKey) => {
+    setDeployArchetype(archetype)
+    setDeployBotName(`${currentAsset.ticker} ${archetype.replace(/_/g, ' ')} Bot`)
+    setDeployResultMsg(null)
+  }
+
+  const submitDeploy = async () => {
+    if (!deployArchetype) return
+    if (activeUserId === null) {
+      setDeployResultMsg('봇을 배포하려면 로그인이 필요합니다.')
+      return
+    }
+    setDeploying(true)
+    setDeployResultMsg(null)
+    try {
+      const result = await approveStrategyResearch({
+        userId: activeUserId,
+        botName: deployBotName || `${currentAsset.ticker} Copilot Bot`,
+        archetype: deployArchetype,
+        exchange: deployExchange,
+        symbol: `${currentAsset.ticker}USDT`,
+        timeFrame: '1h',
+        apiKey: deployApiKey,
+        apiSecret: deployApiSecret,
+        apiPassphrase: deployApiPassphrase
+      })
+      setDeployResultMsg(result?.message || (result?.success ? '봇이 생성되었습니다 (Paper Trading).' : '봇 생성에 실패했습니다.'))
+      if (result?.success) {
+        setDeployArchetype(null)
+      }
+    } catch (e) {
+      setDeployResultMsg('봇 생성 요청 중 오류가 발생했습니다.')
+    } finally {
+      setDeploying(false)
+    }
+  }
+
+  const sendPositionChat = async () => {
+    const text = positionPrompt.trim()
+    if (!text || positionSending) return
+
+    setPositionChatMessages(prev => [...prev, { role: 'user', content: text }])
+    setPositionPrompt('')
+    setPositionSending(true)
+    try {
+      const data = await sendResearchChat({
+        symbol: `${currentAsset.ticker}USDT`,
+        prompt: text,
+        mode: 'GUIDE',
+        language: 'ko'
+      })
+      setPositionChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data?.reply || data?.answer || '응답을 받지 못했습니다.',
+        orderTicket: data?.orderTicket || null
+      }])
+    } catch (e: any) {
+      setPositionChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `❌ ${e?.message || '백엔드 연결에 실패했습니다.'}`
+      }])
+    } finally {
+      setPositionSending(false)
+    }
+  }
+
+  const handleApproveTicket = async (ticket: any) => {
+    const uid = activeUserId ? String(activeUserId) : 'GLOBAL_USER'
+    const result = await approveOrderTicket(ticket, uid)
+    alert(result?.message || (result?.success ? '주문 티켓이 승인되었습니다.' : '승인에 실패했습니다.'))
+    if (result?.success) loadPositionData()
+  }
+
+  const handleRejectTicket = async (ticket: any) => {
+    await rejectOrderTicket(ticket)
+    alert('주문 티켓을 거부했습니다.')
+  }
 
   const currentAsset = useMemo(() => {
     return registeredSymbols.find(s => s.name === active) || registeredSymbols[0]
@@ -655,136 +820,210 @@ export default function TradePage() {
             <div className="copilot-heading">
               <div>
                 <span className="market-kicker">AI COPILOT</span>
-                <h2>Ask the market.</h2>
+                <h2>{copilotMode === 'RESEARCH' ? 'Research a strategy.' : 'Watch your position.'}</h2>
               </div>
             </div>
 
             <div className="copilot-tabs">
-              {(['INSIGHTS', 'GUIDE', 'CODE'] as const).map(tab => (
-                <button
-                  key={tab}
-                  className={activeCopilotTab === tab ? 'active' : ''}
-                  onClick={() => setActiveCopilotTab(tab)}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            {/* Dynamic Insight Card for Active Symbol */}
-            <div className="insight-card">
-              <span className="signal-tag">{currentAsset.name} · {currentAsset.bias}</span>
-              <h3>{currentAsset.bias.includes('BULLISH') || currentAsset.bias.includes('UPTREND') ? 'Buyers remain in control.' : 'Institutional consolidation setup.'}</h3>
-              <p>{currentAsset.analysis}</p>
-              <div className="signal-metrics">
-                <span>
-                  CONFIDENCE <b>{currentAsset.confidence}</b>
-                </span>
-                <span>
-                  SUPPORT <b>{currentAsset.support}</b>
-                </span>
-                <span>
-                  RESISTANCE <b>{currentAsset.resistance}</b>
-                </span>
-              </div>
-            </div>
-
-            <div className="copilot-message">
-              <BrainCircuit size={16} />
-              <p>Ask me to explain the {currentAsset.name} chart, compare cross-market correlations, or draft a risk-managed strategy.</p>
-            </div>
-
-            <div className="copilot-composer">
-              <textarea
-                value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-                placeholder={`Ask AI Copilot about ${currentAsset.name}...`}
-              />
               <button
-                type="button"
-                aria-label="Send question"
-                onClick={() => {
-                  if (prompt.trim()) {
-                    setSent(true)
-                    setPrompt('')
-                  }
-                }}
+                className={copilotMode === 'RESEARCH' ? 'active' : ''}
+                onClick={() => setCopilotMode('RESEARCH')}
               >
-                <Send size={14} />
+                전략 연구·검증
+              </button>
+              <button
+                className={copilotMode === 'POSITION' ? 'active' : ''}
+                onClick={() => setCopilotMode('POSITION')}
+              >
+                포지션 코파일럿
               </button>
             </div>
-            {sent && <span className="sent-note">Analysis queued for {currentAsset.name} in Copilot.</span>}
+
+            {copilotMode === 'RESEARCH' ? (
+              <div className="copilot-scroll-body">
+                <div className="insight-card">
+                  <span className="signal-tag">{currentAsset.name} · STRATEGY RESEARCH</span>
+                  <h3>검증된 전략으로 봇을 만들어보세요.</h3>
+                  <p>Trend Following · Mean Reversion · Breakout 3개 전략을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.</p>
+                  <button
+                    type="button"
+                    className="copilot-primary-button"
+                    onClick={runStrategyResearch}
+                    disabled={researchLoading}
+                  >
+                    {researchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
+                    {researchLoading ? '리서치 진행 중...' : `${currentAsset.ticker} 전략 리서치 시작`}
+                  </button>
+                </div>
+
+                {researchError && (
+                  <div className="copilot-message copilot-message-warn">
+                    <AlertTriangle size={16} />
+                    <p>{researchError}</p>
+                  </div>
+                )}
+
+                {researchResult?.failureReason && (
+                  <div className="copilot-message copilot-message-warn">
+                    <AlertTriangle size={16} />
+                    <p>{researchResult.failureReason}</p>
+                  </div>
+                )}
+
+                {researchResult && researchResult.candidates.length > 0 && (
+                  <>
+                    <div className="strategy-candidate-grid">
+                      {researchResult.candidates.map(c => {
+                        const isRecommended = researchResult.recommendedArchetype === c.archetype
+                        return (
+                          <div key={c.archetype} className={`strategy-candidate-card ${isRecommended ? 'recommended' : ''}`}>
+                            <div className="strategy-candidate-head">
+                              <span>{c.label}</span>
+                              {isRecommended && (
+                                <b className="recommended-badge">
+                                  <ShieldCheck size={11} /> 추천
+                                </b>
+                              )}
+                            </div>
+                            {!c.metricsReliable ? (
+                              <p className="strategy-unreliable">⚠️ {c.reliabilityNote}</p>
+                            ) : (
+                              <>
+                                <div className="strategy-metrics-grid">
+                                  <span>승률 <b>{(c.winRate * 100).toFixed(1)}%</b></span>
+                                  <span>샤프 <b>{c.sharpeRatio.toFixed(2)}</b></span>
+                                  <span>MDD <b>{c.maxDrawdownPct.toFixed(1)}%</b></span>
+                                  <span>손익비 <b>{c.profitFactor.toFixed(2)}</b></span>
+                                  <span>누적수익 <b>{c.totalReturnPct >= 0 ? '+' : ''}{c.totalReturnPct.toFixed(1)}%</b></span>
+                                  <span>거래 <b>{c.totalTrades}회</b></span>
+                                </div>
+                                <div className={`walkforward-tag ${c.walkForwardConsistent ? 'ok' : 'warn'}`}>
+                                  워크포워드 {c.walkForwardProfitableSegments}/{c.walkForwardReliableSegments}구간 순이익
+                                  {c.walkForwardConsistent ? ' · 일관됨' : ' · 일관되지 않음'}
+                                </div>
+                                <button
+                                  type="button"
+                                  className="strategy-deploy-button"
+                                  onClick={() => openDeployForm(c.archetype)}
+                                >
+                                  이 전략으로 봇 생성 (Paper Trading)
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {researchResult.narrative && (
+                      <div className="copilot-message">
+                        <BrainCircuit size={16} />
+                        <p>{researchResult.narrative}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {deployArchetype && (
+                  <div className="copilot-deploy-form">
+                    <div className="copilot-deploy-form-head">
+                      <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성</span>
+                      <button type="button" onClick={() => setDeployArchetype(null)}><X size={14} /></button>
+                    </div>
+                    <input value={deployBotName} onChange={e => setDeployBotName(e.target.value)} placeholder="봇 이름" />
+                    <select value={deployExchange} onChange={e => setDeployExchange(e.target.value as any)}>
+                      <option value="OKX">OKX</option>
+                      <option value="BINANCE">Binance</option>
+                      <option value="BYBIT">Bybit</option>
+                    </select>
+                    <input type="password" value={deployApiKey} onChange={e => setDeployApiKey(e.target.value)} placeholder="API Key" />
+                    <input type="password" value={deployApiSecret} onChange={e => setDeployApiSecret(e.target.value)} placeholder="API Secret" />
+                    {deployExchange === 'OKX' && (
+                      <input type="password" value={deployApiPassphrase} onChange={e => setDeployApiPassphrase(e.target.value)} placeholder="OKX Passphrase" />
+                    )}
+                    <button type="button" className="copilot-primary-button" onClick={submitDeploy} disabled={deploying}>
+                      {deploying ? <RefreshCw size={14} className="animate-spin" /> : <Bot size={14} />}
+                      {deploying ? '배포 중...' : 'Paper Trading으로 배포'}
+                    </button>
+                    {deployResultMsg && <p className="copilot-deploy-result">{deployResultMsg}</p>}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="copilot-scroll-body">
+                <div className="insight-card">
+                  <span className="signal-tag">{currentAsset.name} · POSITION WORKSPACE</span>
+                  {positionLoading ? (
+                    <p><RefreshCw size={12} className="animate-spin" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />포지션 워크스페이스 불러오는 중...</p>
+                  ) : activeUserId === null ? (
+                    <p>로그인하면 보유 포지션과 무효화 경고를 확인할 수 있습니다.</p>
+                  ) : workspace && workspace.openPositionCount > 0 ? (
+                    <p>{workspace.summaryText || `${workspace.openPositionCount}개의 포지션을 추적 중입니다.`}</p>
+                  ) : (
+                    <p>현재 추적 중인 보유 포지션이 없습니다.</p>
+                  )}
+                </div>
+
+                {invalidationAlerts.length > 0 && (
+                  <div className="copilot-message copilot-message-warn">
+                    <AlertTriangle size={16} />
+                    <div>
+                      {invalidationAlerts.map((a, idx) => (
+                        <p key={idx} style={{ margin: '0 0 4px' }}>{a.message || JSON.stringify(a)}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {positionChatMessages.length > 0 && (
+                  <div className="position-chat-thread">
+                    {positionChatMessages.map((m, idx) => (
+                      <div key={idx} className={m.role === 'user' ? 'position-bubble-user' : 'position-bubble-agent'}>
+                        <p>{m.content}</p>
+                        {m.orderTicket && (
+                          <div className="order-ticket-card">
+                            <div className="order-ticket-head">
+                              <span>{m.orderTicket.side} {m.orderTicket.symbol}</span>
+                              <b>{m.orderTicket.status}</b>
+                            </div>
+                            <div className="order-ticket-metrics">
+                              <span>진입 <b>{m.orderTicket.entryPrice}</b></span>
+                              <span>손절 <b>{m.orderTicket.stopLoss}</b></span>
+                              <span>목표 <b>{m.orderTicket.takeProfit}</b></span>
+                            </div>
+                            {m.orderTicket.status === 'PROPOSED' && (
+                              <div className="order-ticket-actions">
+                                <button type="button" onClick={() => handleApproveTicket(m.orderTicket)}><Check size={12} /> 승인</button>
+                                <button type="button" onClick={() => handleRejectTicket(m.orderTicket)}><X size={12} /> 거부</button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="copilot-composer">
+                  <textarea
+                    value={positionPrompt}
+                    onChange={e => setPositionPrompt(e.target.value)}
+                    placeholder={`${currentAsset.name} 포지션에 대해 물어보세요...`}
+                    disabled={positionSending}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Send question"
+                    onClick={sendPositionChat}
+                    disabled={!positionPrompt.trim() || positionSending}
+                  >
+                    {positionSending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                  </button>
+                </div>
+              </div>
+            )}
           </aside>
         </div>
-
-        {/* ── In-Place Floating Fullscreen Copilot Modal for Trade Page (Pure OLED Black) ── */}
-        {isCopilotExpanded && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.88)',
-              backdropFilter: 'blur(12px)',
-              zIndex: 9999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px'
-            }}
-            onClick={() => setIsCopilotExpanded(false)}
-          >
-            <div
-              style={{
-                background: '#000000',
-                border: '1px solid #1e293b',
-                borderRadius: '16px',
-                width: '100%',
-                maxWidth: '940px',
-                maxHeight: '88vh',
-                boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 1px 1px rgba(255, 255, 255, 0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                color: '#e2e8f0',
-                fontFamily: 'var(--font-sans)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #141820', background: '#000000' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <img src={currentAsset.logo} alt={currentAsset.name} style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#f8fafc' }}>{currentAsset.name} ({currentAsset.ticker})</h3>
-                    <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>Institutional Market Micro-Structure & Quant Intelligence Desk</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsCopilotExpanded(false)}
-                  style={{ background: '#1e293b', border: 'none', color: '#94a3b8', borderRadius: '8px', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', background: '#000000' }}>
-                <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#080808', border: '1px solid #1c1c1c' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{currentAsset.name} · {currentAsset.bias}</span>
-                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>Confidence: {currentAsset.confidence}</span>
-                  </div>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#f3f4f6' }}>{currentAsset.bias.includes('BULLISH') ? 'Buyers remain in control.' : 'Institutional consolidation setup.'}</h4>
-                  <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, color: '#9ca3af' }}>{currentAsset.analysis}</p>
-                  <div style={{ display: 'flex', gap: '16px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #1f2937', fontSize: '12px' }}>
-                    <span>SUPPORT: <b style={{ color: '#10b981' }}>{currentAsset.support}</b></span>
-                    <span>RESISTANCE: <b style={{ color: '#ef4444' }}>{currentAsset.resistance}</b></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-
 
         <footer className="market-footer" style={{ width: '100%', display: 'block', borderTop: '1px solid #1e293b', paddingTop: '16px', marginTop: '24px', textAlign: 'center' }}>
           <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>

@@ -10,7 +10,11 @@ import {
   AutoTuneResponse,
   PatternInsight,
   VisionChartAnalysisRequest,
-  VisionChartAnalysisResponse
+  VisionChartAnalysisResponse,
+  StrategyResearchResult,
+  StrategyArchetypeKey,
+  CopilotWorkspaceResponse,
+  InvalidationAlert
 } from './types';
 
 /**
@@ -1616,6 +1620,129 @@ export async function fetchTradingViewConfig(userId: number): Promise<any> {
       strategyName: "Elliott_Wave3_Breakout"
     }
   };
+}
+
+// ── AI 코파일럿: 전략 연구·검증 (Strategy Research & Validation) ──
+
+/**
+ * 29. [전략 연구·검증] Trend / Mean Reversion / Breakout 3개 아키타입을
+ * 백테스트 + 워크포워드 검증하고 AI가 비교 해설을 생성한다.
+ */
+export async function fetchStrategyResearch(symbol: string, timeFrame: string): Promise<StrategyResearchResult | null> {
+  try {
+    const res = await fetch(`${API_BASE}/copilot/strategy-research`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, timeFrame }),
+      signal: AbortSignal.timeout(60000)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchStrategyResearch error:', err);
+  }
+  return null;
+}
+
+/**
+ * 29-1. 승인된 전략 아키타입을 실제 봇 인스턴스로 배포한다 (Paper Trading 고정).
+ */
+export async function approveStrategyResearch(payload: {
+  userId: number;
+  botName: string;
+  archetype: StrategyArchetypeKey;
+  exchange?: string;
+  symbol?: string;
+  timeFrame?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  apiPassphrase?: string;
+  leverage?: number;
+  positionSizePct?: number;
+}): Promise<BotControlResult> {
+  try {
+    const res = await fetch(`${API_BASE}/copilot/strategy-research/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const body = await res.json().catch(() => null);
+    if (res.ok) {
+      return body ?? { success: true };
+    }
+    return { success: false, message: body?.message || `전략 승인이 거부되었습니다. (HTTP ${res.status})` };
+  } catch (err) {
+    console.warn('[API] approveStrategyResearch error:', err);
+    return { success: false, message: BOT_CONTROL_NETWORK_ERROR };
+  }
+}
+
+// ── AI 코파일럿: 포지션 코파일럿 (Position Copilot) ──
+
+/**
+ * 30. 보유 포지션 워크스페이스 & 진입 가설 진단 조회
+ */
+export async function fetchCopilotWorkspace(userId: string): Promise<CopilotWorkspaceResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/copilot/workspace?userId=${encodeURIComponent(userId)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchCopilotWorkspace error:', err);
+  }
+  return { openPositionCount: 0, positions: [] };
+}
+
+/**
+ * 30-1. 무효화 조건 이탈 경고 알림 조회
+ */
+export async function fetchInvalidationAlerts(): Promise<InvalidationAlert[]> {
+  try {
+    const res = await fetch(`${API_BASE}/copilot/invalidation-alerts`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchInvalidationAlerts error:', err);
+  }
+  return [];
+}
+
+/**
+ * 30-2. AI가 제안한 주문 진입 티켓을 사람이 승인/거부한다.
+ */
+export async function approveOrderTicket(ticket: any, userId = 'GLOBAL_USER'): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/copilot/ticket/approve?userId=${encodeURIComponent(userId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ticket)
+    });
+    const body = await res.json().catch(() => null);
+    if (res.ok) return body ?? { success: true };
+    return { success: false, error: body?.message || `티켓 승인이 거부되었습니다. (HTTP ${res.status})` };
+  } catch (err) {
+    console.warn('[API] approveOrderTicket error:', err);
+    return { success: false, error: BOT_CONTROL_NETWORK_ERROR };
+  }
+}
+
+export async function rejectOrderTicket(ticket: any): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/copilot/ticket/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ticket)
+    });
+    const body = await res.json().catch(() => null);
+    if (res.ok) return body ?? { success: true };
+    return { success: false, error: body?.message || `티켓 거부 요청이 실패했습니다. (HTTP ${res.status})` };
+  } catch (err) {
+    console.warn('[API] rejectOrderTicket error:', err);
+    return { success: false, error: BOT_CONTROL_NETWORK_ERROR };
+  }
 }
 
 

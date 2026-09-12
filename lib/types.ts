@@ -253,4 +253,49 @@ export interface AutoTuneResponse {
   tuningSummary: string;
 }
 
+// ── AI 코파일럿: 전략 연구·검증 (Strategy Research & Validation) ──
+export type StrategyArchetypeKey = 'TREND_FOLLOWING' | 'MEAN_REVERSION' | 'BREAKOUT';
+
+export interface StrategyCandidateView {
+  archetype: StrategyArchetypeKey;
+  label: string;
+  metricsReliable: boolean;
+  reliabilityNote: string;
+  totalTrades: number;
+  winRate: number;
+  profitFactor: number;
+  totalReturnPct: number;
+  maxDrawdownPct: number;
+  sharpeRatio: number;
+  totalCostPct: number;
+  outOfSampleTrades: number;
+  outOfSampleWinRate: number;
+  walkForwardSegments: number;
+  walkForwardReliableSegments: number;
+  walkForwardProfitableSegments: number;
+  walkForwardConsistent: boolean;
+  robust: boolean;
+}
+
+export interface StrategyResearchResult {
+  symbol: string;
+  timeframe: string;
+  candidates: StrategyCandidateView[];
+  failureReason?: string | null;
+  recommendedArchetype?: StrategyArchetypeKey | null;
+  narrative?: string | null;
+}
+
+// ── AI 코파일럿: 포지션 코파일럿 (Position Copilot) ──
+export interface CopilotWorkspaceResponse {
+  openPositionCount: number;
+  positions: any[];
+  summaryText?: string;
+}
+
+export interface InvalidationAlert {
+  symbol?: string;
+  message?: string;
+  [key: string]: any;
+}
 
