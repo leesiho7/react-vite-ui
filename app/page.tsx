@@ -1015,23 +1015,34 @@ export default function Page() {
     const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' : 'GUIDE'
     const cleanSym = getSymbolTicker(marketActiveSymbol)
 
+    // 리서치모드에서 아직 전략 리서치가 실행된 적 없으면, 버튼을 눌러달라고 안내만 하는 대신
+    // 채팅 질문 자체가 오케스트레이션을 자동으로 먼저 실행시키는 트리거가 되게 한다.
+    let effectiveResearchResult = researchResult
+    if (marketCopilotMode === 'RESEARCH' && !effectiveResearchResult) {
+      setMarketMessages(prev => prev.map(m => m.id === agentMsgId
+        ? { ...m, text: '전략 리서치가 아직 없어서 먼저 실행합니다 (백테스트 + 워크포워드 검증 진행 중)...' }
+        : m))
+      effectiveResearchResult = await runStrategyResearch()
+      setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: '' } : m))
+    }
+
     // 범용 전술 Q&A(진입 타점/ATR 스탑/온체인 등)는 이미 별도 AI 리서치 섹션이 제공하므로
     // 여기서 중복시키지 않는다. 이 코파일럿 데스크의 채팅은 모드별로 실제 계산된 데이터
     // (전략 리서치 오케스트레이션 결과 / 포지션 워크스페이스)에만 근거해 답하도록 좁힌다.
     let copilotPrompt: string
     if (marketCopilotMode === 'RESEARCH') {
-      const contextBlock = researchResult
+      const contextBlock = effectiveResearchResult
         ? [
-            `심볼: ${researchResult.symbol} (${researchResult.timeframe})`,
-            ...researchResult.candidates.map(c => c.metricsReliable
+            `심볼: ${effectiveResearchResult.symbol} (${effectiveResearchResult.timeframe})`,
+            ...effectiveResearchResult.candidates.map(c => c.metricsReliable
               ? `- ${c.label}: 승률 ${(c.winRate * 100).toFixed(1)}%, 샤프 ${c.sharpeRatio.toFixed(2)}, MDD ${c.maxDrawdownPct.toFixed(1)}%, 손익비 ${c.profitFactor.toFixed(2)}, 누적수익 ${c.totalReturnPct.toFixed(1)}%, 워크포워드 일관성 ${c.walkForwardConsistent ? 'Y' : 'N'}(${c.walkForwardProfitableSegments}/${c.walkForwardReliableSegments}구간)`
               : `- ${c.label}: 표본 부족으로 신뢰 불가 (${c.reliabilityNote})`),
-            researchResult.recommendedArchetype ? `추천 전략: ${researchResult.recommendedArchetype}` : '추천 전략: 없음 (조건 미충족)',
-            researchResult.narrative ? `AI 해설: ${researchResult.narrative}` : ''
+            effectiveResearchResult.recommendedArchetype ? `추천 전략: ${effectiveResearchResult.recommendedArchetype}` : '추천 전략: 없음 (조건 미충족)',
+            effectiveResearchResult.narrative ? `AI 해설: ${effectiveResearchResult.narrative}` : ''
           ].filter(Boolean).join('\n')
-        : '아직 전략 리서치가 실행되지 않았습니다.'
+        : '전략 리서치 실행에 실패했습니다 (백엔드 연결을 확인해야 합니다).'
 
-      copilotPrompt = `[전략 리서치 Q&A 모드] 당신은 방금 계산된 백테스트/워크포워드 결과에 대해서만 답하는 어시스턴트입니다. 아래 컨텍스트에 없는 숫자나 근거는 절대 지어내지 마십시오. 컨텍스트가 없다면 먼저 위쪽의 전략 리서치 시작 버튼을 눌러야 한다고 안내하십시오.\n\n[전략 리서치 결과]\n${contextBlock}\n\n사용자 질의: ${userMsg}`
+      copilotPrompt = `[전략 리서치 Q&A 모드] 당신은 방금 계산된 백테스트/워크포워드 결과에 대해서만 답하는 어시스턴트입니다. 아래 컨텍스트에 없는 숫자나 근거는 절대 지어내지 마십시오.\n\n[전략 리서치 결과]\n${contextBlock}\n\n사용자 질의: ${userMsg}`
     } else {
       const posContext = positionWorkspace
         ? [
@@ -1079,7 +1090,7 @@ export default function Page() {
     }
   }
 
-  const runStrategyResearch = async () => {
+  const runStrategyResearch = async (): Promise<StrategyResearchResult | null> => {
     setCopilotResearchLoading(true)
     setCopilotResearchError(null)
     setResearchResult(null)
@@ -1088,11 +1099,13 @@ export default function Page() {
       const result = await fetchStrategyResearch(getSymbolTicker(marketActiveSymbol), 'H4')
       if (result) {
         setResearchResult(result)
-      } else {
-        setCopilotResearchError('전략 리서치 응답을 받지 못했습니다. 백엔드 연결을 확인해 주세요.')
+        return result
       }
+      setCopilotResearchError('전략 리서치 응답을 받지 못했습니다. 백엔드 연결을 확인해 주세요.')
+      return null
     } catch (e) {
       setCopilotResearchError('전략 리서치 요청 중 오류가 발생했습니다.')
+      return null
     } finally {
       setCopilotResearchLoading(false)
     }
