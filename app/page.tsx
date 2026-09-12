@@ -953,6 +953,7 @@ export default function Page() {
   const [deployApiPassphrase, setDeployApiPassphrase] = useState('')
   const [deploying, setDeploying] = useState(false)
   const [deployResultMsg, setDeployResultMsg] = useState<string | null>(null)
+  const [researchTimeFrame, setResearchTimeFrame] = useState<'M5' | 'M15' | 'H1' | 'H4' | 'D1'>('H4')
 
   // ── 스마트포지션 모드: 보유 포지션 워크스페이스 & 무효화 경고 ──
   const [positionWorkspace, setPositionWorkspace] = useState<CopilotWorkspaceResponse | null>(null)
@@ -1015,15 +1016,20 @@ export default function Page() {
     const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' : 'GUIDE'
     const cleanSym = getSymbolTicker(marketActiveSymbol)
 
-    // 리서치모드에서 아직 전략 리서치가 실행된 적 없으면, 버튼을 눌러달라고 안내만 하는 대신
-    // 채팅 질문 자체가 오케스트레이션을 자동으로 먼저 실행시키는 트리거가 되게 한다.
+    // 리서치모드에서는 채팅 질문 자체가 오케스트레이션을 자동으로 (재)실행시키는 트리거가 된다 —
+    // 아직 리서치가 없으면 처음 실행하고, 질문에 다른 타임프레임이 언급되면 그 타임프레임으로 다시 실행한다.
     let effectiveResearchResult = researchResult
-    if (marketCopilotMode === 'RESEARCH' && !effectiveResearchResult) {
-      setMarketMessages(prev => prev.map(m => m.id === agentMsgId
-        ? { ...m, text: '전략 리서치가 아직 없어서 먼저 실행합니다 (백테스트 + 워크포워드 검증 진행 중)...' }
-        : m))
-      effectiveResearchResult = await runStrategyResearch()
-      setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: '' } : m))
+    if (marketCopilotMode === 'RESEARCH') {
+      const mentionedTf = parseTimeFrameFromText(userMsg)
+      const needsRerun = !effectiveResearchResult || (mentionedTf && mentionedTf !== effectiveResearchResult.timeframe)
+      if (needsRerun) {
+        if (mentionedTf) setResearchTimeFrame(mentionedTf as any)
+        setMarketMessages(prev => prev.map(m => m.id === agentMsgId
+          ? { ...m, text: `전략 리서치를 ${mentionedTf || researchTimeFrame} 기준으로 실행합니다 (백테스트 + 워크포워드 검증 진행 중)...` }
+          : m))
+        effectiveResearchResult = await runStrategyResearch(mentionedTf || undefined)
+        setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: '' } : m))
+      }
     }
 
     // 범용 전술 Q&A(진입 타점/ATR 스탑/온체인 등)는 이미 별도 AI 리서치 섹션이 제공하므로
@@ -1090,13 +1096,25 @@ export default function Page() {
     }
   }
 
-  const runStrategyResearch = async (): Promise<StrategyResearchResult | null> => {
+  /** 채팅 문장에서 타임프레임 언급을 뽑아낸다. 못 찾으면 null (현재 선택된 타임프레임을 그대로 쓴다). */
+  const parseTimeFrameFromText = (text: string): 'M1' | 'M5' | 'M15' | 'H1' | 'H4' | 'D1' | null => {
+    if (/1\s*분/.test(text)) return 'M1'
+    if (/5\s*분/.test(text)) return 'M5'
+    if (/15\s*분/.test(text)) return 'M15'
+    if (/4\s*시간/.test(text)) return 'H4'
+    if (/1\s*시간|시간봉/.test(text)) return 'H1'
+    if (/일봉|하루|데일리|daily/i.test(text)) return 'D1'
+    return null
+  }
+
+  const runStrategyResearch = async (timeFrameOverride?: string): Promise<StrategyResearchResult | null> => {
+    const tf = timeFrameOverride || researchTimeFrame
     setCopilotResearchLoading(true)
     setCopilotResearchError(null)
     setResearchResult(null)
     setDeployArchetype(null)
     try {
-      const result = await fetchStrategyResearch(getSymbolTicker(marketActiveSymbol), 'H4')
+      const result = await fetchStrategyResearch(getSymbolTicker(marketActiveSymbol), tf)
       if (result) {
         setResearchResult(result)
         return result
@@ -3629,12 +3647,29 @@ export default function Page() {
                     <span className="signal-tag">{marketActiveSymbol} · STRATEGY RESEARCH</span>
                     <h3 style={{ fontFamily: 'var(--font-sans)', marginTop: '4px' }}>검증된 전략으로 봇을 만들어보세요.</h3>
                     <p style={{ fontFamily: 'var(--font-sans)', margin: '4px 0 8px', fontSize: '12px', lineHeight: 1.55 }}>
-                      Trend Following · Mean Reversion · Breakout 3개 전략을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
+                      9개 전략(추세/평균회귀/돌파/RSI/VWAP/MACD/이평리본/볼린저스퀴즈/ATR돌파)을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
                     </p>
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      {(['M5', 'M15', 'H1', 'H4', 'D1'] as const).map(tf => (
+                        <button
+                          key={tf}
+                          type="button"
+                          onClick={() => setResearchTimeFrame(tf)}
+                          style={{
+                            padding: '3px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                            border: researchTimeFrame === tf ? '1px solid #f47a20' : '1px solid #e2e8f0',
+                            background: researchTimeFrame === tf ? '#fff4ec' : '#fff',
+                            color: researchTimeFrame === tf ? '#f47a20' : '#64748b'
+                          }}
+                        >
+                          {tf === 'M5' ? '5분' : tf === 'M15' ? '15분' : tf === 'H1' ? '1시간' : tf === 'H4' ? '4시간' : '일봉'}
+                        </button>
+                      ))}
+                    </div>
                     <button
                       type="button"
                       className="copilot-primary-button"
-                      onClick={runStrategyResearch}
+                      onClick={() => runStrategyResearch()}
                       disabled={copilotResearchLoading}
                     >
                       {copilotResearchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
@@ -3962,9 +3997,26 @@ export default function Page() {
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{marketActiveSymbol} · STRATEGY RESEARCH</span>
                       <h4 style={{ margin: '6px 0 8px 0', fontSize: '15px', color: '#f3f4f6' }}>검증된 전략으로 봇을 만들어보세요.</h4>
                       <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.6, color: '#9ca3af' }}>
-                        Trend Following · Mean Reversion · Breakout 3개 전략을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
+                        9개 전략(추세/평균회귀/돌파/RSI/VWAP/MACD/이평리본/볼린저스퀴즈/ATR돌파)을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
                       </p>
-                      <button type="button" className="copilot-primary-button" onClick={runStrategyResearch} disabled={copilotResearchLoading}>
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                        {(['M5', 'M15', 'H1', 'H4', 'D1'] as const).map(tf => (
+                          <button
+                            key={tf}
+                            type="button"
+                            onClick={() => setResearchTimeFrame(tf)}
+                            style={{
+                              padding: '3px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                              border: researchTimeFrame === tf ? '1px solid #f47a20' : '1px solid #27272a',
+                              background: researchTimeFrame === tf ? 'rgba(244,122,32,0.12)' : 'transparent',
+                              color: researchTimeFrame === tf ? '#f47a20' : '#94a3b8'
+                            }}
+                          >
+                            {tf === 'M5' ? '5분' : tf === 'M15' ? '15분' : tf === 'H1' ? '1시간' : tf === 'H4' ? '4시간' : '일봉'}
+                          </button>
+                        ))}
+                      </div>
+                      <button type="button" className="copilot-primary-button" onClick={() => runStrategyResearch()} disabled={copilotResearchLoading}>
                         {copilotResearchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
                         {copilotResearchLoading ? '리서치 진행 중...' : `${getSymbolTicker(marketActiveSymbol)} 전략 리서치 시작`}
                       </button>

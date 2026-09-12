@@ -254,7 +254,16 @@ export interface AutoTuneResponse {
 }
 
 // ── AI 코파일럿: 전략 연구·검증 (Strategy Research & Validation) ──
-export type StrategyArchetypeKey = 'TREND_FOLLOWING' | 'MEAN_REVERSION' | 'BREAKOUT';
+export type StrategyArchetypeKey =
+  | 'TREND_FOLLOWING'
+  | 'MEAN_REVERSION'
+  | 'BREAKOUT'
+  | 'RSI_STANDALONE'
+  | 'VWAP_TREND'
+  | 'MACD_CROSSOVER'
+  | 'MA_RIBBON'
+  | 'BOLLINGER_SQUEEZE_BREAKOUT'
+  | 'ATR_VOLATILITY_BREAKOUT';
 
 export interface StrategyCandidateView {
   archetype: StrategyArchetypeKey;

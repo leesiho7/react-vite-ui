@@ -1935,7 +1935,7 @@ samp,
 .copilot-primary-button:hover { background: #ea580c; }
 .copilot-primary-button:disabled { background: #fcd9b8; cursor: not-allowed; }
 
-.strategy-candidate-grid { display: flex; flex-direction: column; gap: 10px; margin: 0 20px 16px; }
+.strategy-candidate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 0 20px 16px; }
 .strategy-candidate-card { border: 1px solid #e1e5eb; border-radius: 8px; padding: 12px 14px; background: #fff; font-family: var(--font-sans); }
 .strategy-candidate-card.recommended { border-color: #f47a20; background: #fff9f5; box-shadow: 0 0 0 1px rgba(244,122,32,0.15); }
 .strategy-candidate-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #172033; margin-bottom: 8px; }
