@@ -938,7 +938,7 @@ export default function Page() {
   const [marketCopilotMode, setMarketCopilotMode] = useState<'RESEARCH' | 'POSITION'>('RESEARCH')
   const [marketPrompt, setMarketPrompt] = useState('')
   const [marketCopilotLoading, setMarketCopilotLoading] = useState(false)
-  const [marketMessages, setMarketMessages] = useState<{ role: 'user' | 'assistant'; text: string; time: string; orderTicket?: any }[]>([])
+  const [marketMessages, setMarketMessages] = useState<{ id: string; role: 'user' | 'assistant'; text: string; time: string; orderTicket?: any; isStreaming?: boolean }[]>([])
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(false)
 
   // ── 리서치모드: 전략 연구·검증 ──
@@ -999,13 +999,21 @@ export default function Page() {
     if (!msgText.trim() || marketCopilotLoading) return
     const userMsg = msgText.trim()
     const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-    setMarketMessages(prev => [...prev, { role: 'user', text: userMsg, time: now }])
+    const rand = Math.random().toString(36).substring(2, 7)
+    const agentMsgId = `copilot-agent-${Date.now()}-${rand}`
+
+    const historySnapshot = marketMessages.slice(-6).map(m => ({ role: m.role, content: m.text })).filter(m => m.content.trim().length > 0)
+
+    setMarketMessages(prev => [
+      ...prev,
+      { id: `copilot-user-${Date.now()}-${rand}`, role: 'user', text: userMsg, time: now },
+      { id: agentMsgId, role: 'assistant', text: '', time: now, isStreaming: true }
+    ])
     setMarketPrompt('')
     setMarketCopilotLoading(true)
 
     const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' : 'GUIDE'
     const cleanSym = getSymbolTicker(marketActiveSymbol)
-    const copilotHistory = marketMessages.slice(-6).map(m => ({ role: m.role, content: m.text })).filter(m => m.content.trim().length > 0)
 
     // 실전 AI 코파일럿 특화 전술 지시 (리서치 AI와 결을 달리하여 신속, 간결, 실전 타점 및 손절선 중심 브리핑)
     const isTactical = !userMsg.includes('[AI 트레이딩 코파일럿]');
@@ -1013,19 +1021,36 @@ export default function Page() {
       ? `[AI 트레이딩 코파일럿 모드] 당신은 장문의 논문/보고서를 작성하는 리서치 연구원이 아닌 실전 트레이딩 조종석의 'AI 부조종사(Copilot)'입니다. 긴 서론과 학술적 설명을 배제하고 실전 매매 운용 관점에서 ① 포지션 판단(매수/관망/손절), ② 추천 진입가/익절가, ③ 1.5-ATR 동적 손절 기준, ④ 핵심 리스크 1가지만을 신속하고 명확하게 브리핑하십시오.\n\n사용자 질의: ${userMsg}`
       : userMsg;
 
+    let accumulated = ''
     try {
-      const res = await sendResearchChat({
+      await streamResearchChatSSE({
         symbol: cleanSym,
         prompt: copilotPrompt,
         mode: mappedMode as any,
         language: language,
         conversationId: `copilot-${cleanSym}`,
-        history: copilotHistory
+        history: historySnapshot
+      }, {
+        onToken: (token) => {
+          accumulated += token
+          setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: accumulated } : m))
+        },
+        onDone: (finalData) => {
+          const finalText = accumulated || finalData?.reply || finalData?.answer || `[${cleanSym} 퀀트 코파일럿] 실시간 호가 기준 상방 모멘텀 테스트 유효.`
+          setMarketMessages(prev => prev.map(m => m.id === agentMsgId
+            ? { ...m, text: finalText, isStreaming: false, orderTicket: finalData?.orderTicket || null }
+            : m))
+        },
+        onError: (err: any) => {
+          setMarketMessages(prev => prev.map(m => m.id === agentMsgId
+            ? { ...m, text: `❌ [백엔드 AI 오류] ${err?.message || '스프링부트 백엔드 서버 연결 실패'}`, isStreaming: false }
+            : m))
+        }
       })
-      const text = res.reply || res.answer || `[${cleanSym} 퀀트 코파일럿] 실시간 호가 기준 상방 모멘텀 테스트 유효.`
-      setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now, orderTicket: res.orderTicket || null }])
     } catch (err: any) {
-      setMarketMessages(prev => [...prev, { role: 'assistant', text: `❌ [백엔드 AI 오류] ${err?.message || '스프링부트 백엔드 서버 연결 실패'}`, time: now }])
+      setMarketMessages(prev => prev.map(m => m.id === agentMsgId
+        ? { ...m, text: `❌ [백엔드 AI 오류] ${err?.message || '스프링부트 백엔드 서버 연결 실패'}`, isStreaming: false }
+        : m))
     } finally {
       setMarketCopilotLoading(false)
     }
@@ -3728,7 +3753,10 @@ export default function Page() {
                         <b>{m.role === 'user' ? (language === 'ko' ? '사용자' : 'YOU') : (language === 'ko' ? 'AI 코파일럿' : 'COPILOT')}</b>
                         <span>{m.time}</span>
                       </div>
-                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{m.text}</div>
+                      <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                        {m.text}
+                        {m.isStreaming && <span style={{ display: 'inline-block', width: '6px', height: '12px', background: '#f47a20', marginLeft: '2px', verticalAlign: 'middle' }} className="animate-pulse" />}
+                      </div>
                       {m.orderTicket && (
                         <div className="order-ticket-card">
                           <div className="order-ticket-head">
@@ -4051,7 +4079,10 @@ export default function Page() {
                           <b>{m.role === 'user' ? (language === 'ko' ? '👤 나의 질문' : 'USER') : (language === 'ko' ? '🤖 AETHER 퀀트 AI' : 'AETHER QUANT AI')}</b>
                           <span>{m.time}</span>
                         </div>
-                        <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        <div style={{ whiteSpace: 'pre-wrap' }}>
+                          {m.text}
+                          {m.isStreaming && <span style={{ display: 'inline-block', width: '7px', height: '14px', background: '#f47a20', marginLeft: '2px', verticalAlign: 'middle' }} className="animate-pulse" />}
+                        </div>
                         {m.orderTicket && (
                           <div className="order-ticket-card">
                             <div className="order-ticket-head">
