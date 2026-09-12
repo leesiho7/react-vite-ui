@@ -17,6 +17,7 @@ import {
   toggleFollowExpert,
   sendResearchChat,
   streamResearchChatSSE,
+  streamCopilotChatSSE,
   fetchDepositWallets,
   submitOnChainDeposit,
   claimStreakReward,
@@ -1014,7 +1015,6 @@ export default function Page() {
     setMarketPrompt('')
     setMarketCopilotLoading(true)
 
-    const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' : 'GUIDE'
     const cleanSym = getSymbolTicker(marketActiveSymbol)
 
     // 리서치모드에서는 채팅 질문 자체가 오케스트레이션을 자동으로 (재)실행시키는 트리거가 된다 —
@@ -1033,12 +1033,14 @@ export default function Page() {
       }
     }
 
-    // 범용 전술 Q&A(진입 타점/ATR 스탑/온체인 등)는 이미 별도 AI 리서치 섹션이 제공하므로
-    // 여기서 중복시키지 않는다. 이 코파일럿 데스크의 채팅은 모드별로 실제 계산된 데이터
-    // (전략 리서치 오케스트레이션 결과 / 포지션 워크스페이스)에만 근거해 답하도록 좁힌다.
-    let copilotPrompt: string
+    // 범용 전술 Q&A(진입 타점/ATR 스탑/온체인 등)는 이미 별도 AI 리서치 섹션(/ai/research-chat)이
+    // 제공하므로 여기서 중복시키지 않는다. 이 코파일럿 데스크의 채팅은 그 기능과 완전히 분리된
+    // 전용 백엔드(/api/copilot/chat/stream)를 쓰고, 모드별로 실제 계산된 데이터(전략 리서치
+    // 오케스트레이션 결과 / 포지션 워크스페이스)만 컨텍스트로 넘긴다 — 지시문과 사용자 질문은
+    // 하나의 프롬프트 문자열로 뭉치지 않고 별도 필드로 분리해서 보낸다.
+    let contextText: string
     if (marketCopilotMode === 'RESEARCH') {
-      const contextBlock = effectiveResearchResult
+      contextText = effectiveResearchResult
         ? [
             `심볼: ${effectiveResearchResult.symbol} (${effectiveResearchResult.timeframe})`,
             ...effectiveResearchResult.candidates.map(c => c.metricsReliable
@@ -1048,27 +1050,23 @@ export default function Page() {
             effectiveResearchResult.narrative ? `AI 해설: ${effectiveResearchResult.narrative}` : ''
           ].filter(Boolean).join('\n')
         : '전략 리서치 실행에 실패했습니다 (백엔드 연결을 확인해야 합니다).'
-
-      copilotPrompt = `[전략 리서치 Q&A 모드] 당신은 방금 계산된 백테스트/워크포워드 결과에 대해서만 답하는 어시스턴트입니다. 아래 컨텍스트에 없는 숫자나 근거는 절대 지어내지 마십시오.\n\n[전략 리서치 결과]\n${contextBlock}\n\n사용자 질의: ${userMsg}`
     } else {
-      const posContext = positionWorkspace
+      contextText = positionWorkspace
         ? [
             `보유 포지션 수: ${positionWorkspace.openPositionCount}`,
             positionWorkspace.summaryText || '',
             positionAlerts.length > 0 ? `무효화 경고: ${positionAlerts.map(a => a.message || JSON.stringify(a)).join(' / ')}` : '무효화 경고: 없음'
           ].filter(Boolean).join('\n')
         : '아직 포지션 워크스페이스 데이터를 불러오지 못했습니다.'
-
-      copilotPrompt = `[포지션 코파일럿 모드] 당신은 사용자의 실제 보유 포지션 워크스페이스 데이터에 근거해서만 답하는 어시스턴트입니다. 아래 컨텍스트에 없는 포지션이나 수치를 지어내지 마십시오.\n\n[포지션 워크스페이스]\n${posContext}\n\n사용자 질의: ${userMsg}`
     }
 
     let accumulated = ''
     try {
-      await streamResearchChatSSE({
+      await streamCopilotChatSSE({
+        mode: marketCopilotMode,
         symbol: cleanSym,
-        prompt: copilotPrompt,
-        mode: mappedMode as any,
-        language: language,
+        contextText,
+        userMessage: userMsg,
         conversationId: `copilot-${cleanSym}`,
         history: historySnapshot
       }, {
@@ -1077,9 +1075,9 @@ export default function Page() {
           setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: accumulated } : m))
         },
         onDone: (finalData) => {
-          const finalText = accumulated || finalData?.reply || finalData?.answer || `[${cleanSym} 퀀트 코파일럿] 실시간 호가 기준 상방 모멘텀 테스트 유효.`
+          const finalText = accumulated || finalData?.reply || `[${cleanSym} 코파일럿] 응답을 생성하지 못했습니다.`
           setMarketMessages(prev => prev.map(m => m.id === agentMsgId
-            ? { ...m, text: finalText, isStreaming: false, orderTicket: finalData?.orderTicket || null }
+            ? { ...m, text: finalText, isStreaming: false }
             : m))
         },
         onError: (err: any) => {

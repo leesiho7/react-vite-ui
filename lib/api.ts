@@ -629,6 +629,94 @@ export async function streamResearchChatSSE(
 }
 
 /**
+ * 9-2. AI 코파일럿 데스크(전략 연구·검증 / 스마트포지션) 전용 스트리밍 챗.
+ *
+ * streamResearchChatSSE(별도의 "AI 퀀트 리서치" 터미널 기능, INSIGHT/GUIDE/CODING 페르소나)와
+ * 의도적으로 분리한다 — 코파일럿은 이미 계산해 둔 그라운딩 데이터(contextText)를 별도 필드로
+ * 넘기고, 백엔드도 완전히 다른 전용 시스템 프롬프트를 쓴다(/api/copilot/chat/stream).
+ */
+export async function streamCopilotChatSSE(
+  payload: {
+    mode: 'RESEARCH' | 'POSITION';
+    symbol?: string;
+    contextText: string;
+    userMessage: string;
+    conversationId?: string;
+    history?: Array<{ role: string; content: string }>;
+  },
+  callbacks: {
+    onToken?: (token: string) => void;
+    onDone?: (finalData: any) => void;
+    onError?: (err: any) => void;
+  }
+): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const res = await fetch(API_BASE + '/copilot/chat/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok || !res.body) {
+      throw new Error(`코파일럿 채팅 스트리밍 실패 (HTTP ${res.status})`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      let currentEvent = 'message';
+      for (const line of lines) {
+        if (!line.trim()) {
+          currentEvent = 'message';
+          continue;
+        }
+
+        if (line.startsWith('event:')) {
+          currentEvent = line.substring(6).trim();
+        } else if (line.startsWith('data:')) {
+          const dataStr = line.startsWith('data: ') ? line.substring(6) : line.substring(5);
+          try {
+            if (currentEvent === 'token') {
+              let tokenText = dataStr;
+              try {
+                const p = JSON.parse(dataStr);
+                if (typeof p === 'string') tokenText = p;
+                else if (p?.token !== undefined) tokenText = p.token;
+              } catch (_) {}
+              callbacks.onToken?.(tokenText);
+            } else if (currentEvent === 'done') {
+              const parsed = JSON.parse(dataStr);
+              callbacks.onDone?.(parsed);
+            }
+          } catch (e) {
+            if (currentEvent === 'token') {
+              callbacks.onToken?.(dataStr);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[API] streamCopilotChatSSE error:', err);
+    callbacks.onError?.(err);
+  }
+}
+
+/**
  * 9-1. [AETHER 스마트 메모리] 세션 완전 초기화 (분석 맥락 리셋)
  */
 export async function resetResearchMemory(conversationId: string): Promise<boolean> {
