@@ -1015,11 +1015,34 @@ export default function Page() {
     const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' : 'GUIDE'
     const cleanSym = getSymbolTicker(marketActiveSymbol)
 
-    // 실전 AI 코파일럿 특화 전술 지시 (리서치 AI와 결을 달리하여 신속, 간결, 실전 타점 및 손절선 중심 브리핑)
-    const isTactical = !userMsg.includes('[AI 트레이딩 코파일럿]');
-    const copilotPrompt = isTactical
-      ? `[AI 트레이딩 코파일럿 모드] 당신은 장문의 논문/보고서를 작성하는 리서치 연구원이 아닌 실전 트레이딩 조종석의 'AI 부조종사(Copilot)'입니다. 긴 서론과 학술적 설명을 배제하고 실전 매매 운용 관점에서 ① 포지션 판단(매수/관망/손절), ② 추천 진입가/익절가, ③ 1.5-ATR 동적 손절 기준, ④ 핵심 리스크 1가지만을 신속하고 명확하게 브리핑하십시오.\n\n사용자 질의: ${userMsg}`
-      : userMsg;
+    // 범용 전술 Q&A(진입 타점/ATR 스탑/온체인 등)는 이미 별도 AI 리서치 섹션이 제공하므로
+    // 여기서 중복시키지 않는다. 이 코파일럿 데스크의 채팅은 모드별로 실제 계산된 데이터
+    // (전략 리서치 오케스트레이션 결과 / 포지션 워크스페이스)에만 근거해 답하도록 좁힌다.
+    let copilotPrompt: string
+    if (marketCopilotMode === 'RESEARCH') {
+      const contextBlock = researchResult
+        ? [
+            `심볼: ${researchResult.symbol} (${researchResult.timeframe})`,
+            ...researchResult.candidates.map(c => c.metricsReliable
+              ? `- ${c.label}: 승률 ${(c.winRate * 100).toFixed(1)}%, 샤프 ${c.sharpeRatio.toFixed(2)}, MDD ${c.maxDrawdownPct.toFixed(1)}%, 손익비 ${c.profitFactor.toFixed(2)}, 누적수익 ${c.totalReturnPct.toFixed(1)}%, 워크포워드 일관성 ${c.walkForwardConsistent ? 'Y' : 'N'}(${c.walkForwardProfitableSegments}/${c.walkForwardReliableSegments}구간)`
+              : `- ${c.label}: 표본 부족으로 신뢰 불가 (${c.reliabilityNote})`),
+            researchResult.recommendedArchetype ? `추천 전략: ${researchResult.recommendedArchetype}` : '추천 전략: 없음 (조건 미충족)',
+            researchResult.narrative ? `AI 해설: ${researchResult.narrative}` : ''
+          ].filter(Boolean).join('\n')
+        : '아직 전략 리서치가 실행되지 않았습니다.'
+
+      copilotPrompt = `[전략 리서치 Q&A 모드] 당신은 방금 계산된 백테스트/워크포워드 결과에 대해서만 답하는 어시스턴트입니다. 아래 컨텍스트에 없는 숫자나 근거는 절대 지어내지 마십시오. 컨텍스트가 없다면 먼저 위쪽의 전략 리서치 시작 버튼을 눌러야 한다고 안내하십시오.\n\n[전략 리서치 결과]\n${contextBlock}\n\n사용자 질의: ${userMsg}`
+    } else {
+      const posContext = positionWorkspace
+        ? [
+            `보유 포지션 수: ${positionWorkspace.openPositionCount}`,
+            positionWorkspace.summaryText || '',
+            positionAlerts.length > 0 ? `무효화 경고: ${positionAlerts.map(a => a.message || JSON.stringify(a)).join(' / ')}` : '무효화 경고: 없음'
+          ].filter(Boolean).join('\n')
+        : '아직 포지션 워크스페이스 데이터를 불러오지 못했습니다.'
+
+      copilotPrompt = `[포지션 코파일럿 모드] 당신은 사용자의 실제 보유 포지션 워크스페이스 데이터에 근거해서만 답하는 어시스턴트입니다. 아래 컨텍스트에 없는 포지션이나 수치를 지어내지 마십시오.\n\n[포지션 워크스페이스]\n${posContext}\n\n사용자 질의: ${userMsg}`
+    }
 
     let accumulated = ''
     try {
@@ -1146,79 +1169,58 @@ export default function Page() {
     alert('주문 티켓을 거부했습니다.')
   }
 
-  const copilotQuickChips = useMemo(() => {
-    const cleanSym = getSymbolTicker(marketActiveSymbol)
+  // 포지션 코파일럿 전용 퀵칩. 범용 전술 질문(ATR 스탑/온체인/ReAct 등)은 이미 별도
+  // AI 리서치 섹션(#research-terminal, GUIDE/AGENT 모드)이 제공하므로 중복시키지 않는다.
+  // 여기서는 사용자의 실제 보유 포지션 워크스페이스에 근거한 질문만 다룬다.
+  const positionQuickChips = useMemo(() => {
     if (language === 'en') {
       return [
-        {
-          label: '🎯 Target Entry & Plan',
-          icon: <Sparkles size={11} className="text-[#a855f7]" />,
-          prompt: `Provide target entry prices, scaling-in points, and take-profit targets for ${cleanSym} from a copilot perspective.`
-        },
-        {
-          label: '⚡ 1.5-ATR Trailing Stop',
-          icon: <ShieldCheck size={11} className="text-[#f47a20]" />,
-          prompt: `Guide 1.5-ATR dynamic trailing stop and loss-cut threshold for ${cleanSym} based on 14-ATR and weekly VWAP.`
-        },
-        {
-          label: '📊 On-Chain & L2 Imbalance',
-          icon: <Layers size={11} className="text-[#38bdf8]" />,
-          prompt: `Analyze large on-chain whale accumulation and real-time L2 orderbook buy/sell imbalance ratio for ${cleanSym}.`
-        },
-        {
-          label: '🤖 Autonomous ReAct Ticket',
-          icon: <Bot size={11} className="text-[#10b981]" />,
-          prompt: `Issue an optimal execution ticket for ${cleanSym} using autonomous multi-tool ReAct workflow from news fact-checks to fractal matching.`
-        }
+        { label: '📋 Summarize my positions', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: 'Summarize my currently tracked open positions and their entry thesis.' },
+        { label: '⚠️ Any invalidation alerts?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: 'Do any of my open positions have an invalidation warning right now?' },
+        { label: '🎯 What should I do next?', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Based on my current workspace, what should my next action be?' }
       ]
     }
     if (language === 'cn') {
       return [
-        {
-          label: '🎯 实战建仓/分批点位',
-          icon: <Sparkles size={11} className="text-[#a855f7]" />,
-          prompt: `从副驾驶视角简明提供 ${cleanSym} 当前价格下的实战一/二次分批建仓点位与目标价。`
-        },
-        {
-          label: '⚡ 1.5-ATR 动态追踪止损',
-          icon: <ShieldCheck size={11} className="text-[#f47a20]" />,
-          prompt: `基于 14-ATR 与周 VWAP 指引 ${cleanSym} 的 1.5-ATR 动态追踪止损与止损/止盈基准线。`
-        },
-        {
-          label: '📊 链上巨鲸 ↔ 订单簿 L2',
-          icon: <Layers size={11} className="text-[#38bdf8]" />,
-          prompt: `分析 ${cleanSym} 的大型链上巨鲸资金流与实时订单簿买/卖失衡比例。`
-        },
-        {
-          label: '🤖 自主量化 ReAct 执行工单',
-          icon: <Bot size={11} className="text-[#10b981]" />,
-          prompt: `利用自主多工具 (ReAct) 从外媒事实核查到分形模式匹配，为 ${cleanSym} 开出最佳执行工单。`
-        }
+        { label: '📋 总结我的持仓', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '总结我当前追踪的持仓和入场依据。' },
+        { label: '⚠️ 有失效警告吗?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '我持有的仓位现在有没有触发失效(invalidation)警告？' },
+        { label: '🎯 下一步该怎么做?', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '基于我目前的持仓工作区，下一步应该采取什么行动？' }
       ]
     }
     return [
-      {
-        label: '🎯 실전 진입/분할 타점',
-        icon: <Sparkles size={11} className="text-[#a855f7]" />,
-        prompt: `${cleanSym} 현재가 기준 실전 1차/2차 분할 진입 타점과 단기/스윙 목표가를 코파일럿 관점에서 간결하게 제시해줘.`
-      },
-      {
-        label: '⚡ 1.5-ATR 동적 트레일링 스탑',
-        icon: <ShieldCheck size={11} className="text-[#f47a20]" />,
-        prompt: `${cleanSym} 실시간 14-ATR 및 주간 VWAP 기반 1.5-ATR 동적 트레일링 스탑과 분할 손절/익절 기준선을 가이드해줘.`
-      },
-      {
-        label: '📊 온체인 고래 ↔ 오더북 L2',
-        icon: <Layers size={11} className="text-[#38bdf8]" />,
-        prompt: `${cleanSym} 대형 온체인 고래 수급과 실시간 오더북 매수/매도 불균형 비율을 분석해줘.`
-      },
-      {
-        label: '🤖 자율 퀀트 ReAct 집행 티켓',
-        icon: <Bot size={11} className="text-[#10b981]" />,
-        prompt: `${cleanSym}에 대해 외신 팩트체크부터 프랙탈 패턴 매칭, 딥러닝 파동 신경망까지 자율 다중 도구(ReAct)로 최적 집행 티켓을 발행해줘.`
-      }
+      { label: '📋 내 포지션 요약해줘', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '지금 추적 중인 내 보유 포지션들과 각각의 진입 근거를 요약해줘.' },
+      { label: '⚠️ 무효화 경고 있어?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '지금 내 보유 포지션 중에 무효화(invalidation) 경고가 뜬 게 있어?' },
+      { label: '🎯 다음 행동 추천해줘', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '지금 워크스페이스 상황을 근거로 다음에 뭘 해야 하는지 추천해줘.' }
     ]
   }, [marketActiveSymbol, language])
+
+  const researchQuickChips = useMemo(() => {
+    if (language === 'en') {
+      return [
+        { label: '❓ Why this pick?', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: 'Why was this archetype recommended over the others? Cite the specific numbers.' },
+        { label: '📉 Why is MDD high?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: 'Why is the max drawdown this high, and how could it be reduced?' },
+        { label: '🔁 Walk-forward detail', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Explain the walk-forward consistency result segment by segment.' },
+        { label: '🤖 Safe to deploy?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: 'Based on these results, is it reasonable to deploy this strategy to paper trading as-is?' }
+      ]
+    }
+    if (language === 'cn') {
+      return [
+        { label: '❓ 为何推荐此策略?', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '为什么这个策略优于其他两个？请引用具体数值说明。' },
+        { label: '📉 MDD 为何偏高?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '最大回撤(MDD)为什么这么高，如何降低？' },
+        { label: '🔁 워크포워드 상세', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '请逐段说明 walk-forward 一致性结果。' },
+        { label: '🤖 可以部署吗?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '基于这些结果，现在直接部署到模拟交易是否合理？' }
+      ]
+    }
+    return [
+      { label: '❓ 왜 이 전략이 추천됐어?', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '왜 다른 전략이 아니라 이 전략이 추천됐는지, 실제 수치를 인용해서 설명해줘.' },
+      { label: '📉 MDD가 왜 이렇게 높아?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '이 전략의 최대 낙폭(MDD)이 왜 이렇게 높은지, 낮추려면 어떻게 해야 하는지 설명해줘.' },
+      { label: '🔁 워크포워드 상세 설명', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '워크포워드 구간별 결과를 구간마다 하나씩 설명해줘.' },
+      { label: '🤖 지금 배포해도 될까?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '이 결과를 근거로, 지금 바로 이 전략을 Paper Trading에 배포해도 괜찮은지 판단해줘.' }
+    ]
+  }, [language])
+
+  const activeCopilotQuickChips = marketCopilotMode === 'RESEARCH' ? researchQuickChips : positionQuickChips
+
   const [orderbookOpen, setOrderbookOpen] = useState(true)
   const [forkedStrategy, setForkedStrategy] = useState<string | null>(null)
   const [researchMode, setResearchMode] = useState<'INSIGHT' | 'GUIDE' | 'CODING'>('INSIGHT')
@@ -3808,13 +3810,17 @@ export default function Page() {
               {marketMessages.length === 0 && (
                 <div className="copilot-message">
                   <BrainCircuit size={16} color="#f47a20" />
-                  <p style={{ fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? `🤖 AETHER AI 코파일럿에게 ${marketActiveSymbol} 실시간 분석 및 매매 전략을 자유롭게 질문하세요.` : `Ask AETHER AI Copilot about ${marketActiveSymbol} live chart analysis or trade plans.`}</p>
+                  <p style={{ fontFamily: 'var(--font-sans)' }}>
+                    {marketCopilotMode === 'RESEARCH'
+                      ? (language === 'ko' ? `위에서 전략 리서치를 먼저 실행하면, 그 결과에 대해 질문할 수 있습니다.` : `Run the strategy research above first, then ask questions about the results.`)
+                      : (language === 'ko' ? `🤖 지금 보유 중인 포지션에 대해 AETHER 코파일럿에게 질문하세요.` : `Ask AETHER Copilot about your currently open positions.`)}
+                  </p>
                 </div>
               )}
 
               {/* ── AI Copilot Quick Prompt Chipsets Bar ── */}
               <div style={{ padding: '0 20px 8px 20px', display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-                {copilotQuickChips.map((chip, cIdx) => (
+                {activeCopilotQuickChips.map((chip, cIdx) => (
                   <button
                     key={cIdx}
                     type="button"
@@ -3853,7 +3859,11 @@ export default function Page() {
                       handleSendCopilotMessage(marketPrompt)
                     }
                   }}
-                  placeholder={language === 'ko' ? `${marketActiveSymbol} AI 코파일럿에게 질문하기...` : `Ask Copilot about ${marketActiveSymbol}...`}
+                  placeholder={
+                    marketCopilotMode === 'RESEARCH'
+                      ? (language === 'ko' ? '이 전략 리서치 결과에 대해 질문하기...' : 'Ask about this strategy research result...')
+                      : (language === 'ko' ? `${marketActiveSymbol} 포지션에 대해 질문하기...` : `Ask about your ${marketActiveSymbol} position...`)
+                  }
                   style={{ fontFamily: 'var(--font-sans)' }}
                 />
                 <button
@@ -4112,7 +4122,7 @@ export default function Page() {
               <div style={{ padding: '16px 24px', borderTop: '1px solid #141820', background: '#000000' }}>
                 {/* ── Modal Quick Prompt Chipsets Bar ── */}
                 <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none', marginBottom: '10px' }}>
-                  {copilotQuickChips.map((chip, cIdx) => (
+                  {activeCopilotQuickChips.map((chip, cIdx) => (
                     <button
                       key={cIdx}
                       type="button"
