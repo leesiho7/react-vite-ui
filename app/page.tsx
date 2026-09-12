@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server } from 'lucide-react'
+import { Maximize2, UserRound, Copy, Check, ExternalLink, ShieldCheck, Zap, Award, CheckCircle2, QrCode, Play, Radio, SlidersHorizontal, ArrowUpRight, BarChart2, Sparkles, Image as ImageIcon, FileText, Camera, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, BrainCircuit, Send, Bot, RefreshCw, Code2, PieChart, Palette, Paperclip, Cpu, BookOpen, X, Plus, MessageSquare, Layers, Crown, Filter, MoreHorizontal, SquareTerminal, Square, Trash2, CreditCard, Server, AlertTriangle } from 'lucide-react'
 import Navbar from './components/Navbar'
 import { useMarketWebSocket, getCleanTicker, isTraditionalAsset } from '@/lib/useMarketWebSocket'
 import { usePopularMarketsData } from '@/lib/usePopularMarketsData'
@@ -43,7 +43,13 @@ import {
   resetResearchMemory,
   fetchTradingViewConfig,
   fetchTradingViewLogs,
-  sendTradingViewSignal
+  sendTradingViewSignal,
+  fetchStrategyResearch,
+  approveStrategyResearch,
+  fetchCopilotWorkspace,
+  fetchInvalidationAlerts,
+  approveOrderTicket,
+  rejectOrderTicket
 } from '../lib/api'
 import type { BotControlResult } from '../lib/api'
 import {
@@ -52,7 +58,11 @@ import {
   PredictionLeaderboardItem,
   HiveMindBattle,
   ArenaStrategyItem,
-  AuthResponse
+  AuthResponse,
+  StrategyResearchResult,
+  StrategyArchetypeKey,
+  CopilotWorkspaceResponse,
+  InvalidationAlert
 } from '../lib/types'
 import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
@@ -925,11 +935,29 @@ export default function Page() {
   const [researchOpen, setResearchOpen] = useState(true)
   const [marketActiveSymbol, setMarketActiveSymbol] = useState('BTC / USD')
   const [marketChartInterval, setMarketChartInterval] = useState('1W')
-  const [marketCopilotTab, setMarketCopilotTab] = useState<'INSIGHTS' | 'GUIDE' | 'CODE'>('INSIGHTS')
+  const [marketCopilotMode, setMarketCopilotMode] = useState<'RESEARCH' | 'POSITION'>('RESEARCH')
   const [marketPrompt, setMarketPrompt] = useState('')
   const [marketCopilotLoading, setMarketCopilotLoading] = useState(false)
-  const [marketMessages, setMarketMessages] = useState<{ role: 'user' | 'assistant'; text: string; time: string }[]>([])
+  const [marketMessages, setMarketMessages] = useState<{ role: 'user' | 'assistant'; text: string; time: string; orderTicket?: any }[]>([])
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(false)
+
+  // ── 리서치모드: 전략 연구·검증 ──
+  const [copilotResearchLoading, setCopilotResearchLoading] = useState(false)
+  const [researchResult, setResearchResult] = useState<StrategyResearchResult | null>(null)
+  const [copilotResearchError, setCopilotResearchError] = useState<string | null>(null)
+  const [deployArchetype, setDeployArchetype] = useState<StrategyArchetypeKey | null>(null)
+  const [deployBotName, setDeployBotName] = useState('')
+  const [deployExchange, setDeployExchange] = useState<'BINANCE' | 'BYBIT' | 'OKX'>('OKX')
+  const [deployApiKey, setDeployApiKey] = useState('')
+  const [deployApiSecret, setDeployApiSecret] = useState('')
+  const [deployApiPassphrase, setDeployApiPassphrase] = useState('')
+  const [deploying, setDeploying] = useState(false)
+  const [deployResultMsg, setDeployResultMsg] = useState<string | null>(null)
+
+  // ── 스마트포지션 모드: 보유 포지션 워크스페이스 & 무효화 경고 ──
+  const [positionWorkspace, setPositionWorkspace] = useState<CopilotWorkspaceResponse | null>(null)
+  const [positionAlerts, setPositionAlerts] = useState<InvalidationAlert[]>([])
+  const [positionLoading, setPositionLoading] = useState(false)
   const [visionScanOpen, setVisionScanOpen] = useState(false)
   const [autoTunerOpen, setAutoTunerOpen] = useState(false)
   const [articleModalOpen, setArticleModalOpen] = useState(false)
@@ -975,9 +1003,7 @@ export default function Page() {
     setMarketPrompt('')
     setMarketCopilotLoading(true)
 
-    const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' :
-      marketCopilotTab === 'GUIDE' ? 'GUIDE' :
-      marketCopilotTab === 'CODE' ? 'CODING' : 'GUIDE'
+    const mappedMode = userMsg.includes('자율') || userMsg.includes('ReAct') || userMsg.includes('도구') ? 'AGENT' : 'GUIDE'
     const cleanSym = getSymbolTicker(marketActiveSymbol)
     const copilotHistory = marketMessages.slice(-6).map(m => ({ role: m.role, content: m.text })).filter(m => m.content.trim().length > 0)
 
@@ -997,12 +1023,102 @@ export default function Page() {
         history: copilotHistory
       })
       const text = res.reply || res.answer || `[${cleanSym} 퀀트 코파일럿] 실시간 호가 기준 상방 모멘텀 테스트 유효.`
-      setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now }])
+      setMarketMessages(prev => [...prev, { role: 'assistant', text, time: now, orderTicket: res.orderTicket || null }])
     } catch (err: any) {
       setMarketMessages(prev => [...prev, { role: 'assistant', text: `❌ [백엔드 AI 오류] ${err?.message || '스프링부트 백엔드 서버 연결 실패'}`, time: now }])
     } finally {
       setMarketCopilotLoading(false)
     }
+  }
+
+  const runStrategyResearch = async () => {
+    setCopilotResearchLoading(true)
+    setCopilotResearchError(null)
+    setResearchResult(null)
+    setDeployArchetype(null)
+    try {
+      const result = await fetchStrategyResearch(getSymbolTicker(marketActiveSymbol), 'H4')
+      if (result) {
+        setResearchResult(result)
+      } else {
+        setCopilotResearchError('전략 리서치 응답을 받지 못했습니다. 백엔드 연결을 확인해 주세요.')
+      }
+    } catch (e) {
+      setCopilotResearchError('전략 리서치 요청 중 오류가 발생했습니다.')
+    } finally {
+      setCopilotResearchLoading(false)
+    }
+  }
+
+  const openDeployForm = (archetype: StrategyArchetypeKey) => {
+    setDeployArchetype(archetype)
+    setDeployBotName(`${getSymbolTicker(marketActiveSymbol)} ${archetype.replace(/_/g, ' ')} Bot`)
+    setDeployResultMsg(null)
+  }
+
+  const submitDeploy = async () => {
+    if (!deployArchetype) return
+    if (!currentUser?.userId) {
+      setDeployResultMsg('봇을 배포하려면 로그인이 필요합니다.')
+      return
+    }
+    setDeploying(true)
+    setDeployResultMsg(null)
+    try {
+      const result = await approveStrategyResearch({
+        userId: Number(currentUser.userId),
+        botName: deployBotName || `${getSymbolTicker(marketActiveSymbol)} Copilot Bot`,
+        archetype: deployArchetype,
+        exchange: deployExchange,
+        symbol: `${getSymbolTicker(marketActiveSymbol)}USDT`,
+        timeFrame: '1h',
+        apiKey: deployApiKey,
+        apiSecret: deployApiSecret,
+        apiPassphrase: deployApiPassphrase
+      })
+      setDeployResultMsg(result?.message || (result?.success ? '봇이 생성되었습니다 (Paper Trading).' : '봇 생성에 실패했습니다.'))
+      if (result?.success) setDeployArchetype(null)
+    } catch (e) {
+      setDeployResultMsg('봇 생성 요청 중 오류가 발생했습니다.')
+    } finally {
+      setDeploying(false)
+    }
+  }
+
+  const loadPositionCopilotData = async () => {
+    setPositionLoading(true)
+    try {
+      const uid = currentUser?.userId ? String(currentUser.userId) : 'GLOBAL_USER'
+      const [ws, alerts] = await Promise.all([
+        fetchCopilotWorkspace(uid),
+        fetchInvalidationAlerts()
+      ])
+      setPositionWorkspace(ws)
+      setPositionAlerts(alerts)
+    } catch (e) {
+      console.warn('Failed to load position copilot data:', e)
+    } finally {
+      setPositionLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (marketCopilotMode === 'POSITION') {
+      loadPositionCopilotData()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marketCopilotMode])
+
+  const handleApproveOrderTicket = async (ticket: any) => {
+    const uid = currentUser?.userId ? String(currentUser.userId) : 'GLOBAL_USER'
+    const result = await approveOrderTicket(ticket, uid)
+    alert(result?.message || (result?.success ? '주문 티켓이 승인되었습니다.' : '승인에 실패했습니다.'))
+    if (result?.success) loadPositionCopilotData()
+  }
+
+  const handleRejectOrderTicket = async (ticket: any) => {
+    await rejectOrderTicket(ticket)
+    alert('주문 티켓을 거부했습니다.')
   }
 
   const copilotQuickChips = useMemo(() => {
@@ -3452,151 +3568,144 @@ export default function Page() {
 
               <div className="copilot-tabs">
                 <button
-                  className={marketCopilotTab === 'INSIGHTS' ? 'active' : ''}
-                  onClick={() => setMarketCopilotTab('INSIGHTS')}
+                  className={marketCopilotMode === 'RESEARCH' ? 'active' : ''}
+                  onClick={() => setMarketCopilotMode('RESEARCH')}
                   style={{ fontFamily: 'var(--font-sans)' }}
                 >
-                  {language === 'ko' ? '인사이트' : 'INSIGHTS'}
+                  {language === 'ko' ? '리서치모드' : 'RESEARCH'}
                 </button>
                 <button
-                  className={marketCopilotTab === 'GUIDE' ? 'active' : ''}
-                  onClick={() => setMarketCopilotTab('GUIDE')}
+                  className={marketCopilotMode === 'POSITION' ? 'active' : ''}
+                  onClick={() => setMarketCopilotMode('POSITION')}
                   style={{ fontFamily: 'var(--font-sans)' }}
                 >
-                  {language === 'ko' ? '플레이북' : 'GUIDE'}
-                </button>
-                <button
-                  className={marketCopilotTab === 'CODE' ? 'active' : ''}
-                  onClick={() => setMarketCopilotTab('CODE')}
-                  style={{ fontFamily: 'var(--font-sans)' }}
-                >
-                  {language === 'ko' ? '파이썬 코드' : 'CODE'}
+                  {language === 'ko' ? '스마트포지션 모드' : 'SMART POSITION'}
                 </button>
               </div>
 
-              {marketCopilotTab === 'INSIGHTS' && (
+              {marketCopilotMode === 'RESEARCH' ? (
+                <>
+                  <div className="insight-card">
+                    <span className="signal-tag">{marketActiveSymbol} · STRATEGY RESEARCH</span>
+                    <h3 style={{ fontFamily: 'var(--font-sans)', marginTop: '4px' }}>검증된 전략으로 봇을 만들어보세요.</h3>
+                    <p style={{ fontFamily: 'var(--font-sans)', margin: '4px 0 8px', fontSize: '12px', lineHeight: 1.55 }}>
+                      Trend Following · Mean Reversion · Breakout 3개 전략을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
+                    </p>
+                    <button
+                      type="button"
+                      className="copilot-primary-button"
+                      onClick={runStrategyResearch}
+                      disabled={copilotResearchLoading}
+                    >
+                      {copilotResearchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
+                      {copilotResearchLoading ? '리서치 진행 중...' : `${getSymbolTicker(marketActiveSymbol)} 전략 리서치 시작`}
+                    </button>
+                  </div>
+
+                  {copilotResearchError && (
+                    <div className="copilot-message copilot-message-warn">
+                      <AlertTriangle size={16} />
+                      <p>{copilotResearchError}</p>
+                    </div>
+                  )}
+
+                  {researchResult?.failureReason && (
+                    <div className="copilot-message copilot-message-warn">
+                      <AlertTriangle size={16} />
+                      <p>{researchResult.failureReason}</p>
+                    </div>
+                  )}
+
+                  {researchResult && researchResult.candidates.length > 0 && (
+                    <>
+                      <div className="strategy-candidate-grid">
+                        {researchResult.candidates.map(c => {
+                          const isRecommended = researchResult.recommendedArchetype === c.archetype
+                          return (
+                            <div key={c.archetype} className={`strategy-candidate-card ${isRecommended ? 'recommended' : ''}`}>
+                              <div className="strategy-candidate-head">
+                                <span>{c.label}</span>
+                                {isRecommended && <b className="recommended-badge"><ShieldCheck size={11} /> 추천</b>}
+                              </div>
+                              {!c.metricsReliable ? (
+                                <p className="strategy-unreliable">⚠️ {c.reliabilityNote}</p>
+                              ) : (
+                                <>
+                                  <div className="strategy-metrics-grid">
+                                    <span>승률 <b>{(c.winRate * 100).toFixed(1)}%</b></span>
+                                    <span>샤프 <b>{c.sharpeRatio.toFixed(2)}</b></span>
+                                    <span>MDD <b>{c.maxDrawdownPct.toFixed(1)}%</b></span>
+                                    <span>손익비 <b>{c.profitFactor.toFixed(2)}</b></span>
+                                    <span>누적수익 <b>{c.totalReturnPct >= 0 ? '+' : ''}{c.totalReturnPct.toFixed(1)}%</b></span>
+                                    <span>거래 <b>{c.totalTrades}회</b></span>
+                                  </div>
+                                  <div className={`walkforward-tag ${c.walkForwardConsistent ? 'ok' : 'warn'}`}>
+                                    워크포워드 {c.walkForwardProfitableSegments}/{c.walkForwardReliableSegments}구간 순이익
+                                    {c.walkForwardConsistent ? ' · 일관됨' : ' · 일관되지 않음'}
+                                  </div>
+                                  <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
+                                    이 전략으로 봇 생성 (Paper Trading)
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {researchResult.narrative && (
+                        <div className="copilot-message">
+                          <BrainCircuit size={16} />
+                          <p>{researchResult.narrative}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {deployArchetype && (
+                    <div className="copilot-deploy-form">
+                      <div className="copilot-deploy-form-head">
+                        <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성</span>
+                        <button type="button" onClick={() => setDeployArchetype(null)}><X size={14} /></button>
+                      </div>
+                      <input value={deployBotName} onChange={e => setDeployBotName(e.target.value)} placeholder="봇 이름" />
+                      <select value={deployExchange} onChange={e => setDeployExchange(e.target.value as any)}>
+                        <option value="OKX">OKX</option>
+                        <option value="BINANCE">Binance</option>
+                        <option value="BYBIT">Bybit</option>
+                      </select>
+                      <input type="password" value={deployApiKey} onChange={e => setDeployApiKey(e.target.value)} placeholder="API Key" />
+                      <input type="password" value={deployApiSecret} onChange={e => setDeployApiSecret(e.target.value)} placeholder="API Secret" />
+                      {deployExchange === 'OKX' && (
+                        <input type="password" value={deployApiPassphrase} onChange={e => setDeployApiPassphrase(e.target.value)} placeholder="OKX Passphrase" />
+                      )}
+                      <button type="button" className="copilot-primary-button" onClick={submitDeploy} disabled={deploying}>
+                        {deploying ? <RefreshCw size={14} className="animate-spin" /> : <Bot size={14} />}
+                        {deploying ? '배포 중...' : 'Paper Trading으로 배포'}
+                      </button>
+                      {deployResultMsg && <p className="copilot-deploy-result">{deployResultMsg}</p>}
+                    </div>
+                  )}
+                </>
+              ) : (
                 <div className="insight-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span className="signal-tag">{marketActiveSymbol} · {language === 'ko' ? '상승 모멘텀' : 'MOMENTUM'}</span>
-                  </div>
-                  <h3 style={{ fontFamily: 'var(--font-sans)', marginTop: '4px' }}>
-                    {language === 'ko' ? '기관급 미시구조 & 고스트 2.0 앙상블' : 'Market Structure & Dual Ghost 2.0'}
-                  </h3>
-                  <p style={{ fontFamily: 'var(--font-sans)', margin: '4px 0 8px', fontSize: '12px', lineHeight: 1.55 }}>
-                    {language === 'ko'
-                      ? '주간 VWAP 상단 지지와 함께, 과거 프랙탈 파동(89.4%)과 딥러닝 캔들 신경망(91.2%)이 동반 상방 돌파를 가리키고 있습니다.'
-                      : 'Holding above weekly VWAP with synchronized fractal trace and deep learning wave momentum.'}
-                  </p>
-                  <div className="signal-metrics">
-                    <span>{language === 'ko' ? '신뢰도' : 'CONF'} <b>84%</b></span>
-                    <span>{language === 'ko' ? '프랙탈 일치' : 'FRACTAL'} <b style={{ color: '#0284c7' }}>89.4%</b></span>
-                    <span>{language === 'ko' ? '앙상블' : 'SCORE'} <b style={{ color: '#059669' }}>+0.88</b></span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSendCopilotMessage(`${getSymbolTicker(marketActiveSymbol)} 고스트 2.0 신호 기반 실전 진입 타점과 1.5-ATR 손절선, 리스크 대응 계획을 코파일럿 관점에서 간결하게 브리핑해줘.`)}
-                    style={{
-                      marginTop: '10px',
-                      width: '100%',
-                      padding: '7px 10px',
-                      background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      boxShadow: '0 2px 6px rgba(37,99,235,0.2)',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <Sparkles size={12} />
-                    <span>{language === 'ko' ? '💬 AI 코파일럿에게 실전 타점 질문하기' : 'Ask Copilot for Trade Execution Plan'}</span>
-                  </button>
-                </div>
-              )}
-
-              {marketCopilotTab === 'GUIDE' && (
-                <div className="insight-card" style={{ borderColor: '#bfdbfe', background: '#eff6ff' }}>
-                  <span className="signal-tag" style={{ color: '#2563eb' }}>{marketActiveSymbol} · {language === 'ko' ? '퀀트 플레이북' : 'EXECUTION PLAYBOOK'}</span>
-                  <h3 style={{ color: '#1e3a8a', fontFamily: 'var(--font-sans)' }}>{language === 'ko' ? '최적 진입 & 리스크 관리 매트릭스' : 'Recommended Trade Setup'}</h3>
-                  <div style={{ color: '#1e40af', fontSize: '11px', lineHeight: 1.6, marginTop: '6px', fontFamily: 'var(--font-sans)' }}>
-                    • <b>{language === 'ko' ? '권장 진입:' : 'Entry Zone:'}</b> {language === 'ko' ? 'SMA20 지지선 부근 분할 매수' : 'Limit order near Support'}<br />
-                    • <b>{language === 'ko' ? '익절 타겟:' : 'Target:'}</b> {language === 'ko' ? '+2.8% 1차 저항선' : '+2.8% Resistance target'}<br />
-                    • <b>{language === 'ko' ? '손절 기준:' : 'Stop Loss:'}</b> {language === 'ko' ? '-1.2% 트레일링 스탑' : '-1.2% trailing stop'}
-                  </div>
-                  <div className="signal-metrics" style={{ borderColor: '#dbeafe', marginTop: '10px' }}>
-                    <span>{language === 'ko' ? '손익비' : 'RISK REWARD'} <b>1 : 2.6</b></span>
-                    <span>{language === 'ko' ? '최대 리스크' : 'MAX RISK'} <b>0.35x</b></span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleSendCopilotMessage(`${getSymbolTicker(marketActiveSymbol)} 실시간 14-ATR 및 주간 VWAP 기반 1.5-ATR 동적 트레일링 스탑과 분할 손절/익절 기준선을 가이드해줘.`)}
-                    style={{
-                      marginTop: '10px',
-                      width: '100%',
-                      padding: '7px 10px',
-                      background: '#2563eb',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <ShieldCheck size={12} />
-                    <span>{language === 'ko' ? '⚡ 1.5-ATR 스탑로스 가이드 요청' : 'Guide 1.5-ATR Trailing Stop'}</span>
-                  </button>
-                </div>
-              )}
-
-              {marketCopilotTab === 'CODE' && (
-                <div className="insight-card" style={{ borderColor: '#cbd5e1', background: '#090e17', color: '#38bdf8' }}>
-                  <span className="signal-tag" style={{ color: '#38bdf8' }}>{language === 'ko' ? '파이썬 3.12 24/7 퀀트 전략' : 'PYTHON QUANT STRATEGY'}</span>
-                  <pre style={{ margin: 0, fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#a5f3fc', overflowX: 'auto', lineHeight: 1.45 }}>
-{`# 24H Mean Reversion Strategy (${marketActiveSymbol.replace(' / ', '/')})
-def on_market_tick(tick: dict) -> dict:
-    rsi = as_float(tick.get("rsi"))
-    if rsi is None:
-        return {"action": "HOLD", "reason": "warming up"}
-    if rsi < 32.0:
-        return {"action": "BUY", "risk_usd": 200.0}
-    if rsi > 68.0:
-        return {"action": "SELL", "risk_usd": 200.0}
-    return {"action": "HOLD"}`}
-                  </pre>
-                  <button
-                    type="button"
-                    onClick={() => handleSendCopilotMessage(`${getSymbolTicker(marketActiveSymbol)} 평균회귀 파이썬 전략을 파이썬 샌드박스에서 즉시 백테스팅하고 샤프비율과 승률을 검증해줘.`)}
-                    style={{
-                      marginTop: '10px',
-                      width: '100%',
-                      padding: '7px 10px',
-                      background: '#0284c7',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Bot size={12} />
-                    <span>{language === 'ko' ? '🤖 이 전략 샌드박스 백테스트 요청' : 'Backtest Strategy in Sandbox'}</span>
-                  </button>
+                  <span className="signal-tag">{marketActiveSymbol} · POSITION WORKSPACE</span>
+                  {positionLoading ? (
+                    <p style={{ fontFamily: 'var(--font-sans)' }}><RefreshCw size={12} className="animate-spin" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />포지션 워크스페이스 불러오는 중...</p>
+                  ) : !currentUser ? (
+                    <p style={{ fontFamily: 'var(--font-sans)' }}>로그인하면 보유 포지션과 무효화 경고를 확인할 수 있습니다.</p>
+                  ) : positionWorkspace && positionWorkspace.openPositionCount > 0 ? (
+                    <p style={{ fontFamily: 'var(--font-sans)' }}>{positionWorkspace.summaryText || `${positionWorkspace.openPositionCount}개의 포지션을 추적 중입니다.`}</p>
+                  ) : (
+                    <p style={{ fontFamily: 'var(--font-sans)' }}>현재 추적 중인 보유 포지션이 없습니다.</p>
+                  )}
+                  {positionAlerts.length > 0 && (
+                    <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {positionAlerts.map((a, idx) => (
+                        <p key={idx} style={{ margin: 0, fontSize: '11px', color: '#b91c1c', fontFamily: 'var(--font-sans)' }}>⚠️ {a.message || JSON.stringify(a)}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -3620,6 +3729,25 @@ def on_market_tick(tick: dict) -> dict:
                         <span>{m.time}</span>
                       </div>
                       <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{m.text}</div>
+                      {m.orderTicket && (
+                        <div className="order-ticket-card">
+                          <div className="order-ticket-head">
+                            <span>{m.orderTicket.side} {m.orderTicket.symbol}</span>
+                            <b>{m.orderTicket.status}</b>
+                          </div>
+                          <div className="order-ticket-metrics">
+                            <span>진입 <b>{m.orderTicket.entryPrice}</b></span>
+                            <span>손절 <b>{m.orderTicket.stopLoss}</b></span>
+                            <span>목표 <b>{m.orderTicket.takeProfit}</b></span>
+                          </div>
+                          {m.orderTicket.status === 'PROPOSED' && (
+                            <div className="order-ticket-actions">
+                              <button type="button" onClick={() => handleApproveOrderTicket(m.orderTicket)}><Check size={12} /> 승인</button>
+                              <button type="button" onClick={() => handleRejectOrderTicket(m.orderTicket)}><X size={12} /> 거부</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {m.role === 'assistant' && (
                         <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
                           <button
@@ -3759,14 +3887,11 @@ def on_market_tick(tick: dict) -> dict:
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div className="copilot-tabs" style={{ margin: 0, padding: 0 }}>
-                    <button className={marketCopilotTab === 'INSIGHTS' ? 'active' : ''} onClick={() => setMarketCopilotTab('INSIGHTS')} style={{ padding: '6px 12px', fontSize: '12px' }}>
-                      {language === 'ko' ? '인사이트' : 'INSIGHTS'}
+                    <button className={marketCopilotMode === 'RESEARCH' ? 'active' : ''} onClick={() => setMarketCopilotMode('RESEARCH')} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                      {language === 'ko' ? '리서치모드' : 'RESEARCH'}
                     </button>
-                    <button className={marketCopilotTab === 'GUIDE' ? 'active' : ''} onClick={() => setMarketCopilotTab('GUIDE')} style={{ padding: '6px 12px', fontSize: '12px' }}>
-                      {language === 'ko' ? '플레이북' : 'GUIDE'}
-                    </button>
-                    <button className={marketCopilotTab === 'CODE' ? 'active' : ''} onClick={() => setMarketCopilotTab('CODE')} style={{ padding: '6px 12px', fontSize: '12px' }}>
-                      {language === 'ko' ? '파이썬 코드' : 'CODE'}
+                    <button className={marketCopilotMode === 'POSITION' ? 'active' : ''} onClick={() => setMarketCopilotMode('POSITION')} style={{ padding: '6px 12px', fontSize: '12px' }}>
+                      {language === 'ko' ? '스마트포지션 모드' : 'SMART POSITION'}
                     </button>
                   </div>
                   <button
@@ -3780,82 +3905,122 @@ def on_market_tick(tick: dict) -> dict:
 
               {/* Modal Body */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', background: '#000000' }}>
-                {marketCopilotTab === 'INSIGHTS' && (
+                {marketCopilotMode === 'RESEARCH' ? (
+                  <>
+                    <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#080808', border: '1px solid #1c1c1c' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{marketActiveSymbol} · STRATEGY RESEARCH</span>
+                      <h4 style={{ margin: '6px 0 8px 0', fontSize: '15px', color: '#f3f4f6' }}>검증된 전략으로 봇을 만들어보세요.</h4>
+                      <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.6, color: '#9ca3af' }}>
+                        Trend Following · Mean Reversion · Breakout 3개 전략을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
+                      </p>
+                      <button type="button" className="copilot-primary-button" onClick={runStrategyResearch} disabled={copilotResearchLoading}>
+                        {copilotResearchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
+                        {copilotResearchLoading ? '리서치 진행 중...' : `${getSymbolTicker(marketActiveSymbol)} 전략 리서치 시작`}
+                      </button>
+                    </div>
+
+                    {copilotResearchError && (
+                      <div className="copilot-message copilot-message-warn">
+                        <AlertTriangle size={16} />
+                        <p>{copilotResearchError}</p>
+                      </div>
+                    )}
+                    {researchResult?.failureReason && (
+                      <div className="copilot-message copilot-message-warn">
+                        <AlertTriangle size={16} />
+                        <p>{researchResult.failureReason}</p>
+                      </div>
+                    )}
+
+                    {researchResult && researchResult.candidates.length > 0 && (
+                      <>
+                        <div className="strategy-candidate-grid">
+                          {researchResult.candidates.map(c => {
+                            const isRecommended = researchResult.recommendedArchetype === c.archetype
+                            return (
+                              <div key={c.archetype} className={`strategy-candidate-card ${isRecommended ? 'recommended' : ''}`}>
+                                <div className="strategy-candidate-head">
+                                  <span>{c.label}</span>
+                                  {isRecommended && <b className="recommended-badge"><ShieldCheck size={11} /> 추천</b>}
+                                </div>
+                                {!c.metricsReliable ? (
+                                  <p className="strategy-unreliable">⚠️ {c.reliabilityNote}</p>
+                                ) : (
+                                  <>
+                                    <div className="strategy-metrics-grid">
+                                      <span>승률 <b>{(c.winRate * 100).toFixed(1)}%</b></span>
+                                      <span>샤프 <b>{c.sharpeRatio.toFixed(2)}</b></span>
+                                      <span>MDD <b>{c.maxDrawdownPct.toFixed(1)}%</b></span>
+                                      <span>손익비 <b>{c.profitFactor.toFixed(2)}</b></span>
+                                      <span>누적수익 <b>{c.totalReturnPct >= 0 ? '+' : ''}{c.totalReturnPct.toFixed(1)}%</b></span>
+                                      <span>거래 <b>{c.totalTrades}회</b></span>
+                                    </div>
+                                    <div className={`walkforward-tag ${c.walkForwardConsistent ? 'ok' : 'warn'}`}>
+                                      워크포워드 {c.walkForwardProfitableSegments}/{c.walkForwardReliableSegments}구간 순이익
+                                      {c.walkForwardConsistent ? ' · 일관됨' : ' · 일관되지 않음'}
+                                    </div>
+                                    <button type="button" className="strategy-deploy-button" onClick={() => openDeployForm(c.archetype)}>
+                                      이 전략으로 봇 생성 (Paper Trading)
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {researchResult.narrative && (
+                          <div className="copilot-message">
+                            <BrainCircuit size={16} />
+                            <p>{researchResult.narrative}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {deployArchetype && (
+                      <div className="copilot-deploy-form">
+                        <div className="copilot-deploy-form-head">
+                          <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성</span>
+                          <button type="button" onClick={() => setDeployArchetype(null)}><X size={14} /></button>
+                        </div>
+                        <input value={deployBotName} onChange={e => setDeployBotName(e.target.value)} placeholder="봇 이름" />
+                        <select value={deployExchange} onChange={e => setDeployExchange(e.target.value as any)}>
+                          <option value="OKX">OKX</option>
+                          <option value="BINANCE">Binance</option>
+                          <option value="BYBIT">Bybit</option>
+                        </select>
+                        <input type="password" value={deployApiKey} onChange={e => setDeployApiKey(e.target.value)} placeholder="API Key" />
+                        <input type="password" value={deployApiSecret} onChange={e => setDeployApiSecret(e.target.value)} placeholder="API Secret" />
+                        {deployExchange === 'OKX' && (
+                          <input type="password" value={deployApiPassphrase} onChange={e => setDeployApiPassphrase(e.target.value)} placeholder="OKX Passphrase" />
+                        )}
+                        <button type="button" className="copilot-primary-button" onClick={submitDeploy} disabled={deploying}>
+                          {deploying ? <RefreshCw size={14} className="animate-spin" /> : <Bot size={14} />}
+                          {deploying ? '배포 중...' : 'Paper Trading으로 배포'}
+                        </button>
+                        {deployResultMsg && <p className="copilot-deploy-result">{deployResultMsg}</p>}
+                      </div>
+                    )}
+                  </>
+                ) : (
                   <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#080808', border: '1px solid #1c1c1c' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{marketActiveSymbol} · {language === 'ko' ? '상승 모멘텀 진단' : 'MOMENTUM INSIGHT'}</span>
-                    </div>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#f3f4f6' }}>{language === 'ko' ? '기관급 시장 미시구조 & 고스트 2.0 듀얼 앙상블 분석' : 'Institutional Market Structure & Dual Ghost 2.0'}</h4>
-                    <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, color: '#9ca3af' }}>
-                      {language === 'ko'
-                        ? '주간 VWAP 상단 지지와 함께, 과거 프랙탈 파동(89.4%)과 딥러닝 캔들 신경망(91.2%)이 동반 상방 돌파를 가리키고 있습니다. 합성 앙상블 점수 +0.88로 강력한 매수 엣지가 형성되었습니다.'
-                        : 'Holding above weekly VWAP with synchronized fractal trace and deep learning wave momentum. Ensemble score +0.88 confirms high-conviction long setup.'}
-                    </p>
-                    <div style={{ display: 'flex', gap: '16px', marginTop: '12px', padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>{language === 'ko' ? '신뢰도:' : 'Confidence:'} <b style={{ color: '#10b981' }}>84%</b></span>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>{language === 'ko' ? '프랙탈 일치율:' : 'Fractal Match:'} <b style={{ color: '#38bdf8' }}>89.4%</b></span>
-                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>{language === 'ko' ? '앙상블 스코어:' : 'Ensemble Score:'} <b style={{ color: '#34d399' }}>+0.88</b></span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsCopilotExpanded(false)
-                        handleSendCopilotMessage(`${getSymbolTicker(marketActiveSymbol)} 고스트 2.0 신호 기반 실전 진입 타점과 1.5-ATR 손절선, 리스크 대응 계획을 코파일럿 관점에서 간결하게 브리핑해줘.`)
-                      }}
-                      style={{
-                        marginTop: '12px',
-                        padding: '8px 14px',
-                        background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Sparkles size={13} />
-                      <span>{language === 'ko' ? '💬 AI 코파일럿에게 실전 타점 질문하기' : 'Ask Copilot for Trade Execution Plan'}</span>
-                    </button>
-                  </div>
-                )}
-                {marketCopilotTab === 'GUIDE' && (
-                  <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#040a14', border: '1px solid #10243e' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#3b82f6' }}>{marketActiveSymbol} · {language === 'ko' ? '기관급 분할 진입 가이드' : 'EXECUTION PLAYBOOK'}</span>
-                      <span style={{ fontSize: '11px', color: '#60a5fa', fontWeight: 600 }}>손익비 1:2.6 · 최대 허용 리스크 0.35x</span>
-                    </div>
-                    <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#bfdbfe' }}>
-                      • <b>권장 진입:</b> SMA 20 지지선 부근 분할 매수<br />
-                      • <b>익절 타겟:</b> +2.8% 1차 저항선 도달 시 50% 분할 익절<br />
-                      • <b>손절 기준:</b> -1.2% 하향 이탈 시 트레일링 스탑 청산
-                    </div>
-                  </div>
-                )}
-                {marketCopilotTab === 'CODE' && (
-                  <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#040404', border: '1px solid #171717' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8' }}>PYTHON 3.12 QUANT BOT</span>
-                    <pre style={{ margin: '10px 0 0 0', fontSize: '12px', fontFamily: 'var(--font-mono)', color: '#7dd3fc', lineHeight: 1.5, overflowX: 'auto' }}>
-{`# 24H High-Performance Algorithmic Bot (${marketActiveSymbol.replace(' / ', '/')})
-def on_market_tick(tick: dict) -> dict:
-    rsi = as_float(tick.get("rsi"))
-    position = position_of(tick)
-    if rsi is None:
-        return {"action": "HOLD", "reason": "warming up"}
-    if position["side"]:
-        unrealized = pnl_pct(position, tick.get("price"))
-        if unrealized is not None and unrealized <= -2.5:
-            return {"action": "CLOSE", "reason": "stop loss"}
-        return {"action": "HOLD"}
-    if rsi < 32.0:
-        return {"action": "BUY", "risk_usd": 350.0}
-    if rsi > 68.0:
-        return {"action": "SELL", "risk_usd": 350.0}
-    return {"action": "HOLD"}`}
-                    </pre>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{marketActiveSymbol} · POSITION WORKSPACE</span>
+                    {positionLoading ? (
+                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#9ca3af' }}><RefreshCw size={12} className="animate-spin" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />포지션 워크스페이스 불러오는 중...</p>
+                    ) : !currentUser ? (
+                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#9ca3af' }}>로그인하면 보유 포지션과 무효화 경고를 확인할 수 있습니다.</p>
+                    ) : positionWorkspace && positionWorkspace.openPositionCount > 0 ? (
+                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#9ca3af' }}>{positionWorkspace.summaryText || `${positionWorkspace.openPositionCount}개의 포지션을 추적 중입니다.`}</p>
+                    ) : (
+                      <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#9ca3af' }}>현재 추적 중인 보유 포지션이 없습니다.</p>
+                    )}
+                    {positionAlerts.length > 0 && (
+                      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {positionAlerts.map((a, idx) => (
+                          <p key={idx} style={{ margin: 0, fontSize: '12px', color: '#f87171' }}>⚠️ {a.message || JSON.stringify(a)}</p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -3887,6 +4052,25 @@ def on_market_tick(tick: dict) -> dict:
                           <span>{m.time}</span>
                         </div>
                         <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        {m.orderTicket && (
+                          <div className="order-ticket-card">
+                            <div className="order-ticket-head">
+                              <span>{m.orderTicket.side} {m.orderTicket.symbol}</span>
+                              <b>{m.orderTicket.status}</b>
+                            </div>
+                            <div className="order-ticket-metrics">
+                              <span>진입 <b>{m.orderTicket.entryPrice}</b></span>
+                              <span>손절 <b>{m.orderTicket.stopLoss}</b></span>
+                              <span>목표 <b>{m.orderTicket.takeProfit}</b></span>
+                            </div>
+                            {m.orderTicket.status === 'PROPOSED' && (
+                              <div className="order-ticket-actions">
+                                <button type="button" onClick={() => handleApproveOrderTicket(m.orderTicket)}><Check size={12} /> 승인</button>
+                                <button type="button" onClick={() => handleRejectOrderTicket(m.orderTicket)}><X size={12} /> 거부</button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
