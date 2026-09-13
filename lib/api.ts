@@ -13,6 +13,7 @@ import {
   VisionChartAnalysisResponse,
   StrategyResearchResult,
   StrategyArchetypeKey,
+  StrategyCodeResponse,
   CopilotWorkspaceResponse,
   InvalidationAlert
 } from './types';
@@ -1777,15 +1778,50 @@ export function buildStrategyCodeDownloadUrl(params: {
   timeFrame?: string;
   exchange?: string;
   positionSizePct?: number;
+  lang?: 'PINE' | 'PYTHON';
 }): string {
   const query = new URLSearchParams({
     archetype: params.archetype,
+    lang: params.lang || 'PYTHON',
     symbol: params.symbol || 'BTCUSDT',
     timeFrame: params.timeFrame || '1h',
     exchange: params.exchange || 'BINANCE',
     positionSizePct: String(params.positionSizePct ?? 20.0)
   });
   return `${API_BASE}/copilot/strategy-research/export-code?${query.toString()}`;
+}
+
+/**
+ * 29-3. 채팅 안에 코드 블록으로 띄우기 위한 소스 조회. 위 다운로드 URL과 같은 백엔드 생성기를
+ * 쓰므로, 대화에서 본 코드와 내려받은 파일이 서로 다를 일이 없다.
+ */
+export async function fetchStrategyCode(params: {
+  archetype: StrategyArchetypeKey;
+  lang: 'PINE' | 'PYTHON';
+  symbol?: string;
+  timeFrame?: string;
+  exchange?: string;
+  positionSizePct?: number;
+}): Promise<StrategyCodeResponse | null> {
+  try {
+    const query = new URLSearchParams({
+      archetype: params.archetype,
+      lang: params.lang,
+      symbol: params.symbol || 'BTCUSDT',
+      timeFrame: params.timeFrame || '1h',
+      exchange: params.exchange || 'BINANCE',
+      positionSizePct: String(params.positionSizePct ?? 20.0)
+    });
+    const res = await fetch(`${API_BASE}/copilot/strategy-research/code?${query.toString()}`, {
+      signal: AbortSignal.timeout(20000)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchStrategyCode error:', err);
+  }
+  return null;
 }
 
 // ── AI 코파일럿: 포지션 코파일럿 (Position Copilot) ──

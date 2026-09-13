@@ -290,6 +290,18 @@ export interface StrategyCandidateView {
   robust: boolean;
 }
 
+/** 채팅 안에서 코드 블록으로 렌더할 전략 코드. 파일 다운로드와 같은 생성기에서 나온다. */
+export interface StrategyCodeResponse {
+  archetype: StrategyArchetypeKey;
+  language: 'PINE' | 'PYTHON';
+  syntax?: string | null;
+  filename?: string | null;
+  /** 지원하지 않는 조합이면 null */
+  code?: string | null;
+  /** 생성하지 못한 이유. 생성됐으면 null */
+  unsupportedReason?: string | null;
+}
+
 export interface StrategyResearchResult {
   symbol: string;
   timeframe: string;

@@ -48,6 +48,7 @@ import {
   fetchStrategyResearch,
   approveStrategyResearch,
   buildStrategyCodeDownloadUrl,
+  fetchStrategyCode,
   fetchCopilotWorkspace,
   fetchInvalidationAlerts,
   approveOrderTicket,
@@ -929,6 +930,57 @@ function getAssetTelemetry(symbol: string) {
  */
 const RERUN_INTENT = /다시\s*(돌려|실행|해줘|분석|검증|리서치)|재실행|새로\s*고침|리프레시|\brefresh\b|re-?run/i
 
+/** 채팅 말풍선 안에 붙는 생성된 전략 코드. */
+type ChatCodeBlock = { language: 'PINE' | 'PYTHON'; filename: string; source: string; downloadUrl: string }
+
+/** 채팅 안에서 코드를 그대로 보여주고 복사/다운로드까지 끝내는 블록. 라이트 패널과 다크 모달이 같이 쓴다. */
+function CopilotCodeBlock({ code, dark }: { code: ChatCodeBlock; dark?: boolean }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code.source)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // 클립보드 권한이 없는 브라우저/컨텍스트(비 HTTPS 등)에서는 옆의 다운로드로 받으면 된다.
+    }
+  }
+
+  const actionStyle: React.CSSProperties = {
+    fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px', cursor: 'pointer',
+    textDecoration: 'none', border: `1px solid ${dark ? '#1e293b' : '#e2e8f0'}`,
+    background: dark ? '#0a0f18' : '#fff', color: dark ? '#94a3b8' : '#475569'
+  }
+
+  return (
+    <div style={{ marginTop: '8px', borderRadius: '8px', overflow: 'hidden', border: `1px solid ${dark ? '#1c1c1c' : '#e2e8f0'}` }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px',
+        padding: '5px 8px', background: dark ? '#080808' : '#f1f5f9',
+        borderBottom: `1px solid ${dark ? '#1c1c1c' : '#e2e8f0'}`
+      }}>
+        <span style={{ fontSize: '9px', fontWeight: 700, color: '#f47a20', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {code.language === 'PINE' ? 'PINE SCRIPT v5' : 'PYTHON'} · {code.filename}
+        </span>
+        <span style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+          <button type="button" onClick={handleCopy} style={actionStyle}>
+            {copied ? '복사됨' : '복사'}
+          </button>
+          <a href={code.downloadUrl} download={code.filename} style={actionStyle}>다운로드</a>
+        </span>
+      </div>
+      <pre style={{
+        margin: 0, padding: '8px 10px', maxHeight: '240px', overflow: 'auto',
+        fontSize: '10px', lineHeight: 1.5, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        background: dark ? '#000000' : '#ffffff', color: dark ? '#cbd5e1' : '#334155'
+      }}>
+        <code>{code.source}</code>
+      </pre>
+    </div>
+  )
+}
+
 export default function Page() {
   const popularMarketsData = usePopularMarketsData()
   const [query, setQuery] = useState('')
@@ -948,7 +1000,7 @@ export default function Page() {
   const [marketCopilotMode, setMarketCopilotMode] = useState<'RESEARCH' | 'POSITION'>('RESEARCH')
   const [marketPrompt, setMarketPrompt] = useState('')
   const [marketCopilotLoading, setMarketCopilotLoading] = useState(false)
-  const [marketMessages, setMarketMessages] = useState<{ id: string; role: 'user' | 'assistant'; text: string; time: string; orderTicket?: any; isStreaming?: boolean }[]>([])
+  const [marketMessages, setMarketMessages] = useState<{ id: string; role: 'user' | 'assistant'; text: string; time: string; orderTicket?: any; isStreaming?: boolean; code?: ChatCodeBlock }[]>([])
   const [isCopilotExpanded, setIsCopilotExpanded] = useState(false)
 
   // ── 리서치모드: 전략 연구·검증 ──
@@ -1060,6 +1112,15 @@ export default function Page() {
       }
     }
 
+    // "파인스크립트로 줘" 같은 코드 요청은 LLM을 태우지 않고 결정론적 생성기로 바로 답한다 —
+    // 코드를 LLM이 쓰면 화면의 백테스트 숫자와 다른 전략이 나가고 컴파일 여부도 보장할 수 없다.
+    const codeRequest = marketCopilotMode === 'RESEARCH' ? parseCodeRequestFromText(userMsg) : null
+    if (codeRequest) {
+      await respondWithStrategyCode(agentMsgId, codeRequest, effectiveResearchResult)
+      setMarketCopilotLoading(false)
+      return
+    }
+
     // 범용 전술 Q&A(진입 타점/ATR 스탑/온체인 등)는 이미 별도 AI 리서치 섹션(/ai/research-chat)이
     // 제공하므로 여기서 중복시키지 않는다. 이 코파일럿 데스크의 채팅은 그 기능과 완전히 분리된
     // 전용 백엔드(/api/copilot/chat/stream)를 쓰고, 모드별로 실제 계산된 데이터(전략 리서치
@@ -1156,6 +1217,97 @@ export default function Page() {
       if (pattern.test(text)) return ticker
     }
     return null
+  }
+
+  /**
+   * 코드 요청에 코드 블록으로 답한다. LLM을 거치지 않는다 — 백엔드 생성기가 StrategyArchetype에서
+   * 결정론적으로 번역하므로, 사용자가 받는 코드는 화면에 뜬 백테스트 숫자와 같은 규칙이다.
+   */
+  const respondWithStrategyCode = async (
+    agentMsgId: string,
+    request: { language: 'PINE' | 'PYTHON'; archetype?: StrategyArchetypeKey },
+    result: StrategyResearchResult | null
+  ) => {
+    const reply = (text: string, code?: ChatCodeBlock) =>
+      setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text, code, isStreaming: false } : m))
+
+    // 전략을 직접 말하지 않았으면 추천 전략 → 없으면 검증을 통과한 첫 후보 순으로 고른다.
+    const archetype = request.archetype
+      || result?.recommendedArchetype
+      || result?.candidates.find(c => c.robust)?.archetype
+    if (!archetype) {
+      reply('아직 코드로 내보낼 전략이 정해지지 않았습니다. "추세추종 파인스크립트 줘"처럼 전략 이름을 같이 말씀해 주시거나, 먼저 리서치를 돌려주세요.')
+      return
+    }
+
+    const prettyName = archetype.replace(/_/g, ' ')
+    const langLabel = request.language === 'PINE' ? 'Pine Script v5' : '파이썬'
+    reply(`${prettyName} 전략을 ${langLabel} 코드로 생성하고 있습니다...`)
+
+    const codeParams = {
+      archetype,
+      lang: request.language,
+      symbol: `${getResearchedTicker()}USDT`,
+      timeFrame: getValidatedTimeFrameCode(archetype)
+    }
+    const generated = await fetchStrategyCode(codeParams)
+
+    if (!generated) {
+      reply('코드 생성 요청이 실패했습니다. 백엔드 연결을 확인해 주세요.')
+      return
+    }
+    if (!generated.code) {
+      // 패턴 전략을 Pine으로 요청한 경우 등 — 백엔드가 준 사유를 그대로 전달한다.
+      reply(generated.unsupportedReason || '이 전략은 요청하신 언어로 내보낼 수 없습니다.')
+      return
+    }
+
+    reply(
+      request.language === 'PINE'
+        ? `${prettyName} 전략의 Pine Script v5입니다. TradingView 차트 > Pine 에디터에 붙여넣고 "차트에 추가"하면 바로 백테스트가 돌아갑니다. 진입 규칙과 TP/SL은 코파일럿이 검증한 값 그대로이고, 펀딩피·슬리피지 차이는 코드 상단 주석에 적어뒀습니다.`
+        : `${prettyName} 전략의 파이썬 봇 코드입니다. "봇 생성"으로 배포될 때와 정확히 같은 코드입니다.`,
+      {
+        language: generated.language,
+        filename: generated.filename || 'strategy',
+        source: generated.code,
+        downloadUrl: buildStrategyCodeDownloadUrl(codeParams)
+      }
+    )
+  }
+
+  /**
+   * 채팅 문장에서 "코드 내놔" 의도를 뽑아낸다. 못 찾으면 null (평소처럼 LLM 답변으로 간다).
+   *
+   * 코드 생성은 LLM을 타지 않는다 — 백엔드의 결정론적 생성기가 StrategyArchetype에서 바로
+   * 번역하므로, 여기서는 "어떤 언어로 / 어떤 전략을" 두 가지만 알아내면 된다.
+   */
+  const parseCodeRequestFromText = (text: string): { language: 'PINE' | 'PYTHON'; archetype?: StrategyArchetypeKey } | null => {
+    const wantsPine = /파인\s*스크립트|파인스크립트|pine\s*script|pinescript|트레이딩뷰|tradingview/i.test(text)
+    const wantsPython = /파이썬|파이선|python|\.py\b/i.test(text)
+    // "코드 줘"처럼 언어를 안 밝히면 봇 배포와 같은 파이썬을 기본으로 준다.
+    const wantsCode = /코드|소스|스크립트|code|script/i.test(text)
+    if (!wantsPine && !wantsPython && !wantsCode) return null
+
+    const language: 'PINE' | 'PYTHON' = wantsPine ? 'PINE' : 'PYTHON'
+
+    // 문장에 전략 이름이 직접 나오면 그걸 쓴다 (없으면 호출부가 추천 전략으로 채운다).
+    const archetypeAliases: Array<[RegExp, StrategyArchetypeKey]> = [
+      [/추세추종|골든\s*크로스|TREND_FOLLOWING/i, 'TREND_FOLLOWING'],
+      [/평균회귀|MEAN_REVERSION/i, 'MEAN_REVERSION'],
+      [/돌파.*돈치안|돈치안|DONCHIAN|\bBREAKOUT\b/i, 'BREAKOUT'],
+      [/RSI_STANDALONE|RSI\s*단독|RSI\s*과매도\s*회복/i, 'RSI_STANDALONE'],
+      [/VWAP/i, 'VWAP_TREND'],
+      [/MACD/i, 'MACD_CROSSOVER'],
+      [/리본|RIBBON/i, 'MA_RIBBON'],
+      [/스퀴즈|SQUEEZE/i, 'BOLLINGER_SQUEEZE_BREAKOUT'],
+      [/ATR/i, 'ATR_VOLATILITY_BREAKOUT'],
+      [/바텀|더블\s*바텀|트리플\s*바텀|MULTI_BOTTOM/i, 'MULTI_BOTTOM_BREAKOUT'],
+      [/가틀리|하모닉|GARTLEY/i, 'GARTLEY_222']
+    ]
+    for (const [pattern, key] of archetypeAliases) {
+      if (pattern.test(text)) return { language, archetype: key }
+    }
+    return { language }
   }
 
   /** 다음 리서치가 돌 종목. 채팅에서 지정한 값이 우선이고, 없으면 상단 차트 종목을 따른다. */
@@ -1316,6 +1468,8 @@ export default function Page() {
         { label: '📉 Why is MDD high?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: 'Why is the max drawdown this high, and how could it be reduced?' },
         { label: '🔁 Walk-forward detail', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Explain the walk-forward consistency result segment by segment.' },
         { label: '🤖 Safe to deploy?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: 'Based on these results, is it reasonable to deploy this strategy to paper trading as-is?' },
+        { label: '📜 Pine Script', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Give me the recommended strategy as a Pine Script.' },
+        { label: '🐍 Python code', icon: <Bot size={11} className="text-[#10b981]" />, prompt: 'Give me the recommended strategy as Python code.' },
         { label: '🔁 Re-run', icon: <RefreshCw size={11} className="text-[#94a3b8]" />, prompt: 'Run the research again with the latest candles.' }
       ]
     }
@@ -1325,6 +1479,8 @@ export default function Page() {
         { label: '📉 MDD 为何偏高?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '最大回撤(MDD)为什么这么高，如何降低？' },
         { label: '🔁 워크포워드 상세', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '请逐段说明 walk-forward 一致性结果。' },
         { label: '🤖 可以部署吗?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '基于这些结果，现在直接部署到模拟交易是否合理？' },
+        { label: '📜 Pine Script', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '把推荐策略输出为 Pine Script 代码。' },
+        { label: '🐍 Python 代码', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '把推荐策略输出为 Python 代码。' },
         { label: '🔁 重新运行', icon: <RefreshCw size={11} className="text-[#94a3b8]" />, prompt: '用最新的K线重新运行一次研究。' }
       ]
     }
@@ -1333,6 +1489,8 @@ export default function Page() {
       { label: '📉 MDD가 왜 이렇게 높아?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '이 전략의 최대 낙폭(MDD)이 왜 이렇게 높은지, 낮추려면 어떻게 해야 하는지 설명해줘.' },
       { label: '🔁 워크포워드 상세 설명', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '워크포워드 구간별 결과를 구간마다 하나씩 설명해줘.' },
       { label: '🤖 지금 배포해도 될까?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '이 결과를 근거로, 지금 바로 이 전략을 Paper Trading에 배포해도 괜찮은지 판단해줘.' },
+      { label: '📜 파인스크립트로 줘', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '추천 전략을 파인스크립트로 줘.' },
+      { label: '🐍 파이썬 코드로 줘', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '추천 전략을 파이썬 코드로 줘.' },
       { label: '🔁 다시 돌리기', icon: <RefreshCw size={11} className="text-[#94a3b8]" />, prompt: '최신 캔들로 전략 리서치를 다시 돌려줘.' }
     ]
   }, [language])
@@ -3920,6 +4078,7 @@ export default function Page() {
                         {m.text}
                         {m.isStreaming && <span style={{ display: 'inline-block', width: '6px', height: '12px', background: '#f47a20', marginLeft: '2px', verticalAlign: 'middle' }} className="animate-pulse" />}
                       </div>
+                      {m.code && <CopilotCodeBlock code={m.code} />}
                       {m.orderTicket && (
                         <div className="order-ticket-card">
                           <div className="order-ticket-head">
@@ -4276,6 +4435,7 @@ export default function Page() {
                           {m.text}
                           {m.isStreaming && <span style={{ display: 'inline-block', width: '7px', height: '14px', background: '#f47a20', marginLeft: '2px', verticalAlign: 'middle' }} className="animate-pulse" />}
                         </div>
+                        {m.code && <CopilotCodeBlock code={m.code} dark />}
                         {m.orderTicket && (
                           <div className="order-ticket-card">
                             <div className="order-ticket-head">
