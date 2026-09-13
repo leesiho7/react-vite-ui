@@ -921,6 +921,14 @@ function getAssetTelemetry(symbol: string) {
   }
 }
 
+/**
+ * 채팅에서 "다시 돌려줘"류의 재실행 의도. 종목·타임프레임이 그대로여도 새로 돌려야 한다.
+ *
+ * "다시" 하나만으로 판정하면 "이 전략 다시 설명해줘" 같은 순수 질문에도 걸려 11개 전략 백테스트가
+ * 통째로 다시 돈다 — 그래서 "다시" 뒤에 실행을 뜻하는 말이 붙은 경우만 재실행으로 본다.
+ */
+const RERUN_INTENT = /다시\s*(돌려|실행|해줘|분석|검증|리서치)|재실행|새로\s*고침|리프레시|\brefresh\b|re-?run/i
+
 export default function Page() {
   const popularMarketsData = usePopularMarketsData()
   const [query, setQuery] = useState('')
@@ -956,6 +964,12 @@ export default function Page() {
   const [deploying, setDeploying] = useState(false)
   const [deployResultMsg, setDeployResultMsg] = useState<string | null>(null)
   const [researchTimeFrame, setResearchTimeFrame] = useState<'M5' | 'M15' | 'H1' | 'H4' | 'D1'>('H4')
+  /** 채팅에서 지정한 리서치 종목. null이면 상단 차트에서 고른 종목을 그대로 따라간다. */
+  const [researchSymbol, setResearchSymbol] = useState<string | null>(null)
+
+  // 사용자가 상단 차트 종목을 직접 바꾸면 채팅으로 지정해둔 리서치 종목은 풀어준다 —
+  // 그래야 차트를 SOL로 옮긴 뒤 던진 질문이 예전에 말한 ETH로 조용히 돌지 않는다.
+  useEffect(() => { setResearchSymbol(null) }, [marketActiveSymbol])
 
   // ── 스마트포지션 모드: 보유 포지션 워크스페이스 & 무효화 경고 ──
   const [positionWorkspace, setPositionWorkspace] = useState<CopilotWorkspaceResponse | null>(null)
@@ -1017,18 +1031,31 @@ export default function Page() {
 
     const cleanSym = getSymbolTicker(marketActiveSymbol)
 
-    // 리서치모드에서는 채팅 질문 자체가 오케스트레이션을 자동으로 (재)실행시키는 트리거가 된다 —
-    // 아직 리서치가 없으면 처음 실행하고, 질문에 다른 타임프레임이 언급되면 그 타임프레임으로 다시 실행한다.
+    // 리서치모드는 채팅이 유일한 입구다 — 별도의 "리서치 시작" 버튼 없이, 질문 자체가
+    // 오케스트레이션을 (재)실행시키는 트리거가 된다. 다시 돌려야 하는 경우는 네 가지다:
+    // ① 아직 결과가 없다  ② "다시/새로고침" 같은 재실행 의도  ③ 다른 타임프레임 언급  ④ 다른 종목 언급.
     let effectiveResearchResult = researchResult
     if (marketCopilotMode === 'RESEARCH') {
       const mentionedTf = parseTimeFrameFromText(userMsg)
-      const needsRerun = !effectiveResearchResult || (mentionedTf && mentionedTf !== effectiveResearchResult.timeframe)
+      const mentionedSymbol = parseSymbolFromText(userMsg)
+      const needsRerun = !effectiveResearchResult
+        || RERUN_INTENT.test(userMsg)
+        || (!!mentionedTf && mentionedTf !== effectiveResearchResult.timeframe)
+        || (!!mentionedSymbol && mentionedSymbol !== effectiveResearchResult.symbol)
+
       if (needsRerun) {
+        // 언급이 없으면 "직전에 돌린 것"을 그대로 유지한다 — 재실행 요청이 조용히 다른 종목/
+        // 타임프레임으로 튀지 않게 한다.
+        const runTf = mentionedTf || effectiveResearchResult?.timeframe || researchTimeFrame
+        const runSymbol = mentionedSymbol || effectiveResearchResult?.symbol || effectiveResearchSymbol
+
         if (mentionedTf) setResearchTimeFrame(mentionedTf as any)
+        if (mentionedSymbol) setResearchSymbol(mentionedSymbol)
+
         setMarketMessages(prev => prev.map(m => m.id === agentMsgId
-          ? { ...m, text: `전략 리서치를 ${mentionedTf || researchTimeFrame} 기준으로 실행합니다 (백테스트 + 워크포워드 검증 진행 중)...` }
+          ? { ...m, text: `${runSymbol} 전략 리서치를 ${runTf} 기준으로 실행합니다 (백테스트 + 워크포워드 검증 진행 중)...` }
           : m))
-        effectiveResearchResult = await runStrategyResearch(mentionedTf || undefined)
+        effectiveResearchResult = await runStrategyResearch(runTf, runSymbol)
         setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: '' } : m))
       }
     }
@@ -1075,7 +1102,10 @@ export default function Page() {
           setMarketMessages(prev => prev.map(m => m.id === agentMsgId ? { ...m, text: accumulated } : m))
         },
         onDone: (finalData) => {
-          const finalText = accumulated || finalData?.reply || `[${cleanSym} 코파일럿] 응답을 생성하지 못했습니다.`
+          // 백엔드에서 이그레스 방화벽(LlmEgressFirewallService.sanitizeLlmOutput)을 통과한 텍스트는
+          // done 이벤트의 reply 하나뿐이다 — 스트리밍 토큰은 정화 전 원문이라, accumulated를 우선하면
+          // 방화벽이 통째로 무력화된다. reply가 오면 항상 그쪽을 확정 텍스트로 쓴다.
+          const finalText = finalData?.reply || accumulated || `[${cleanSym} 코파일럿] 응답을 생성하지 못했습니다.`
           setMarketMessages(prev => prev.map(m => m.id === agentMsgId
             ? { ...m, text: finalText, isStreaming: false }
             : m))
@@ -1106,14 +1136,69 @@ export default function Page() {
     return null
   }
 
-  const runStrategyResearch = async (timeFrameOverride?: string): Promise<StrategyResearchResult | null> => {
+  /**
+   * 채팅 문장에서 리서치할 종목을 뽑아낸다. 못 찾으면 null (직전에 돌린 종목을 그대로 쓴다).
+   *
+   * 전략 리서치는 백엔드가 바이낸스 실측 캔들로 돌리므로 암호화폐만 대상이다 — 상단 차트에서
+   * 고를 수 있는 지수/주식(NDX, TSLA 등)은 여기 목록에 없다.
+   * 티커는 \b로 단어 경계를 요구해서 "BTCUSDT" 같은 부분일치나 문장 속 우연한 대문자를 거른다.
+   */
+  const parseSymbolFromText = (text: string): string | null => {
+    const aliases: Array<[RegExp, string]> = [
+      [/비트코인|BITCOIN|\bBTC\b/i, 'BTC'],
+      [/이더리움|ETHEREUM|\bETH\b/i, 'ETH'],
+      [/솔라나|SOLANA|\bSOL\b/i, 'SOL'],
+      [/리플|RIPPLE|\bXRP\b/i, 'XRP'],
+      [/바이낸스코인|\bBNB\b/i, 'BNB'],
+      [/도지코인|도지|DOGECOIN|\bDOGE\b/i, 'DOGE']
+    ]
+    for (const [pattern, ticker] of aliases) {
+      if (pattern.test(text)) return ticker
+    }
+    return null
+  }
+
+  /** 다음 리서치가 돌 종목. 채팅에서 지정한 값이 우선이고, 없으면 상단 차트 종목을 따른다. */
+  const effectiveResearchSymbol = researchSymbol || getSymbolTicker(marketActiveSymbol)
+
+  /**
+   * 화면에 떠 있는 리서치 결과의 종목. 봇 배포와 코드 다운로드는 상단 차트가 아니라 이걸 따라야 한다 —
+   * 채팅에서 "ETH로 해줘"라고 하면 차트는 BTC 그대로인 채 리서치 종목만 바뀌기 때문에,
+   * 차트 종목을 쓰면 ETH로 검증한 전략을 BTC 봇으로 배포하는 검증-배포 불일치가 생긴다.
+   */
+  const getResearchedTicker = (): string => researchResult?.symbol || effectiveResearchSymbol
+
+  /** 백엔드 TimeFrame 열거형 이름 → 봇/거래소가 쓰는 타임프레임 코드 (core/model/TimeFrame.java와 동일) */
+  const TIMEFRAME_CODES: Record<string, string> = {
+    M1: '1m', M5: '5m', M15: '15m', H1: '1h', H4: '4h', D1: '1d'
+  }
+
+  /** 이 두 전략은 백엔드가 요청 타임프레임과 무관하게 항상 H1 8000봉 뱅크로 검증한다
+   *  (StrategyResearchOrchestrator.buildMultiBottomCandidateView / buildGartleyCandidateView). */
+  const H1_ONLY_ARCHETYPES: StrategyArchetypeKey[] = ['MULTI_BOTTOM_BREAKOUT', 'GARTLEY_222']
+
+  /**
+   * 화면에 떠 있는 후보가 "실제로 검증된" 타임프레임 코드를 돌려준다.
+   * 봇 배포와 코드 다운로드는 반드시 이 값을 써야 한다 — '1h'로 하드코딩하면 4시간봉으로
+   * 백테스트·워크포워드 검증한 전략이 1시간봉 봇으로 나가는 검증-배포 불일치가 생긴다.
+   */
+  const getValidatedTimeFrameCode = (archetype: StrategyArchetypeKey): string => {
+    if (H1_ONLY_ARCHETYPES.includes(archetype)) return '1h'
+    // researchTimeFrame(현재 선택값)이 아니라 응답에 실려 온 타임프레임을 쓴다 —
+    // 리서치 실행 후 사용자가 버튼만 눌러 선택을 바꿔도 카드의 숫자는 예전 것 그대로이기 때문.
+    const validatedTf = researchResult?.timeframe || researchTimeFrame
+    return TIMEFRAME_CODES[validatedTf] || TIMEFRAME_CODES[researchTimeFrame] || '1h'
+  }
+
+  const runStrategyResearch = async (timeFrameOverride?: string, symbolOverride?: string): Promise<StrategyResearchResult | null> => {
     const tf = timeFrameOverride || researchTimeFrame
+    const symbol = symbolOverride || effectiveResearchSymbol
     setCopilotResearchLoading(true)
     setCopilotResearchError(null)
     setResearchResult(null)
     setDeployArchetype(null)
     try {
-      const result = await fetchStrategyResearch(getSymbolTicker(marketActiveSymbol), tf)
+      const result = await fetchStrategyResearch(symbol, tf)
       if (result) {
         setResearchResult(result)
         return result
@@ -1130,7 +1215,7 @@ export default function Page() {
 
   const openDeployForm = (archetype: StrategyArchetypeKey) => {
     setDeployArchetype(archetype)
-    setDeployBotName(`${getSymbolTicker(marketActiveSymbol)} ${archetype.replace(/_/g, ' ')} Bot`)
+    setDeployBotName(`${getResearchedTicker()} ${archetype.replace(/_/g, ' ')} Bot`)
     setDeployResultMsg(null)
   }
 
@@ -1145,11 +1230,11 @@ export default function Page() {
     try {
       const result = await approveStrategyResearch({
         userId: Number(currentUser.userId),
-        botName: deployBotName || `${getSymbolTicker(marketActiveSymbol)} Copilot Bot`,
+        botName: deployBotName || `${getResearchedTicker()} Copilot Bot`,
         archetype: deployArchetype,
         exchange: deployExchange,
-        symbol: `${getSymbolTicker(marketActiveSymbol)}USDT`,
-        timeFrame: '1h',
+        symbol: `${getResearchedTicker()}USDT`,
+        timeFrame: getValidatedTimeFrameCode(deployArchetype),
         apiKey: deployApiKey,
         apiSecret: deployApiSecret,
         apiPassphrase: deployApiPassphrase
@@ -1230,7 +1315,8 @@ export default function Page() {
         { label: '❓ Why this pick?', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: 'Why was this archetype recommended over the others? Cite the specific numbers.' },
         { label: '📉 Why is MDD high?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: 'Why is the max drawdown this high, and how could it be reduced?' },
         { label: '🔁 Walk-forward detail', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Explain the walk-forward consistency result segment by segment.' },
-        { label: '🤖 Safe to deploy?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: 'Based on these results, is it reasonable to deploy this strategy to paper trading as-is?' }
+        { label: '🤖 Safe to deploy?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: 'Based on these results, is it reasonable to deploy this strategy to paper trading as-is?' },
+        { label: '🔁 Re-run', icon: <RefreshCw size={11} className="text-[#94a3b8]" />, prompt: 'Run the research again with the latest candles.' }
       ]
     }
     if (language === 'cn') {
@@ -1238,18 +1324,49 @@ export default function Page() {
         { label: '❓ 为何推荐此策略?', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '为什么这个策略优于其他两个？请引用具体数值说明。' },
         { label: '📉 MDD 为何偏高?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '最大回撤(MDD)为什么这么高，如何降低？' },
         { label: '🔁 워크포워드 상세', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '请逐段说明 walk-forward 一致性结果。' },
-        { label: '🤖 可以部署吗?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '基于这些结果，现在直接部署到模拟交易是否合理？' }
+        { label: '🤖 可以部署吗?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '基于这些结果，现在直接部署到模拟交易是否合理？' },
+        { label: '🔁 重新运行', icon: <RefreshCw size={11} className="text-[#94a3b8]" />, prompt: '用最新的K线重新运行一次研究。' }
       ]
     }
     return [
       { label: '❓ 왜 이 전략이 추천됐어?', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '왜 다른 전략이 아니라 이 전략이 추천됐는지, 실제 수치를 인용해서 설명해줘.' },
       { label: '📉 MDD가 왜 이렇게 높아?', icon: <ShieldCheck size={11} className="text-[#f47a20]" />, prompt: '이 전략의 최대 낙폭(MDD)이 왜 이렇게 높은지, 낮추려면 어떻게 해야 하는지 설명해줘.' },
       { label: '🔁 워크포워드 상세 설명', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '워크포워드 구간별 결과를 구간마다 하나씩 설명해줘.' },
-      { label: '🤖 지금 배포해도 될까?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '이 결과를 근거로, 지금 바로 이 전략을 Paper Trading에 배포해도 괜찮은지 판단해줘.' }
+      { label: '🤖 지금 배포해도 될까?', icon: <Bot size={11} className="text-[#10b981]" />, prompt: '이 결과를 근거로, 지금 바로 이 전략을 Paper Trading에 배포해도 괜찮은지 판단해줘.' },
+      { label: '🔁 다시 돌리기', icon: <RefreshCw size={11} className="text-[#94a3b8]" />, prompt: '최신 캔들로 전략 리서치를 다시 돌려줘.' }
     ]
   }, [language])
 
-  const activeCopilotQuickChips = marketCopilotMode === 'RESEARCH' ? researchQuickChips : positionQuickChips
+  /**
+   * 리서치 결과가 아직 없을 때 뜨는 칩. 기존 researchQuickChips 4개는 전부 "결과가 이미 있다"를
+   * 전제한 후속 질문이라, 버튼을 없앤 지금은 첫 화면에서 시작할 방법이 없어진다.
+   * 이 칩들은 그대로 채팅 메시지로 보내져서 평소 입력과 똑같은 경로(파싱 → 리서치 실행)를 탄다.
+   */
+  const researchStartChips = useMemo(() => {
+    if (language === 'en') {
+      return [
+        { label: '⚡ BTC 4h', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: 'Find a strategy for BTC on the 4 hour timeframe.' },
+        { label: '🔍 ETH 1h', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: 'Find a strategy for ETH on the 1 hour timeframe.' },
+        { label: '📈 SOL daily', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Find a strategy for SOL on the daily timeframe.' }
+      ]
+    }
+    if (language === 'cn') {
+      return [
+        { label: '⚡ BTC 4小时', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: '用 BTC 4小时 周期做策略研究。' },
+        { label: '🔍 ETH 1小时', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '用 ETH 1小时 周期做策略研究。' },
+        { label: '📈 SOL 日线', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '用 SOL 日线 周期做策略研究。' }
+      ]
+    }
+    return [
+      { label: '⚡ BTC 4시간봉', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: 'BTC 4시간봉으로 전략 찾아줘.' },
+      { label: '🔍 이더리움 1시간봉', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '이더리움 1시간봉으로 전략 찾아줘.' },
+      { label: '📈 솔라나 일봉', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '솔라나 일봉으로 전략 찾아줘.' }
+    ]
+  }, [language])
+
+  const activeCopilotQuickChips = marketCopilotMode === 'RESEARCH'
+    ? (researchResult ? researchQuickChips : researchStartChips)
+    : positionQuickChips
 
   const [orderbookOpen, setOrderbookOpen] = useState(true)
   const [forkedStrategy, setForkedStrategy] = useState<string | null>(null)
@@ -3642,39 +3759,21 @@ export default function Page() {
 
               {marketCopilotMode === 'RESEARCH' ? (
                 <>
-                  <div className="insight-card">
-                    <span className="signal-tag">{marketActiveSymbol} · STRATEGY RESEARCH</span>
-                    <h3 style={{ fontFamily: 'var(--font-sans)', marginTop: '4px' }}>검증된 전략으로 봇을 만들어보세요.</h3>
-                    <p style={{ fontFamily: 'var(--font-sans)', margin: '4px 0 8px', fontSize: '12px', lineHeight: 1.55 }}>
-                      9개 전략(추세/평균회귀/돌파/RSI/VWAP/MACD/이평리본/볼린저스퀴즈/ATR돌파)을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
-                    </p>
-                    <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                      {(['M5', 'M15', 'H1', 'H4', 'D1'] as const).map(tf => (
-                        <button
-                          key={tf}
-                          type="button"
-                          onClick={() => setResearchTimeFrame(tf)}
-                          style={{
-                            padding: '3px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
-                            border: researchTimeFrame === tf ? '1px solid #f47a20' : '1px solid #e2e8f0',
-                            background: researchTimeFrame === tf ? '#fff4ec' : '#fff',
-                            color: researchTimeFrame === tf ? '#f47a20' : '#64748b'
-                          }}
-                        >
-                          {tf === 'M5' ? '5분' : tf === 'M15' ? '15분' : tf === 'H1' ? '1시간' : tf === 'H4' ? '4시간' : '일봉'}
-                        </button>
-                      ))}
+                  {/* 실행 컨트롤(타임프레임 칩 + 시작 버튼)은 두지 않는다 — 리서치 입구는 아래 채팅
+                      하나뿐이고, 이 카드는 "지금 무엇을 기준으로 본 결과인지"만 알려주는 상태 표시다. */}
+                  {(researchResult || copilotResearchLoading) && (
+                    <div className="insight-card">
+                      <span className="signal-tag">
+                        {researchResult ? `${researchResult.symbol} · ${researchResult.timeframe}` : effectiveResearchSymbol} · STRATEGY RESEARCH
+                      </span>
+                      {copilotResearchLoading && (
+                        <p style={{ fontFamily: 'var(--font-sans)', margin: '6px 0 0', fontSize: '12px', color: '#64748b' }}>
+                          <RefreshCw size={12} className="animate-spin" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                          백테스트 + 워크포워드 검증 진행 중...
+                        </p>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      className="copilot-primary-button"
-                      onClick={() => runStrategyResearch()}
-                      disabled={copilotResearchLoading}
-                    >
-                      {copilotResearchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
-                      {copilotResearchLoading ? '리서치 진행 중...' : `${getSymbolTicker(marketActiveSymbol)} 전략 리서치 시작`}
-                    </button>
-                  </div>
+                  )}
 
                   {copilotResearchError && (
                     <div className="copilot-message copilot-message-warn">
@@ -3728,7 +3827,8 @@ export default function Page() {
                                       className="strategy-download-link"
                                       href={buildStrategyCodeDownloadUrl({
                                         archetype: c.archetype,
-                                        symbol: `${getSymbolTicker(marketActiveSymbol)}USDT`
+                                        symbol: `${getResearchedTicker()}USDT`,
+                                        timeFrame: getValidatedTimeFrameCode(c.archetype)
                                       })}
                                     >
                                       코드 다운로드 (.py)
@@ -3753,7 +3853,7 @@ export default function Page() {
                   {deployArchetype && (
                     <div className="copilot-deploy-form">
                       <div className="copilot-deploy-form-head">
-                        <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성</span>
+                        <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성 · {getValidatedTimeFrameCode(deployArchetype)} (검증된 타임프레임)</span>
                         <button type="button" onClick={() => setDeployArchetype(null)}><X size={14} /></button>
                       </div>
                       <input value={deployBotName} onChange={e => setDeployBotName(e.target.value)} placeholder="봇 이름" />
@@ -3873,7 +3973,9 @@ export default function Page() {
                   <BrainCircuit size={16} color="#f47a20" />
                   <p style={{ fontFamily: 'var(--font-sans)' }}>
                     {marketCopilotMode === 'RESEARCH'
-                      ? (language === 'ko' ? `위에서 전략 리서치를 먼저 실행하면, 그 결과에 대해 질문할 수 있습니다.` : `Run the strategy research above first, then ask questions about the results.`)
+                      ? (language === 'ko'
+                          ? `어떤 전략을 찾아볼까요? 종목과 타임프레임을 말해주시면 백테스트부터 바로 돌립니다. 예: "이더리움 4시간봉 전략 찾아줘"`
+                          : `What should we look for? Name a symbol and timeframe and the backtest runs right away — e.g. "find an ETH 4h strategy".`)
                       : (language === 'ko' ? `🤖 지금 보유 중인 포지션에 대해 AETHER 코파일럿에게 질문하세요.` : `Ask AETHER Copilot about your currently open positions.`)}
                   </p>
                 </div>
@@ -3922,7 +4024,9 @@ export default function Page() {
                   }}
                   placeholder={
                     marketCopilotMode === 'RESEARCH'
-                      ? (language === 'ko' ? '이 전략 리서치 결과에 대해 질문하기...' : 'Ask about this strategy research result...')
+                      ? (researchResult
+                          ? (language === 'ko' ? '결과에 대해 묻거나, 다른 종목·타임프레임을 말해보세요...' : 'Ask about the results, or name another symbol / timeframe...')
+                          : (language === 'ko' ? '예: 이더리움 4시간봉 전략 찾아줘' : 'e.g. find an ETH 4h strategy'))
                       : (language === 'ko' ? `${marketActiveSymbol} 포지션에 대해 질문하기...` : `Ask about your ${marketActiveSymbol} position...`)
                   }
                   style={{ fontFamily: 'var(--font-sans)' }}
@@ -4006,34 +4110,20 @@ export default function Page() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', background: '#000000' }}>
                 {marketCopilotMode === 'RESEARCH' ? (
                   <>
-                    <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#080808', border: '1px solid #1c1c1c' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>{marketActiveSymbol} · STRATEGY RESEARCH</span>
-                      <h4 style={{ margin: '6px 0 8px 0', fontSize: '15px', color: '#f3f4f6' }}>검증된 전략으로 봇을 만들어보세요.</h4>
-                      <p style={{ margin: '0 0 12px', fontSize: '13px', lineHeight: 1.6, color: '#9ca3af' }}>
-                        9개 전략(추세/평균회귀/돌파/RSI/VWAP/MACD/이평리본/볼린저스퀴즈/ATR돌파)을 실측 캔들로 백테스트하고 워크포워드로 검증합니다.
-                      </p>
-                      <div style={{ display: 'flex', gap: '4px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                        {(['M5', 'M15', 'H1', 'H4', 'D1'] as const).map(tf => (
-                          <button
-                            key={tf}
-                            type="button"
-                            onClick={() => setResearchTimeFrame(tf)}
-                            style={{
-                              padding: '3px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 700, cursor: 'pointer',
-                              border: researchTimeFrame === tf ? '1px solid #f47a20' : '1px solid #27272a',
-                              background: researchTimeFrame === tf ? 'rgba(244,122,32,0.12)' : 'transparent',
-                              color: researchTimeFrame === tf ? '#f47a20' : '#94a3b8'
-                            }}
-                          >
-                            {tf === 'M5' ? '5분' : tf === 'M15' ? '15분' : tf === 'H1' ? '1시간' : tf === 'H4' ? '4시간' : '일봉'}
-                          </button>
-                        ))}
+                    {/* 실행 컨트롤 없음 — 리서치 입구는 아래 채팅 하나뿐이다 (라이트 패널과 동일). */}
+                    {(researchResult || copilotResearchLoading) && (
+                      <div style={{ padding: '18px 20px', borderRadius: '12px', background: '#080808', border: '1px solid #1c1c1c' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#f47a20' }}>
+                          {researchResult ? `${researchResult.symbol} · ${researchResult.timeframe}` : effectiveResearchSymbol} · STRATEGY RESEARCH
+                        </span>
+                        {copilotResearchLoading && (
+                          <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#9ca3af' }}>
+                            <RefreshCw size={12} className="animate-spin" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                            백테스트 + 워크포워드 검증 진행 중...
+                          </p>
+                        )}
                       </div>
-                      <button type="button" className="copilot-primary-button" onClick={() => runStrategyResearch()} disabled={copilotResearchLoading}>
-                        {copilotResearchLoading ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
-                        {copilotResearchLoading ? '리서치 진행 중...' : `${getSymbolTicker(marketActiveSymbol)} 전략 리서치 시작`}
-                      </button>
-                    </div>
+                    )}
 
                     {copilotResearchError && (
                       <div className="copilot-message copilot-message-warn">
@@ -4086,7 +4176,8 @@ export default function Page() {
                                         className="strategy-download-link"
                                         href={buildStrategyCodeDownloadUrl({
                                           archetype: c.archetype,
-                                          symbol: `${getSymbolTicker(marketActiveSymbol)}USDT`
+                                          symbol: `${getResearchedTicker()}USDT`,
+                                          timeFrame: getValidatedTimeFrameCode(c.archetype)
                                         })}
                                       >
                                         코드 다운로드 (.py)
@@ -4110,7 +4201,7 @@ export default function Page() {
                     {deployArchetype && (
                       <div className="copilot-deploy-form">
                         <div className="copilot-deploy-form-head">
-                          <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성</span>
+                          <span>{deployArchetype.replace(/_/g, ' ')} 봇 생성 · {getValidatedTimeFrameCode(deployArchetype)} (검증된 타임프레임)</span>
                           <button type="button" onClick={() => setDeployArchetype(null)}><X size={14} /></button>
                         </div>
                         <input value={deployBotName} onChange={e => setDeployBotName(e.target.value)} placeholder="봇 이름" />
@@ -4247,7 +4338,11 @@ export default function Page() {
                   <textarea
                     value={marketPrompt}
                     onChange={(e) => setMarketPrompt(e.target.value)}
-                    placeholder={language === 'ko' ? `${marketActiveSymbol}에 대해 추가 질문하기...` : `Ask follow-up questions about ${marketActiveSymbol}...`}
+                    placeholder={
+                      marketCopilotMode === 'RESEARCH' && !researchResult
+                        ? (language === 'ko' ? '예: 이더리움 4시간봉 전략 찾아줘' : 'e.g. find an ETH 4h strategy')
+                        : (language === 'ko' ? `${marketActiveSymbol}에 대해 추가 질문하기...` : `Ask follow-up questions about ${marketActiveSymbol}...`)
+                    }
                     style={{ fontFamily: 'var(--font-sans)', minHeight: '52px', fontSize: '13px' }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
