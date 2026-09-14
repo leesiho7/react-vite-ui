@@ -1832,7 +1832,10 @@ export default function Page() {
               ...s,
               messages: s.messages.map(m => m.id === agentMsgId ? {
                 ...m,
-                content: accumulatedText || finalData?.reply || finalData?.answer || '분석 완료',
+                // finalData.reply가 최종 근거 검증(그라운딩)을 거친 정본이다 — 스트리밍 중 화면에
+                // 이미 흘러나온 accumulatedText에는 사후에 차단된 날조 문장이 아직 남아있을 수 있으므로
+                // done 이벤트가 도착하면 그쪽으로 교체한다.
+                content: finalData?.reply || finalData?.answer || accumulatedText || '분석 완료',
                 toolCalls: dynamicToolCalls
               } : m),
               updatedAt: '방금 전'
@@ -8085,9 +8088,7 @@ export default function Page() {
               {[
                 { key: 'INSIGHT', name: language === 'en' ? 'Insight' : language === 'cn' ? '洞察' : '인사이트', icon: <Sparkles size={14} className="text-[#f47a20]" />, tag: 'FACT-CHECK', cssClass: 'chiplet-insight' },
                 { key: 'GUIDE', name: language === 'en' ? 'Guide (Auto)' : language === 'cn' ? '指南(自主)' : '가이드(자율형)', icon: <Bot size={14} className="text-[#0284C7]" />, tag: 'AUTONOMOUS', cssClass: 'chiplet-guide' },
-                { key: 'CODING', name: language === 'en' ? 'Coding</>' : language === 'cn' ? '编程</>' : '코딩</>', icon: <Code2 size={14} className="text-[#059669]" />, tag: 'PYTHON / ALGO', cssClass: 'chiplet-coding' },
-                { key: 'MASTER', name: language === 'en' ? 'Master' : language === 'cn' ? '大师' : '마스터', icon: <Crown size={14} className="text-[#D97706]" />, tag: 'COUNCIL & MENTAL', cssClass: 'chiplet-master' },
-                { key: 'AGENT', name: language === 'en' ? 'Agent' : language === 'cn' ? '智能体' : '에이전트', icon: <Layers size={14} className="text-[#6366F1]" />, tag: 'AUTONOMOUS QUANT AI', cssClass: 'chiplet-agent' }
+                { key: 'CODING', name: language === 'en' ? 'Coding</>' : language === 'cn' ? '编程</>' : '코딩</>', icon: <Code2 size={14} className="text-[#059669]" />, tag: 'PYTHON / ALGO', cssClass: 'chiplet-coding' }
               ].map(chip => {
                 const isActive = (researchMode || 'INSIGHT') === chip.key
                 return (
@@ -8419,40 +8420,6 @@ export default function Page() {
                       { label: '🛡️ 1,000만원 3단계 분할 매수 티켓', prompt: `1,000만 원 예산으로 ${currentSession?.symbol || searched} 3단계 분할 매수 집행 티켓을 발행해줘. 최대 손실은 50만 원 한도야.` },
                       { label: '⚖️ 켈리 공식(Kelly) 최적 자본배분', prompt: `${currentSession?.symbol || searched} 현재가 기준 켈리 공식으로 최적 투입 자본금과 1/2차 익절 목표가를 계산해줘.` },
                       { label: '🔄 선물 펀딩비 차익거래 델타 뉴트럴', prompt: `현물 매수 + 선물 1배 숏 델타 뉴트럴 펀딩비 수취 전략의 수익률 계산 공식과 리스크 관리 매뉴얼을 정리해줘.` }
-                    ]
-                  ) : (researchMode as string) === 'MASTER' ? (
-                    language === 'en' ? [
-                      { label: '🏛️ Wall St 3 Masters Debate: Buffett vs Simons vs Dalio', prompt: `Generate a deep debate among Warren Buffett, Jim Simons, and Ray Dalio on ${currentSession?.symbol || searched} to reach consensus on a 1.5-ATR stop loss.` },
-                      { label: '📊 Warren Buffett 13F Portfolio & $277B Cash', prompt: `Analyze Berkshire Hathaway's latest 13F filing data and $277B cash strategy market cycle implications.` },
-                      { label: '📜 Historical Deja Vu Time Machine', prompt: `Review historical deja vu events over 50 years (e.g. May 2021 drop or Mar 2020) that resemble current market sentiment.` },
-                      { label: '🛡️ Anti-FOMO Emergency Mental Guardians', prompt: `Prescribe emergency loss simulations and top 3 mental rules to prevent panic buying or FOMO.` }
-                    ] : language === 'cn' ? [
-                      { label: '🏛️ 华尔街三大大师辩论: 巴菲特 vs 西蒙斯 vs 达里奥', prompt: `针对 ${currentSession?.symbol || searched} 当前局面，让沃伦·巴菲特、吉姆·西蒙斯、雷·达里奥三人展开辩论并得出 1.5-ATR 止损共识。` },
-                      { label: '📊 沃伦·巴菲特 13F 机构持仓与 $277B 现金', prompt: `深入分析伯克希尔·哈撒韦 (Berkshire Hathaway) 最新 13F 披露数据及 $277B 现金储备策略所预示的市场周期。` },
-                      { label: '📜 历史既视感时光机: 过去暴跌/暴涨事实', prompt: `复盘当前市场情绪与价格走势在过去 50 年历史中最相似的既视感事件（如 2021年5月暴跌 或 2020年3월 等）。` },
-                      { label: '🛡️ 冲动交易 & FOMO 紧急处方: 心态法则', prompt: `开出防止因暴涨暴跌导致冲动交易 (FOMO) 的紧急亏损模拟与必须遵守的三大心态守护法则。` }
-                    ] : [
-                      { label: '🏛️ 월가 3대 거장 끝장 토론: 버핏 vs 시몬스 vs 달리오', prompt: `${currentSession?.symbol || searched} 현재 국면을 두고 워런 버핏(가치·안전마진), 짐 시몬스(퀀트·수학적 엣지), 레이 달리오(올웨더·매크로) 3인의 끝장 토론과 1.5-ATR 손절선 합의를 도출해줘.` },
-                      { label: '📊 워런 버핏 13F 기관 포트폴리오 & $277B 현금', prompt: `버크셔 해서웨이(Berkshire Hathaway)의 최신 13F 공시 데이터와 $277B 현금 보유 전략이 시사하는 시장 사이클 관점을 심층 분석해줘.` },
-                      { label: '📜 역사적 데자뷔 타임머신: 과거 급락/폭등장 팩트', prompt: `현재 시장 심리와 가격 흐름이 과거 50년 역사 중 어떤 사건(2021년 5월 급락 or 2020년 3월 등)과 가장 유사한지 역사적 데자뷔를 복기해줘.` },
-                      { label: '🛡️ 뇌동매매 & FOMO 긴급 처방전: 멘탈 수칙', prompt: `급등/급락에 따른 충동 매매(FOMO)를 막기 위한 긴급 손실 시뮬레이션과 지금 당장 지켜야 할 3대 멘탈 가디언 수칙을 처방해줘.` }
-                    ]
-                  ) : (researchMode as string) === 'AGENT' ? (
-                    language === 'en' ? [
-                      { label: '⚡ Autonomous Tool Chain (ReAct) Execution', prompt: `Sequentially execute ReAct tool trace: ① Global news fact-check tool, ② Quant momentum matrix tool, ③ Time-series fractal engine for ${currentSession?.symbol || searched}.` },
-                      { label: '🤖 Dual Trajectory Double Confirmed Validation', prompt: `Concurrently call time-series fractal engine & deep learning wave neural network for ${currentSession?.symbol || searched} to double confirm trajectory.` },
-                      { label: '🤖 4-Stage Autonomous Quant Orchestration', prompt: `Orchestrate 4-stage tools from news fact-checks to fractal matching and 24-param grid simulations for ${currentSession?.symbol || searched}.` },
-                      { label: '🚨 Multi-Indicator Divergence Detection & Hedging', prompt: `Detect divergence between news and overbought indicators for ${currentSession?.symbol || searched} and design delta-neutral hedging position.` }
-                    ] : language === 'cn' ? [
-                      { label: '⚡ 自主工具链条 (ReAct) 执行', prompt: `为 ${currentSession?.symbol || searched} 顺序自主执行 (ReAct)：① 全球外媒实时资金流事实核查工具，② AETHER 量化动量矩阵工具，③ AETHER 时间序列分形引擎。` },
-                      { label: '🤖 双轨迹双重确认 (Double Confirmed) 自主验证', prompt: `为 ${currentSession?.symbol || searched} 自主同时调用 ① 时序分形引擎工具 与 ② 深度学习波浪神经网络工具，交叉验证轨迹方向。` },
-                      { label: '🤖 4阶段自主量化编排: 执行工单', prompt: `自主链式调用 (Orchestration) 从外媒事实核查到分形模式匹配、24参数网格模拟 4阶段工具，算出 ${currentSession?.symbol || searched} 最佳建仓价。` },
-                      { label: '🚨 多指标背离检测与对冲持仓', prompt: `调用检测 ${currentSession?.symbol || searched} 利好速报与超买指标间背离的工具，并自主设计 Delta 中性对冲与防亏持仓。` }
-                    ] : [
-                      { label: '⚡ 자율 도구 연쇄 실행(ReAct): 복합 분석', prompt: `${currentSession?.symbol || searched}에 대해 ① 글로벌 외신 실시간 수급 팩트체크 도구, ② AETHER 퀀트 모멘텀 매트릭스 도구, ③ AETHER 시계열 프랙탈 엔진을 순차 자율 실행(ReAct)하여, 각 도구의 실행 추론 과정(Tool Execution Trace)과 종합 투자 집행 전략을 수립해줘.` },
-                      { label: '🤖 듀얼 궤적 더블 컨펌(Double Confirmed) 자율 검증', prompt: `${currentSession?.symbol || searched}에 대해 ① 시계열 프랙탈 엔진 도구와 ② 딥러닝 파동 신경망 도구를 자율 동시 호출하여, 두 궤적이 동일 방향을 가리키는지(Double Confirmed) 상호 교차 검증하고 앙상블 확신도 기반 최적 진입 티켓을 발행해줘.` },
-                      { label: '🤖 4단계 자율 퀀트 오케스트레이션: 집행 티켓', prompt: `외신 팩트체크부터 프랙탈 패턴 매칭, 24개 파라미터 그리드 가상 시뮬레이션까지 4단계 도구를 자율 연쇄 호출(Orchestration)하여, ${currentSession?.symbol || searched} 최적 진입가와 1.5-ATR 동적 트레일링 스탑 집행 티켓을 산출해줘.` },
-                      { label: '🚨 다중 지표 다이버전스 감지 & 헤징 포지션', prompt: `${currentSession?.symbol || searched} 호재성 뉴스 속보와 과매수 지표 간의 다이버전스를 감지하는 도구를 호출하고, 시장 급변 시 리스크를 방어하기 위한 델타 뉴트럴 헤징 및 손실 방어 포지션을 자율 연쇄 도구로 설계해줘.` }
                     ]
                   ) : (
                     language === 'en' ? [
