@@ -176,29 +176,18 @@ export interface RichNewsItem {
   link?: string;
 }
 
-// ── 혁신 기능 2: 3인 AI 투자의견 토론 (Debate Arena) ──
+// ── 월가 3대 거장의 명언 (실시간 매수/매도 신호 아님, 공개적으로 알려진 명언 인용) ──
 export interface DebateMessage {
   personaId: string;
   name: string;
   title: string;
   avatar: string;
-  stance: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   content: string;
-  metrics: string[];
-  targetPrice?: string;
 }
 
 export interface AiDebateResponse {
   symbol: string;
   timestamp: string;
-  consensusScore: number;
-  consensusVerdict: string;
-  bullRatio: number;
-  bearRatio: number;
-  suggestedAction: string;
-  keyTakeaway: string;
-  recommendedTrailingStop?: number;
-  targetPriceRange?: string;
   dialogue: DebateMessage[];
 }
 

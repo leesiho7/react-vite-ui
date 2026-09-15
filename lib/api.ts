@@ -1597,7 +1597,7 @@ export async function fetchFractalGhost(symbol = 'BTCUSDT', timeFrame = 'H1', li
 }
 
 /**
- * 24. [혁신 2] 멀티 에이전트 3인 'AI 투자의견 토론' (Debate Arena) API
+ * 24. 월가 3대 거장의 명언 API — 실시간 매수/매도 신호가 아닌 공개적으로 알려진 명언 인용.
  */
 export async function fetchAiDebate(symbol = 'BTCUSDT'): Promise<AiDebateResponse | null> {
   try {
