@@ -933,6 +933,31 @@ const RERUN_INTENT = /다시\s*(돌려|실행|해줘|분석|검증|리서치)|�
 /** 채팅 말풍선 안에 붙는 생성된 전략 코드. */
 type ChatCodeBlock = { language: 'PINE' | 'PYTHON'; filename: string; source: string; downloadUrl: string }
 
+/**
+ * 텍스트를 로컬 Blob으로 감싸 저장 다이얼로그를 띄운다.
+ *
+ * 과거에는 `<a href={서버 URL} download={filename}>`를 썼는데, `download` 속성은 cross-origin
+ * URL(프론트/백엔드가 다른 포트·도메인)에서는 브라우저가 무시한다 — 그러면 다운로드 대신 같은 탭에서
+ * 그 URL로 그냥 이동해버려서, 서버가 내려준 순수 코드 텍스트가 화면 전체를 덮어써 버렸다
+ * (앱 UI가 통째로 날아간 것처럼 보이는 원인). 코드는 이미 클라이언트 메모리에 있으므로 서버를
+ * 다시 왕복할 필요도 없이, 오리진 문제 자체가 없는 로컬 blob URL로 다운로드시킨다.
+ */
+function downloadTextAsFile(filename: string, content: string, mimeType = 'text/plain;charset=utf-8') {
+  try {
+    const blob = new Blob([content], { type: mimeType })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch {
+    // Blob/URL API가 막힌 극히 예외적인 환경 — 복사 버튼이 별도로 있으니 조용히 무시한다.
+  }
+}
+
 /** 채팅 안에서 코드를 그대로 보여주고 복사/다운로드까지 끝내는 블록. 라이트 패널과 다크 모달이 같이 쓴다. */
 function CopilotCodeBlock({ code, dark }: { code: ChatCodeBlock; dark?: boolean }) {
   const [copied, setCopied] = useState(false)
@@ -945,6 +970,11 @@ function CopilotCodeBlock({ code, dark }: { code: ChatCodeBlock; dark?: boolean 
     } catch {
       // 클립보드 권한이 없는 브라우저/컨텍스트(비 HTTPS 등)에서는 옆의 다운로드로 받으면 된다.
     }
+  }
+
+  const handleDownload = () => {
+    const mime = code.language === 'PINE' ? 'text/plain;charset=utf-8' : 'text/x-python;charset=utf-8'
+    downloadTextAsFile(code.filename, code.source, mime)
   }
 
   const actionStyle: React.CSSProperties = {
@@ -967,7 +997,7 @@ function CopilotCodeBlock({ code, dark }: { code: ChatCodeBlock; dark?: boolean 
           <button type="button" onClick={handleCopy} style={actionStyle}>
             {copied ? '복사됨' : '복사'}
           </button>
-          <a href={code.downloadUrl} download={code.filename} style={actionStyle}>다운로드</a>
+          <button type="button" onClick={handleDownload} style={actionStyle}>다운로드</button>
         </span>
       </div>
       <pre style={{
@@ -979,6 +1009,81 @@ function CopilotCodeBlock({ code, dark }: { code: ChatCodeBlock; dark?: boolean 
       </pre>
     </div>
   )
+}
+
+/**
+ * AI 리서치 메인 채팅(ReactMarkdown)의 펜스 코드블록(```python ... ```)을 Claude/Gemini 스타일
+ * 패키지(언어 배지 + 복사 + 다운로드 + 스크롤 박스)로 렌더링한다. 코드 블록 다음에 이어지는
+ * 설명 문단은 ReactMarkdown이 그대로 계속 렌더링하므로 "코드 패키지 + 이어지는 설명"이 자연스럽게 된다.
+ */
+function MarkdownCodeBlock({ language, source }: { language: string; source: string }) {
+  const [copied, setCopied] = useState(false)
+  const lang = (language || 'text').toLowerCase()
+  const displayLang = lang === 'py' ? 'python' : lang
+  const filename = displayLang === 'python' ? 'strategy.py' : displayLang === 'pine' ? 'strategy.pine' : `snippet.${displayLang || 'txt'}`
+  const mime = displayLang === 'python' ? 'text/x-python;charset=utf-8' : 'text/plain;charset=utf-8'
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(source)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // 클립보드 권한 없음 — 다운로드 버튼으로 받으면 된다.
+    }
+  }
+
+  return (
+    <div style={{ margin: '10px 0', borderRadius: '8px', overflow: 'hidden', border: '1px solid #23262d', background: '#0d1117' }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px',
+        padding: '6px 10px', background: '#161b22', borderBottom: '1px solid #23262d'
+      }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {displayLang}
+        </span>
+        <span style={{ display: 'flex', gap: '6px' }}>
+          <button type="button" onClick={handleCopy} style={{
+            fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', cursor: 'pointer',
+            border: '1px solid #2d333b', background: '#0d1117', color: copied ? '#4ade80' : '#94a3b8'
+          }}>
+            {copied ? '복사됨 ✓' : '복사'}
+          </button>
+          <button type="button" onClick={() => downloadTextAsFile(filename, source, mime)} style={{
+            fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', cursor: 'pointer',
+            border: '1px solid #2d333b', background: '#0d1117', color: '#94a3b8'
+          }}>
+            다운로드
+          </button>
+        </span>
+      </div>
+      <pre style={{
+        margin: 0, padding: '12px 14px', maxHeight: '420px', overflow: 'auto',
+        fontSize: '12px', lineHeight: 1.6, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        color: '#e6edf3'
+      }}>
+        <code>{source}</code>
+      </pre>
+    </div>
+  )
+}
+
+/** ReactMarkdown의 `code` 컴포넌트를 이 함수로 교체하면 펜스 코드블록만 MarkdownCodeBlock으로,
+ * 문장 중간의 인라인 코드(`foo()`)는 기존처럼 짧은 배지로 렌더링된다. */
+function MarkdownCodeRenderer({ className, children }: { className?: string; children?: React.ReactNode }) {
+  const match = /language-(\w+)/.exec(className || '')
+  if (!match) {
+    return (
+      <code style={{
+        background: '#eef1f5', padding: '1px 5px', borderRadius: '4px',
+        fontSize: '0.9em', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
+      }}>
+        {children}
+      </code>
+    )
+  }
+  const source = String(children).replace(/\n$/, '')
+  return <MarkdownCodeBlock language={match[1]} source={source} />
 }
 
 export default function Page() {
@@ -8264,7 +8369,17 @@ export default function Page() {
                       )}
 
                       <div className="prose max-w-none text-[14px] leading-relaxed">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            code: MarkdownCodeRenderer,
+                            // MarkdownCodeBlock이 자체 <pre>로 코드 박스를 그리므로, react-markdown이
+                            // 기본으로 씌우는 <pre>는 그대로 통과시켜 이중 래핑을 막는다.
+                            pre: ({ children }) => <>{children}</>
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
                       </div>
 
                       <div className="text-[10px] text-right mt-2 opacity-60 font-mono">{msg.timestamp} · AUDITED ✓</div>
