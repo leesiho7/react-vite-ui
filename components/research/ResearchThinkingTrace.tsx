@@ -1,10 +1,38 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2, RefreshCw } from 'lucide-react'
 
 export interface ThinkingStep {
   thought: string
   progress: number
+}
+
+/** 백엔드는 문장을 완성된 상태로 한 번에 보내기 때문에(스트리밍 토큰이 아니라 미리 정해진
+ *  단계 설명), 그대로 렌더링하면 화면에 문장이 "덤프"되듯 통째로 박힌다. 프론트에서만 타자
+ *  효과를 입혀서 실제로 타이핑되는 것처럼 보이게 한다 — 내용 자체는 100% 실제 문구다. */
+function useTypewriter(text: string, speedMs = 16) {
+  const [shown, setShown] = useState('')
+  const prevText = useRef('')
+
+  useEffect(() => {
+    // 텍스트가 바뀌지 않았으면(예: 부모 리렌더) 다시 처음부터 타이핑하지 않는다.
+    if (text === prevText.current) return
+    prevText.current = text
+
+    setShown('')
+    if (!text) return
+
+    let i = 0
+    const id = setInterval(() => {
+      i += 1
+      setShown(text.slice(0, i))
+      if (i >= text.length) clearInterval(id)
+    }, speedMs)
+    return () => clearInterval(id)
+  }, [text, speedMs])
+
+  return shown
 }
 
 /**
@@ -24,11 +52,18 @@ export default function ResearchThinkingTrace({
   steps: ThinkingStep[]
   fallbackLabel: string
 }) {
+  // 지나간 단계는 이미 다 봤으니 통째로 보여주고, "지금 진행 중인" 문구 하나만 타자 효과를 준다.
+  const currentThought = steps.length > 0 ? steps[steps.length - 1].thought : fallbackLabel
+  const typedCurrent = useTypewriter(currentThought)
+
   if (steps.length === 0) {
     return (
       <div className="flex items-center gap-3 text-[13px] text-[#f47a20] font-semibold">
         <ThinkingOrb />
-        <span className="animate-pulse">{fallbackLabel}</span>
+        <span>
+          {typedCurrent}
+          <TypingCaret />
+        </span>
       </div>
     )
   }
@@ -49,7 +84,10 @@ export default function ResearchThinkingTrace({
             ) : (
               <CheckCircle2 size={12} className="text-[#94a3b8] flex-shrink-0" />
             )}
-            <span className={isCurrent ? 'animate-pulse' : ''}>{step.thought}</span>
+            <span>
+              {isCurrent ? typedCurrent : step.thought}
+              {isCurrent && <TypingCaret />}
+            </span>
             {step.progress > 0 && (
               <span className="text-[9px] font-mono text-[#64748b] flex-shrink-0">{step.progress}%</span>
             )}
@@ -58,6 +96,11 @@ export default function ResearchThinkingTrace({
       })}
     </div>
   )
+}
+
+/** 커서처럼 깜빡이는 세로 막대 — 타자 효과가 "지금 쓰이고 있다"는 느낌을 더해준다. */
+function TypingCaret() {
+  return <span className="inline-block w-[2px] h-[11px] bg-current ml-0.5 -mb-0.5 animate-pulse" />
 }
 
 /** 진행 중인 단계 앞에 붙는 작은 "구슬" — 뒤에 흐릿하게 번지는 글로우를 깔고 그 위에
