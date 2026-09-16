@@ -24,12 +24,37 @@ export function PolymarketSpeedGameCard({
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [round, setRound] = useState<number>(1)
   const [remainingSec, setRemainingSec] = useState<number>(300)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // 1H 예측게임과 동일하게, 로그인(auth_session에 실제 userId가 있는 사용자)한 경우에만
+  // 예측 제출을 허용한다. 비회원은 관전만 가능하고 제출 시 로그인 안내를 받는다.
+  const getCurrentUserId = (): number | null => {
+    try {
+      const session = localStorage.getItem('auth_session')
+      if (!session) return null
+      const user = JSON.parse(session)
+      return user?.userId ? Number(user.userId) : null
+    } catch (e) {
+      return null
+    }
+  }
 
   // Real-time WebSocket Ticker Integration
-  const pair = `${symbol.replace('/USD', '').replace('/USDT', '')}/USDT`
-  const { price: wsPrice } = useMarketWebSocket(pair)
+  // useMarketWebSocket이 내부에서 자체적으로 "/USD","/USDT" 접미사를 제거하므로
+  // 여기서 미리 "/USDT"를 붙여 넘기면 "BTC/USDT" -> "BTCT" -> "btctusdt"로 이중 손상되어
+  // 존재하지 않는 바이낸스 심볼을 구독하게 된다(소켓이 절대 연결되지 않음). 원본 심볼 그대로 전달한다.
+  const { price: wsPrice, fiveMinOpenPrice, fiveMinKline } = useMarketWebSocket(symbol)
   const livePrice = wsPrice > 0 ? wsPrice : (currentPrice || 79422.77)
-  const targetPrice = basePrice || 79409.09
+
+  // 라운드의 "TO BEAT" 기준가는 실제 바이낸스 5분봉(kline_5m) 시가에 고정한다.
+  // 캔들이 실제로 바뀔 때만 갱신되며, 그 전까지는 이번 라운드 동안 고정된다.
+  const [roundBasePrice, setRoundBasePrice] = useState<number>(0)
+  useEffect(() => {
+    if (fiveMinOpenPrice > 0 && roundBasePrice === 0) {
+      setRoundBasePrice(fiveMinOpenPrice)
+    }
+  }, [fiveMinOpenPrice, roundBasePrice])
+  const targetPrice = roundBasePrice > 0 ? roundBasePrice : (basePrice || livePrice || 79409.09)
 
   const [history, setHistory] = useState<number[]>(() =>
     Array.from({ length: 34 }, (_, index) => livePrice - (34 - index) * livePrice * 0.00012)
@@ -51,11 +76,27 @@ export function PolymarketSpeedGameCard({
     return () => cancelAnimationFrame(frame)
   }, [livePrice])
 
-  // Accumulate price history ticks
+  // 실시간 가격을 5초 간격으로 샘플링해 축적 — 실제 원인은 여기 있었다.
+  // 바이낸스 @trade 스트림은 초당 여러 번 틱이 들어오는데, 그 매 틱마다 60칸 버퍼에
+  // 쌓다 보니 "5분(00:00~05:00)"이라는 축 라벨과 달리 실제로는 최근 몇 초 치 가격만
+  // 반복해서 보여주고 있었다. 몇 초 동안 BTC가 움직이는 폭은 차트의 최소 스프레드
+  // 바닥값(livePrice*0.0006, 지금 시세 기준 약 $45)보다 작아서 선이 거의 평평하게
+  // 눌린 것처럼 보였던 것 — 소켓은 죽지 않았고, 그래프가 보여주는 시간 창이 잘못됐었다.
+  const livePriceRef = useRef(livePrice)
   useEffect(() => {
-    if (!livePrice) return
-    setHistory((current) => [...current.slice(-59), livePrice])
+    livePriceRef.current = livePrice
   }, [livePrice])
+
+  useEffect(() => {
+    const sample = () => {
+      const p = livePriceRef.current
+      if (!p) return
+      setHistory((current) => [...current.slice(-59), p])
+    }
+    sample()
+    const interval = setInterval(sample, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Chart Geometry Calculation
   const chartGeometry = useMemo(() => {
@@ -127,6 +168,7 @@ export function PolymarketSpeedGameCard({
 
   useEffect(() => {
     setMounted(true)
+    setIsLoggedIn(getCurrentUserId() !== null)
     try {
       const storageKey = getUserStreakKey()
       const saved = localStorage.getItem(storageKey)
@@ -136,11 +178,6 @@ export function PolymarketSpeedGameCard({
         setRound(typeof parsed.round === 'number' ? parsed.round : 1)
         setChoice(parsed.choice === 'up' || parsed.choice === 'down' ? parsed.choice : null)
         setSubmitted(typeof parsed.submitted === 'boolean' ? parsed.submitted : false)
-        if (typeof parsed.remainingSec === 'number' && parsed.savedAt) {
-          const elapsedSec = Math.floor((Date.now() - parsed.savedAt) / 1000)
-          const newRemaining = Math.max(1, parsed.remainingSec - elapsedSec)
-          setRemainingSec(newRemaining)
-        }
       } else {
         // 계정 변경 시 기존 승수 초기화
         setFiveMinWins(0)
@@ -158,22 +195,41 @@ export function PolymarketSpeedGameCard({
     stateRef.current = { submitted, choice, animatedPrice, targetPrice, fiveMinWins, round }
   }, [submitted, choice, animatedPrice, targetPrice, fiveMinWins, round])
 
-  // 5분(300초) 실시간 카운트다운 타이머 (빈 의존성 배열로 1초마다 정확히 차감)
+  // 실제 바이낸스 5분봉 마감 시각(open + 300초) 기준 실시간 카운트다운 —
+  // 클라이언트 마운트 시점과 무관하게 실제 거래소 5분봉 경계에 정확히 동기화된다.
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRemainingSec((prev) => {
-        if (prev <= 1) {
-          const curr = stateRef.current
-          if (curr.submitted) {
-            handleSettle(curr.animatedPrice)
-          }
-          return 300
-        }
-        return prev - 1
-      })
-    }, 1000)
+    const computeRemaining = () => {
+      if (fiveMinKline && fiveMinKline.time > 0) {
+        const closeTimeSec = fiveMinKline.time + 300
+        const nowSec = Math.floor(Date.now() / 1000)
+        return Math.max(0, closeTimeSec - nowSec)
+      }
+      return 300
+    }
+    setRemainingSec(computeRemaining())
+    const interval = setInterval(() => setRemainingSec(computeRemaining()), 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [fiveMinKline?.time])
+
+  // 실제 5분봉이 새로 열릴 때(라운드 경계 통과) 이전 라운드를 정산하고,
+  // 다음 라운드 기준가를 새 캔들의 실제 시가로 갱신한다.
+  const prevCandleTimeRef = useRef<number | null>(null)
+  useEffect(() => {
+    const candleTime = fiveMinKline?.time
+    if (candleTime == null) return
+    if (prevCandleTimeRef.current === null) {
+      prevCandleTimeRef.current = candleTime
+      return
+    }
+    if (candleTime !== prevCandleTimeRef.current) {
+      prevCandleTimeRef.current = candleTime
+      const curr = stateRef.current
+      if (curr.submitted) {
+        handleSettle(curr.animatedPrice)
+      }
+      setRoundBasePrice(fiveMinOpenPrice)
+    }
+  }, [fiveMinKline?.time, fiveMinOpenPrice])
 
   const format5MCountdown = (sec: number) => {
     const m = Math.floor(sec / 60)
@@ -301,6 +357,10 @@ export function PolymarketSpeedGameCard({
             disabled={submitted || remainingSec <= 60}
             onClick={() => {
               if (submitted || remainingSec <= 60) return
+              if (!isLoggedIn) {
+                alert('🔒 5분 예측을 제출하려면 로그인이 필요합니다. 회원가입 후 이용해주세요.')
+                return
+              }
               setChoice('up')
             }}
           >
@@ -314,12 +374,22 @@ export function PolymarketSpeedGameCard({
             disabled={submitted || remainingSec <= 60}
             onClick={() => {
               if (submitted || remainingSec <= 60) return
+              if (!isLoggedIn) {
+                alert('🔒 5분 예측을 제출하려면 로그인이 필요합니다. 회원가입 후 이용해주세요.')
+                return
+              }
               setChoice('down')
             }}
           >
             <span className="vote-icon">▼</span>
             <span>Predict Down (5M)</span>
           </button>
+
+          {!isLoggedIn && (
+            <span style={{ fontSize: '9px', color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '4px', padding: '4px 8px', textAlign: 'center' }}>
+              🔒 로그인 후 예측 제출이 가능합니다 (관전은 로그인 없이 가능)
+            </span>
+          )}
 
           <span className="speed-volume">
             5M ROUND #{round} CLOSES IN: <strong>{format5MCountdown(remainingSec)}</strong>
@@ -406,6 +476,10 @@ export function PolymarketSpeedGameCard({
           disabled={!choice || submitted || remainingSec <= 60}
           onClick={() => {
             if (!choice || submitted || remainingSec <= 60) return
+            if (!isLoggedIn) {
+              alert('🔒 5분 예측을 제출하려면 로그인이 필요합니다. 회원가입 후 이용해주세요.')
+              return
+            }
             setSubmitted(true)
             try {
               const storageKey = getUserStreakKey()
@@ -426,6 +500,8 @@ export function PolymarketSpeedGameCard({
             ? `ROUND #${round} [${choice === 'up' ? '상승(UP)' : '하락(DOWN)'}] 5분 예측 제출 완료 (🔒 변경 불가 · 실시간 관전 중)`
             : (remainingSec <= 60)
             ? `ROUND #${round} 마감 1분 전 락아웃 (신규 예측 마감 · 실시간 관전 모드)`
+            : !isLoggedIn
+            ? '🔒 예측을 제출하려면 로그인이 필요합니다 (회원가입 후 이용해주세요)'
             : choice
             ? `ROUND #${round} [${choice === 'up' ? '상승(UP)' : '하락(DOWN)'}] 5분 예측 제출하기 (5분봉 10연승 도전)`
             : '위 카드에서 예측 방향(UP 또는 DOWN)을 먼저 선택해주세요'}

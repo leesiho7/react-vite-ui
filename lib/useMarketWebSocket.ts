@@ -68,6 +68,8 @@ export function useMarketWebSocket(symbol: string) {
   const [latestKline, setLatestKline] = useState<KlineUpdate | null>(null);
   const [hourlyOpenPrice, setHourlyOpenPrice] = useState<number>(0);
   const [hourlyKline, setHourlyKline] = useState<KlineUpdate | null>(null);
+  const [fiveMinOpenPrice, setFiveMinOpenPrice] = useState<number>(0);
+  const [fiveMinKline, setFiveMinKline] = useState<KlineUpdate | null>(null);
 
   const prevPriceRef = useRef<number>(price);
   const wsRef = useRef<WebSocket | null>(null);
@@ -165,6 +167,8 @@ export function useMarketWebSocket(symbol: string) {
         setLatestKline(klineObj);
         setHourlyKline(klineObj);
         setHourlyOpenPrice(first.open);
+        setFiveMinKline(klineObj);
+        setFiveMinOpenPrice(current);
         setConnectionStatus('CONNECTED');
         setLatencyMs(8);
       } catch (err) {
@@ -214,8 +218,8 @@ export function useMarketWebSocket(symbol: string) {
     const pair = getNormalizedPair(symbol);
     setConnectionStatus('CONNECTING');
 
-    // Binance Combined Stream: Trade (100ms real-time execution) + Ticker + 100ms Depth10 + 1h Kline
-    const streamUrl = `wss://stream.binance.com:9443/stream?streams=${pair}@trade/${pair}@ticker/${pair}@depth10@100ms/${pair}@kline_1h`;
+    // Binance Combined Stream: Trade (100ms real-time execution) + Ticker + 100ms Depth10 + 1h Kline + 5m Kline
+    const streamUrl = `wss://stream.binance.com:9443/stream?streams=${pair}@trade/${pair}@ticker/${pair}@depth10@100ms/${pair}@kline_1h/${pair}@kline_5m`;
     
     let ws: WebSocket;
     try {
@@ -323,6 +327,23 @@ export function useMarketWebSocket(symbol: string) {
           setLatestKline(klineObj);
           setHourlyKline(klineObj);
         }
+
+        // 4. Kline Stream (@kline_5m) - Live 5-Minute Candle Update (real settlement baseline for the 5M speed game)
+        if (stream.endsWith('@kline_5m') && data.k) {
+          const k = data.k;
+          const openVal = parseFloat(k.o || '0');
+          if (openVal > 0) {
+            setFiveMinOpenPrice(openVal);
+          }
+          setFiveMinKline({
+            time: Math.floor(k.t / 1000),
+            open: openVal,
+            high: parseFloat(k.h || '0'),
+            low: parseFloat(k.l || '0'),
+            close: parseFloat(k.c || '0'),
+            volume: parseFloat(k.v || '0')
+          });
+        }
       } catch (err) {
         // ignore malformed packets
       }
@@ -356,6 +377,8 @@ export function useMarketWebSocket(symbol: string) {
     orderbook,
     latestKline,
     hourlyOpenPrice,
-    hourlyKline
+    hourlyKline,
+    fiveMinOpenPrice,
+    fiveMinKline
   };
 }

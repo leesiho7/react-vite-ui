@@ -43,8 +43,9 @@ export function Polymarket1HSpeedGameCard({
 
   // Real-time WebSocket Ticker Integration
   const symbol = searched || 'BTC/USD'
-  const pair = `${symbol.replace('/USD', '').replace('/USDT', '')}/USDT`
-  const { price: wsPrice } = useMarketWebSocket(pair)
+  // useMarketWebSocket이 내부에서 자체적으로 "/USD","/USDT" 접미사를 제거하므로
+  // 여기서 미리 "/USDT"를 붙여 넘기면 이중 손상되어 존재하지 않는 심볼을 구독하게 된다.
+  const { price: wsPrice } = useMarketWebSocket(symbol)
   const livePrice = wsPrice > 0 ? wsPrice : (latestHistoryPrice || 79422.77)
   const targetPrice = numericBasePrice || 79409.09
 
