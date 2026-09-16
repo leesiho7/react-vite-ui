@@ -10,8 +10,9 @@ import PanelFrame from '@/components/admin/monitoring/PanelFrame'
 import LineChartPanel from '@/components/admin/monitoring/LineChartPanel'
 import BarChartPanel from '@/components/admin/monitoring/BarChartPanel'
 import HeatmapPanel from '@/components/admin/monitoring/HeatmapPanel'
-import { fetchOnnxModelHealth, fetchVetoAccuracy, fetchOnnxVetoBacktest } from '@/lib/api'
-import { OnnxModelHealth, VetoAccuracyEntry, OnnxVetoBacktestComparison, OnnxBacktestArchetypeKey, BacktestTrade } from '@/lib/types'
+import RiskGaugePanel from '@/components/admin/monitoring/RiskGaugePanel'
+import { fetchOnnxModelHealth, fetchVetoAccuracy, fetchOnnxVetoBacktest, fetchIntegratedDecision } from '@/lib/api'
+import { OnnxModelHealth, VetoAccuracyEntry, OnnxVetoBacktestComparison, OnnxBacktestArchetypeKey, BacktestTrade, IntegratedDecisionReport } from '@/lib/types'
 import {
   deriveEquitySeries,
   deriveDrawdownSeries,
@@ -41,23 +42,40 @@ export default function OnnxVetoDashboardPage() {
   const [accuracy, setAccuracy] = useState<VetoAccuracyEntry[]>([])
   const [backtest, setBacktest] = useState<OnnxVetoBacktestComparison | null>(null)
   const [running, setRunning] = useState(false)
+  const [liveDecision, setLiveDecision] = useState<IntegratedDecisionReport | null>(null)
+
+  // /api/trading/decision은 심볼을 "BTCUSDT" 식 전체 티커로 받는다 — 대시보드 필터는 "BTC"처럼
+  // 짧게 입력받으므로 여기서만 맞춰준다(다른 곳은 서버가 알아서 정규화한다).
+  const decisionSymbol = (s: string) => {
+    const up = s.trim().toUpperCase()
+    return up.endsWith('USDT') ? up : `${up}USDT`
+  }
 
   const loadLight = async () => {
-    const [h, a] = await Promise.all([fetchOnnxModelHealth(), fetchVetoAccuracy(ACCURACY_WINDOW_DAYS)])
+    const [h, a, d] = await Promise.all([
+      fetchOnnxModelHealth(),
+      fetchVetoAccuracy(ACCURACY_WINDOW_DAYS),
+      fetchIntegratedDecision(decisionSymbol(symbol), 'H1', 150).catch((err) => {
+        console.warn('[OnnxVetoDashboard] fetchIntegratedDecision failed:', err)
+        return null
+      })
+    ])
     setHealth(h)
     setAccuracy(a)
+    setLiveDecision(d)
   }
 
   useEffect(() => {
     loadLight()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol])
 
   useEffect(() => {
     if (!liveRefresh) return
     const id = setInterval(loadLight, LIVE_REFRESH_MS)
     return () => clearInterval(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveRefresh])
+  }, [liveRefresh, symbol])
 
   const runBacktest = async () => {
     setRunning(true)
@@ -158,7 +176,7 @@ export default function OnnxVetoDashboardPage() {
           </SectionHeader>
 
           <SectionHeader label="Model Validation">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 mb-4">
               <PanelFrame title="DOWN_RISK / UP_RISK STATUS">
                 <div className="flex flex-col gap-1.5 pt-1">
                   <HealthRow label="DOWN_RISK (BUY 거부권)" ok={health?.downRiskInitialized} />
@@ -167,6 +185,16 @@ export default function OnnxVetoDashboardPage() {
                     게이트 {health ? health.ensembleGate.toFixed(2) : '—'} · 캔들 부족 폴백률 {health ? `${health.insufficientCandleFallbackRatePct.toFixed(1)}%` : '—'}
                   </div>
                 </div>
+              </PanelFrame>
+
+              <PanelFrame title="LIVE RISK GAUGE" subtitle={decisionSymbol(symbol)}>
+                <RiskGaugePanel
+                  downRiskProb={liveDecision?.onnxDownRiskProb ?? null}
+                  upRiskProb={liveDecision?.onnxUpRiskProb ?? null}
+                  gate={health?.ensembleGate ?? 0.4}
+                  vetoed={liveDecision?.onnxVetoed ?? null}
+                  finalAction={liveDecision?.finalAction ?? null}
+                />
               </PanelFrame>
 
               <PanelFrame title="VETO ACCURACY BY DIRECTION" className="lg:col-span-2">

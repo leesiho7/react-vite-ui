@@ -60,6 +60,12 @@ export interface IntegratedDecisionReport {
   patternInsight: PatternInsight;
   agentReflection: string;
   personaAdvice: PersonaAdvice;
+  /** ONNX DOWN_RISK 확률(0~1) — BUY 진입이 향후 20봉 내 손절당할 위험. BUY/STRONG_BUY가 아니어도 항상 기록됨. */
+  onnxDownRiskProb: number;
+  /** ONNX UP_RISK 확률(0~1) — SELL 진입이 향후 20봉 내 손절당할(가격 상승) 위험. UP_RISK 모델 미배포 시 0. */
+  onnxUpRiskProb: number;
+  /** true면 이 판정이 원래 BUY/SELL이었다가 ONNX 거부권으로 HOLD 강등됨. */
+  onnxVetoed: boolean;
   generatedAt: string;
 }
 
