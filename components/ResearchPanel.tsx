@@ -1,7 +1,51 @@
+'use client'
 
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import {
+  Sparkles, Bot, Code2, Trash2, Plus, MessageSquare, ShieldCheck, RefreshCw,
+  Paperclip, BarChart2, BookOpen, Cpu, Send, BrainCircuit
+} from 'lucide-react'
+import { MARKDOWN_CHAT_COMPONENTS } from './research/MarkdownCodeBlock'
+import type { AgentSession } from '../app/page'
 
-      {/* ── AI Research Intelligence Workspace (Light Mode Embedded Studio) ── */}
-      {(activeTopView === 'research') && (
+export interface ResearchPanelProps {
+  language: 'en' | 'cn' | 'ko'
+  researchMode: 'INSIGHT' | 'GUIDE' | 'CODING'
+  setResearchMode: (mode: 'INSIGHT' | 'GUIDE' | 'CODING') => void
+  agentSessions: AgentSession[]
+  setAgentSessions: React.Dispatch<React.SetStateAction<AgentSession[]>>
+  currentSession: AgentSession | null
+  activeSessionId: string
+  setActiveSessionId: (id: string) => void
+  handleClearAllSessions: (e?: React.MouseEvent) => void
+  handleCreateNewSession: () => void
+  handleDeleteSession: (id: string, e?: React.MouseEvent) => void
+  agentThinking: boolean
+  agentThinkingStep: string
+  agentInputPrompt: string
+  setAgentInputPrompt: (v: string) => void
+  handleChatPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void
+  handleSendAgentMessage: (customPrompt?: string) => void | Promise<void>
+  attachedImage: string | null
+  setAttachedImage: (v: string | null) => void
+  attachedImageName: string
+  setAttachedImageName: (v: string) => void
+  chatFileInputRef: React.RefObject<HTMLInputElement | null>
+  searched: string
+  setSearched: React.Dispatch<React.SetStateAction<string>>
+}
+
+/** AI 리서치 인텔리전스 워크스페이스. app/page.tsx의 activeTopView === 'research'일 때만
+ *  렌더링하도록 호출부에서 조건부로 감싼다(이 컴포넌트 자체는 항상 렌더링한다고 가정). */
+export default function ResearchPanel({
+  language, researchMode, setResearchMode, agentSessions, setAgentSessions, currentSession,
+  activeSessionId, setActiveSessionId, handleClearAllSessions, handleCreateNewSession, handleDeleteSession,
+  agentThinking, agentThinkingStep, agentInputPrompt, setAgentInputPrompt, handleChatPaste, handleSendAgentMessage,
+  attachedImage, setAttachedImage, attachedImageName, setAttachedImageName, chatFileInputRef, searched, setSearched
+}: ResearchPanelProps) {
+  return (
+    <>
         <section className="research-terminal panel" id="research-terminal" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e3e6ee', borderRadius: '12px', background: '#ffffff', margin: '20px 0' }}>
         <div className="workspace-light" style={{ minHeight: 'auto' }}>
           {/* Header Intro inside main page */}
@@ -211,12 +255,7 @@
                       <div className="prose max-w-none text-[14px] leading-relaxed">
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
-                          components={{
-                            code: MarkdownCodeRenderer,
-                            // MarkdownCodeBlock이 자체 <pre>로 코드 박스를 그리므로, react-markdown이
-                            // 기본으로 씌우는 <pre>는 그대로 통과시켜 이중 래핑을 막는다.
-                            pre: ({ children }) => <>{children}</>
-                          }}
+                          components={MARKDOWN_CHAT_COMPONENTS}
                         >
                           {msg.content}
                         </ReactMarkdown>
@@ -410,4 +449,6 @@
           </div>
         </div>
       </section>
-      )}
+    </>
+  )
+}

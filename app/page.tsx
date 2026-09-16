@@ -74,6 +74,7 @@ import { PolymarketSpeedGameCard } from '../components/PolymarketSpeedGameCard'
 import { Polymarket1HSpeedGameCard } from '../components/Polymarket1HSpeedGameCard'
 import { VisionChartScanModal } from '../components/VisionChartScanModal'
 import { QuantAutoTunerModal } from '../components/QuantAutoTunerModal'
+import ResearchPanel from '../components/ResearchPanel'
 
 const languageLabels = { en: 'EN', cn: 'CN', ko: 'KO' } as const
 type Language = keyof typeof languageLabels
@@ -8160,6 +8161,34 @@ export default function Page() {
       </section>
       )}
 
+      {activeTopView === 'research' && (
+        <ResearchPanel
+          language={language}
+          researchMode={researchMode}
+          setResearchMode={setResearchMode}
+          agentSessions={agentSessions}
+          setAgentSessions={setAgentSessions}
+          currentSession={currentSession}
+          activeSessionId={activeSessionId}
+          setActiveSessionId={setActiveSessionId}
+          handleClearAllSessions={handleClearAllSessions}
+          handleCreateNewSession={handleCreateNewSession}
+          handleDeleteSession={handleDeleteSession}
+          agentThinking={agentThinking}
+          agentThinkingStep={agentThinkingStep}
+          agentInputPrompt={agentInputPrompt}
+          setAgentInputPrompt={setAgentInputPrompt}
+          handleChatPaste={handleChatPaste}
+          handleSendAgentMessage={handleSendAgentMessage}
+          attachedImage={attachedImage}
+          setAttachedImage={setAttachedImage}
+          attachedImageName={attachedImageName}
+          setAttachedImageName={setAttachedImageName}
+          chatFileInputRef={chatFileInputRef}
+          searched={searched}
+          setSearched={setSearched}
+        />
+      )}
 
       {(activeTopView === 'trade') && (
         <>

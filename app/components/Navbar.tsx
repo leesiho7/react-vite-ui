@@ -337,6 +337,16 @@ export default function Navbar({
 
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l border-[#27272a]">
+                {currentUser.role === 'ROLE_ADMIN' && (
+                  <Link
+                    href="/admin/onnx-veto"
+                    className="flex items-center gap-1 text-[10px] font-bold text-[#f47a20] no-underline hover:underline whitespace-nowrap border border-[#f47a20]/40 rounded px-1.5 py-0.5"
+                    title="ONNX 거부권 검증 대시보드 (관리자 전용)"
+                  >
+                    <ShieldCheck size={12} />
+                    <span className="hidden sm:inline">관리자</span>
+                  </Link>
+                )}
                 <Link href="/profile" className="flex items-center gap-1.5 text-[11px] font-semibold text-[#34d399] no-underline hover:underline whitespace-nowrap">
                   <UserRound size={13} />
                   <span className="hidden sm:inline">{currentUser.nickname || currentUser.username}</span>
