@@ -11,6 +11,9 @@ import LineChartPanel from '@/components/admin/monitoring/LineChartPanel'
 import BarChartPanel from '@/components/admin/monitoring/BarChartPanel'
 import HeatmapPanel from '@/components/admin/monitoring/HeatmapPanel'
 import RiskGaugePanel from '@/components/admin/monitoring/RiskGaugePanel'
+import WalkForwardPanel from '@/components/admin/monitoring/WalkForwardPanel'
+import DecisionCalibrationPanel from '@/components/admin/monitoring/DecisionCalibrationPanel'
+import RecentVetoLogPanel from '@/components/admin/monitoring/RecentVetoLogPanel'
 import { fetchOnnxModelHealth, fetchVetoAccuracy, fetchOnnxVetoBacktest, fetchIntegratedDecision } from '@/lib/api'
 import { OnnxModelHealth, VetoAccuracyEntry, OnnxVetoBacktestComparison, OnnxBacktestArchetypeKey, BacktestTrade, IntegratedDecisionReport } from '@/lib/types'
 import {
@@ -267,8 +270,24 @@ export default function OnnxVetoDashboardPage() {
                 <PanelFrame title="WIN-RATE HEATMAP" subtitle="진입 요일 × 시간(UTC)" className="lg:col-span-2">
                   <HeatmapPanel grid={heatmapGrid} />
                 </PanelFrame>
+
+                <PanelFrame title="WALK-FORWARD CONSISTENCY" subtitle="시간순 4구간 재검증" className="lg:col-span-2">
+                  <WalkForwardPanel baseline={backtest.baselineWalkForward} vetoFiltered={backtest.vetoFilteredWalkForward} />
+                </PanelFrame>
               </div>
             )}
+          </SectionHeader>
+
+          <SectionHeader label="Decision Journal (ONNX 외 — AI 리서치 판정 전체)">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
+              <PanelFrame title="VERDICT CALIBRATION" subtitle="7일 뒤 실측 채점">
+                <DecisionCalibrationPanel />
+              </PanelFrame>
+
+              <PanelFrame title="RECENT VETO LOG" subtitle="최신순, 최대 50건">
+                <RecentVetoLogPanel />
+              </PanelFrame>
+            </div>
           </SectionHeader>
         </div>
       </main>

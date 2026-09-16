@@ -19,7 +19,9 @@ import {
   OnnxModelHealth,
   VetoAccuracyEntry,
   OnnxVetoBacktestComparison,
-  OnnxBacktestArchetypeKey
+  OnnxBacktestArchetypeKey,
+  DecisionCalibrationEntry,
+  RecentVetoEntry
 } from './types';
 
 /**
@@ -1814,6 +1816,30 @@ export async function fetchOnnxVetoBacktest(
     console.warn('[API] fetchOnnxVetoBacktest error:', err);
   }
   return null;
+}
+
+/** 33. 판정별(BUY/SELL/HOLD 등) 실측 캘리브레이션 — ONNX와 별개로, AI 리서치 판정 자체가
+ *  실제로 얼마나 맞았는지(decision_outcomes 테이블, 7일 뒤 실측 채점). 표본 부족 항목도
+ *  포함되어 오니 reliable로 걸러야 한다. */
+export async function fetchDecisionCalibration(): Promise<DecisionCalibrationEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/ai/decision-calibration`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchDecisionCalibration error:', err);
+  }
+  return [];
+}
+
+/** 34. 최근 채점 완료된 ONNX 거부권 발동 개별 로그(최신순, 최대 50건). */
+export async function fetchRecentVetoes(): Promise<RecentVetoEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/ml/veto-audit/recent`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchRecentVetoes error:', err);
+  }
+  return [];
 }
 
 /**

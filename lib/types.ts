@@ -381,6 +381,29 @@ export interface WalkForwardSummary {
   reliableSegments: number;
   profitableSegments: number;
   consistent: boolean;
+  /** 구간(segment)별 개별 백테스트 결과 — 시간순으로 4등분한 각 구간. */
+  segmentReports: BacktestReportSummary[];
+}
+
+// ── 판정 캘리브레이션 (AI 리서치 BUY/SELL/HOLD 실측 승률, ONNX와 별개) ──
+export interface DecisionCalibrationEntry {
+  verdict: string;
+  samples: number;
+  wins: number;
+  winRate: number;
+  avgReturnPct: number;
+  reliable: boolean;
+}
+
+// ── 거부권 개별 발동 로그 ──
+export interface RecentVetoEntry {
+  symbol: string;
+  vetoedDirection: string;
+  riskProbability: number;
+  entryPrice: number;
+  vetoedAt: string;
+  outcome: string;
+  realizedReturnPct: number | null;
 }
 
 export interface OnnxVetoBacktestComparison {
