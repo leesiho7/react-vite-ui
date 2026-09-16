@@ -336,6 +336,20 @@ export interface VetoAccuracyEntry {
   harmfulVetoes: number;
 }
 
+/** TripleBarrierEvaluator.Trade — 백테스트가 실제로 실행한 개별 거래 1건. */
+export interface BacktestTrade {
+  direction: 'LONG' | 'SHORT';
+  entryTime: string;
+  entryPrice: number;
+  exitTime: string;
+  exitPrice: number;
+  outcome: 'TARGET_HIT' | 'STOP_HIT' | 'TIME_EXIT' | 'PENDING' | 'INVALID';
+  returnPct: number;
+  barsHeld: number;
+  maxFavorablePct: number;
+  maxAdversePct: number;
+}
+
 export interface BacktestReportSummary {
   symbol: string;
   strategyName: string;
@@ -353,6 +367,7 @@ export interface BacktestReportSummary {
   outOfSampleTrades: number;
   metricsReliable: boolean;
   reliabilityNote: string;
+  trades: BacktestTrade[];
 }
 
 export interface WalkForwardSummary {
