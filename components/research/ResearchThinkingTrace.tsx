@@ -27,8 +27,8 @@ export default function ResearchThinkingTrace({
   if (steps.length === 0) {
     return (
       <div className="flex items-center gap-3 text-[13px] text-[#f47a20] font-semibold">
-        <RefreshCw size={16} className="animate-spin text-[#f47a20]" />
-        <span>{fallbackLabel}</span>
+        <ThinkingOrb />
+        <span className="animate-pulse">{fallbackLabel}</span>
       </div>
     )
   }
@@ -45,11 +45,11 @@ export default function ResearchThinkingTrace({
             }`}
           >
             {isCurrent ? (
-              <RefreshCw size={14} className="animate-spin text-[#f47a20] flex-shrink-0" />
+              <ThinkingOrb />
             ) : (
               <CheckCircle2 size={12} className="text-[#94a3b8] flex-shrink-0" />
             )}
-            <span>{step.thought}</span>
+            <span className={isCurrent ? 'animate-pulse' : ''}>{step.thought}</span>
             {step.progress > 0 && (
               <span className="text-[9px] font-mono text-[#64748b] flex-shrink-0">{step.progress}%</span>
             )}
@@ -57,5 +57,16 @@ export default function ResearchThinkingTrace({
         )
       })}
     </div>
+  )
+}
+
+/** 진행 중인 단계 앞에 붙는 작은 "구슬" — 뒤에 흐릿하게 번지는 글로우를 깔고 그 위에
+ *  스피너를 얹어서 그냥 화살표가 뱅글뱅글 도는 것보다 살아있는 느낌을 준다. */
+function ThinkingOrb() {
+  return (
+    <span className="relative flex items-center justify-center w-4 h-4 flex-shrink-0">
+      <span className="absolute inset-0 rounded-full bg-[#f47a20] blur-[6px] opacity-50 animate-pulse" />
+      <RefreshCw size={14} className="relative animate-spin text-[#f47a20]" />
+    </span>
   )
 }

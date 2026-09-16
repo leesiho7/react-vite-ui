@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { MARKDOWN_CHAT_COMPONENTS } from './research/MarkdownCodeBlock'
 import ResearchThinkingTrace, { ThinkingStep } from './research/ResearchThinkingTrace'
+import ResearchSourceChips, { NewsSource } from './research/ResearchSourceChips'
 import type { AgentSession } from '../app/page'
 
 export interface ResearchPanelProps {
@@ -25,6 +26,7 @@ export interface ResearchPanelProps {
   agentThinking: boolean
   agentThinkingStep: string
   agentThinkingLog: ThinkingStep[]
+  agentSourcesFound: NewsSource[]
   agentInputPrompt: string
   setAgentInputPrompt: (v: string) => void
   handleChatPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void
@@ -43,7 +45,7 @@ export interface ResearchPanelProps {
 export default function ResearchPanel({
   language, researchMode, setResearchMode, agentSessions, setAgentSessions, currentSession,
   activeSessionId, setActiveSessionId, handleClearAllSessions, handleCreateNewSession, handleDeleteSession,
-  agentThinking, agentThinkingStep, agentThinkingLog, agentInputPrompt, setAgentInputPrompt, handleChatPaste, handleSendAgentMessage,
+  agentThinking, agentThinkingStep, agentThinkingLog, agentSourcesFound, agentInputPrompt, setAgentInputPrompt, handleChatPaste, handleSendAgentMessage,
   attachedImage, setAttachedImage, attachedImageName, setAttachedImageName, chatFileInputRef, searched, setSearched
 }: ResearchPanelProps) {
   return (
@@ -274,6 +276,7 @@ export default function ResearchPanel({
                       steps={agentThinkingLog}
                       fallbackLabel={agentThinkingStep || (language === 'en' ? 'Qwen-Max flagship model is performing deep research via institutional quant framework...' : language === 'cn' ? 'Qwen-Max 旗舰大模型正在通过机构级量化框架进行深度研报分析...' : 'Qwen-Max 대형모델이 기관급 퀀트 프레임워크로 심층 리서치 중입니다...')}
                     />
+                    <ResearchSourceChips sources={agentSourcesFound} />
                   </div>
                 )}
               </div>

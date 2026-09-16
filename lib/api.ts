@@ -557,6 +557,7 @@ export async function streamResearchChatSSE(
   },
   callbacks: {
     onProgress?: (data: { step: number; progress: number; thought: string }) => void;
+    onSources?: (sources: Array<{ title: string; url: string }>) => void;
     onToken?: (token: string) => void;
     onDone?: (finalData: any) => void;
     onError?: (err: any) => void;
@@ -606,6 +607,9 @@ export async function streamResearchChatSSE(
             if (currentEvent === 'progress') {
               const parsed = JSON.parse(dataStr);
               callbacks.onProgress?.(parsed);
+            } else if (currentEvent === 'sources') {
+              const parsed = JSON.parse(dataStr);
+              if (Array.isArray(parsed)) callbacks.onSources?.(parsed);
             } else if (currentEvent === 'token') {
               let tokenText = dataStr;
               try {

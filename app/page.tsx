@@ -1666,6 +1666,8 @@ export default function Page() {
   // 백엔드 SSE onProgress가 보낸 단계별 실제 사고 과정을 받은 순서대로 누적한다 — 마지막 문구만
   // 덮어쓰던 예전 방식과 달리 지나간 단계들도 화면에 남겨서 실제 진행 과정을 보여준다.
   const [agentThinkingLog, setAgentThinkingLog] = useState<{ thought: string; progress: number }[]>([])
+  // 백엔드 SSE onSources가 보낸, 이번 요청에서 실제로 찾은 뉴스 기사(제목+URL) 목록.
+  const [agentSourcesFound, setAgentSourcesFound] = useState<{ title: string; url: string }[]>([])
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const [attachedImageName, setAttachedImageName] = useState<string>('')
   const chatFileInputRef = useRef<HTMLInputElement>(null)
@@ -1772,6 +1774,7 @@ export default function Page() {
       ? '업로드된 차트의 캔들 구조와 지지/저항 매물대를 꼼꼼히 판독하는 중...'
       : '시장의 숨겨진 가격 파동과 흐름을 깊이 곱씹는 중...')
     setAgentThinkingLog([])
+    setAgentSourcesFound([])
 
     const userMsg: AgentMessage = {
       id: 'usr-' + Date.now(),
@@ -1897,6 +1900,9 @@ export default function Page() {
               setAgentThinkingStep(prog.thought);
               setAgentThinkingLog(prev => [...prev, { thought: prog.thought, progress: prog.progress ?? 0 }]);
             }
+          },
+          onSources: (sources) => {
+            setAgentSourcesFound(sources);
           },
           onToken: (token) => {
             setAgentThinking(false);
@@ -8182,6 +8188,7 @@ export default function Page() {
           agentThinking={agentThinking}
           agentThinkingStep={agentThinkingStep}
           agentThinkingLog={agentThinkingLog}
+          agentSourcesFound={agentSourcesFound}
           agentInputPrompt={agentInputPrompt}
           setAgentInputPrompt={setAgentInputPrompt}
           handleChatPaste={handleChatPaste}
