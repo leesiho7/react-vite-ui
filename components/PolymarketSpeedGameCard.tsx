@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
+import { submitPredictionApi, settlePredictionApi, fetchUserPredictionStats, claimStreakReward } from '../lib/api'
 
 interface SpeedGameProps {
   symbol?: string
@@ -25,6 +26,14 @@ export function PolymarketSpeedGameCard({
   const [round, setRound] = useState<number>(1)
   const [remainingSec, setRemainingSec] = useState<number>(300)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const predictionIdRef = useRef<number | null>(null)
+
+  // 10연승 클레임 모달 상태 (1시간 게임의 클레임 플로우와 동일한 백엔드 API 재사용)
+  const [claimModalOpen, setClaimModalOpen] = useState(false)
+  const [claimAddress, setClaimAddress] = useState('')
+  const [claimNetwork, setClaimNetwork] = useState('polygon')
+  const [claimLoading, setClaimLoading] = useState(false)
+  const [claimSuccessData, setClaimSuccessData] = useState<any>(null)
 
   // 1H 예측게임과 동일하게, 로그인(auth_session에 실제 userId가 있는 사용자)한 경우에만
   // 예측 제출을 허용한다. 비회원은 관전만 가능하고 제출 시 로그인 안내를 받는다.
@@ -132,7 +141,7 @@ export function PolymarketSpeedGameCard({
     return 'aether_5m_streak_guest'
   }
 
-  const handleSettle = (overridePrice?: number) => {
+  const handleSettle = async (overridePrice?: number) => {
     const curr = stateRef.current
     const userChoice = curr.choice ?? choice
     const checkPrice = overridePrice ?? curr.animatedPrice ?? animatedPrice
@@ -142,8 +151,20 @@ export function PolymarketSpeedGameCard({
 
     if (!userChoice) return
 
-    // 유저 선택(UP/DOWN)에 따른 베이스라인 가격 비교 정산
-    const isWin = userChoice === 'up' ? checkPrice >= baseTarget : checkPrice < baseTarget
+    // 서버에 실제로 제출된 예측이 있으면(로그인 상태로 제출) 서버가 판정한 승패를 신뢰한다 —
+    // 이 판정이 UserPredictionStatsEntity.currentStreak을 실제로 갱신하므로, 여기서 승리해야만
+    // 아래 "10연승 클레임" 버튼이 실제로 동작하는 진짜 연승으로 이어진다.
+    let isWin: boolean
+    const predId = predictionIdRef.current
+    if (predId) {
+      const settleRes = await settlePredictionApi(predId, checkPrice)
+      isWin = settleRes?.status === 'WON'
+      predictionIdRef.current = null
+    } else {
+      // 비로그인 관전 등 서버에 기록된 예측이 없는 경우: 로컬 판정만 유지 (클레임 대상 아님)
+      isWin = userChoice === 'up' ? checkPrice >= baseTarget : checkPrice < baseTarget
+    }
+
     const newWins = isWin ? Math.min(10, currentWins + 1) : 0
     const nextRound = isWin ? (currentWins + 1 >= 10 ? 1 : currentRound + 1) : 1
 
@@ -151,6 +172,16 @@ export function PolymarketSpeedGameCard({
     setRound(nextRound)
     setSubmitted(false)
     setChoice(null)
+
+    // 서버 원장 값으로 한 번 더 동기화 (로그인 상태인 경우)
+    const uid = getCurrentUserId()
+    if (uid) {
+      fetchUserPredictionStats(uid).then((stats) => {
+        if (stats && typeof stats.currentStreak === 'number') {
+          setFiveMinWins((prev) => Math.max(prev, stats.currentStreak))
+        }
+      }).catch(() => {})
+    }
 
     try {
       const storageKey = getUserStreakKey()
@@ -168,7 +199,15 @@ export function PolymarketSpeedGameCard({
 
   useEffect(() => {
     setMounted(true)
-    setIsLoggedIn(getCurrentUserId() !== null)
+    const uid = getCurrentUserId()
+    setIsLoggedIn(uid !== null)
+    if (uid) {
+      fetchUserPredictionStats(uid).then((stats) => {
+        if (stats && typeof stats.currentStreak === 'number' && stats.currentStreak > 0) {
+          setFiveMinWins((prev) => Math.max(prev, stats.currentStreak))
+        }
+      }).catch(() => {})
+    }
     try {
       const storageKey = getUserStreakKey()
       const saved = localStorage.getItem(storageKey)
@@ -237,6 +276,41 @@ export function PolymarketSpeedGameCard({
     return `${m}:${s < 10 ? '0' : ''}${s}`
   }
 
+  const handleClaimPayout = async () => {
+    const uid = getCurrentUserId()
+    if (!uid) {
+      alert('🔒 10연승 보상을 신청하려면 먼저 로그인해 주세요.')
+      return
+    }
+    if (!claimAddress.trim()) {
+      alert('출금받으실 지갑 주소를 입력해주세요.')
+      return
+    }
+    setClaimLoading(true)
+    try {
+      const res = await claimStreakReward({
+        userId: uid,
+        destinationAddress: claimAddress.trim(),
+        network: claimNetwork
+      })
+      if (res && res.success) {
+        setClaimSuccessData(res)
+        setFiveMinWins(0)
+        setRound(1)
+        setSubmitted(false)
+        setChoice(null)
+        const storageKey = getUserStreakKey()
+        localStorage.removeItem(storageKey)
+      } else {
+        alert(res?.message || '출금 처리에 실패했습니다.')
+      }
+    } catch (e) {
+      alert('출금 요청 중 오류가 발생했습니다.')
+    } finally {
+      setClaimLoading(false)
+    }
+  }
+
   const cleanSymbol = symbol.replace('/USD', '').replace('/USDT', '')
   const displayBase = targetPrice
   const displayCurrent = animatedPrice
@@ -250,6 +324,7 @@ export function PolymarketSpeedGameCard({
   const gradientStopColor = '#f47a20'
 
   return (
+    <>
     <div className="speed-card" style={{ maxWidth: '100%', margin: '0 0 24px' }} aria-label="5분 스피드게임">
       {/* Top Header Bar */}
       <div className="speed-topline">
@@ -295,9 +370,17 @@ export function PolymarketSpeedGameCard({
               현재 <b>{fiveMinWins} / 10</b> 승 달성 ({10 - fiveMinWins}승 남음)
             </span>
           </div>
-          <span style={{ fontSize: '10px', color: '#059669', fontWeight: 700 }}>
-            {fiveMinWins >= 10 ? '🏆 10연승 전설 달성!' : `5분 실시간 정산 모드`}
-          </span>
+          {fiveMinWins >= 10 ? (
+            <button
+              type="button"
+              onClick={() => setClaimModalOpen(true)}
+              style={{ fontSize: '10px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', border: '1px solid #34d399', padding: '4px 10px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              🏆 10연승 달성! $10.00 USDT 즉시 수령하기 ↗
+            </button>
+          ) : (
+            <span style={{ fontSize: '10px', color: '#059669', fontWeight: 700 }}>5분 실시간 정산 모드</span>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '8px' }}>
@@ -474,12 +557,25 @@ export function PolymarketSpeedGameCard({
             transition: 'all 0.2s ease'
           }}
           disabled={!choice || submitted || remainingSec <= 60}
-          onClick={() => {
+          onClick={async () => {
             if (!choice || submitted || remainingSec <= 60) return
-            if (!isLoggedIn) {
+            const uid = getCurrentUserId()
+            if (!uid) {
               alert('🔒 5분 예측을 제출하려면 로그인이 필요합니다. 회원가입 후 이용해주세요.')
               return
             }
+            const rawSymbol = cleanSymbol + 'USDT'
+            const res = await submitPredictionApi({
+              userId: uid,
+              symbol: rawSymbol,
+              predictionType: 'DIRECTION_5M',
+              predictedDirection: choice === 'up' ? 'UP' : 'DOWN'
+            })
+            if (!res || !res.success) {
+              alert(res?.message || '예측 제출에 실패했습니다.')
+              return
+            }
+            predictionIdRef.current = typeof res.predictionId === 'number' ? res.predictionId : null
             setSubmitted(true)
             try {
               const storageKey = getUserStreakKey()
@@ -512,6 +608,87 @@ export function PolymarketSpeedGameCard({
         AETHER SPEED GAME · 5 MINUTE FLASH STREAK LEAGUE · REAL-TIME MARKET DATA FEED
       </p>
     </div>
+
+    {claimModalOpen && (
+      <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+        <div className="panel" style={{ fontFamily: 'var(--font-sans)', width: '480px', maxWidth: '92vw', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <strong style={{ fontSize: '15px' }}>🏆 5분봉 10연승 챌린지 $10.00 USDT Claim</strong>
+            <button type="button" className="text-button" onClick={() => setClaimModalOpen(false)}>닫기 ×</button>
+          </div>
+
+          {claimSuccessData ? (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>{claimSuccessData.message}</h3>
+              <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
+                온체인 트랜잭션이 블록체인에서 안전하게 승인되었습니다.
+              </p>
+              <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', fontSize: '11px', textAlign: 'left', wordBreak: 'break-all' }}>
+                <div><b>트랜잭션 해시:</b> {claimSuccessData.txHash}</div>
+                <div><b>수신 지갑:</b> {claimSuccessData.destinationAddress}</div>
+                <div><b>네트워크:</b> {claimSuccessData.network?.toUpperCase()}</div>
+              </div>
+              <button
+                type="button"
+                className="primary-button"
+                style={{ width: '100%', marginTop: '16px' }}
+                onClick={() => { setClaimModalOpen(false); setClaimSuccessData(null) }}
+              >
+                확인 완료
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p style={{ fontSize: '12px', color: '#555', marginBottom: '12px' }}>
+                5분봉 10연승 미션 달성을 축하합니다! $10.00 USDT를 수신할 지갑 주소를 입력해 주세요.
+              </p>
+              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '4px', padding: '10px 12px', marginBottom: '14px', fontSize: '10.5px', color: '#0369a1', lineHeight: 1.5 }}>
+                💡 메타마스크가 없으셔도 괜찮습니다! 바이비트/바이낸스/OKX/Bitget 앱의 USDT 입금 주소(Polygon/BSC/TRC20)를 붙여넣으셔도 됩니다.
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>출금 네트워크 선택</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[
+                    { key: 'polygon', label: 'POLYGON' },
+                    { key: 'bsc', label: 'BSC' },
+                    { key: 'tron', label: 'TRON (TRC20)' },
+                    { key: 'solana', label: 'SOLANA' }
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      type="button"
+                      style={{ flex: 1, padding: '7px 4px', fontSize: '10px', fontWeight: claimNetwork === item.key ? 700 : 500, border: claimNetwork === item.key ? '2px solid #18334a' : '1px solid #ddd', background: claimNetwork === item.key ? '#18334a' : '#f9f9f9', color: claimNetwork === item.key ? '#fff' : '#333', borderRadius: '3px' }}
+                      onClick={() => setClaimNetwork(item.key)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>수신 지갑 / 거래소 USDT 입금 주소</label>
+                <input
+                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}
+                  placeholder="0x... (메타마스크 또는 거래소 USDT 입금 주소)"
+                  value={claimAddress}
+                  onChange={(e) => setClaimAddress(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                className="primary-button"
+                style={{ width: '100%', padding: '10px', fontSize: '12px', fontWeight: 700, borderRadius: '4px' }}
+                disabled={claimLoading}
+                onClick={handleClaimPayout}
+              >
+                {claimLoading ? '온체인 송금 처리 중…' : '$10.00 USDT 즉시 수령하기 ↗'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 

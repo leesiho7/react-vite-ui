@@ -133,7 +133,7 @@ export async function fetchPredictionLeaderboard(limit = 10): Promise<Prediction
 export interface SubmitPredictionPayload {
   userId: number;
   symbol: string;
-  predictionType: 'DIRECTION_1H' | 'DIRECTION_24H' | 'PRICE_SNIPER';
+  predictionType: 'DIRECTION_1H' | 'DIRECTION_24H' | 'DIRECTION_5M' | 'PRICE_SNIPER';
   predictedDirection: 'UP' | 'DOWN' | 'BULL' | 'BEAR';
   predictedPrice?: number;
 }
@@ -878,7 +878,7 @@ export async function claimStreakReward(payload: {
   network?: string;
 }): Promise<any> {
   try {
-    const res = await fetch(`${API_BASE}/v1/gamification/claim-streak-reward`, {
+    const res = await fetch(`${API_BASE}/gamification/claim-streak-reward`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -896,7 +896,7 @@ export async function claimStreakReward(payload: {
       message: body?.message || `보상 출금 신청에 실패했습니다. (HTTP ${res.status})`
     };
   } catch (err: any) {
-    console.warn('[API] Error calling /v1/gamification/claim-streak-reward:', err);
+    console.warn('[API] Error calling /gamification/claim-streak-reward:', err);
     return {
       success: false,
       message: '서버 연결에 실패했습니다: ' + (err?.message || '')
@@ -1469,6 +1469,7 @@ export interface EscrowPoolStatus {
   escrowAddress: string;
   network: string;
   status: string;
+  onChainBalance?: number;
 }
 
 export async function fetchEscrowPoolStatus(): Promise<EscrowPoolStatus | null> {
