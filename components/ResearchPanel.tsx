@@ -7,6 +7,7 @@ import {
   Paperclip, BarChart2, BookOpen, Cpu, Send, BrainCircuit
 } from 'lucide-react'
 import { MARKDOWN_CHAT_COMPONENTS } from './research/MarkdownCodeBlock'
+import ResearchThinkingTrace, { ThinkingStep } from './research/ResearchThinkingTrace'
 import type { AgentSession } from '../app/page'
 
 export interface ResearchPanelProps {
@@ -23,6 +24,7 @@ export interface ResearchPanelProps {
   handleDeleteSession: (id: string, e?: React.MouseEvent) => void
   agentThinking: boolean
   agentThinkingStep: string
+  agentThinkingLog: ThinkingStep[]
   agentInputPrompt: string
   setAgentInputPrompt: (v: string) => void
   handleChatPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void
@@ -41,7 +43,7 @@ export interface ResearchPanelProps {
 export default function ResearchPanel({
   language, researchMode, setResearchMode, agentSessions, setAgentSessions, currentSession,
   activeSessionId, setActiveSessionId, handleClearAllSessions, handleCreateNewSession, handleDeleteSession,
-  agentThinking, agentThinkingStep, agentInputPrompt, setAgentInputPrompt, handleChatPaste, handleSendAgentMessage,
+  agentThinking, agentThinkingStep, agentThinkingLog, agentInputPrompt, setAgentInputPrompt, handleChatPaste, handleSendAgentMessage,
   attachedImage, setAttachedImage, attachedImageName, setAttachedImageName, chatFileInputRef, searched, setSearched
 }: ResearchPanelProps) {
   return (
@@ -268,10 +270,10 @@ export default function ResearchPanel({
 
                 {agentThinking && (
                   <div className="research-bubble-agent">
-                    <div className="flex items-center gap-3 text-[13px] text-[#f47a20] font-semibold">
-                      <RefreshCw size={16} className="animate-spin text-[#f47a20]" />
-                      <span>{agentThinkingStep || (language === 'en' ? 'Qwen-Max flagship model is performing deep research via institutional quant framework...' : language === 'cn' ? 'Qwen-Max 旗舰大模型正在通过机构级量化框架进行深度研报分析...' : 'Qwen-Max 대형모델이 기관급 퀀트 프레임워크로 심층 리서치 중입니다...')}</span>
-                    </div>
+                    <ResearchThinkingTrace
+                      steps={agentThinkingLog}
+                      fallbackLabel={agentThinkingStep || (language === 'en' ? 'Qwen-Max flagship model is performing deep research via institutional quant framework...' : language === 'cn' ? 'Qwen-Max 旗舰大模型正在通过机构级量化框架进行深度研报分析...' : 'Qwen-Max 대형모델이 기관급 퀀트 프레임워크로 심층 리서치 중입니다...')}
+                    />
                   </div>
                 )}
               </div>

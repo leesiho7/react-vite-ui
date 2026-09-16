@@ -1663,6 +1663,9 @@ export default function Page() {
   const [agentInputPrompt, setAgentInputPrompt] = useState<string>('')
   const [agentThinking, setAgentThinking] = useState<boolean>(false)
   const [agentThinkingStep, setAgentThinkingStep] = useState<string>('AETHER 퀀트 모멘텀 지표 & 20/50 EMA 계산 중...')
+  // 백엔드 SSE onProgress가 보낸 단계별 실제 사고 과정을 받은 순서대로 누적한다 — 마지막 문구만
+  // 덮어쓰던 예전 방식과 달리 지나간 단계들도 화면에 남겨서 실제 진행 과정을 보여준다.
+  const [agentThinkingLog, setAgentThinkingLog] = useState<{ thought: string; progress: number }[]>([])
   const [attachedImage, setAttachedImage] = useState<string | null>(null)
   const [attachedImageName, setAttachedImageName] = useState<string>('')
   const chatFileInputRef = useRef<HTMLInputElement>(null)
@@ -1765,9 +1768,10 @@ export default function Page() {
     setAttachedImage(null)
     setAttachedImageName('')
     setAgentThinking(true)
-    setAgentThinkingStep(currentImg 
-      ? '업로드된 차트의 캔들 구조와 지지/저항 매물대를 꼼꼼히 판독하는 중...' 
+    setAgentThinkingStep(currentImg
+      ? '업로드된 차트의 캔들 구조와 지지/저항 매물대를 꼼꼼히 판독하는 중...'
       : '시장의 숨겨진 가격 파동과 흐름을 깊이 곱씹는 중...')
+    setAgentThinkingLog([])
 
     const userMsg: AgentMessage = {
       id: 'usr-' + Date.now(),
@@ -1891,6 +1895,7 @@ export default function Page() {
           onProgress: (prog) => {
             if (prog?.thought) {
               setAgentThinkingStep(prog.thought);
+              setAgentThinkingLog(prev => [...prev, { thought: prog.thought, progress: prog.progress ?? 0 }]);
             }
           },
           onToken: (token) => {
@@ -8176,6 +8181,7 @@ export default function Page() {
           handleDeleteSession={handleDeleteSession}
           agentThinking={agentThinking}
           agentThinkingStep={agentThinkingStep}
+          agentThinkingLog={agentThinkingLog}
           agentInputPrompt={agentInputPrompt}
           setAgentInputPrompt={setAgentInputPrompt}
           handleChatPaste={handleChatPaste}
