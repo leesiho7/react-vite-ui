@@ -15,7 +15,11 @@ import {
   StrategyArchetypeKey,
   StrategyCodeResponse,
   CopilotWorkspaceResponse,
-  InvalidationAlert
+  InvalidationAlert,
+  OnnxModelHealth,
+  VetoAccuracyEntry,
+  OnnxVetoBacktestComparison,
+  OnnxBacktestArchetypeKey
 } from './types';
 
 /**
@@ -1765,6 +1769,47 @@ export async function approveStrategyResearch(payload: {
     console.warn('[API] approveStrategyResearch error:', err);
     return { success: false, message: BOT_CONTROL_NETWORK_ERROR };
   }
+}
+
+// ── ONNX 거부권 감사 대시보드 (app/admin/onnx-veto) ──
+
+/** 30. ONNX DOWN_RISK/UP_RISK 모델 로딩 상태 및 게이트 값 */
+export async function fetchOnnxModelHealth(): Promise<OnnxModelHealth | null> {
+  try {
+    const res = await fetch(`${API_BASE}/ml/veto-audit/model-health`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchOnnxModelHealth error:', err);
+  }
+  return null;
+}
+
+/** 31. 방향별(BUY=DOWN_RISK 거부권 / SELL=UP_RISK 거부권) 실전 거부권 정확도 */
+export async function fetchVetoAccuracy(windowDays = 30): Promise<VetoAccuracyEntry[]> {
+  try {
+    const res = await fetch(`${API_BASE}/ml/veto-audit/accuracy?windowDays=${windowDays}`);
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchVetoAccuracy error:', err);
+  }
+  return [];
+}
+
+/** 32. 전략 아키타입에 ONNX 거부권을 적용했을 때/안 했을 때 백테스트 비교 (비용/MDD/워크포워드 포함) */
+export async function fetchOnnxVetoBacktest(
+  symbol: string,
+  archetype: OnnxBacktestArchetypeKey
+): Promise<OnnxVetoBacktestComparison | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/ml/veto-backtest?symbol=${encodeURIComponent(symbol)}&archetype=${archetype}`,
+      { signal: AbortSignal.timeout(60000) }
+    );
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchOnnxVetoBacktest error:', err);
+  }
+  return null;
 }
 
 /**

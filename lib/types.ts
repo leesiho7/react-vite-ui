@@ -307,6 +307,76 @@ export interface CopilotWorkspaceResponse {
   summaryText?: string;
 }
 
+// ── ONNX 거부권 감사 대시보드 (관리자 전용, app/admin/onnx-veto) ──
+
+/** OnnxVetoBacktestController가 받는 아키타입 — MULTI_BOTTOM_BREAKOUT/GARTLEY_222는 패턴 전용
+ *  백테스터를 따로 쓰기 때문에(StrategyResearchOrchestrator 참고) 이 목록에서 제외된다. */
+export type OnnxBacktestArchetypeKey =
+  | 'TREND_FOLLOWING'
+  | 'MEAN_REVERSION'
+  | 'BREAKOUT'
+  | 'RSI_STANDALONE'
+  | 'VWAP_TREND'
+  | 'MACD_CROSSOVER'
+  | 'MA_RIBBON'
+  | 'BOLLINGER_SQUEEZE_BREAKOUT'
+  | 'ATR_VOLATILITY_BREAKOUT';
+
+export interface OnnxModelHealth {
+  downRiskInitialized: boolean;
+  upRiskInitialized: boolean;
+  insufficientCandleFallbackRatePct: number;
+  ensembleGate: number;
+}
+
+export interface VetoAccuracyEntry {
+  direction: string;
+  samples: number;
+  correctVetoes: number;
+  harmfulVetoes: number;
+}
+
+export interface BacktestReportSummary {
+  symbol: string;
+  strategyName: string;
+  totalTrades: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  profitFactor: number;
+  avgReturnPct: number;
+  totalReturnPct: number;
+  maxDrawdownPct: number;
+  sharpeRatio: number;
+  totalCostPct: number;
+  outOfSampleWinRate: number;
+  outOfSampleTrades: number;
+  metricsReliable: boolean;
+  reliabilityNote: string;
+}
+
+export interface WalkForwardSummary {
+  totalSegments: number;
+  reliableSegments: number;
+  profitableSegments: number;
+  consistent: boolean;
+}
+
+export interface OnnxVetoBacktestComparison {
+  symbol: string;
+  strategyName: string;
+  direction: string;
+  reliable: boolean;
+  note: string;
+  baseline?: BacktestReportSummary;
+  vetoFiltered?: BacktestReportSummary;
+  baselineWalkForward?: WalkForwardSummary;
+  vetoFilteredWalkForward?: WalkForwardSummary;
+  totalEntrySignals: number;
+  vetoedEntrySignals: number;
+  vetoRatePct: number;
+}
+
 export interface InvalidationAlert {
   symbol?: string;
   message?: string;
