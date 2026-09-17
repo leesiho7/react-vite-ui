@@ -1578,7 +1578,7 @@ export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]
  * 백엔드가 JWT의 ROLE_ADMIN을 실제로 검증하므로 authHeader()를 반드시 붙여야 한다.
  */
 export interface AdminGrantLicenseRequest {
-  targetUserId: number;
+  targetUsername: string;
   botName?: string;
   tradeSymbol?: string;
   timeFrame?: string;

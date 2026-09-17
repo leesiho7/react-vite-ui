@@ -2151,7 +2151,7 @@ export default function Page() {
 
   // [관리자 전용] 실결제 없는 24H 봇 라이선스 무료 발급 토글 State
   const [adminGrantPanelOpen, setAdminGrantPanelOpen] = useState(false)
-  const [adminGrantTargetUserId, setAdminGrantTargetUserId] = useState('')
+  const [adminGrantTargetUsername, setAdminGrantTargetUsername] = useState('')
   const [adminGrantBotName, setAdminGrantBotName] = useState('')
   const [adminGrantSymbol, setAdminGrantSymbol] = useState('')
   const [adminGrantTimeFrame, setAdminGrantTimeFrame] = useState('')
@@ -3405,9 +3405,9 @@ export default function Page() {
       alert('🔒 최고 관리자(leesiho58@gmail.com) 계정으로 로그인해야 접근할 수 있습니다.')
       return
     }
-    const targetId = parseInt(adminGrantTargetUserId, 10)
-    if (isNaN(targetId) || targetId <= 0) {
-      alert('올바른 대상 유저 ID를 입력해주세요.')
+    const targetUsername = adminGrantTargetUsername.trim()
+    if (!targetUsername) {
+      alert('대상 유저 아이디(로그인 아이디/이메일)를 입력해주세요.')
       return
     }
     const days = parseInt(adminGrantDurationDays, 10)
@@ -3415,7 +3415,7 @@ export default function Page() {
     setAdminGrantResult(null)
     try {
       const result = await adminGrantLicense({
-        targetUserId: targetId,
+        targetUsername,
         botName: adminGrantBotName.trim() || undefined,
         tradeSymbol: adminGrantSymbol.trim() || undefined,
         timeFrame: adminGrantTimeFrame.trim() || undefined,
@@ -6690,12 +6690,12 @@ export default function Page() {
                       {adminGrantPanelOpen && (
                         <div style={{ marginTop: '10px', padding: '14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '360px' }}>
                           <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600 }}>
-                            대상 유저 ID *
+                            대상 유저 아이디 (로그인 아이디/이메일) *
                             <input
-                              type="number"
-                              value={adminGrantTargetUserId}
-                              onChange={(e) => setAdminGrantTargetUserId(e.target.value)}
-                              placeholder="예: 1"
+                              type="text"
+                              value={adminGrantTargetUsername}
+                              onChange={(e) => setAdminGrantTargetUsername(e.target.value)}
+                              placeholder="예: test@example.com"
                               style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
                             />
                           </label>
@@ -6711,14 +6711,19 @@ export default function Page() {
                           </label>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600, flex: 1 }}>
-                              종목 (선택)
-                              <input
-                                type="text"
+                              종목 (선택 — 크립토 USDT 선물만 지원)
+                              <select
                                 value={adminGrantSymbol}
                                 onChange={(e) => setAdminGrantSymbol(e.target.value)}
-                                placeholder="BTCUSDT"
-                                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
-                              />
+                                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px', background: '#fff' }}
+                              >
+                                <option value="">기본값 (BTCUSDT)</option>
+                                <option value="BTCUSDT">BTCUSDT</option>
+                                <option value="ETHUSDT">ETHUSDT</option>
+                                <option value="SOLUSDT">SOLUSDT</option>
+                                <option value="XRPUSDT">XRPUSDT</option>
+                                <option value="BNBUSDT">BNBUSDT</option>
+                              </select>
                             </label>
                             <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600, flex: 1 }}>
                               타임프레임 (선택)
