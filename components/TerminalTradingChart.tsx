@@ -80,6 +80,9 @@ export function TerminalTradingChart({
     winRate: number;
     expectedReturn: number;
     futurePrices: number[];
+    riskCrossCheckProbability: number | null;
+    riskCrossCheckLabel: string;
+    riskCrossCheckAlert: boolean;
   } | null>(null)
 
   // Hover Crosshair State
@@ -124,12 +127,18 @@ export function TerminalTradingChart({
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data) {
+          // 실측 궤적이 없으면(합성 기반/매칭 실패) null로 둔다 — 프론트는 이 경우 오버레이를 끄고,
+          // 그럴듯한 숫자로 대신 채우지 않는다.
+          const hasRealFuture = Array.isArray(data.ghostFuturePrices) && data.ghostFuturePrices.length >= 5
           setGhostData({
-            patternName: data.patternName || '상승 깃발형 돌파',
-            similarity: data.similarityScore ? Math.round(data.similarityScore * 1000) / 10 : 89.2,
-            winRate: data.historicalWinRate ? Math.round(data.historicalWinRate * 100) : 80,
-            expectedReturn: data.expectedReturn5Day ? Math.round(data.expectedReturn5Day * 1000) / 10 : 6.5,
-            futurePrices: (data.ghostFuturePrices && data.ghostFuturePrices.length > 0) ? data.ghostFuturePrices : []
+            patternName: data.patternName || '패턴 분석 중',
+            similarity: Math.round((data.similarityScore ?? 0) * 1000) / 10,
+            winRate: Math.round((data.historicalWinRate ?? 0) * 100),
+            expectedReturn: Math.round((data.expectedReturn5Day ?? 0) * 1000) / 10,
+            futurePrices: hasRealFuture ? data.ghostFuturePrices : [],
+            riskCrossCheckProbability: typeof data.riskCrossCheckProbability === 'number' ? data.riskCrossCheckProbability : null,
+            riskCrossCheckLabel: data.riskCrossCheckLabel || 'UNAVAILABLE',
+            riskCrossCheckAlert: Boolean(data.riskCrossCheckAlert)
           })
         }
       })
@@ -471,8 +480,9 @@ export function TerminalTradingChart({
     const allPrices = candles.flatMap(c => [c.high, c.low])
     indicatorData.upperBB.forEach(v => { if (v) allPrices.push(v) })
     indicatorData.lowerBB.forEach(v => { if (v) allPrices.push(v) })
-    if (showGhostOverlay && ghostData?.futurePrices) {
-      ghostData.futurePrices.forEach(p => {
+    const hasRealGhostTrajectoryForLayout = !!(showGhostOverlay && ghostData?.futurePrices && ghostData.futurePrices.length >= 5)
+    if (hasRealGhostTrajectoryForLayout) {
+      ghostData!.futurePrices.forEach(p => {
         allPrices.push(p * 1.02)
         allPrices.push(p * 0.98)
       })
@@ -486,7 +496,7 @@ export function TerminalTradingChart({
       return priceChartHeight - 20 - ((val - minPrice) / priceRange) * (priceChartHeight - 40)
     }
 
-    const futureSlotCount = showGhostOverlay ? 6 : 0
+    const futureSlotCount = hasRealGhostTrajectoryForLayout ? 6 : 0
     const totalSlots = candles.length + futureSlotCount
     const candleSlotWidth = chartWidth / totalSlots
     const candleBarWidth = Math.max(3.5, candleSlotWidth * 0.72)
@@ -709,21 +719,17 @@ export function TerminalTradingChart({
     }
 
     // 6.5 AETHER 프랙탈 파동 궤적: Area 형식 예측 신뢰구간 밴드 & 실제 예측 주가봉(Ghost Candlesticks)
-    if (showGhostOverlay && candles.length > 0) {
+    // 실측 궤적(ghostFuturePrices)이 없으면 그럴듯한 값으로 대체하지 않고 오버레이 자체를 그리지 않는다.
+    if (showGhostOverlay && candles.length > 0 && hasRealGhostTrajectoryForLayout) {
       const lastCandle = candles[candles.length - 1]
       const lastX = getX(candles.length - 1)
       const basePrice = lastCandle.close
-      const winPct = ghostData?.winRate ? Math.round(ghostData.winRate) : 80
-      const expRet = ghostData?.expectedReturn ? Math.round(ghostData.expectedReturn * 10) / 10 : 6.5
-      const simScore = ghostData?.similarity ? Math.round(ghostData.similarity * 10) / 10 : 89.2
+      const winPct = Math.round(ghostData!.winRate)
+      const expRet = Math.round(ghostData!.expectedReturn * 10) / 10
+      const simScore = Math.round(ghostData!.similarity * 10) / 10
 
-      // 1) 5개 미래 예측 종가 궤적 계산
-      const rawFuturePrices: number[] = (ghostData?.futurePrices && ghostData.futurePrices.length >= 5)
-        ? ghostData.futurePrices.slice(0, 5)
-        : [1, 2, 3, 4, 5].map((step) => {
-            const factor = 1 + ((expRet / 100) * Math.sin((step / 5) * (Math.PI / 2)))
-            return basePrice * factor
-          })
+      // 1) 5개 미래 예측 종가 궤적 — 백엔드가 계산한 실제 매칭 구간의 미래 종가(현재가 비율 스케일링)
+      const rawFuturePrices: number[] = ghostData!.futurePrices.slice(0, 5)
 
       // 2) 최근 14봉 평균진폭(ATR) 기반 동적 변동성 계산
       const recentSlice = candles.slice(-14)
@@ -855,6 +861,35 @@ export function TerminalTradingChart({
       ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a'
       ctx.fillText(badgeText, badgeX + 20, badgeY + 15)
 
+      // ── E. ONNX 급락/급등 위험 교차검증 배지 (판별 불가면 아무것도 그리지 않는다 — mock 금지) ──
+      if (ghostData?.riskCrossCheckLabel && ghostData.riskCrossCheckLabel !== 'UNAVAILABLE' && ghostData.riskCrossCheckProbability !== null) {
+        const riskPct = Math.round(ghostData.riskCrossCheckProbability * 1000) / 10
+        const riskDirLabel = ghostData.riskCrossCheckLabel === 'DOWN_RISK_CHECK' ? '급락 위험' : '급등 위험'
+        const riskColor = ghostData.riskCrossCheckAlert ? '#f59e0b' : '#10b981'
+        const riskText = ghostData.riskCrossCheckAlert
+          ? `⚠ ONNX 교차검증: ${riskDirLabel} ${riskPct}% (이 방향 신뢰도 낮음)`
+          : `✓ ONNX 교차검증: ${riskDirLabel} ${riskPct}% (게이트 이하, 방향 유지)`
+
+        ctx.font = 'bold 9.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        const riskBadgeW = ctx.measureText(riskText).width + 18
+        const riskBadgeX = Math.max(10, Math.min(chartWidth - riskBadgeW - 10, badgeX))
+        const riskBadgeY = badgeY + 25
+
+        ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.94)'
+        ctx.strokeStyle = riskColor
+        ctx.beginPath()
+        if ((ctx as any).roundRect) {
+          (ctx as any).roundRect(riskBadgeX, riskBadgeY, riskBadgeW, 20, 5)
+        } else {
+          ctx.rect(riskBadgeX, riskBadgeY, riskBadgeW, 20)
+        }
+        ctx.fill()
+        ctx.stroke()
+
+        ctx.fillStyle = riskColor
+        ctx.fillText(riskText, riskBadgeX + 8, riskBadgeY + 14)
+      }
+
       ctx.restore()
     }
 
@@ -978,7 +1013,8 @@ export function TerminalTradingChart({
       return
     }
 
-    const futureSlotCount = showGhostOverlay ? 6 : 0
+    const hasRealGhostTrajectoryForHover = !!(showGhostOverlay && ghostData?.futurePrices && ghostData.futurePrices.length >= 5)
+    const futureSlotCount = hasRealGhostTrajectoryForHover ? 6 : 0
     const totalSlots = candles.length + futureSlotCount
     const candleSlotWidth = chartWidth / totalSlots
     const candleIdx = Math.min(candles.length - 1, Math.max(0, Math.floor(mouseX / candleSlotWidth)))
@@ -1206,6 +1242,9 @@ export function TerminalTradingChart({
             }}
           >
             프랙탈 고스트 {showGhostOverlay ? 'ON' : 'OFF'}
+            {showGhostOverlay && !(ghostData?.futurePrices && ghostData.futurePrices.length >= 5) && (
+              <span style={{ color: isDark ? '#787b86' : '#94a3b8', fontWeight: 400 }}>(데이터 없음)</span>
+            )}
           </button>
 
           <span style={{ height: '14px', borderLeft: `1px solid ${isDark ? '#363a45' : '#cbd5e1'}` }} />
