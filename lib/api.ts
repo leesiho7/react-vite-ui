@@ -1574,6 +1574,50 @@ export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]
 }
 
 /**
+ * 21-1. [관리자 전용] 실결제 없이 24H 봇 라이선스 무료 발급 (테스트/코프 계정용).
+ * 백엔드가 JWT의 ROLE_ADMIN을 실제로 검증하므로 authHeader()를 반드시 붙여야 한다.
+ */
+export interface AdminGrantLicenseRequest {
+  targetUserId: number;
+  botName?: string;
+  tradeSymbol?: string;
+  timeFrame?: string;
+  durationDays?: number;
+}
+
+export interface AdminGrantLicenseResponse {
+  success: boolean;
+  message: string;
+  licenseToken?: string;
+  userId?: number;
+  username?: string;
+  telegramDeepLink?: string;
+  telegramBotUsername?: string;
+  instanceId?: number;
+  botName?: string;
+  expiredAt?: string;
+  remainingDays?: number;
+}
+
+export async function adminGrantLicense(req: AdminGrantLicenseRequest): Promise<AdminGrantLicenseResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/payments/license/admin-grant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify(req)
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data) {
+      return data;
+    }
+    return data || { success: false, message: `HTTP ${res.status}` };
+  } catch (e) {
+    console.warn('[API] adminGrantLicense failed:', e);
+    return { success: false, message: e instanceof Error ? e.message : '요청 실패' };
+  }
+}
+
+/**
  * 22. AI Vision 차트 사진 시각 판독 & AETHER 시계열 프랙탈 분석 API
  */
 export async function fetchVisionChartAnalysis(req: VisionChartAnalysisRequest): Promise<VisionChartAnalysisResponse | null> {

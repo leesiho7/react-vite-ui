@@ -30,6 +30,7 @@ import {
   updateAdminEscrowConfig,
   sweepAdminEscrowFunds,
   fetchAdminEscrowAuditLogs,
+  adminGrantLicense,
   AdminEscrowAuditLog,
   fetchVisionChartAnalysis,
   fetchUserBots,
@@ -2147,6 +2148,16 @@ export default function Page() {
   const [adminSweepResult, setAdminSweepResult] = useState<any>(null)
   const [adminAuditLogs, setAdminAuditLogs] = useState<AdminEscrowAuditLog[]>([])
 
+  // [관리자 전용] 실결제 없는 24H 봇 라이선스 무료 발급 토글 State
+  const [adminGrantPanelOpen, setAdminGrantPanelOpen] = useState(false)
+  const [adminGrantTargetUserId, setAdminGrantTargetUserId] = useState('')
+  const [adminGrantBotName, setAdminGrantBotName] = useState('')
+  const [adminGrantSymbol, setAdminGrantSymbol] = useState('')
+  const [adminGrantTimeFrame, setAdminGrantTimeFrame] = useState('')
+  const [adminGrantDurationDays, setAdminGrantDurationDays] = useState('30')
+  const [adminGrantLoading, setAdminGrantLoading] = useState(false)
+  const [adminGrantResult, setAdminGrantResult] = useState<any>(null)
+
   // Super Admin Authorization Check (leesiho58@gmail.com)
   const isAdmin = useMemo(() => {
     if (!currentUser) return false
@@ -3385,6 +3396,36 @@ export default function Page() {
     }
     const logs = await fetchAdminEscrowAuditLogs()
     if (logs) setAdminAuditLogs(logs)
+  }
+
+  // 6-0. [관리자] 실결제 없는 24H 봇 라이선스 무료 발급 핸들러 (테스트/코프 계정용)
+  const handleAdminGrantLicense = async () => {
+    if (!isAdmin) {
+      alert('🔒 최고 관리자(leesiho58@gmail.com) 계정으로 로그인해야 접근할 수 있습니다.')
+      return
+    }
+    const targetId = parseInt(adminGrantTargetUserId, 10)
+    if (isNaN(targetId) || targetId <= 0) {
+      alert('올바른 대상 유저 ID를 입력해주세요.')
+      return
+    }
+    const days = parseInt(adminGrantDurationDays, 10)
+    setAdminGrantLoading(true)
+    setAdminGrantResult(null)
+    try {
+      const result = await adminGrantLicense({
+        targetUserId: targetId,
+        botName: adminGrantBotName.trim() || undefined,
+        tradeSymbol: adminGrantSymbol.trim() || undefined,
+        timeFrame: adminGrantTimeFrame.trim() || undefined,
+        durationDays: !isNaN(days) && days > 0 ? days : undefined
+      })
+      setAdminGrantResult(result)
+    } catch (e) {
+      setAdminGrantResult({ success: false, message: e instanceof Error ? e.message : '요청 실패' })
+    } finally {
+      setAdminGrantLoading(false)
+    }
   }
 
   // 6-1. [관리자] 에스크로 풀 설정(예치금/상태) 적용 핸들러
@@ -7046,6 +7087,109 @@ export default function Page() {
                       텔레그램 알림 봇 연동
                     </button>
                   </div>
+
+                  {isAdmin && (
+                    <div style={{ marginTop: '10px', paddingTop: '14px', borderTop: '1px dashed #e2e8f0' }}>
+                      <button
+                        type="button"
+                        onClick={() => setAdminGrantPanelOpen(!adminGrantPanelOpen)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          background: 'transparent', border: 'none', cursor: 'pointer',
+                          fontSize: '11px', fontWeight: 700, color: '#b45309', padding: 0
+                        }}
+                      >
+                        {adminGrantPanelOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        🔑 [관리자] 무료 라이선스 발급 (실결제 없음)
+                      </button>
+
+                      {adminGrantPanelOpen && (
+                        <div style={{ marginTop: '10px', padding: '14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '360px' }}>
+                          <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600 }}>
+                            대상 유저 ID *
+                            <input
+                              type="number"
+                              value={adminGrantTargetUserId}
+                              onChange={(e) => setAdminGrantTargetUserId(e.target.value)}
+                              placeholder="예: 1"
+                              style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
+                            />
+                          </label>
+                          <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600 }}>
+                            봇 이름 (선택)
+                            <input
+                              type="text"
+                              value={adminGrantBotName}
+                              onChange={(e) => setAdminGrantBotName(e.target.value)}
+                              placeholder="비워두면 자동 생성"
+                              style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
+                            />
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600, flex: 1 }}>
+                              종목 (선택)
+                              <input
+                                type="text"
+                                value={adminGrantSymbol}
+                                onChange={(e) => setAdminGrantSymbol(e.target.value)}
+                                placeholder="BTCUSDT"
+                                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
+                              />
+                            </label>
+                            <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600, flex: 1 }}>
+                              타임프레임 (선택)
+                              <input
+                                type="text"
+                                value={adminGrantTimeFrame}
+                                onChange={(e) => setAdminGrantTimeFrame(e.target.value)}
+                                placeholder="5m"
+                                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
+                              />
+                            </label>
+                            <label style={{ fontSize: '10px', color: '#78350f', fontWeight: 600, width: '80px' }}>
+                              기간(일)
+                              <input
+                                type="number"
+                                value={adminGrantDurationDays}
+                                onChange={(e) => setAdminGrantDurationDays(e.target.value)}
+                                style={{ display: 'block', width: '100%', marginTop: '4px', padding: '6px 8px', fontSize: '12px', border: '1px solid #fde68a', borderRadius: '4px' }}
+                              />
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleAdminGrantLicense}
+                            disabled={adminGrantLoading}
+                            style={{
+                              marginTop: '4px', padding: '8px 12px', fontSize: '11px', fontWeight: 700,
+                              background: '#b45309', color: '#fff', border: 'none', borderRadius: '4px',
+                              cursor: adminGrantLoading ? 'not-allowed' : 'pointer', opacity: adminGrantLoading ? 0.6 : 1
+                            }}
+                          >
+                            {adminGrantLoading ? '발급 중...' : '무료 라이선스 발급'}
+                          </button>
+
+                          {adminGrantResult && (
+                            <div style={{
+                              marginTop: '6px', padding: '8px 10px', borderRadius: '4px', fontSize: '10.5px', lineHeight: 1.5,
+                              background: adminGrantResult.success ? '#ecfdf5' : '#fef2f2',
+                              color: adminGrantResult.success ? '#065f46' : '#991b1b',
+                              border: `1px solid ${adminGrantResult.success ? '#a7f3d0' : '#fecaca'}`
+                            }}>
+                              {adminGrantResult.message}
+                              {adminGrantResult.success && (
+                                <>
+                                  <br />토큰: <code>{adminGrantResult.licenseToken}</code>
+                                  <br />텔레그램 딥링크: <a href={adminGrantResult.telegramDeepLink} target="_blank" rel="noreferrer">{adminGrantResult.telegramDeepLink}</a>
+                                  <br />만료: {adminGrantResult.expiredAt}
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
