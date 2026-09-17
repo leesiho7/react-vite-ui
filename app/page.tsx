@@ -2791,6 +2791,17 @@ export default function Page() {
   }
 
 
+  // 1시간 경계를 넘을 때 라운드를 자동으로 정산/리셋하기 위한 "최신값" ref들.
+  // 아래 타이머 effect는 마운트 시 한 번만 setInterval을 등록하므로([] 의존성), 그 콜백이
+  // submitted/handleSettleOrResetRound를 직접 클로저로 캡처하면 마운트 시점 값에 영원히 고정된다
+  // (탭을 계속 열어둬도 제출 후 상태가 안 바뀌던 원인). ref는 매 렌더마다 최신값으로 갱신되므로
+  // 인터벌 콜백이 ref.current를 통해 항상 최신 submitted/정산 함수를 참조하게 한다.
+  const submittedRef = useRef(submitted)
+  useEffect(() => { submittedRef.current = submitted }, [submitted])
+  const handleSettleOrResetRoundRef = useRef<((forceWon?: boolean) => void) | null>(null)
+  useEffect(() => { handleSettleOrResetRoundRef.current = handleSettleOrResetRound })
+  const currentHourTagRef = useRef<string | null>(null)
+
   useEffect(() => {
     const updateHourlyTimer = () => {
       const now = new Date()
@@ -2798,6 +2809,20 @@ export default function Page() {
       const seconds = now.getSeconds()
       const secLeft = (59 - minutes) * 60 + (60 - seconds)
       setHourlyRemainingSec(secLeft)
+
+      // 정각을 넘어가면 새 라운드다 — 탭을 새로고침하지 않아도 자동으로 정산/리셋해서
+      // 유저가 다시 UP/DOWN을 선택할 수 있게 한다.
+      const hourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
+      if (currentHourTagRef.current === null) {
+        currentHourTagRef.current = hourTag
+      } else if (currentHourTagRef.current !== hourTag) {
+        currentHourTagRef.current = hourTag
+        if (submittedRef.current) {
+          handleSettleOrResetRoundRef.current?.()
+        } else {
+          setPrediction(null)
+        }
+      }
     }
     updateHourlyTimer()
     const interval = setInterval(updateHourlyTimer, 1000)
@@ -3462,12 +3487,9 @@ export default function Page() {
       prediction: null,
       roundHourTag: currentHourTag
     }))
-
-    if (isWon) {
-      alert(`🎉 [라운드 정산 완료] 예측 적중! 현재 ${newWins}연승을 달성하셨습니다! (${10 - newWins}승 남음)`)
-    } else {
-      alert(`📢 [라운드 정산 완료] 라운드가 정산/초기화되었습니다. 새로운 1시간 예측을 진행해 주세요!`)
-    }
+    // Polymarket처럼 라운드는 조용히 흘러가고 다음 선택을 기다린다 — 매 시간 정산마다 팝업으로
+    // 끊는 대신, 연승 트래커(도트 매트릭스)와 10연승 달성 시 나타나는 골든 Claim 버튼이 결과를
+    // 그대로 보여준다.
   }
 
   const handlerRunDeepResearch = async () => {
