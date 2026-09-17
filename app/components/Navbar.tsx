@@ -155,7 +155,7 @@ export default function Navbar({
     league: language === 'ko' ? '10연승 리그' : language === 'cn' ? '10连胜联赛' : '10-Win League',
     news: language === 'ko' ? '실시간 속보' : language === 'cn' ? '实时快讯' : 'News Wire',
     trade: language === 'ko' ? 'TRADE' : language === 'cn' ? '交易' : 'Trade',
-    bots: language === 'ko' ? '24H 자동봇' : language === 'cn' ? '24H自动机器人' : '24H Bots',
+    bots: language === 'ko' ? '24H 스튜디오' : language === 'cn' ? '24H工作室' : '24H Studio',
     research: language === 'ko' ? 'AI 퀀트 리서치' : language === 'cn' ? 'AI量化研报' : 'AI Quant Research',
     media: language === 'ko' ? '미디어 데스크' : language === 'cn' ? '媒体工作台' : 'Media Desk',
     arbitrage: language === 'ko' ? '김프 / 아비트라지' : language === 'cn' ? '泡菜溢价/套利' : 'Arbitrage',
