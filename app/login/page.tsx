@@ -582,7 +582,7 @@ export default function LoginPage() {
           </p>
 
           <p className="signup-terms">
-            로그인함으로써 귀하는 저희 <a href="/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</a> 및 서비스 이용약관에 동의합니다.
+            로그인함으로써 귀하는 저희 <a href="/kr/policy/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</a> 및 서비스 이용약관에 동의합니다.
           </p>
         </section>
       </div>
