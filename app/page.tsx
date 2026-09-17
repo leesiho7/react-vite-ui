@@ -6599,7 +6599,7 @@ export default function Page() {
                 className={botConsoleActiveTab === 'center' ? 'active' : ''}
                 onClick={() => setBotConsoleActiveTab('center')}
               >
-                <Bot size={16} /> 24H Bot Center
+                <Bot size={16} /> Aether Quant Strategy Studio
               </a>
               <a
                 className={botConsoleActiveTab === 'terminal' ? 'active' : ''}
@@ -6656,7 +6656,7 @@ export default function Page() {
                 <header className="bot-console-header">
                   <div>
                     <span className="bot-console-kicker">AUTONOMOUS TRADING / WORKSPACE</span>
-                    <h1>24H <em>Bot Center</em></h1>
+                    <h1>Aether <em>Quant Strategy Studio</em></h1>
                     <p>Manage, monitor, and deploy your autonomous trading instances.</p>
                   </div>
                 </header>
@@ -7022,7 +7022,7 @@ export default function Page() {
               <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>
                 <span className="bot-console-kicker">SYSTEM CONFIGURATION</span>
                 <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0 16px', color: '#0f172a' }}>
-                  24H Bot Center 인프라 & 라이선스 설정
+                  Aether Quant Strategy Studio 인프라 & 라이선스 설정
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '520px' }}>
                   <div style={{ padding: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
