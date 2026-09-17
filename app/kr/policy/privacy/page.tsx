@@ -67,8 +67,10 @@ export default function PrivacyPolicyPage() {
           <li>법령상 의무 이행 및 분쟁 대응</li>
         </ul>
         <p>
-          한 가지 안내드리고 싶은 점은, AETHER의 AI 리서치·챗봇 기능은 <strong>회사가 직접 운영하는 자체 서버의 언어모델(Ollama 기반)</strong>로 처리되며,
-          귀하의 질의 내용이 OpenAI·Google 등 외부 AI API로 전송되지 않는다는 것입니다.
+          AETHER의 AI 리서치·챗봇 기능은 응답 품질과 속도를 위해 <strong>Anthropic Claude, Alibaba Cloud(Qwen-Max) 등 외부 AI API 사업자</strong>에게
+          귀하의 질의 내용을 우선적으로 전송하여 처리하며, 해당 외부 API가 설정되어 있지 않거나 응답에 실패하는 경우에 한해
+          회사가 직접 운영하는 자체 서버의 언어모델(Ollama, 자체 인프라 내 처리)로 대체 처리됩니다. 어떤 외부 사업자가
+          실제로 응답을 처리했는지는 서비스 정책 및 설정 변경에 따라 달라질 수 있습니다.
         </p>
       </Section>
 
@@ -77,6 +79,7 @@ export default function PrivacyPolicyPage() {
         <ul>
           <li>귀하가 연동을 신청한 거래소(Binance, Bybit, OKX, Upbit, Bitunix 등) — 봇 주문 실행을 위해 API 호출 시에만 이용, 저장은 회사 서버에서만 수행</li>
           <li>귀하가 신청한 온체인 출금을 위한 블록체인 네트워크(트랜잭션 특성상 지갑 주소와 금액이 공개 원장에 기록됨)</li>
+          <li>Anthropic(Claude), Alibaba Cloud(Qwen-Max) 등 AI 리서치·챗봇 응답 생성을 위해 이용하는 해외 AI API 사업자 — 귀하가 입력한 질의 내용이 응답 생성을 위해 전송됨</li>
           <li>Google — 소셜 로그인 인증 목적</li>
           <li>서버 호스팅 제공업체 — 인프라 운영 목적 (데이터 열람 권한 없음)</li>
           <li>법령에 따라 요구되는 경우 수사기관·감독기관 등</li>
