@@ -15,7 +15,6 @@ import {
   fetchArenaLeaderboard,
   fetchTopExperts,
   toggleFollowExpert,
-  sendResearchChat,
   streamResearchChatSSE,
   streamCopilotChatSSE,
   fetchDepositWallets,
@@ -3496,21 +3495,29 @@ export default function Page() {
     setResearchLoading(true)
     setResearchError(null)
     setResearchRan(false)
-    try {
-      const response = await sendResearchChat({
+    // 논스트리밍 /ai/research-chat 대신 /ai/research-chat/stream으로 통일한다 —
+    // 같은 AiResearchChatService를 타지만 스트리밍 경로만 Claude/Qwen-Max 디스패치가
+    // 처음부터 로컬 Ollama 가용성과 무관하게 독립적으로 짜여 있었다.
+    await streamResearchChatSSE(
+      {
         prompt: researchPrompt.trim() || (researchMode === 'GUIDE' ? 'Explain the key risks and practical allocation guidance for this asset.' : 'Produce an institutional-grade research brief for this asset.'),
         symbol: extractAssetSymbol(`${researchPrompt} ${searched}`, searched),
-        mode: researchMode,
+        mode: researchMode as 'INSIGHT' | 'GUIDE' | 'CODING',
         language,
-      })
-      setResearchResponse(response)
-      setResearchRan(true)
-    } catch (error) {
-      console.error('[v0] Research chat backend unavailable:', error)
-      setResearchError(error instanceof Error ? error.message : 'Research request failed')
-    } finally {
-      setResearchLoading(false)
-    }
+      },
+      {
+        onDone: (finalData) => {
+          setResearchResponse(finalData)
+          setResearchRan(true)
+          setResearchLoading(false)
+        },
+        onError: (error) => {
+          console.error('[v0] Research chat backend unavailable:', error)
+          setResearchError(error instanceof Error ? error.message : 'Research request failed')
+          setResearchLoading(false)
+        }
+      }
+    )
   }
 
   // Live News Rotator — 실제 수집된 목록만 순환한다 (하드코딩 배열 순환 제거)
