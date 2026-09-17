@@ -492,7 +492,7 @@ export default function SignupPage() {
 
           {/* Social / Web3 Register Grid (Full Display) */}
           <div className="social-grid social-grid-wide" style={{ marginTop: '16px', marginBottom: '24px', display: 'grid', gap: '10px' }}>
-            {/* NAVER */}
+            {/* NAVER — 임시 비활성화 (주석처리로 숨김)
             <button
               className="social-button"
               type="button"
@@ -506,8 +506,9 @@ export default function SignupPage() {
               <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left' }}>네이버로 가입하기</strong>
               <span>↗</span>
             </button>
+            */}
 
-            {/* KAKAO */}
+            {/* KAKAO — 임시 비활성화 (주석처리로 숨김)
             <button
               className="social-button"
               type="button"
@@ -521,6 +522,7 @@ export default function SignupPage() {
               <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left' }}>카카오로 가입하기</strong>
               <span>↗</span>
             </button>
+            */}
 
 
 
