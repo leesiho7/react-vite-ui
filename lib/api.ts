@@ -1498,7 +1498,7 @@ export async function updateAdminEscrowConfig(req: AdminEscrowConfigRequest): Pr
   try {
     const res = await fetch(`${API_BASE}/gamification/admin/escrow-config`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(req)
     });
     if (res.ok) {
@@ -1535,7 +1535,7 @@ export async function sweepAdminEscrowFunds(req: AdminEscrowSweepRequest): Promi
   try {
     const res = await fetch(`${API_BASE}/gamification/admin/escrow-sweep`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(req)
     });
     if (res.ok) {
@@ -1563,7 +1563,7 @@ export interface AdminEscrowAuditLog {
 
 export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]> {
   try {
-    const res = await fetch(`${API_BASE}/gamification/admin/escrow-logs`);
+    const res = await fetch(`${API_BASE}/gamification/admin/escrow-logs`, { headers: { ...authHeader() } });
     if (res.ok) {
       return await res.json();
     }
