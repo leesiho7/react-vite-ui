@@ -1593,7 +1593,7 @@ export async function fetchVisionChartAnalysis(req: VisionChartAnalysisRequest):
 }
 
 /**
- * 23. [혁신 1] FastDTW 기반 '유사 차트 오버레이' 고스트 궤적 조회 API
+ * 23. [혁신 1] AETHER 엔진 기반 '유사 차트 오버레이' 고스트 궤적 조회 API
  */
 export async function fetchFractalGhost(symbol = 'BTCUSDT', timeFrame = 'H1', limit = 30): Promise<PatternInsight | null> {
   try {

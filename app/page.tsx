@@ -1930,8 +1930,8 @@ export default function Page() {
 
             const dynamicToolCalls: AgentToolCall[] = activeMode === 'CODING' ? [
               { name: 'quant.strategyModeling', detail: `${currentSymbol} 지표 매핑 완료 (판단: ${verdict}, 퀄리티: ${qualityScore})`, status: 'DONE' },
-              { name: 'python.workerEngine', detail: `Python NumPy/Numba 기반 프랙탈 패턴 산출 (일치율: ${similarity})`, status: 'DONE' },
-              { name: 'algorithm.autoTuning', detail: `백엔드 ta4j 기술 지표 기반 매매 시그널 합성 완료`, status: 'DONE' },
+              { name: 'python.workerEngine', detail: `AETHER 병렬 연산 엔진 기반 프랙탈 패턴 산출 (일치율: ${similarity})`, status: 'DONE' },
+              { name: 'algorithm.autoTuning', detail: `AETHER 퀀트 지표 엔진 기반 매매 시그널 합성 완료`, status: 'DONE' },
               { name: 'botArena.generateBlueprint', detail: `24H 자율 트레이딩 봇 실행 청사진 생성 완료`, status: 'DONE' }
             ] : activeMode === 'GUIDE' ? [
               { name: 'risk.volatilityGuard', detail: `${currentSymbol} 변동성 Guard계산 (판단: ${verdict})`, status: 'DONE' },
@@ -1939,10 +1939,10 @@ export default function Page() {
               { name: 'kelly.optimizeCapital', detail: `켈리 공식 리스크 방패 자본 배분 계산 완료`, status: 'DONE' },
               { name: 'aether.issueActionTicket', detail: `3단계 분할 집행 티켓 발행 (진입 퀄리티: ${qualityScore})`, status: 'DONE' }
             ] : [
-              { name: 'quant.marketSignals', detail: `${currentSymbol} ta4j 실시간 지표 (RSI, SMA20/50, 볼린저) 계산 완료`, status: 'DONE' },
-              { name: 'aether.fractalEngine', detail: `FastDTW 시계열 프랙탈 대조 (일치율: ${similarity}, 과거승률: ${winRate})`, status: 'DONE' },
-              { name: 'intelligence.globalNewswire', detail: `Financial RAG 실시간 뉴스 수급 & 팩트체크 인덱싱 완료`, status: 'DONE' },
-              { name: 'aether.cognitiveSynthesis', detail: `Spring Boot AI 에이전트 종합 리포트 생성 완료 (판단: ${verdict})`, status: 'DONE' }
+              { name: 'quant.marketSignals', detail: `${currentSymbol} AETHER 실시간 지표 (RSI, SMA20/50, 볼린저) 계산 완료`, status: 'DONE' },
+              { name: 'aether.fractalEngine', detail: `AETHER 프랙탈 엔진 시계열 대조 (일치율: ${similarity}, 과거승률: ${winRate})`, status: 'DONE' },
+              { name: 'intelligence.globalNewswire', detail: `AETHER 인텔리전스 실시간 뉴스 수급 & 팩트체크 인덱싱 완료`, status: 'DONE' },
+              { name: 'aether.cognitiveSynthesis', detail: `AETHER AI 에이전트 종합 리포트 생성 완료 (판단: ${verdict})`, status: 'DONE' }
             ];
 
             setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {

@@ -117,7 +117,7 @@ export function TerminalTradingChart({
     return `${clean}USDT`
   }, [])
 
-  // 0. Fetch FastDTW Fractal Ghost Overlay Data
+  // 0. Fetch AETHER Fractal Ghost Overlay Data
   useEffect(() => {
     const isTrad = isTraditionalAsset(ticker) || isTraditionalAsset(symbol)
     const cleanSym = getCleanTicker(ticker)
@@ -861,14 +861,14 @@ export function TerminalTradingChart({
       ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a'
       ctx.fillText(badgeText, badgeX + 20, badgeY + 15)
 
-      // ── E. ONNX 급락/급등 위험 교차검증 배지 (판별 불가면 아무것도 그리지 않는다 — mock 금지) ──
+      // ── E. AETHER 리스크 가디언 교차검증 배지 (판별 불가면 아무것도 그리지 않는다 — mock 금지) ──
       if (ghostData?.riskCrossCheckLabel && ghostData.riskCrossCheckLabel !== 'UNAVAILABLE' && ghostData.riskCrossCheckProbability !== null) {
         const riskPct = Math.round(ghostData.riskCrossCheckProbability * 1000) / 10
         const riskDirLabel = ghostData.riskCrossCheckLabel === 'DOWN_RISK_CHECK' ? '급락 위험' : '급등 위험'
         const riskColor = ghostData.riskCrossCheckAlert ? '#f59e0b' : '#10b981'
         const riskText = ghostData.riskCrossCheckAlert
-          ? `⚠ ONNX 교차검증: ${riskDirLabel} ${riskPct}% (이 방향 신뢰도 낮음)`
-          : `✓ ONNX 교차검증: ${riskDirLabel} ${riskPct}% (게이트 이하, 방향 유지)`
+          ? `⚠ AETHER 리스크 가디언: ${riskDirLabel} ${riskPct}% (이 방향 신뢰도 낮음)`
+          : `✓ AETHER 리스크 가디언: ${riskDirLabel} ${riskPct}% (게이트 이하, 방향 유지)`
 
         ctx.font = 'bold 9.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         const riskBadgeW = ctx.measureText(riskText).width + 18

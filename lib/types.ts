@@ -42,7 +42,7 @@ export interface PatternInsight {
   ghostHistoryPrices?: number[];
   ghostFuturePrices?: number[];
   syntheticBasis?: boolean;
-  /** ONNX 급락/급등 위험 교차검증 확률(0.0~1.0). 판별 불가면 null/undefined. */
+  /** AETHER 리스크 가디언 급락/급등 위험 교차검증 확률(0.0~1.0). 판별 불가면 null/undefined. */
   riskCrossCheckProbability?: number | null;
   /** "DOWN_RISK_CHECK" | "UP_RISK_CHECK" | "UNAVAILABLE" */
   riskCrossCheckLabel?: string;

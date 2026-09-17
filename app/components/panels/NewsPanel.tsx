@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronRight, ExternalLink, RefreshCw, Send, AlertTriangle, ShieldCheck, UserRound, ArrowUpRight, BarChart2, CheckCircle2, ChevronDown, ChevronUp, Cpu, Crown, Filter, MessageSquare, Play, Sparkles, X, Award, Search, Copy, Check, Radio , SlidersHorizontal } from 'lucide-react';
+
+const NEWS_PAGE_SIZE = 6;
 
 export function NewsPanel(props: any) {
   const { language, handleSelectTopView, newsCategoryTabs, setLanguage, activeMarketCategory, setActiveMarketCategory, query, setQuery, setNewsOpen, newsItems, formatNewsTime, setArticleModalOpen, setSelectedArticle, currentNewsList, wireStockQuery, setWireStockQuery, liveAssetTickers, searched, decisionReport, setSearched, newsCategory, setNewsCategory, activeNews, selectNews } = props;
-  
+
+  // 키셋(커서) 방식 대신 페이지셋 — 전체 기사(예: 85개)를 페이지 단위로 끝까지 넘겨볼 수 있게 한다.
+  // currentNewsList는 이미 백엔드가 한 번에 다 내려준 전체 목록이라 별도 API 호출 없이 클라이언트에서 페이징한다.
+  const [newsPage, setNewsPage] = useState(0);
+  const totalNewsPages = Math.max(1, Math.ceil(currentNewsList.length / NEWS_PAGE_SIZE));
+
+  useEffect(() => {
+    setNewsPage(0);
+  }, [currentNewsList]);
+
+  const pagedNewsList = currentNewsList.slice(newsPage * NEWS_PAGE_SIZE, (newsPage + 1) * NEWS_PAGE_SIZE);
+
   return (
     <>
         <section className="wire-news-shell" id="live-newswire" style={{ margin: '0 auto', maxWidth: '1440px', padding: '0 24px 40px' }}>
@@ -147,7 +160,10 @@ export function NewsPanel(props: any) {
                   })}
                 </div>
                 <span className="media-updated">
-                  {language === 'ko' ? '실시간 스트리밍' : 'LIVE STREAM'} · {currentNewsList.length} {language === 'ko' ? '개 기사' : 'ARTICLES'}
+                  {language === 'ko' ? '실시간 스트리밍' : 'LIVE STREAM'} ·{' '}
+                  {currentNewsList.length > 0
+                    ? `${newsPage * NEWS_PAGE_SIZE + 1}-${Math.min((newsPage + 1) * NEWS_PAGE_SIZE, currentNewsList.length)} / ${currentNewsList.length}`
+                    : `0`} {language === 'ko' ? '개 기사' : 'ARTICLES'}
                 </span>
               </div>
 
@@ -305,7 +321,7 @@ export function NewsPanel(props: any) {
 
               {/* 실시간 2열 뉴스 그리드 */}
               <section className="media-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                {currentNewsList.slice(0, 6).map((item) => (
+                {pagedNewsList.map((item) => (
                   <button
                     className={`media-card ${activeNews?.title === item.title ? 'active' : ''}`}
                     key={item.title + ((item as any).link || '')}
@@ -370,6 +386,43 @@ export function NewsPanel(props: any) {
                   </button>
                 ))}
               </section>
+
+              {/* 전체 기사 페이지 넘기기 — currentNewsList 전체를 페이지 단위로 끝까지 볼 수 있게 한다 */}
+              {currentNewsList.length > NEWS_PAGE_SIZE && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '18px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setNewsPage((p: number) => Math.max(0, p - 1))}
+                    disabled={newsPage === 0}
+                    style={{
+                      padding: '6px 14px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
+                      border: '1px solid #dfe3eb',
+                      background: newsPage === 0 ? '#f1f5f9' : '#fff',
+                      color: newsPage === 0 ? '#b6bcc7' : '#334155',
+                      cursor: newsPage === 0 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {language === 'ko' ? '이전' : language === 'cn' ? '上一页' : 'PREV'}
+                  </button>
+                  <span style={{ fontSize: '11px', color: '#687184', fontWeight: 700, fontFamily: 'var(--font-mono), monospace' }}>
+                    {newsPage + 1} / {totalNewsPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setNewsPage((p: number) => Math.min(totalNewsPages - 1, p + 1))}
+                    disabled={newsPage >= totalNewsPages - 1}
+                    style={{
+                      padding: '6px 14px', fontSize: '11px', fontWeight: 600, borderRadius: '4px',
+                      border: '1px solid #dfe3eb',
+                      background: newsPage >= totalNewsPages - 1 ? '#f1f5f9' : '#fff',
+                      color: newsPage >= totalNewsPages - 1 ? '#b6bcc7' : '#334155',
+                      cursor: newsPage >= totalNewsPages - 1 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {language === 'ko' ? '다음' : language === 'cn' ? '下一页' : 'NEXT'}
+                  </button>
+                </div>
+              )}
             </section>
 
             {/* ── 우측 사이드바: 최신 실시간 속보 피드 & 시장 요약 ── */}
