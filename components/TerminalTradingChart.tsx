@@ -123,7 +123,7 @@ export function TerminalTradingChart({
     const cleanSym = getCleanTicker(ticker)
     const querySym = isTrad ? cleanSym : getBinancePair(ticker)
 
-    fetch(`http://localhost:8080/api/quant/fractal-ghost?symbol=${encodeURIComponent(querySym)}`)
+    fetch(`/api/quant/fractal-ghost?symbol=${encodeURIComponent(querySym)}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data) {
@@ -202,7 +202,7 @@ export function TerminalTradingChart({
 
     if (isTrad) {
       // Connect to Live Yahoo Finance Provider via Spring Boot Ingestion API
-      const url = `http://localhost:8080/api/market/historical?symbol=${encodeURIComponent(cleanSym)}&timeFrame=${binanceInterval}&limit=70`
+      const url = `/api/market/historical?symbol=${encodeURIComponent(cleanSym)}&timeFrame=${binanceInterval}&limit=70`
       fetch(url)
         .then(res => {
           if (!res.ok) throw new Error(`Live Historical HTTP ${res.status}`)

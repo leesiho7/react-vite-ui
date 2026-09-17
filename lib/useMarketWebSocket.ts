@@ -100,7 +100,7 @@ export function useMarketWebSocket(symbol: string) {
 
     const fetchLiveQuotes = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/market/historical?symbol=${encodeURIComponent(ticker)}&timeFrame=1h&limit=15`);
+        const res = await fetch(`/api/market/historical?symbol=${encodeURIComponent(ticker)}&timeFrame=1h&limit=15`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const candles = await res.json();
         if (isCancelled || !Array.isArray(candles) || candles.length === 0) return;

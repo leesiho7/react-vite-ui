@@ -79,7 +79,7 @@ export function usePopularMarketsData() {
       const tradTickers = ['SPX', 'NDX', 'GOLD', 'NVDA', 'TSLA'];
       for (const t of tradTickers) {
         try {
-          const res = await fetch(`http://localhost:8080/api/market/historical?symbol=${t}&timeFrame=1h&limit=15`);
+          const res = await fetch(`/api/market/historical?symbol=${t}&timeFrame=1h&limit=15`);
           if (!res.ok) continue;
           const candles = await res.json();
           if (isCancelled || !Array.isArray(candles) || candles.length === 0) continue;
