@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://aetherquantstudio.com'),
   title: 'AETHER — Market Intelligence Terminal',
   description: 'Institutional-grade market intelligence for decision makers.',
   generator: 'v0.app',
@@ -10,6 +11,29 @@ export const metadata: Metadata = {
     icon: '/brand-logo.png',
     apple: '/brand-logo.png',
     shortcut: '/brand-logo.png',
+  },
+  // 오픈그래프 썸네일 이미지 직접 지정 — 링크 공유 시 카톡/슬랙/트위터 등에서 보이는 미리보기 이미지
+  openGraph: {
+    title: 'AETHER — Market Intelligence Terminal',
+    description: 'Institutional-grade market intelligence for decision makers.',
+    url: 'https://aetherquantstudio.com',
+    siteName: 'AETHER',
+    images: [
+      {
+        url: '/brand-logo.png',
+        width: 2048,
+        height: 2048,
+        alt: 'AETHER Official Logo',
+      },
+    ],
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AETHER — Market Intelligence Terminal',
+    description: 'Institutional-grade market intelligence for decision makers.',
+    images: ['/brand-logo.png'],
   },
 }
 
