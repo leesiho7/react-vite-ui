@@ -1601,7 +1601,7 @@ export interface AdminGrantLicenseResponse {
 
 export async function adminGrantLicense(req: AdminGrantLicenseRequest): Promise<AdminGrantLicenseResponse | null> {
   try {
-    const res = await fetch(`${API_BASE}/payments/license/admin-grant`, {
+    const res = await fetch(`${API_BASE}/v1/payments/license/admin-grant`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(req)
