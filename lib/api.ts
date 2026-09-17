@@ -822,7 +822,7 @@ export async function fetchDepositWallets(): Promise<any> {
     wallets: {
       polygon: '0xb0390a087488E304cA32996532Ab9f40028511fE',
       bsc: '0xb0390a087488E304cA32996532Ab9f40028511fE',
-      trc20: 'TVAfSsFKhMxj3jMvdSbK2Gf7ncbDgRu3Dk',
+      trc20: 'TAyaqG7cXpHKMvCdrTW56T7pw6JXe5zPK6',
       solana: '8cEVKX4SzUUADEkkp9X62eWrgXRuU9zZiWBTgQfupqKA'
     },
     notice: '입금 전송 시 온체인 트랜잭션이 블록체인에서 승인되는 즉시(1~2분 내) 24시간 봇이 자동 활성화됩니다.'

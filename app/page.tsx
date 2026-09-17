@@ -2119,7 +2119,7 @@ export default function Page() {
   const [depositWallets, setDepositWallets] = useState<Record<string, string>>({
     polygon: '0xb0390a087488E304cA32996532Ab9f40028511fE',
     bsc: '0xb0390a087488E304cA32996532Ab9f40028511fE',
-    trc20: 'TVAfSsFKhMxj3jMvdSbK2Gf7ncbDgRu3Dk',
+    trc20: 'TAyaqG7cXpHKMvCdrTW56T7pw6JXe5zPK6',
     solana: '8cEVKX4SzUUADEkkp9X62eWrgXRuU9zZiWBTgQfupqKA'
   })
   const [userTxHash, setUserTxHash] = useState('')
@@ -6957,7 +6957,7 @@ export default function Page() {
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                               <input
                                 readOnly
-                                value={depositWallets['trc20'] || 'TVAfSsFKhMxj3jMvdSbK2Gf7ncbDgRu3Dk'}
+                                value={depositWallets['trc20'] || 'TAyaqG7cXpHKMvCdrTW56T7pw6JXe5zPK6'}
                                 style={{
                                   flex: 1,
                                   padding: '9px 12px',
@@ -6973,7 +6973,7 @@ export default function Page() {
                                 type="button"
                                 className="bot-tool-button"
                                 onClick={() => {
-                                  const addr = depositWallets['trc20'] || 'TVAfSsFKhMxj3jMvdSbK2Gf7ncbDgRu3Dk'
+                                  const addr = depositWallets['trc20'] || 'TAyaqG7cXpHKMvCdrTW56T7pw6JXe5zPK6'
                                   navigator.clipboard.writeText(addr)
                                   setCopied(true)
                                   setTimeout(() => setCopied(false), 2000)
