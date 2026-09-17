@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronRight, ExternalLink, RefreshCw, Send, AlertTriangle, ShieldCheck, UserRound, ArrowUpRight, BarChart2, CheckCircle2, ChevronDown, ChevronUp, Cpu, Crown, Filter, MessageSquare, Play, Sparkles, X, Award, Search, Copy, Check, Radio , SlidersHorizontal } from 'lucide-react';
 
 const NEWS_PAGE_SIZE = 6;
+const WIRE_PAGE_SIZE = 6;
 
 export function NewsPanel(props: any) {
   const { language, handleSelectTopView, newsCategoryTabs, setLanguage, activeMarketCategory, setActiveMarketCategory, query, setQuery, setNewsOpen, newsItems, formatNewsTime, setArticleModalOpen, setSelectedArticle, currentNewsList, wireStockQuery, setWireStockQuery, liveAssetTickers, searched, decisionReport, setSearched, newsCategory, setNewsCategory, activeNews, selectNews } = props;
@@ -16,6 +17,16 @@ export function NewsPanel(props: any) {
   }, [currentNewsList]);
 
   const pagedNewsList = currentNewsList.slice(newsPage * NEWS_PAGE_SIZE, (newsPage + 1) * NEWS_PAGE_SIZE);
+
+  // 우측 "실시간 속보 피드" 사이드바도 앞 6개 고정이 아니라 오프셋 페이징으로 전체를 볼 수 있게 한다.
+  const [wirePage, setWirePage] = useState(0);
+  const totalWirePages = Math.max(1, Math.ceil(currentNewsList.length / WIRE_PAGE_SIZE));
+
+  useEffect(() => {
+    setWirePage(0);
+  }, [currentNewsList]);
+
+  const pagedWireList = currentNewsList.slice(wirePage * WIRE_PAGE_SIZE, (wirePage + 1) * WIRE_PAGE_SIZE);
 
   return (
     <>
@@ -432,7 +443,7 @@ export function NewsPanel(props: any) {
                 <span style={{ color: '#09a58e', fontWeight: 600 }}>REAL-TIME</span>
               </div>
 
-              {currentNewsList.slice(0, 6).map((s) => (
+              {pagedWireList.map((s) => (
                 <button
                   className="wire-feed"
                   key={s.title}
@@ -462,6 +473,42 @@ export function NewsPanel(props: any) {
                   </div>
                 </button>
               ))}
+
+              {currentNewsList.length > WIRE_PAGE_SIZE && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', padding: '10px 0' }}>
+                  <button
+                    type="button"
+                    onClick={() => setWirePage((p: number) => Math.max(0, p - 1))}
+                    disabled={wirePage === 0}
+                    style={{
+                      padding: '4px 10px', fontSize: '10px', fontWeight: 600, borderRadius: '4px',
+                      border: '1px solid #dfe3eb',
+                      background: wirePage === 0 ? '#f1f5f9' : '#fff',
+                      color: wirePage === 0 ? '#b6bcc7' : '#334155',
+                      cursor: wirePage === 0 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {language === 'ko' ? '이전' : language === 'cn' ? '上一页' : 'PREV'}
+                  </button>
+                  <span style={{ fontSize: '10px', color: '#9aa2b1', fontWeight: 600 }}>
+                    {wirePage + 1} / {totalWirePages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setWirePage((p: number) => Math.min(totalWirePages - 1, p + 1))}
+                    disabled={wirePage >= totalWirePages - 1}
+                    style={{
+                      padding: '4px 10px', fontSize: '10px', fontWeight: 600, borderRadius: '4px',
+                      border: '1px solid #dfe3eb',
+                      background: wirePage >= totalWirePages - 1 ? '#f1f5f9' : '#fff',
+                      color: wirePage >= totalWirePages - 1 ? '#b6bcc7' : '#334155',
+                      cursor: wirePage >= totalWirePages - 1 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {language === 'ko' ? '다음' : language === 'cn' ? '下一页' : 'NEXT'}
+                  </button>
+                </div>
+              )}
 
               <div className="wire-sidebar-divider" />
               <h2>{language === 'ko' ? '글로벌 시장 요약' : language === 'cn' ? '全球市场概览' : 'MARKET SUMMARY'}</h2>
