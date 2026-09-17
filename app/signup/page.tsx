@@ -563,7 +563,7 @@ export default function SignupPage() {
           </p>
 
           <p className="signup-terms">
-            등록함으로써 귀하는 저희 <a href="#terms">개인정보 처리방침</a>에 동의하고 이를 인정합니다.
+            등록함으로써 귀하는 저희 <a href="/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</a>에 동의하고 이를 인정합니다.
           </p>
         </section>
       </div>
