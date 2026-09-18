@@ -7294,7 +7294,7 @@ export default function Page() {
                 </header>
 
                 {/* Top KPI Metrics Cards (4 Grid) */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                <div className="webhook-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
                   <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px 20px', borderLeft: '4px solid #f47a20' }}>
                     <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>PROCESSED SIGNALS</div>
                     <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>{tvLogs.length} <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>Alerts</span></div>

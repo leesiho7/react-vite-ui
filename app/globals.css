@@ -178,8 +178,9 @@ button {
 }
 
 /* 모바일: 타이틀바 라벨/프롬프트 명령어가 한 줄로 넘쳐 잘리고, 백테스트 실행 버튼 2개가
-   한 줄에서 서로 밀려 잘리는 문제 — 좁은 화면에서는 줄바꿈/세로 배치로 전환한다. */
-@media (max-width: 640px) {
+   한 줄에서 서로 밀려 잘리는 문제 — 좁은 화면에서는 줄바꿈/세로 배치로 전환한다.
+   .bot-console 사이드바가 접히는 기존 760px 기준과 맞춘다. */
+@media (max-width: 760px) {
   .powershell-titlebar {
     flex-wrap: wrap;
     row-gap: 6px;
@@ -1208,8 +1209,9 @@ button {
 }
 
 /* 모바일: START/PAUSE/REBOOT/DEPLOY CODE/STOP가 한 줄에서 잘려 나오는 문제 —
-   좁은 화면에서는 헤더를 세로로 쌓고 버튼을 2열 그리드로 재배치한다. */
-@media (max-width: 640px) {
+   좁은 화면에서는 헤더를 세로로 쌓고 버튼을 2열 그리드로 재배치한다.
+   .bot-console 사이드바가 접히는 기존 760px 기준과 맞춘다. */
+@media (max-width: 760px) {
   .instance-terminal-header {
     flex-direction: column;
     align-items: stretch;
@@ -1225,6 +1227,10 @@ button {
   .instance-ctrl-actions button {
     width: 100%;
     justify-content: center;
+  }
+
+  .webhook-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
