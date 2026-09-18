@@ -556,10 +556,10 @@ export function TerminalTradingChart({
         }
       }
       ctx.closePath()
-      ctx.fillStyle = isDark ? 'rgba(41, 98, 255, 0.08)' : 'rgba(41, 98, 255, 0.05)'
+      ctx.fillStyle = isDark ? 'rgba(161, 161, 170, 0.08)' : 'rgba(113, 113, 122, 0.05)'
       ctx.fill()
 
-      ctx.strokeStyle = '#2962ff'
+      ctx.strokeStyle = '#a1a1aa'
       ctx.lineWidth = 1
       ctx.setLineDash([2, 3])
 
@@ -606,10 +606,10 @@ export function TerminalTradingChart({
       })
     }
 
-    // 5. Indicators: SMA 20 (Orange) & EMA 50 (Blue)
+    // 5. Indicators: SMA 20 & EMA 50 (calm grayscale)
     if (showSMA) {
       ctx.beginPath()
-      ctx.strokeStyle = '#ff9800'
+      ctx.strokeStyle = '#9ca3af'
       ctx.lineWidth = 1.6
       let started = false
       for (let i = 0; i < candles.length; i++) {
@@ -626,7 +626,7 @@ export function TerminalTradingChart({
 
     if (showEMA) {
       ctx.beginPath()
-      ctx.strokeStyle = '#2962ff'
+      ctx.strokeStyle = '#6b7280'
       ctx.lineWidth = 1.4
       let started = false
       for (let i = 0; i < candles.length; i++) {
@@ -772,13 +772,13 @@ export function TerminalTradingChart({
       const endX = ghostCandles[ghostCandles.length - 1].x + candleBarWidth
       const areaGrad = ctx.createLinearGradient(lastX, 0, endX, 0)
       if (expRet >= 0) {
-        areaGrad.addColorStop(0, isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.10)')
-        areaGrad.addColorStop(0.6, isDark ? 'rgba(6, 182, 212, 0.08)' : 'rgba(6, 182, 212, 0.06)')
-        areaGrad.addColorStop(1, isDark ? 'rgba(168, 85, 247, 0.03)' : 'rgba(168, 85, 247, 0.02)')
+        areaGrad.addColorStop(0, isDark ? 'rgba(161, 161, 170, 0.14)' : 'rgba(113, 113, 122, 0.10)')
+        areaGrad.addColorStop(0.6, isDark ? 'rgba(113, 113, 122, 0.08)' : 'rgba(113, 113, 122, 0.06)')
+        areaGrad.addColorStop(1, isDark ? 'rgba(82, 82, 91, 0.03)' : 'rgba(82, 82, 91, 0.02)')
       } else {
-        areaGrad.addColorStop(0, isDark ? 'rgba(244, 63, 94, 0.14)' : 'rgba(239, 68, 68, 0.10)')
-        areaGrad.addColorStop(0.6, isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.06)')
-        areaGrad.addColorStop(1, isDark ? 'rgba(217, 70, 239, 0.03)' : 'rgba(217, 70, 239, 0.02)')
+        areaGrad.addColorStop(0, isDark ? 'rgba(82, 82, 91, 0.14)' : 'rgba(63, 63, 70, 0.10)')
+        areaGrad.addColorStop(0.6, isDark ? 'rgba(63, 63, 70, 0.08)' : 'rgba(63, 63, 70, 0.06)')
+        areaGrad.addColorStop(1, isDark ? 'rgba(39, 39, 42, 0.03)' : 'rgba(39, 39, 42, 0.02)')
       }
 
       ctx.beginPath()
@@ -801,8 +801,8 @@ export function TerminalTradingChart({
         const botY = getY(Math.min(c.open, c.close))
         const bodyH = Math.max(3, botY - topY)
         const candleW = Math.max(4, candleBarWidth * 0.88)
-        const candleColor = c.isUp ? '#00f0ff' : '#f43f5e'
-        const candleFill = c.isUp ? 'rgba(0, 240, 255, 0.28)' : 'rgba(244, 63, 94, 0.28)'
+        const candleColor = c.isUp ? '#a1a1aa' : '#52525b'
+        const candleFill = c.isUp ? 'rgba(161, 161, 170, 0.28)' : 'rgba(82, 82, 91, 0.28)'
 
         // Wick (High - Low)
         ctx.beginPath()
@@ -843,7 +843,7 @@ export function TerminalTradingChart({
 
       // 배지 배경
       ctx.fillStyle = isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.94)'
-      ctx.strokeStyle = expRet >= 0 ? '#00f0ff' : '#f43f5e'
+      ctx.strokeStyle = expRet >= 0 ? '#a1a1aa' : '#52525b'
       ctx.lineWidth = 1
       ctx.beginPath()
       if ((ctx as any).roundRect) {
@@ -856,7 +856,7 @@ export function TerminalTradingChart({
 
       // 배지 텍스트
       ctx.textAlign = 'left'
-      ctx.fillStyle = expRet >= 0 ? '#00f0ff' : '#f43f5e'
+      ctx.fillStyle = expRet >= 0 ? '#a1a1aa' : '#52525b'
       ctx.fillText('⚡', badgeX + 6, badgeY + 15)
       ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a'
       ctx.fillText(badgeText, badgeX + 20, badgeY + 15)
@@ -1184,9 +1184,9 @@ export function TerminalTradingChart({
               fontSize: '10px',
               fontWeight: 700,
               borderRadius: '3px',
-              border: `1px solid ${showSMA ? '#ff9800' : (isDark ? '#363a45' : '#cbd5e1')}`,
-              background: showSMA ? 'rgba(255, 152, 0, 0.15)' : 'transparent',
-              color: showSMA ? '#ff9800' : (isDark ? '#787b86' : '#64748b'),
+              border: `1px solid ${showSMA ? '#9ca3af' : (isDark ? '#363a45' : '#cbd5e1')}`,
+              background: showSMA ? 'rgba(156, 163, 175, 0.15)' : 'transparent',
+              color: showSMA ? '#9ca3af' : (isDark ? '#787b86' : '#64748b'),
               cursor: 'pointer'
             }}
           >
@@ -1200,9 +1200,9 @@ export function TerminalTradingChart({
               fontSize: '10px',
               fontWeight: 700,
               borderRadius: '3px',
-              border: `1px solid ${showEMA ? '#2962ff' : (isDark ? '#363a45' : '#cbd5e1')}`,
-              background: showEMA ? 'rgba(41, 98, 255, 0.15)' : 'transparent',
-              color: showEMA ? '#2962ff' : (isDark ? '#787b86' : '#64748b'),
+              border: `1px solid ${showEMA ? '#6b7280' : (isDark ? '#363a45' : '#cbd5e1')}`,
+              background: showEMA ? 'rgba(107, 114, 128, 0.15)' : 'transparent',
+              color: showEMA ? '#6b7280' : (isDark ? '#787b86' : '#64748b'),
               cursor: 'pointer'
             }}
           >
@@ -1216,9 +1216,9 @@ export function TerminalTradingChart({
               fontSize: '10px',
               fontWeight: 700,
               borderRadius: '3px',
-              border: `1px solid ${showBBands ? '#089981' : (isDark ? '#363a45' : '#cbd5e1')}`,
-              background: showBBands ? 'rgba(8, 153, 129, 0.15)' : 'transparent',
-              color: showBBands ? '#089981' : (isDark ? '#787b86' : '#64748b'),
+              border: `1px solid ${showBBands ? '#a1a1aa' : (isDark ? '#363a45' : '#cbd5e1')}`,
+              background: showBBands ? 'rgba(161, 161, 170, 0.15)' : 'transparent',
+              color: showBBands ? '#a1a1aa' : (isDark ? '#787b86' : '#64748b'),
               cursor: 'pointer'
             }}
           >
@@ -1232,9 +1232,9 @@ export function TerminalTradingChart({
               fontSize: '10px',
               fontWeight: 700,
               borderRadius: '3px',
-              border: `1px solid ${showGhostOverlay ? '#00f0ff' : (isDark ? '#363a45' : '#cbd5e1')}`,
-              background: showGhostOverlay ? 'rgba(0, 240, 255, 0.18)' : 'transparent',
-              color: showGhostOverlay ? '#00f0ff' : (isDark ? '#787b86' : '#64748b'),
+              border: `1px solid ${showGhostOverlay ? '#71717a' : (isDark ? '#363a45' : '#cbd5e1')}`,
+              background: showGhostOverlay ? 'rgba(113, 113, 122, 0.18)' : 'transparent',
+              color: showGhostOverlay ? '#71717a' : (isDark ? '#787b86' : '#64748b'),
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
