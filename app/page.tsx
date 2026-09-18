@@ -6479,7 +6479,7 @@ export default function Page() {
                         <span className="dot-yellow" />
                         <span className="dot-green" />
                       </div>
-                      <span>Windows PowerShell (x64) - [Python 3.12.10 - Strategy Runner Sandbox]</span>
+                      <span className="powershell-titlebar-label">Windows PowerShell (x64) - [Python 3.12.10 - Strategy Runner Sandbox]</span>
                     </div>
                     <span style={{ color: '#38bdf8' }}>AST_SANDBOX_ACTIVE</span>
                   </div>
@@ -6511,7 +6511,7 @@ export default function Page() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="sandbox-action-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <button
                     type="button"
                     className="primary-button"

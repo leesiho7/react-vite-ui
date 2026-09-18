@@ -172,6 +172,46 @@ button {
   color: #f1f5f9;
 }
 
+.sandbox-action-row {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+/* 모바일: 타이틀바 라벨/프롬프트 명령어가 한 줄로 넘쳐 잘리고, 백테스트 실행 버튼 2개가
+   한 줄에서 서로 밀려 잘리는 문제 — 좁은 화면에서는 줄바꿈/세로 배치로 전환한다. */
+@media (max-width: 640px) {
+  .powershell-titlebar {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .powershell-titlebar-label {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .powershell-prompt {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .powershell-prompt span.cmd {
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  .sandbox-action-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .sandbox-action-row button {
+    width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
 .powershell-editor {
   width: 100%;
   min-height: 140px;
