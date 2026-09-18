@@ -6912,13 +6912,6 @@ export default function Page() {
                   </div>
                 ) : (
                   <>
-                    {/* ── 테스트넷 준비 안내 ── */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#334155', letterSpacing: '.06em' }}>TESTNET</span>
-                      <span style={{ width: '1px', height: '14px', background: '#e2e8f0' }} />
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>TRC-20 USDT 결제 시스템을 샤스타(Shasta) 테스트넷에서 검증 중입니다. 정식 오픈 전 내부 테스트 단계입니다.</span>
-                    </div>
-
                     {/* ── TRC-20 USDT 입금 카드 ── */}
                     <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
                       {/* 카드 헤더 */}
