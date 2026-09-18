@@ -545,9 +545,9 @@ export default function SignupPage() {
               style={{
                 padding: '10px 14px',
                 marginTop: '16px',
-                background: isError ? '#fef2f2' : '#f0fdf4',
-                border: isError ? '1px solid #f87171' : '1px solid #4ade80',
-                color: isError ? '#dc2626' : '#166534',
+                background: isError ? '#fef2f2' : '#ffffff',
+                border: isError ? '1px solid #f87171' : '1px solid #d1d5db',
+                color: isError ? '#dc2626' : '#374151',
                 fontSize: '11px',
                 fontWeight: 600,
                 borderRadius: '6px',
