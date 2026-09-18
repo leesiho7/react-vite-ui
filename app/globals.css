@@ -1157,6 +1157,37 @@ button {
   cursor: not-allowed;
 }
 
+.instance-terminal-header {
+  align-items: center;
+}
+
+.instance-ctrl-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 모바일: START/PAUSE/REBOOT/DEPLOY CODE/STOP가 한 줄에서 잘려 나오는 문제 —
+   좁은 화면에서는 헤더를 세로로 쌓고 버튼을 2열 그리드로 재배치한다. */
+@media (max-width: 640px) {
+  .instance-terminal-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .instance-ctrl-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
+  }
+
+  .instance-ctrl-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .instance-live-terminal {
   background: #020617;
   border: 1px solid #1e293b;

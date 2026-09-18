@@ -6411,7 +6411,7 @@ export default function Page() {
 
             {botConsoleActiveTab === 'terminal' && (
               <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div className="instance-terminal-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <div>
                     <span className="bot-console-kicker">HETZNER HEL1 CLOUD DOCKER INSTANCE</span>
                     <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0', color: '#0f172a' }}>
@@ -6421,7 +6421,7 @@ export default function Page() {
                       {botInstances.find(i => i.id === selectedInstanceId)?.exchange || 'Binance'} · {botInstances.find(i => i.id === selectedInstanceId)?.symbol || searched} · Docker Runtime: AETHER Quant Matrix v2.4 (PID: 3419)
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div className="instance-ctrl-actions">
                     <button
                       className="instance-ctrl-btn primary"
                       onClick={handleStartInstance}
