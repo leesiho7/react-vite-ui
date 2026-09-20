@@ -65,9 +65,9 @@ export function PolymarketSpeedGameCard({
   }, [fiveMinOpenPrice, roundBasePrice])
   const targetPrice = roundBasePrice > 0 ? roundBasePrice : (basePrice || livePrice || 79409.09)
 
-  const [history, setHistory] = useState<number[]>(() =>
-    Array.from({ length: 34 }, (_, index) => livePrice - (34 - index) * livePrice * 0.00012)
-  )
+  // 실제 히스토리가 쌓이기 전(마운트 직후)엔 가짜 추세선을 지어내지 않고 현재가로 평평하게
+  // 시작한다 — 실시간 틱이 들어오는 즉시 아래 useEffect가 실제 값으로 채워나간다.
+  const [history, setHistory] = useState<number[]>(() => Array(120).fill(livePrice))
   const [animatedPrice, setAnimatedPrice] = useState(livePrice)
 
   // Smooth Price Easing Animation
@@ -85,34 +85,27 @@ export function PolymarketSpeedGameCard({
     return () => cancelAnimationFrame(frame)
   }, [livePrice])
 
-  // 실시간 가격을 5초 간격으로 샘플링해 축적 — 실제 원인은 여기 있었다.
-  // 바이낸스 @trade 스트림은 초당 여러 번 틱이 들어오는데, 그 매 틱마다 60칸 버퍼에
-  // 쌓다 보니 "5분(00:00~05:00)"이라는 축 라벨과 달리 실제로는 최근 몇 초 치 가격만
-  // 반복해서 보여주고 있었다. 몇 초 동안 BTC가 움직이는 폭은 차트의 최소 스프레드
-  // 바닥값(livePrice*0.0006, 지금 시세 기준 약 $45)보다 작아서 선이 거의 평평하게
-  // 눌린 것처럼 보였던 것 — 소켓은 죽지 않았고, 그래프가 보여주는 시간 창이 잘못됐었다.
-  const livePriceRef = useRef(livePrice)
+  // 바이낸스 @trade 스트림의 실제 틱마다(초당 여러 번) 바로바로 히스토리에 반영한다 —
+  // 예전엔 5초 간격으로 샘플링해서 폴리마켓처럼 생생한 실시간 움직임 대신 거의 평평하게
+  // 눌린 선을 그렸었는데, 그건 실제 틱 데이터를 임의로 솎아내서(mock이 아니라 데이터 손실)
+  // 생긴 문제였다. 틱이 실제로 안 바뀌었을 때만 중복 추가를 건너뛴다.
   useEffect(() => {
-    livePriceRef.current = livePrice
+    if (!livePrice) return
+    setHistory((current) => {
+      if (current[current.length - 1] === livePrice) return current
+      return [...current.slice(-119), livePrice]
+    })
   }, [livePrice])
-
-  useEffect(() => {
-    const sample = () => {
-      const p = livePriceRef.current
-      if (!p) return
-      setHistory((current) => [...current.slice(-59), p])
-    }
-    sample()
-    const interval = setInterval(sample, 5000)
-    return () => clearInterval(interval)
-  }, [])
 
   // Chart Geometry Calculation
   const chartGeometry = useMemo(() => {
     const values = history.length ? history : [livePrice]
     const minimum = Math.min(...values, targetPrice)
     const maximum = Math.max(...values, targetPrice)
-    const spread = Math.max(maximum - minimum, livePrice * 0.0006)
+    // 스프레드 하한을 너무 넉넉하게 잡으면 실제 변동폭이 축 전체 대비 작아 보여 선이
+    // 눌린 것처럼(=폴리마켓과 달리 밋밋하게) 보인다 — 낮춰서 실제 움직임 그대로 화면을
+    // 채우게 하고, 완전히 평평한 극단적 경우의 0-나눗셈만 막는다.
+    const spread = Math.max(maximum - minimum, livePrice * 0.00015)
     const points = values.map((value, index) => {
       const x = (index / Math.max(values.length - 1, 1)) * 700
       const y = 150 - ((value - minimum) / spread) * 115
@@ -621,10 +614,9 @@ export function PolymarketSpeedGameCard({
             <div style={{ textAlign: 'center', padding: '16px 0' }}>
               <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>{claimSuccessData.message}</h3>
               <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-                온체인 트랜잭션이 블록체인에서 안전하게 승인되었습니다.
+                관리자가 확인 후 직접 지갑으로 송금해 드립니다. (보통 24시간 이내)
               </p>
               <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', fontSize: '11px', textAlign: 'left', wordBreak: 'break-all' }}>
-                <div><b>트랜잭션 해시:</b> {claimSuccessData.txHash}</div>
                 <div><b>수신 지갑:</b> {claimSuccessData.destinationAddress}</div>
                 <div><b>네트워크:</b> {claimSuccessData.network?.toUpperCase()}</div>
               </div>
@@ -681,7 +673,7 @@ export function PolymarketSpeedGameCard({
                 disabled={claimLoading}
                 onClick={handleClaimPayout}
               >
-                {claimLoading ? '온체인 송금 처리 중…' : '$10.00 USDT 즉시 수령하기 ↗'}
+                {claimLoading ? '보상 확정 처리 중…' : '$10.00 USDT 보상 확정하기 ↗'}
               </button>
             </div>
           )}

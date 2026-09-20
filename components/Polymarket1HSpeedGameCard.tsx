@@ -49,9 +49,9 @@ export function Polymarket1HSpeedGameCard({
   const livePrice = wsPrice > 0 ? wsPrice : (latestHistoryPrice || 79422.77)
   const targetPrice = numericBasePrice || 79409.09
 
-  const [history, setHistory] = useState<number[]>(() =>
-    Array.from({ length: 34 }, (_, index) => livePrice - (34 - index) * livePrice * 0.00012)
-  )
+  // 실제 히스토리가 쌓이기 전(마운트 직후)엔 가짜 추세선을 지어내지 않고 현재가로 평평하게
+  // 시작한다 — 실시간 틱이 들어오는 즉시 아래 useEffect가 실제 값으로 채워나간다.
+  const [history, setHistory] = useState<number[]>(() => Array(180).fill(livePrice))
   const [animatedPrice, setAnimatedPrice] = useState(livePrice)
 
   // 페이지/배포 리로드 시 백엔드 DB에서 현재 활성화된 예측 상태 자동 조회 및 복원
@@ -85,25 +85,30 @@ export function Polymarket1HSpeedGameCard({
     return () => cancelAnimationFrame(frame)
   }, [livePrice])
 
-  // 5초 간격 1H 차트 다운샘플링 축적 (1H 차트선 찌그러짐/잡음 방지)
+  // 바이낸스 @trade 스트림의 실제 틱마다(초당 여러 번) 바로바로 히스토리에 반영한다 —
+  // 예전엔 5초 간격으로 솎아내 폴리마켓처럼 생생한 실시간 움직임 대신 밋밋한 선을
+  // 그렸는데, 그건 실제 틱 데이터를 임의로 버려서(mock이 아니라 데이터 손실) 생긴
+  // 문제였다. 틱이 실제로 안 바뀌었을 때만 중복 추가를 건너뛴다.
   useEffect(() => {
     if (!livePrice) return
-    const timer = setInterval(() => {
-      setHistory((current) => [...current.slice(-35), livePrice])
-    }, 5000)
-    return () => clearInterval(timer)
+    setHistory((current) => {
+      if (current[current.length - 1] === livePrice) return current
+      return [...current.slice(-179), livePrice]
+    })
   }, [livePrice])
 
-  // SVG Chart Geometry Calculation (1H 고유의 안정적 Y축 스케일 및 라이브 이징 연동)
+  // SVG Chart Geometry Calculation — history 자체가 이미 실시간 틱 그대로라
+  // animatedPrice(숫자 표시용 이징)를 선 모양에 다시 섞지 않는다(섞으면 마지막 구간만
+  // 부자연스럽게 매끈해져서 "실제 틱인데 왜 저기만 곡선이지" 하는 어색함이 생긴다).
   const chartGeometry = useMemo(() => {
-    // 히스토리 배열 마지막 지점에 실시간 보간 가격(animatedPrice)을 반영하여 스무스 연동
-    const baseValues = history.length ? history : [livePrice]
-    const values = [...baseValues.slice(0, -1), animatedPrice]
-    
+    const values = history.length ? history : [livePrice]
+
     const minimum = Math.min(...values, targetPrice)
     const maximum = Math.max(...values, targetPrice)
-    // 1시간 차트에 적합한 0.25% 미니멈 변동폭 스프레드로 미세 틱 잡음 억제
-    const spread = Math.max(maximum - minimum, livePrice * 0.0025)
+    // 스프레드 하한을 너무 넉넉하게 잡으면 실제 변동폭이 축 전체 대비 작아 보여 선이
+    // 눌린 것처럼(=폴리마켓과 달리 밋밋하게) 보인다 — 0.03%로 낮춰 실제 움직임 그대로
+    // 화면을 채우게 하고, 완전히 평평한 극단적 경우의 0-나눗셈만 막는다.
+    const spread = Math.max(maximum - minimum, livePrice * 0.0003)
     
     const points = values.map((value, index) => {
       const x = (index / Math.max(values.length - 1, 1)) * 700
