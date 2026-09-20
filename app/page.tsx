@@ -11,7 +11,6 @@ import { usePopularMarketsData } from '@/lib/usePopularMarketsData'
 import {
   fetchIntegratedDecision,
   fetchHistoricalCandles,
-  fetchPredictionLeaderboard,
   fetchHiveMindBattle,
   fetchArenaLeaderboard,
   fetchTopExperts,
@@ -55,7 +54,6 @@ import type { BotControlResult } from '../lib/api'
 import {
   IntegratedDecisionReport,
   CandleData,
-  PredictionLeaderboardItem,
   HiveMindBattle,
   ArenaStrategyItem,
   AuthResponse,
@@ -71,6 +69,7 @@ import { PolymarketSpeedGameCard } from '../components/PolymarketSpeedGameCard'
 import { Polymarket1HSpeedGameCard } from '../components/Polymarket1HSpeedGameCard'
 import { EscrowConsoleModal } from '../components/admin/EscrowConsoleModal'
 import { StreakClaimModal } from '../components/StreakClaimModal'
+import { PredictionLeaderboardPanel } from '../components/PredictionLeaderboardPanel'
 import { VisionChartScanModal } from '../components/VisionChartScanModal'
 import { QuantAutoTunerModal } from '../components/QuantAutoTunerModal'
 import ResearchPanel from '../components/ResearchPanel'
@@ -2273,7 +2272,6 @@ export default function Page() {
     window.location.reload()
   }
   const [candles, setCandles] = useState<CandleData[]>([])
-  const [leaderboard, setLeaderboard] = useState<PredictionLeaderboardItem[]>([])
   const [battle, setBattle] = useState<HiveMindBattle | null>(null)
   const [strategies, setStrategies] = useState<ArenaStrategyItem[]>([])
   const [experts, setExperts] = useState<any[]>([])
@@ -3085,7 +3083,6 @@ export default function Page() {
 
     fetchHistoricalCandles(rawSymbol, period, 40).then(setCandles).catch((error) => console.error('[v0] Candles backend unavailable:', error))
     fetchHiveMindBattle(rawSymbol).then(setBattle).catch((error) => console.error('[v0] Battle backend unavailable:', error))
-    fetchPredictionLeaderboard(10).then(setLeaderboard).catch((error) => console.error('[v0] Leaderboard backend unavailable:', error))
     fetchArenaLeaderboard('SEASON_1', 10).then(setStrategies).catch((error) => console.error('[v0] Arena backend unavailable:', error))
     fetchTopExperts().then(setExperts).catch((error) => console.error('[v0] Experts backend unavailable:', error))
 
@@ -4927,6 +4924,8 @@ export default function Page() {
               }
             }}
           />
+
+          <PredictionLeaderboardPanel />
         </section>
       )}
 
