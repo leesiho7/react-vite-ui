@@ -191,7 +191,11 @@ export async function fetchActivePrediction(userId?: number | null, symbol = 'BT
 export async function settlePredictionApi(predictionId: number, customCurrentPrice?: number) {
   try {
     let url = `${API_BASE}/prediction/settle/${predictionId}`;
-    if (customCurrentPrice) url += `?currentPrice=${customCurrentPrice}`;
+    // `if (customCurrentPrice)` 였으면 가격이 0으로 찍히는 순간(falsy) 쿼리파라미터가
+    // 통째로 빠져서 백엔드가 실시간 시세 대신 가짜 정산가로 판정해버렸다.
+    if (typeof customCurrentPrice === 'number' && !Number.isNaN(customCurrentPrice)) {
+      url += `?currentPrice=${customCurrentPrice}`;
+    }
     const res = await fetch(url, { method: 'POST' });
     if (res.ok) {
       return await res.json();

@@ -3346,17 +3346,27 @@ export default function Page() {
     const predId = predictionIdRef.current
 
     let isWon: boolean
+    let settleUnknown = false
     if (predId) {
       const settleRes = await settlePredictionApi(predId, checkPrice)
-      isWon = settleRes?.status === 'WON'
+      if (settleRes && (settleRes.status === 'WON' || settleRes.status === 'LOST')) {
+        isWon = settleRes.status === 'WON'
+      } else {
+        // 정산 요청 자체가 실패한 것(네트워크 오류 등)이지 "졌다"는 판정이 아니다. 여기서
+        // 0으로 리셋해버리면 실제로는 이겼는데 화면에만 연승이 끊긴 것처럼 보인다 — 서버의
+        // 자동 정산 스케줄러(PredictionService#autoSettleDuePredictions)가 뒤이어 실제
+        // 시세로 정산하므로, 그 결과는 아래 fetchUserPredictionStats 동기화가 반영한다.
+        settleUnknown = true
+        isWon = false
+      }
       predictionIdRef.current = null
     } else {
       // 서버에 기록된 예측이 없는 경우(비로그인 관전 등): 로컬 판정만 유지, 클레임 대상 아님
       isWon = prediction === 'UP' ? checkPrice >= numericBasePrice : checkPrice < numericBasePrice
     }
 
-    const newWins = isWon ? Math.min(10, humanWins + 1) : 0
-    const newRound = isWon ? Math.min(10, newWins + 1) : 1
+    const newWins = settleUnknown ? humanWins : (isWon ? Math.min(10, humanWins + 1) : 0)
+    const newRound = settleUnknown ? round : (isWon ? Math.min(10, newWins + 1) : 1)
 
     setHumanWins(newWins)
     setRound(newRound)

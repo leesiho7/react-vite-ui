@@ -145,18 +145,27 @@ export function PolymarketSpeedGameCard({
     // 이 판정이 UserPredictionStatsEntity.currentStreak을 실제로 갱신하므로, 여기서 승리해야만
     // 아래 "10연승 클레임" 버튼이 실제로 동작하는 진짜 연승으로 이어진다.
     let isWin: boolean
+    let settleUnknown = false
     const predId = predictionIdRef.current
     if (predId) {
       const settleRes = await settlePredictionApi(predId, checkPrice)
-      isWin = settleRes?.status === 'WON'
+      if (settleRes && (settleRes.status === 'WON' || settleRes.status === 'LOST')) {
+        isWin = settleRes.status === 'WON'
+      } else {
+        // 정산 요청 자체가 실패한 것(네트워크 오류 등)이지 "졌다"는 판정이 아니다. 서버의
+        // 자동 정산 스케줄러(PredictionService#autoSettleDuePredictions)가 뒤이어 실제
+        // 시세로 정산하므로, 그 결과는 아래 fetchUserPredictionStats 동기화가 반영한다.
+        settleUnknown = true
+        isWin = false
+      }
       predictionIdRef.current = null
     } else {
       // 비로그인 관전 등 서버에 기록된 예측이 없는 경우: 로컬 판정만 유지 (클레임 대상 아님)
       isWin = userChoice === 'up' ? checkPrice >= baseTarget : checkPrice < baseTarget
     }
 
-    const newWins = isWin ? Math.min(10, currentWins + 1) : 0
-    const nextRound = isWin ? (currentWins + 1 >= 10 ? 1 : currentRound + 1) : 1
+    const newWins = settleUnknown ? currentWins : (isWin ? Math.min(10, currentWins + 1) : 0)
+    const nextRound = settleUnknown ? currentRound : (isWin ? (currentWins + 1 >= 10 ? 1 : currentRound + 1) : 1)
 
     setFiveMinWins(newWins)
     setRound(nextRound)
