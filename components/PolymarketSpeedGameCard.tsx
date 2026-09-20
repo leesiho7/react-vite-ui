@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useMarketWebSocket } from '../lib/useMarketWebSocket'
-import { submitPredictionApi, settlePredictionApi, fetchUserPredictionStats, claimStreakReward } from '../lib/api'
+import { submitPredictionApi, settlePredictionApi, fetchUserPredictionStats } from '../lib/api'
+import { StreakClaimModal } from './StreakClaimModal'
 
 interface SpeedGameProps {
   symbol?: string
@@ -28,12 +29,8 @@ export function PolymarketSpeedGameCard({
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const predictionIdRef = useRef<number | null>(null)
 
-  // 10연승 클레임 모달 상태 (1시간 게임의 클레임 플로우와 동일한 백엔드 API 재사용)
+  // 10연승 클레임 모달 열림 상태 — 폼/API 호출/성공 화면은 공용 StreakClaimModal이 담당한다.
   const [claimModalOpen, setClaimModalOpen] = useState(false)
-  const [claimAddress, setClaimAddress] = useState('')
-  const [claimNetwork, setClaimNetwork] = useState('polygon')
-  const [claimLoading, setClaimLoading] = useState(false)
-  const [claimSuccessData, setClaimSuccessData] = useState<any>(null)
 
   // 1H 예측게임과 동일하게, 로그인(auth_session에 실제 userId가 있는 사용자)한 경우에만
   // 예측 제출을 허용한다. 비회원은 관전만 가능하고 제출 시 로그인 안내를 받는다.
@@ -269,39 +266,13 @@ export function PolymarketSpeedGameCard({
     return `${m}:${s < 10 ? '0' : ''}${s}`
   }
 
-  const handleClaimPayout = async () => {
-    const uid = getCurrentUserId()
-    if (!uid) {
-      alert('🔒 10연승 보상을 신청하려면 먼저 로그인해 주세요.')
-      return
-    }
-    if (!claimAddress.trim()) {
-      alert('출금받으실 지갑 주소를 입력해주세요.')
-      return
-    }
-    setClaimLoading(true)
-    try {
-      const res = await claimStreakReward({
-        userId: uid,
-        destinationAddress: claimAddress.trim(),
-        network: claimNetwork
-      })
-      if (res && res.success) {
-        setClaimSuccessData(res)
-        setFiveMinWins(0)
-        setRound(1)
-        setSubmitted(false)
-        setChoice(null)
-        const storageKey = getUserStreakKey()
-        localStorage.removeItem(storageKey)
-      } else {
-        alert(res?.message || '출금 처리에 실패했습니다.')
-      }
-    } catch (e) {
-      alert('출금 요청 중 오류가 발생했습니다.')
-    } finally {
-      setClaimLoading(false)
-    }
+  const handleClaimSuccess = () => {
+    setFiveMinWins(0)
+    setRound(1)
+    setSubmitted(false)
+    setChoice(null)
+    const storageKey = getUserStreakKey()
+    localStorage.removeItem(storageKey)
   }
 
   const cleanSymbol = symbol.replace('/USD', '').replace('/USDT', '')
@@ -602,84 +573,12 @@ export function PolymarketSpeedGameCard({
       </p>
     </div>
 
-    {claimModalOpen && (
-      <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-        <div className="panel" style={{ fontFamily: 'var(--font-sans)', width: '480px', maxWidth: '92vw', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <strong style={{ fontSize: '15px' }}>🏆 5분봉 10연승 챌린지 $10.00 USDT Claim</strong>
-            <button type="button" className="text-button" onClick={() => setClaimModalOpen(false)}>닫기 ×</button>
-          </div>
-
-          {claimSuccessData ? (
-            <div style={{ textAlign: 'center', padding: '16px 0' }}>
-              <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>{claimSuccessData.message}</h3>
-              <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-                관리자가 확인 후 직접 지갑으로 송금해 드립니다. (보통 24시간 이내)
-              </p>
-              <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', fontSize: '11px', textAlign: 'left', wordBreak: 'break-all' }}>
-                <div><b>수신 지갑:</b> {claimSuccessData.destinationAddress}</div>
-                <div><b>네트워크:</b> {claimSuccessData.network?.toUpperCase()}</div>
-              </div>
-              <button
-                type="button"
-                className="primary-button"
-                style={{ width: '100%', marginTop: '16px' }}
-                onClick={() => { setClaimModalOpen(false); setClaimSuccessData(null) }}
-              >
-                확인 완료
-              </button>
-            </div>
-          ) : (
-            <div>
-              <p style={{ fontSize: '12px', color: '#555', marginBottom: '12px' }}>
-                5분봉 10연승 미션 달성을 축하합니다! $10.00 USDT를 수신할 지갑 주소를 입력해 주세요.
-              </p>
-              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '4px', padding: '10px 12px', marginBottom: '14px', fontSize: '10.5px', color: '#0369a1', lineHeight: 1.5 }}>
-                💡 메타마스크가 없으셔도 괜찮습니다! 바이비트/바이낸스/OKX/Bitget 앱의 USDT 입금 주소(Polygon/BSC/TRC20)를 붙여넣으셔도 됩니다.
-              </div>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>출금 네트워크 선택</label>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {[
-                    { key: 'polygon', label: 'POLYGON' },
-                    { key: 'bsc', label: 'BSC' },
-                    { key: 'tron', label: 'TRON (TRC20)' },
-                    { key: 'solana', label: 'SOLANA' }
-                  ].map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      style={{ flex: 1, padding: '7px 4px', fontSize: '10px', fontWeight: claimNetwork === item.key ? 700 : 500, border: claimNetwork === item.key ? '2px solid #18334a' : '1px solid #ddd', background: claimNetwork === item.key ? '#18334a' : '#f9f9f9', color: claimNetwork === item.key ? '#fff' : '#333', borderRadius: '3px' }}
-                      onClick={() => setClaimNetwork(item.key)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>수신 지갑 / 거래소 USDT 입금 주소</label>
-                <input
-                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}
-                  placeholder="0x... (메타마스크 또는 거래소 USDT 입금 주소)"
-                  value={claimAddress}
-                  onChange={(e) => setClaimAddress(e.target.value)}
-                />
-              </div>
-              <button
-                type="button"
-                className="primary-button"
-                style={{ width: '100%', padding: '10px', fontSize: '12px', fontWeight: 700, borderRadius: '4px' }}
-                disabled={claimLoading}
-                onClick={handleClaimPayout}
-              >
-                {claimLoading ? '보상 확정 처리 중…' : '$10.00 USDT 보상 확정하기 ↗'}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
+    <StreakClaimModal
+      open={claimModalOpen}
+      onClose={() => setClaimModalOpen(false)}
+      userId={getCurrentUserId()}
+      onSuccess={handleClaimSuccess}
+    />
     </>
   )
 }
