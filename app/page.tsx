@@ -23,6 +23,7 @@ import {
   fetchUserLicenseToken,
   testPythonCode,
   submitPredictionApi,
+  settlePredictionApi,
   fetchUserPredictionStats,
   fetchLiveFinancialNewsFeed,
   fetchEscrowPoolStatus,
@@ -2794,7 +2795,10 @@ export default function Page() {
   // 인터벌 콜백이 ref.current를 통해 항상 최신 submitted/정산 함수를 참조하게 한다.
   const submittedRef = useRef(submitted)
   useEffect(() => { submittedRef.current = submitted }, [submitted])
-  const handleSettleOrResetRoundRef = useRef<((forceWon?: boolean) => void) | null>(null)
+  // 1시간 예측 제출 시 서버가 돌려준 predictionId — 정산 때 실제 /settle 호출에 필요하다
+  // (이전엔 이걸 저장 안 해서 서버 정산이 아예 안 됐었다).
+  const predictionIdRef = useRef<number | null>(null)
+  const handleSettleOrResetRoundRef = useRef<((overridePrice?: number) => Promise<void>) | null>(null)
   useEffect(() => { handleSettleOrResetRoundRef.current = handleSettleOrResetRound })
   const currentHourTagRef = useRef<string | null>(null)
 
@@ -2859,49 +2863,10 @@ export default function Page() {
     return numericCurrentPrice
   }, [hourlyOpenPrice, lockedBasePrice, numericCurrentPrice])
 
-  const [strikePriceHistory, setStrikePriceHistory] = useState<number[]>([])
-
-  // Live WebSocket Tick Buffer for Polymarket Strike Line Chart
-  useEffect(() => {
-    if (numericCurrentPrice > 0) {
-      setStrikePriceHistory((prev) => {
-        if (prev.length === 0) {
-          const seed = Array.from({ length: 32 }).map((_, i) => {
-            const offset = (Math.sin(i / 3.2) * 0.0007 + ((i % 5) - 2) * 0.00018) * numericBasePrice
-            return numericBasePrice + offset
-          })
-          return [...seed, numericCurrentPrice]
-        }
-        return [...prev.slice(-39), numericCurrentPrice]
-      })
-    }
-  }, [numericCurrentPrice, numericBasePrice])
-
-  // Real-Time 1-Second Bitcoin Tick Physics Engine (Sub-second jitter & energetic bouncing radar)
-  useEffect(() => {
-    let tickCount = 0
-    let velocity = 0
-    const tickInterval = setInterval(() => {
-      tickCount++
-      setStrikePriceHistory((prev) => {
-        if (prev.length === 0) return prev
-        const last = prev[prev.length - 1]
-        
-        // Simulating authentic Bitcoin 1-second candle orderbook bouncing & tick volatility
-        const momentumPull = (numericCurrentPrice - last) * 0.16 // Spring pull towards live WebSocket price
-        const randomShock = (Math.random() - 0.492) * 0.00032 * numericBasePrice // Sudden orderbook bid/ask jumps ($4~$18)
-        const microHarmonic = Math.sin(tickCount * 0.65) * 0.00016 * numericBasePrice // High-frequency respiration
-        
-        velocity = velocity * 0.62 + (momentumPull + randomShock + microHarmonic) * 0.38
-        const nextPrice = last + velocity
-
-        return [...prev.slice(-39), nextPrice]
-      })
-    }, 180) // 180ms high-frequency tick interval for realistic 1-second candle bouncing
-    return () => clearInterval(tickInterval)
-  }, [numericCurrentPrice, numericBasePrice])
-
-  const latestHistoryPrice = strikePriceHistory.length > 0 ? strikePriceHistory[strikePriceHistory.length - 1] : numericCurrentPrice
+  // 예전엔 여기서 Math.random()/Math.sin()으로 "그럴듯한" 가짜 틱 변동을 만들어(가격의 84%가
+  // 가짜 노이즈) 그 값으로 승패까지 판정했다 — 실제 승패는 이제 서버 정산(/api/prediction/settle)
+  // 결과를 그대로 신뢰하므로, 화면에 보여주는 현재가도 실제 실시간 가격을 그대로 쓴다.
+  const latestHistoryPrice = numericCurrentPrice
   const priceDelta = latestHistoryPrice - numericBasePrice
   const priceDeltaPct = (priceDelta / (numericBasePrice || 1)) * 100
   const isUpWinning = priceDelta >= 0
@@ -3373,17 +3338,43 @@ export default function Page() {
   }
 
   // 6-3. [연승 리그] 라운드 즉시 정산 및 초기화 핸들러 (어제/지난 라운드 모래시계 해제)
-  const handleSettleOrResetRound = (forceWon?: boolean) => {
-    const isWon = forceWon !== undefined ? forceWon : (prediction === 'UP' ? isUpWinning : !isUpWinning)
+  // 실제 서버 정산(/api/prediction/settle) 없이 프론트가 자체적으로(그것도 가짜 시뮬레이션
+  // 가격으로) 승패를 판정해버려서, 서버의 진짜 currentStreak1h가 절대 올라가지 않고 Claim이
+  // 항상 실패하던 버그를 고쳤다 — 5분봉(PolymarketSpeedGameCard.handleSettle)과 동일하게
+  // predictionId를 들고 실제 서버 판정을 받아온다.
+  const handleSettleOrResetRound = async (overridePrice?: number) => {
+    const checkPrice = overridePrice ?? numericCurrentPrice
+    const predId = predictionIdRef.current
+
+    let isWon: boolean
+    if (predId) {
+      const settleRes = await settlePredictionApi(predId, checkPrice)
+      isWon = settleRes?.status === 'WON'
+      predictionIdRef.current = null
+    } else {
+      // 서버에 기록된 예측이 없는 경우(비로그인 관전 등): 로컬 판정만 유지, 클레임 대상 아님
+      isWon = prediction === 'UP' ? checkPrice >= numericBasePrice : checkPrice < numericBasePrice
+    }
+
     const newWins = isWon ? Math.min(10, humanWins + 1) : 0
     const newRound = isWon ? Math.min(10, newWins + 1) : 1
-    
+
     setHumanWins(newWins)
     setRound(newRound)
     setSubmitted(false)
     setPrediction(null)
     setLockedBasePrice(priceFormatted)
-    
+
+    // 서버 원장 값으로 한 번 더 동기화(로그인 상태인 경우) — 5분봉과 동일한 패턴.
+    const uidForSync = currentUser?.userId ? Number(currentUser.userId) : null
+    if (uidForSync) {
+      fetchUserPredictionStats(uidForSync).then((stats) => {
+        if (stats && typeof stats.currentStreak1h === 'number') {
+          setHumanWins((prev) => Math.max(prev, stats.currentStreak1h))
+        }
+      }).catch(() => {})
+    }
+
     const now = new Date()
     const currentHourTag = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`
     const streakKey = `aether_streak_${currentUser?.username ? currentUser.username.replace(/[^a-zA-Z0-9_]/g, '_') : 'guest'}`
@@ -4914,6 +4905,7 @@ export default function Page() {
                 })
 
                 if (res && res.success) {
+                  predictionIdRef.current = typeof res.predictionId === 'number' ? res.predictionId : null
                   setSubmitted(true)
                   localStorage.setItem(streakKey, JSON.stringify({
                     humanWins,
