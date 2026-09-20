@@ -469,6 +469,25 @@ export async function loginApi(payload: {
 }
 
 /**
+ * 6-1. 회원 프로필 화면 — 활동 닉네임 변경
+ */
+export async function updateNicknameApi(userId: number, nickname: string): Promise<AuthResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/nickname`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, nickname })
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false,
+      message: '서버 연결에 실패해 닉네임을 변경하지 못했습니다: ' + (err?.message || 'Network Error')
+    };
+  }
+}
+
+/**
  * 7. 공인 퀀트 전문가(Resident AI Analysts) 목록 조회
  */
 export async function fetchTopExperts(currentUserId?: number, limit = 10): Promise<any[]> {

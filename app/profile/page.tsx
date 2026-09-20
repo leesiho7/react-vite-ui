@@ -4,12 +4,18 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { AuthResponse } from '../../lib/types'
+import { updateNicknameApi } from '../../lib/api'
 
 export default function ProfilePage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<AuthResponse | null>(null)
   const [wallet, setWallet] = useState('')
   const [saved, setSaved] = useState(false)
+
+  const [nicknameInput, setNicknameInput] = useState('')
+  const [nicknameSaving, setNicknameSaving] = useState(false)
+  const [nicknameError, setNicknameError] = useState('')
+  const [nicknameSaved, setNicknameSaved] = useState(false)
 
   useEffect(() => {
     try {
@@ -18,6 +24,7 @@ export default function ProfilePage() {
         const user: AuthResponse = JSON.parse(stored)
         setCurrentUser(user)
         if (user.walletAddress) setWallet(user.walletAddress)
+        setNicknameInput(user.nickname || '')
       }
     } catch (e) {}
   }, [])
@@ -29,6 +36,33 @@ export default function ProfilePage() {
     setCurrentUser(updated)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+  }
+
+  // 활동 닉네임 변경 — 서버가 유니크 제약(다른 유저와 중복 불가)을 최종 판정하므로
+  // 로컬에서 바로 반영하지 않고 응답을 받은 뒤에만 화면/세션을 갱신한다.
+  const handleSaveNickname = async () => {
+    const trimmed = nicknameInput.trim()
+    if (!trimmed || !currentUser?.userId) return
+    if (trimmed === currentUser.nickname) return
+
+    setNicknameSaving(true)
+    setNicknameError('')
+    setNicknameSaved(false)
+    try {
+      const res = await updateNicknameApi(currentUser.userId, trimmed)
+      if (res.success) {
+        const updated = { ...currentUser, nickname: res.nickname || trimmed }
+        localStorage.setItem('auth_session', JSON.stringify(updated))
+        setCurrentUser(updated)
+        setNicknameInput(updated.nickname || trimmed)
+        setNicknameSaved(true)
+        setTimeout(() => setNicknameSaved(false), 2500)
+      } else {
+        setNicknameError(res.message || '닉네임 변경에 실패했습니다.')
+      }
+    } finally {
+      setNicknameSaving(false)
+    }
   }
 
   const handleLogout = () => {
@@ -88,6 +122,36 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {currentUser && (
+              <>
+                <label>
+                  활동 닉네임 (다른 유저에게 표시되는 이름)
+                  <input
+                    value={nicknameInput}
+                    onChange={(event) => { setNicknameInput(event.target.value); setNicknameError(''); setNicknameSaved(false) }}
+                    placeholder="다른 유저와 겹치지 않는 닉네임을 입력하세요"
+                    aria-label="활동 닉네임"
+                    maxLength={50}
+                  />
+                </label>
+
+                <div className="profile-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px', marginBottom: '18px' }}>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={!nicknameInput.trim() || nicknameSaving || nicknameInput.trim() === currentUser.nickname}
+                    onClick={handleSaveNickname}
+                    style={{ background: '#f47a20', color: '#ffffff' }}
+                  >
+                    {nicknameSaving ? 'SAVING…' : nicknameSaved ? 'NICKNAME SAVED ✓' : 'SAVE NICKNAME'} <span>↗</span>
+                  </button>
+                </div>
+                {nicknameError && (
+                  <p style={{ color: '#dc2626', fontSize: '11px', marginTop: '-10px', marginBottom: '18px' }}>{nicknameError}</p>
+                )}
+              </>
+            )}
+
             <label>
               REWARD DESTINATION WALLET ADDRESS (TRC-20 USDT 수령 지갑 주소)
               <input
@@ -98,7 +162,7 @@ export default function ProfilePage() {
               />
             </label>
 
-            <div className="profile-actions" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <div className="profile-actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
               <button
                 className="primary-button"
                 disabled={!wallet.trim() || !currentUser}
