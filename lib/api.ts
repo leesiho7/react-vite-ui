@@ -935,10 +935,18 @@ export async function fetchUserLicenseToken(userId: number): Promise<any> {
 /**
  * 14. 파이썬 코드 문법 및 보안 샌드박스 검증
  */
+/**
+ * 샌드박스 백테스트가 실제로 요청하는 캔들 개수.
+ * 거래소 단일 호출 상한(Binance 1,500 / Bybit 1,000 / OKX 300 - 페이지네이션 없음)을
+ * 넘지 않는 값으로, 버튼 라벨과 실제 요청 값을 이 상수 하나로 묶어 서로 어긋나지 않게 한다.
+ */
+export const SANDBOX_BACKTEST_BARS = 1000;
+
 export async function testPythonCode(payload: {
   pythonCode: string;
   symbol?: string;
   timeFrame?: string;
+  bars?: number;
 }): Promise<any> {
   const code = payload.pythonCode || '';
 
@@ -1153,7 +1161,10 @@ NameError: Function 'def on_market_tick(tick):' is required to receive live mark
     };
   }
 
-  // 2. If code passes local AST scan, optionally call live backend sandbox container
+  // 2. Local AST scan passed — call the real backend sandbox (Binance/Bybit/OKX-backed engine).
+  // There is no client-side fallback here on purpose: fabricating a backtest result when the
+  // backend is unreachable is exactly the "지어낸 결과" behavior this validator was rewritten
+  // to stop doing (see PythonStrategyValidator.java's header comment).
   try {
     const res = await fetch(`${API_BASE}/bot/instance/test-code`, {
       method: 'POST',
@@ -1161,7 +1172,8 @@ NameError: Function 'def on_market_tick(tick):' is required to receive live mark
       body: JSON.stringify({
         pythonCode: code,
         symbol: payload.symbol || 'BTCUSDT',
-        timeFrame: payload.timeFrame || '5m'
+        timeFrame: payload.timeFrame || '5m',
+        bars: payload.bars ?? SANDBOX_BACKTEST_BARS
       })
     });
     if (res.ok) {
@@ -1170,223 +1182,33 @@ NameError: Function 'def on_market_tick(tick):' is required to receive live mark
         return data;
       }
     }
+    return {
+      valid: false,
+      status: 'BACKEND_ERROR',
+      simulatedOutput: `[전략 검증 결과 — 백엔드 오류]
+===========================================================
+[ERROR] 백테스트 서버(${API_BASE}/bot/instance/test-code)가 유효한 결과를 반환하지 않았습니다 (HTTP ${res.status}).
+-----------------------------------------------------------
+임의 생성 데이터로 대체하지 않으므로 백테스트를 진행할 수 없습니다.
+잠시 후 다시 시도하거나 서버 로그를 확인하세요.
+===========================================================
+❌ [FAILED] 백테스트 서버 응답 없음.`
+    };
   } catch (err) {
     console.warn('[API] Error calling /bot/instance/test-code:', err);
-  }
-
-  // 3. Dynamic 8,000-candle Backtest Engine Evaluator
-  return runRealCandleBacktest(code, payload.symbol, payload.timeFrame);
-}
-
-export interface BacktestResult {
-  valid: boolean;
-  status: 'PASSED' | 'FAILED' | 'WARNING';
-  totalBars: number;
-  totalTrades: number;
-  winningTrades: number;
-  losingTrades: number;
-  winRate: number;
-  grossProfit: number;
-  grossLoss: number;
-  profitFactor: number;
-  avgWin: number;
-  avgLoss: number;
-  expectedValue: number;
-  netPnlPct: number;
-  maxDrawdownPct: number;
-  sharpeRatio: number;
-  simulatedOutput: string;
-}
-
-export function runRealCandleBacktest(
-  code: string,
-  symbol: string = 'BTCUSDT',
-  timeFrame: string = '5m'
-): BacktestResult {
-  const totalBars = 8000;
-  
-  // 1. Generate 8,000 OHLCV candles
-  let basePrice = symbol.includes('BTC') ? 68000 : symbol.includes('ETH') ? 3500 : 150;
-  let seed = 42;
-  const pseudoRandom = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
-  
-  const opens: number[] = [];
-  const highs: number[] = [];
-  const lows: number[] = [];
-  const closes: number[] = [];
-  const volumes: number[] = [];
-  
-  let currP = basePrice;
-  for (let i = 0; i < totalBars; i++) {
-    const change = (pseudoRandom() - 0.495) * (basePrice * 0.0025);
-    const open = currP;
-    const close = Math.max(10, open + change);
-    const high = Math.max(open, close) + pseudoRandom() * (basePrice * 0.001);
-    const low = Math.max(10, Math.min(open, close) - pseudoRandom() * (basePrice * 0.001));
-    const vol = 10 + pseudoRandom() * 500;
-    
-    opens.push(open);
-    highs.push(high);
-    lows.push(low);
-    closes.push(close);
-    volumes.push(vol);
-    currP = close;
-  }
-  
-  // Calculate 14-period RSI
-  const rsis: number[] = new Array(totalBars).fill(50);
-  let gain = 0, loss = 0;
-  for (let i = 1; i <= 14; i++) {
-    const diff = closes[i] - closes[i - 1];
-    if (diff > 0) gain += diff;
-    else loss -= diff;
-  }
-  let rsiAvgGain = gain / 14;
-  let rsiAvgLoss = loss / 14;
-  rsis[14] = 100 - (100 / (1 + rsiAvgGain / (rsiAvgLoss || 1e-9)));
-  for (let i = 15; i < totalBars; i++) {
-    const diff = closes[i] - closes[i - 1];
-    const g = diff > 0 ? diff : 0;
-    const l = diff < 0 ? -diff : 0;
-    rsiAvgGain = (rsiAvgGain * 13 + g) / 14;
-    rsiAvgLoss = (rsiAvgLoss * 13 + l) / 14;
-    rsis[i] = 100 - (100 / (1 + rsiAvgGain / (rsiAvgLoss || 1e-9)));
-  }
-
-  // Parse entry/exit thresholds or strategy type from user Python code
-  const buyMatch = code.match(/rsi\s*<\s*(\d+(\.\d+)?)/i);
-  const buyThreshold = buyMatch ? parseFloat(buyMatch[1]) : 30;
-  const sellMatch = code.match(/rsi\s*>\s*(\d+(\.\d+)?)/i);
-  const sellThreshold = sellMatch ? parseFloat(sellMatch[1]) : 70;
-
-  const isElliott = code.toLowerCase().includes('elliott') || code.toLowerCase().includes('wave');
-  const isHarmonic = code.toLowerCase().includes('harmonic') || code.toLowerCase().includes('prz') || code.toLowerCase().includes('gartley');
-
-  let inPos = false;
-  let entryP = 0;
-  let trades = 0;
-  let winCount = 0;
-  let lossCount = 0;
-  let totalWinPctSum = 0;
-  let totalLossPctSum = 0;
-  let grossProfitPct = 0;
-  let grossLossPct = 0;
-  let equity = 10000;
-  let maxPeak = 10000;
-  let maxDD = 0;
-  const takerFeePct = 0.08; // 0.08% per roundtrip trade (0.04% * 2)
-
-  // Simulation execution across 8,000 bars
-  for (let i = 50; i < totalBars; i++) {
-    const p = closes[i];
-    const r = rsis[i];
-    
-    let buySignal = false;
-    let sellSignal = false;
-
-    if (isElliott) {
-      // Wave 3 breakout signal simulation
-      const prev20Min = Math.min(...lows.slice(i - 20, i));
-      const prev20Max = Math.max(...highs.slice(i - 20, i));
-      if (p > prev20Max * 0.998 && r > 55) buySignal = true;
-      if (p < prev20Min * 1.002 || r > 72) sellSignal = true;
-    } else if (isHarmonic) {
-      // Harmonic PRZ rebound simulation
-      if (r < 32 && closes[i] > opens[i]) buySignal = true;
-      if (r > 65 || closes[i] < opens[i] * 0.995) sellSignal = true;
-    } else {
-      // Standard RSI / MA mean reversion simulation
-      if (r < buyThreshold) buySignal = true;
-      if (r > sellThreshold) sellSignal = true;
-    }
-
-    if (buySignal && !inPos) {
-      inPos = true;
-      entryP = p;
-    } else if (sellSignal && inPos) {
-      inPos = false;
-      const rawPnlPct = ((p - entryP) / entryP) * 100;
-      const netTradePnlPct = rawPnlPct - takerFeePct;
-      trades++;
-      
-      if (netTradePnlPct > 0) {
-        winCount++;
-        totalWinPctSum += netTradePnlPct;
-        grossProfitPct += netTradePnlPct;
-      } else {
-        lossCount++;
-        totalLossPctSum += Math.abs(netTradePnlPct);
-        grossLossPct += Math.abs(netTradePnlPct);
-      }
-
-      equity *= (1 + netTradePnlPct / 100);
-      if (equity > maxPeak) maxPeak = equity;
-      const dd = ((maxPeak - equity) / maxPeak) * 100;
-      if (dd > maxDD) maxDD = dd;
-    }
-  }
-
-  const winRateRatio = trades > 0 ? winCount / trades : 0;
-  const winRate = winRateRatio * 100;
-  const lossRateRatio = 1 - winRateRatio;
-  
-  const avgWin = winCount > 0 ? totalWinPctSum / winCount : 0;
-  const avgLoss = lossCount > 0 ? totalLossPctSum / lossCount : 0;
-  
-  // Mathematical Expected Value (EV) per trade formula:
-  // EV = (WinRate * AvgWin) - (LossRate * AvgLoss) - TakerFee
-  const expectedValue = (winRateRatio * avgWin) - (lossRateRatio * avgLoss) - takerFeePct;
-  const profitFactor = grossLossPct > 0 ? (grossProfitPct / grossLossPct) : (grossProfitPct > 0 ? 99.99 : 0);
-  const netPnlPct = ((equity - 10000) / 10000) * 100;
-  const sharpeRatio = netPnlPct > 0 ? (expectedValue > 0 ? 1.85 : 0.95) : 0.25;
-
-  const status = expectedValue > 0 && profitFactor > 1.2 ? 'PASSED' : 'WARNING';
-
-  const outputStr = `[Quant Engine Real 8,000-Bar Backtest Output]
+    return {
+      valid: false,
+      status: 'CONNECTION_ERROR',
+      simulatedOutput: `[전략 검증 결과 — 연결 오류]
 ===========================================================
-[INFO] Target Pair: ${symbol} (${timeFrame} timeframe)
-[INFO] Historical Dataset Loaded: 8,000 Bars (OHLCV)
-[INFO] AST Validation & Security Scan: PASSED (0 errors, sandboxed)
+[ERROR] ${API_BASE}/bot/instance/test-code 에 연결할 수 없습니다.
 -----------------------------------------------------------
-[QUANT EV METRICS & PERFORMANCE REPORT]
-  • Total Bars Analyzed : 8,000 Bars
-  • Total Trades       : ${trades} (Wins: ${winCount} / Losses: ${lossCount})
-  • Win Rate           : ${winRate.toFixed(2)}%
-  • Profit Factor      : ${profitFactor.toFixed(2)}
-  • Avg Win / Avg Loss : +${avgWin.toFixed(2)}% / -${avgLoss.toFixed(2)}%
-  • Expected Value (EV): ${expectedValue >= 0 ? '+' : ''}${expectedValue.toFixed(3)}% per trade
-  • Net Return (PnL)   : ${netPnlPct >= 0 ? '+' : ''}${netPnlPct.toFixed(2)}%
-  • Max Drawdown (MDD) : -${maxDD.toFixed(2)}%
-  • Sharpe Ratio       : ${sharpeRatio.toFixed(2)}
------------------------------------------------------------
-${expectedValue > 0 
-  ? `✅ [POSITIVE EXPECTED VALUE (+EV)] Strategy yields +${expectedValue.toFixed(3)}% expected value per trade after taker fees (0.08%). Ready for live bot deployment!`
-  : `⚠️ [NEGATIVE EXPECTED VALUE (-EV)] Strategy yields ${expectedValue.toFixed(3)}% expected value per trade. High risk of capital decay over 8,000 bars.`
-}
-===========================================================`;
-
-  return {
-    valid: true,
-    status,
-    totalBars,
-    totalTrades: trades,
-    winningTrades: winCount,
-    losingTrades: lossCount,
-    winRate: Number(winRate.toFixed(2)),
-    grossProfit: Number(grossProfitPct.toFixed(2)),
-    grossLoss: Number(grossLossPct.toFixed(2)),
-    profitFactor: Number(profitFactor.toFixed(2)),
-    avgWin: Number(avgWin.toFixed(2)),
-    avgLoss: Number(avgLoss.toFixed(2)),
-    expectedValue: Number(expectedValue.toFixed(4)),
-    netPnlPct: Number(netPnlPct.toFixed(2)),
-    maxDrawdownPct: Number(maxDD.toFixed(2)),
-    sharpeRatio: Number(sharpeRatio.toFixed(2)),
-    simulatedOutput: outputStr
-  };
+임의 생성 데이터로 대체하지 않으므로 백테스트를 진행할 수 없습니다.
+네트워크 상태 또는 서버 실행 여부를 확인하세요.
+===========================================================
+❌ [FAILED] 백엔드 연결 실패.`
+    };
+  }
 }
 
 /**

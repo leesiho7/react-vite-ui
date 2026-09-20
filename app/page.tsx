@@ -48,7 +48,8 @@ import {
   fetchCopilotWorkspace,
   fetchInvalidationAlerts,
   approveOrderTicket,
-  rejectOrderTicket
+  rejectOrderTicket,
+  SANDBOX_BACKTEST_BARS
 } from '../lib/api'
 import type { BotControlResult } from '../lib/api'
 import {
@@ -3268,7 +3269,8 @@ export default function Page() {
       const res = await testPythonCode({
         pythonCode,
         symbol: rawSymbol,
-        timeFrame: period
+        timeFrame: period,
+        bars: SANDBOX_BACKTEST_BARS
       })
       if (res) {
         const isErr = res.valid === false || res.status === 'SYNTAX_ERROR' || res.status === 'SECURITY_VIOLATION' || res.status === 'MISSING_FUNCTION' || res.status === 'EMPTY_CODE' || res.status === 'TIMEOUT' || res.status?.includes('ERROR')
@@ -5952,7 +5954,9 @@ export default function Page() {
                     onClick={handleTestSandbox}
                     disabled={sandboxLoading}
                   >
-                    {sandboxLoading ? '8,000봉 AST 분석 및 퀀트 연산 중…' : '▶ 퀀트 엔진 백테스트 실행 (8,000 캔들 · 딥 벡터 시뮬레이션)'}
+                    {sandboxLoading
+                      ? `${SANDBOX_BACKTEST_BARS.toLocaleString()}봉 AST 분석 및 퀀트 연산 중…`
+                      : `▶ 퀀트 엔진 백테스트 실행 (실거래소 ${SANDBOX_BACKTEST_BARS.toLocaleString()}봉)`}
                   </button>
                   <button
                     type="button"
