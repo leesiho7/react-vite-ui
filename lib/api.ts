@@ -1574,6 +1574,48 @@ export async function fetchAdminEscrowAuditLogs(): Promise<AdminEscrowAuditLog[]
 }
 
 /**
+ * 원장+수동배치 모델 — Claim은 DB 원장만 확정하고, 실제 온체인 송금은 관리자가 직접 지갑
+ * 앱에서 보낸 뒤 이 목록에서 완료 처리한다.
+ */
+export interface PendingPayout {
+  withdrawalId: number;
+  userId: number;
+  nickname: string;
+  amount: number;
+  destinationAddress: string;
+  network: string;
+  requestedAt: string;
+}
+
+export async function fetchPendingPayouts(): Promise<PendingPayout[]> {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/admin/pending-payouts`, { headers: { ...authHeader() } });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for fetchPendingPayouts:', e);
+  }
+  return [];
+}
+
+export async function completePendingPayout(withdrawalId: number, txHash: string): Promise<PendingPayout | null> {
+  try {
+    const res = await fetch(`${API_BASE}/gamification/admin/pending-payouts/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify({ withdrawalId, txHash })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn('[API] Fallback for completePendingPayout:', e);
+  }
+  return null;
+}
+
+/**
  * 21-1. [관리자 전용] 실결제 없이 24H 봇 라이선스 무료 발급 (테스트/코프 계정용).
  * 백엔드가 JWT의 ROLE_ADMIN을 실제로 검증하므로 authHeader()를 반드시 붙여야 한다.
  */

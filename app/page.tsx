@@ -31,8 +31,11 @@ import {
   updateAdminEscrowConfig,
   sweepAdminEscrowFunds,
   fetchAdminEscrowAuditLogs,
+  fetchPendingPayouts,
+  completePendingPayout,
   adminGrantLicense,
   AdminEscrowAuditLog,
+  PendingPayout,
   fetchVisionChartAnalysis,
   fetchUserBots,
   createBotInstanceApi,
@@ -2139,7 +2142,7 @@ export default function Page() {
 
   // Admin Escrow Management Console State
   const [adminEscrowModalOpen, setAdminEscrowModalOpen] = useState(false)
-  const [adminEscrowTab, setAdminEscrowTab] = useState<'DEPOSIT' | 'SWEEP' | 'AUDIT'>('DEPOSIT')
+  const [adminEscrowTab, setAdminEscrowTab] = useState<'DEPOSIT' | 'SWEEP' | 'PENDING' | 'AUDIT'>('DEPOSIT')
   const [adminConfigCapacity, setAdminConfigCapacity] = useState('100.0')
   const [adminConfigStatus, setAdminConfigStatus] = useState('ACTIVE')
   const [adminSweepAddress, setAdminSweepAddress] = useState('')
@@ -2148,6 +2151,7 @@ export default function Page() {
   const [adminActionLoading, setAdminActionLoading] = useState(false)
   const [adminSweepResult, setAdminSweepResult] = useState<any>(null)
   const [adminAuditLogs, setAdminAuditLogs] = useState<AdminEscrowAuditLog[]>([])
+  const [adminPendingPayouts, setAdminPendingPayouts] = useState<PendingPayout[]>([])
 
   // [관리자 전용] 실결제 없는 24H 봇 라이선스 무료 발급 토글 State
   const [adminGrantPanelOpen, setAdminGrantPanelOpen] = useState(false)
@@ -4957,7 +4961,7 @@ export default function Page() {
             </div>
 
             {/* 10 Step Badge Circles */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '8px' }}>
+            <div className="streak-badge-grid">
               {Array.from({ length: 10 }).map((_, idx) => {
                 const stepNum = idx + 1;
                 const isWon = stepNum <= humanWins;
@@ -5100,7 +5104,7 @@ export default function Page() {
             </div>
 
             {/* Sub Tabs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '18px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', marginBottom: '18px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
               <button
                 type="button"
                 onClick={() => setAdminEscrowTab('DEPOSIT')}
@@ -5138,6 +5142,26 @@ export default function Page() {
               <button
                 type="button"
                 onClick={() => {
+                  setAdminEscrowTab('PENDING')
+                  fetchPendingPayouts().then(setAdminPendingPayouts)
+                }}
+                style={{
+                  padding: '8px 10px',
+                  border: '1px solid',
+                  borderColor: adminEscrowTab === 'PENDING' ? '#b45309' : '#e2e8f0',
+                  background: adminEscrowTab === 'PENDING' ? '#fffbeb' : '#f8fafc',
+                  color: adminEscrowTab === 'PENDING' ? '#b45309' : '#64748b',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                💸 3. 수동 송금 대기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setAdminEscrowTab('AUDIT')
                   fetchAdminEscrowAuditLogs().then(setAdminAuditLogs)
                 }}
@@ -5153,7 +5177,7 @@ export default function Page() {
                   cursor: 'pointer'
                 }}
               >
-                📜 3. 감사 원장
+                📜 4. 감사 원장
               </button>
             </div>
 
@@ -5381,6 +5405,64 @@ export default function Page() {
             )}
 
             {/* TAB 3: AUDIT LOGS */}
+            {adminEscrowTab === 'PENDING' && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#1e293b' }}>
+                    수동 송금 대기 목록 — 지갑 앱에서 직접 보낸 뒤 완료 처리하세요
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => fetchPendingPayouts().then(setAdminPendingPayouts)}
+                    style={{ fontSize: '9px', background: '#f1f5f9', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '3px', cursor: 'pointer' }}
+                  >
+                    새로고침 🔄
+                  </button>
+                </div>
+
+                {adminPendingPayouts.length === 0 ? (
+                  <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontSize: '11px', background: '#f8fafc', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                    수동 송금 대기 중인 건이 없습니다.
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                    {adminPendingPayouts.map((p) => (
+                      <div key={p.withdrawalId} style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '11px' }}>
+                            {p.nickname} <span style={{ color: '#b45309' }}>${p.amount.toFixed(2)} USDT</span>
+                          </div>
+                          <div style={{ fontSize: '9px', color: '#64748b', fontFamily: "var(--font-mono)", wordBreak: 'break-all' }}>
+                            {p.destinationAddress} ({p.network})
+                          </div>
+                          <div style={{ fontSize: '8.5px', color: '#94a3b8' }}>
+                            확정: {new Date(p.requestedAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const txHash = prompt(`${p.nickname}님에게 $${p.amount.toFixed(2)} USDT를 ${p.destinationAddress}(으)로 지갑 앱에서 직접 보낸 뒤,\n실제 트랜잭션 해시를 입력해 완료 처리하세요.`)
+                            if (!txHash || !txHash.trim()) return
+                            const result = await completePendingPayout(p.withdrawalId, txHash.trim())
+                            if (result) {
+                              alert('✅ 완료 처리되었습니다.')
+                              fetchPendingPayouts().then(setAdminPendingPayouts)
+                            } else {
+                              alert('완료 처리에 실패했습니다.')
+                            }
+                          }}
+                          style={{ flexShrink: 0, fontSize: '9px', background: '#0f766e', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '3px', cursor: 'pointer', fontWeight: 700 }}
+                        >
+                          송금 완료 처리 ✓
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {adminEscrowTab === 'AUDIT' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -5495,7 +5577,7 @@ export default function Page() {
 
               <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '12px 14px', fontSize: '11px', textAlign: 'left', lineHeight: 1.6, color: '#334155' }}>
                 <div>• <b>규칙:</b> 1시간 기준가 대비 연속 10회 종가 방향(UP/DOWN) 적중</div>
-                <div>• <b>보상:</b> 10연승 즉시 $10.00 USDT 온체인 출금 (가스비 100% 무료 지원)</div>
+                <div>• <b>보상:</b> 10연승 달성 시 $10.00 USDT 확정, 관리자 확인 후 24시간 내 지급 (가스비 100% 무료 지원)</div>
                 <div>• <b>실시간 풀:</b> 실제 이벤트 예치금 온체인 잔액과 1:1 직결</div>
               </div>
             </div>
@@ -5526,10 +5608,9 @@ export default function Page() {
                 <CheckCircle2 size={42} color="#2b866d" style={{ margin: '0 auto 12px' }} />
                 <h3 style={{ margin: '0 0 8px', fontSize: '16px' }}>{claimSuccessData.message}</h3>
                 <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
-                  온체인 트랜잭션이 블록체인에서 안전하게 승인되었습니다.
+                  관리자가 확인 후 직접 지갑으로 송금해 드립니다. (보통 24시간 이내)
                 </p>
                 <div style={{ background: '#f5f7fa', padding: '12px', borderRadius: '4px', fontSize: '11px', textAlign: 'left', wordBreak: 'break-all' }}>
-                  <div><b>트랜잭션 해시:</b> {claimSuccessData.txHash}</div>
                   <div><b>수신 지갑:</b> {claimSuccessData.destinationAddress}</div>
                   <div><b>네트워크:</b> {claimSuccessData.network?.toUpperCase()}</div>
                 </div>
@@ -5546,7 +5627,7 @@ export default function Page() {
                 {/* Bybit / Binance Exchange Friendly Notice */}
                 <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '4px', padding: '10px 12px', marginBottom: '14px', fontSize: '10.5px', color: '#0369a1', lineHeight: 1.5 }}>
                   💡 <b>메타마스크가 없으셔도 괜찮습니다!</b><br />
-                  <b>바이비트(Bybit)</b>, <b>바이낸스(Binance)</b>, <b>OKX / Bitget</b> 앱에서 복사한 <code>USDT 입금 주소 (Polygon / BSC / TRC20)</code>를 붙여넣으시면 거래소 계좌로 $10.00 USDT가 즉시 입금됩니다.
+                  <b>바이비트(Bybit)</b>, <b>바이낸스(Binance)</b>, <b>OKX / Bitget</b> 앱에서 복사한 <code>USDT 입금 주소 (Polygon / BSC / TRC20)</code>를 붙여넣으시면 됩니다. 확인 후 관리자가 직접 해당 주소로 송금해 드려요 (보통 24시간 이내).
                 </div>
 
                 <div style={{ marginBottom: '12px' }}>
