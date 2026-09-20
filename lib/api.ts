@@ -124,9 +124,9 @@ export async function fetchPredictionLeaderboard(limit = 10): Promise<Prediction
   }
 
   return [
-    { rank: 1, userId: 101, nickname: 'Oracle_Sniper', tier: 'ORACLE', currentStreak: 12, maxStreak: 15, winRatePct: 88.5, totalPredictions: 45, wonPredictions: 40, totalEarnedTokens: 420.0 },
-    { rank: 2, userId: 102, nickname: 'Alpha_QuantMaster', tier: 'GRAND_MASTER', currentStreak: 8, maxStreak: 11, winRatePct: 82.0, totalPredictions: 60, wonPredictions: 49, totalEarnedTokens: 310.5 },
-    { rank: 3, userId: 103, nickname: 'Seoul_HedgeAnt', tier: 'MASTER', currentStreak: 6, maxStreak: 9, winRatePct: 78.4, totalPredictions: 38, wonPredictions: 30, totalEarnedTokens: 245.0 }
+    { rank: 1, userId: 101, nickname: 'Oracle_Sniper', tier: 'ORACLE', currentStreak: 12, maxStreak: 15, currentStreak5m: 0, currentStreak1h: 0, winRatePct: 88.5, totalPredictions: 45, wonPredictions: 40, totalEarnedTokens: 420.0 },
+    { rank: 2, userId: 102, nickname: 'Alpha_QuantMaster', tier: 'GRAND_MASTER', currentStreak: 8, maxStreak: 11, currentStreak5m: 0, currentStreak1h: 0, winRatePct: 82.0, totalPredictions: 60, wonPredictions: 49, totalEarnedTokens: 310.5 },
+    { rank: 3, userId: 103, nickname: 'Seoul_HedgeAnt', tier: 'MASTER', currentStreak: 6, maxStreak: 9, currentStreak5m: 0, currentStreak1h: 0, winRatePct: 78.4, totalPredictions: 38, wonPredictions: 30, totalEarnedTokens: 245.0 }
   ];
 }
 
@@ -870,12 +870,14 @@ export async function submitOnChainDeposit(payload: {
 
 
 /**
- * 12. 10연승 달성 시 $10 USDT 자동 출금(Payout) Claim 요청
+ * 12. 10연승 달성 보상 확정(원장+수동배치) Claim 요청 — 게임 종류에 따라 보상 금액이 다르다
+ * (DIRECTION_5M=$10, DIRECTION_1H=$30, 백엔드가 최종 판정/금액 결정).
  */
 export async function claimStreakReward(payload: {
   userId: number;
   destinationAddress: string;
   network?: string;
+  gameType?: 'DIRECTION_5M' | 'DIRECTION_1H';
 }): Promise<any> {
   try {
     const res = await fetch(`${API_BASE}/gamification/claim-streak-reward`, {
@@ -884,7 +886,8 @@ export async function claimStreakReward(payload: {
       body: JSON.stringify({
         userId: payload.userId,
         destinationAddress: payload.destinationAddress,
-        network: payload.network || 'polygon'
+        network: payload.network || 'polygon',
+        gameType: payload.gameType || 'DIRECTION_5M'
       })
     });
     const body = await res.json().catch(() => null);

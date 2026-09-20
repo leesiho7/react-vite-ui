@@ -92,6 +92,8 @@ export interface PredictionLeaderboardItem {
   tier: string;
   currentStreak: number;
   maxStreak: number;
+  currentStreak5m: number;
+  currentStreak1h: number;
   winRatePct: number;
   totalPredictions: number;
   wonPredictions: number;

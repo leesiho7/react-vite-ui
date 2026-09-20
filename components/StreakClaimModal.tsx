@@ -8,6 +8,9 @@ interface StreakClaimModalProps {
   open: boolean
   onClose: () => void
   userId: number | null
+  /** 어느 게임의 10연승인지 — 보상 금액과 문구가 여기 따라 달라진다 (5분봉=$10, 1시간봉=$30). */
+  gameType: 'DIRECTION_5M' | 'DIRECTION_1H'
+  amount: number
   /** 클레임 성공 직후 호출 — 호출부(5분봉/1시간봉 등)가 자신의 연승 상태를 초기화한다. */
   onSuccess: () => void
 }
@@ -20,12 +23,12 @@ const NETWORKS = [
 ]
 
 /**
- * 10연승 $10 USDT 보상 Claim 모달 — 원장+수동배치 모델(claim은 원장만 확정, 실제 송금은
- * 관리자가 지갑 앱에서 직접 보낸 뒤 처리)이라 성공 메시지도 "즉시 송금됨"이 아니라
- * "확정, 관리자가 곧 송금"으로 안내한다. 5분봉/1시간봉 등 여러 게임 카드가 동일하게
- * 재사용해서, 문구를 바꿀 때 한 곳만 고치면 되게 한다.
+ * 10연승 보상 Claim 모달 — 원장+수동배치 모델(claim은 원장만 확정, 실제 송금은 관리자가
+ * 지갑 앱에서 직접 보낸 뒤 처리)이라 성공 메시지도 "즉시 송금됨"이 아니라 "확정, 관리자가
+ * 곧 송금"으로 안내한다. 5분봉($10)/1시간봉($30) 등 여러 게임 카드가 amount/gameType prop만
+ * 다르게 넘겨 동일하게 재사용해서, 문구를 바꿀 때 한 곳만 고치면 되게 한다.
  */
-export function StreakClaimModal({ open, onClose, userId, onSuccess }: StreakClaimModalProps) {
+export function StreakClaimModal({ open, onClose, userId, gameType, amount, onSuccess }: StreakClaimModalProps) {
   const [claimAddress, setClaimAddress] = useState('')
   const [claimNetwork, setClaimNetwork] = useState('polygon')
   const [claimLoading, setClaimLoading] = useState(false)
@@ -47,7 +50,8 @@ export function StreakClaimModal({ open, onClose, userId, onSuccess }: StreakCla
       const res = await claimStreakReward({
         userId,
         destinationAddress: claimAddress.trim(),
-        network: claimNetwork
+        network: claimNetwork,
+        gameType
       })
       if (res && res.success) {
         setClaimSuccessData(res)
@@ -71,7 +75,7 @@ export function StreakClaimModal({ open, onClose, userId, onSuccess }: StreakCla
     <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <div className="panel" style={{ fontFamily: 'var(--font-sans)', width: '480px', maxWidth: '92vw', background: '#fff', padding: '24px', borderRadius: '4px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <strong style={{ fontSize: '15px' }}>🏆 10연승 챌린지 $10.00 USDT Claim</strong>
+          <strong style={{ fontSize: '15px' }}>🏆 10연승 챌린지 ${amount.toFixed(2)} USDT Claim</strong>
           <button type="button" className="text-button" onClick={handleClose}>닫기 ×</button>
         </div>
 
@@ -93,7 +97,7 @@ export function StreakClaimModal({ open, onClose, userId, onSuccess }: StreakCla
         ) : (
           <div>
             <p style={{ fontSize: '12px', color: '#555', marginBottom: '12px' }}>
-              10연승 미션 달성을 축하합니다! $10.00 USDT를 수신할 지갑 주소를 입력해 주세요. (가스비 상점 전액 지원)
+              10연승 미션 달성을 축하합니다! ${amount.toFixed(2)} USDT를 수신할 지갑 주소를 입력해 주세요. (가스비 상점 전액 지원)
             </p>
 
             <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '4px', padding: '10px 12px', marginBottom: '14px', fontSize: '10.5px', color: '#0369a1', lineHeight: 1.5 }}>
@@ -143,7 +147,7 @@ export function StreakClaimModal({ open, onClose, userId, onSuccess }: StreakCla
               disabled={claimLoading}
               onClick={handleClaim}
             >
-              {claimLoading ? '보상 확정 처리 중…' : '$10.00 USDT 보상 확정하기 ↗'}
+              {claimLoading ? '보상 확정 처리 중…' : `$${amount.toFixed(2)} USDT 보상 확정하기 ↗`}
             </button>
           </div>
         )}

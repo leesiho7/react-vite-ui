@@ -3127,8 +3127,8 @@ export default function Page() {
     // Fetch user real DB prediction streak if authenticated (preserve ongoing local round if higher)
     if (currentUser?.userId) {
       fetchUserPredictionStats(Number(currentUser.userId)).then((stats) => {
-        if (stats && typeof stats.currentStreak === 'number') {
-          const dbStreak = stats.currentStreak
+        if (stats && typeof stats.currentStreak1h === 'number') {
+          const dbStreak = stats.currentStreak1h
           if (dbStreak > 0) {
             setHumanWins((prev) => Math.max(prev, dbStreak))
             setRound((prev) => Math.max(prev, Math.min(dbStreak + 1, 10)))
@@ -4607,7 +4607,7 @@ export default function Page() {
               <p style={{ margin: 0, color: '#64748b', fontSize: '11px', lineHeight: 1.6 }}>
                 <strong>[LAYER 1] {language === 'en' ? 'AI vs Human Battle:' : language === 'cn' ? 'AI vs 人类对决:' : 'AI vs 인간 배틀:'}</strong> {language === 'en' ? 'Real-time market direction contest between AETHER quant model and global trader consensus' : language === 'cn' ? 'AETHER 量化算法与全球交易员群体智慧的实时市场方向对决' : 'AETHER 퀀트 알고리즘과 전 세계 트레이더 집단지성의 실시간 시장 방향성 대결'}<br />
                 <strong>[LAYER 2] {language === 'en' ? '1-Hour Fixed Strike Settlement:' : language === 'cn' ? '1小时基准价结算:' : '1시간 기준 고정가 정산:'}</strong> {language === 'en' ? 'Predict UP / DOWN based on 1H fixed strike price' : language === 'cn' ? '基于 1 小时固定基准价预测 1 小时 K 线收盘价上涨(UP) / 下跌(DOWN)' : '라운드 시작 시 고정된 1H 기준가 대비 1시간 캔들 종가의 상승(UP) / 하락(DOWN) 예측'}<br className="desktop-only" />
-                {language === 'en' ? 'Achieve 10 consecutive wins to claim $10.00 USDT directly from the Smart Escrow pool.' : language === 'cn' ? '达成无赔率纯粹 10 连胜，即可从智能托管池中即时领取 $10.00 USDT。' : '배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 $10.00 USDT가 즉시 지급됩니다.'}
+                {language === 'en' ? 'Achieve 10 consecutive wins to claim $30.00 USDT directly from the Smart Escrow pool.' : language === 'cn' ? '达成无赔率纯粹 10 连胜，即可从智能托管池中即时领取 $30.00 USDT。' : '배당률 없는 순수 10연승 달성 시, 스마트 에스크로 풀에서 $30.00 USDT가 지급됩니다.'}
               </p>
             </div>
 
@@ -4625,7 +4625,7 @@ export default function Page() {
                     {(escrowPool?.currentBalance ?? 0) > 0 ? `${escrowPool?.remainingWinners} / ${escrowPool?.maxWinners} CLAIMS LEFT` : '0 / 0 CLAIMS (EVENT STANDBY)'}
                   </span>
                   <span style={{ fontSize: '8.5px', color: '#059669', background: '#ecfdf5', padding: '1px 5px', borderRadius: '2px', fontWeight: 600 }}>
-                    $10.00/WINNER
+                    $10~$30/WINNER
                   </span>
                 </div>
                 {isAdmin ? (
@@ -4789,7 +4789,7 @@ export default function Page() {
                 >
                   <span className="bell-shaking" style={{ fontSize: '14px' }}>🔔</span>
                   <Award size={15} />
-                  <span>🔥 $10.00 USDT 즉시 출금하기 (CLAIM NOW ↗)</span>
+                  <span>🔥 $30.00 USDT 보상 확정하기 (CLAIM NOW ↗)</span>
                   <span className="bell-shaking" style={{ fontSize: '14px' }}>🔔</span>
                 </button>
               ) : (
@@ -4810,10 +4810,10 @@ export default function Page() {
                     cursor: 'pointer'
                   }}
                   onClick={() => setClaimTeaserModalOpen(true)}
-                  title="클릭하여 10연승 $10 USDT 보상 수령 조건을 확인하세요!"
+                  title="클릭하여 10연승 $30 USDT 보상 수령 조건을 확인하세요!"
                 >
                   <span className="bell-shaking" style={{ fontSize: '13px' }}>🔔</span>
-                  <span>🔒 $10.00 USDT CLAIM (현재 {humanWins}/10승 · {10 - humanWins}연승 남음!)</span>
+                  <span>🔒 $30.00 USDT CLAIM (현재 {humanWins}/10승 · {10 - humanWins}연승 남음!)</span>
                   <span style={{ fontSize: '9px', background: '#f59e0b', color: '#fff', padding: '1px 5px', borderRadius: '3px', fontWeight: 600 }}>
                     보상 잠금
                   </span>
@@ -4862,7 +4862,7 @@ export default function Page() {
                       {isFinal ? '🏆 FINAL' : `R${stepNum}`}
                     </div>
                     <div style={{ fontSize: '10.5px', fontWeight: 700, color: isWon ? '#059669' : isPending ? '#d97706' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#94a3b8', marginTop: '2px' }}>
-                      {isWon ? 'WIN' : isPending ? `${prediction || 'PENDING'} ⏳` : isCurrent ? 'READY' : isFinal ? '$10' : '—'}
+                      {isWon ? 'WIN' : isPending ? `${prediction || 'PENDING'} ⏳` : isCurrent ? 'READY' : isFinal ? '$30' : '—'}
                     </div>
                   </div>
                 );
@@ -4964,7 +4964,7 @@ export default function Page() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="bell-shaking" style={{ fontSize: '18px' }}>🔔</span>
                 <strong style={{ fontSize: '14px', color: '#92400e', letterSpacing: '.04em' }}>
-                  🔒 10연승 $10.00 USDT CLAIM 잠금 상태
+                  🔒 10연승 $30.00 USDT CLAIM 잠금 상태
                 </strong>
               </div>
               <button className="text-button" onClick={() => setClaimTeaserModalOpen(false)}>닫기 ×</button>
@@ -4979,7 +4979,7 @@ export default function Page() {
               </h3>
               <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.6 }}>
                 앞으로 <b style={{ color: '#d97706', fontSize: '14px' }}>{10 - humanWins}연승</b>만 더 달성하시면 이 황금 자물쇠가 풀리며,<br />
-                스마트 에스크로 풀에서 <b>$10.00 USDT</b>를 즉시 내 지갑으로 인출할 수 있습니다! 🔥
+                스마트 에스크로 풀에서 <b>$30.00 USDT</b> 보상을 확정받을 수 있습니다! 🔥
               </p>
 
               {/* Progress visual bar */}
@@ -4997,7 +4997,7 @@ export default function Page() {
 
               <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '12px 14px', fontSize: '11px', textAlign: 'left', lineHeight: 1.6, color: '#334155' }}>
                 <div>• <b>규칙:</b> 1시간 기준가 대비 연속 10회 종가 방향(UP/DOWN) 적중</div>
-                <div>• <b>보상:</b> 10연승 달성 시 $10.00 USDT 확정, 관리자 확인 후 24시간 내 지급 (가스비 100% 무료 지원)</div>
+                <div>• <b>보상:</b> 10연승 달성 시 $30.00 USDT 확정, 관리자 확인 후 24시간 내 지급 (가스비 100% 무료 지원)</div>
                 <div>• <b>실시간 풀:</b> 실제 이벤트 예치금 온체인 잔액과 1:1 직결</div>
               </div>
             </div>
@@ -5014,12 +5014,13 @@ export default function Page() {
         </div>
       )}
 
-      {/* ── 10-Win Streak Claim Modal (Non-Custodial) ── */}
-      {/* ── 10-Win Streak Claim Modal (공용 StreakClaimModal 컴포넌트로 분리) ── */}
+      {/* ── 10-Win Streak Claim Modal (1시간봉 — 공용 StreakClaimModal 컴포넌트, $30) ── */}
       <StreakClaimModal
         open={claimModalOpen}
         onClose={() => setClaimModalOpen(false)}
         userId={currentUser?.userId ? Number(currentUser.userId) : null}
+        gameType="DIRECTION_1H"
+        amount={30}
         onSuccess={handleStreakClaimSuccess}
       />
 

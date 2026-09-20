@@ -167,8 +167,8 @@ export function PolymarketSpeedGameCard({
     const uid = getCurrentUserId()
     if (uid) {
       fetchUserPredictionStats(uid).then((stats) => {
-        if (stats && typeof stats.currentStreak === 'number') {
-          setFiveMinWins((prev) => Math.max(prev, stats.currentStreak))
+        if (stats && typeof stats.currentStreak5m === 'number') {
+          setFiveMinWins((prev) => Math.max(prev, stats.currentStreak5m))
         }
       }).catch(() => {})
     }
@@ -193,8 +193,8 @@ export function PolymarketSpeedGameCard({
     setIsLoggedIn(uid !== null)
     if (uid) {
       fetchUserPredictionStats(uid).then((stats) => {
-        if (stats && typeof stats.currentStreak === 'number' && stats.currentStreak > 0) {
-          setFiveMinWins((prev) => Math.max(prev, stats.currentStreak))
+        if (stats && typeof stats.currentStreak5m === 'number' && stats.currentStreak5m > 0) {
+          setFiveMinWins((prev) => Math.max(prev, stats.currentStreak5m))
         }
       }).catch(() => {})
     }
@@ -340,7 +340,7 @@ export function PolymarketSpeedGameCard({
               onClick={() => setClaimModalOpen(true)}
               style={{ fontSize: '10px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)', color: '#fff', border: '1px solid #34d399', padding: '4px 10px', borderRadius: '4px', fontWeight: 700, cursor: 'pointer' }}
             >
-              🏆 10연승 달성! $10.00 USDT 즉시 수령하기 ↗
+              🏆 10연승 달성! $10.00 USDT 보상 확정하기 ↗
             </button>
           ) : (
             <span style={{ fontSize: '10px', color: '#059669', fontWeight: 700 }}>5분 실시간 정산 모드</span>
@@ -387,7 +387,7 @@ export function PolymarketSpeedGameCard({
                   {isFinal ? '🏆 FINAL' : `R${stepNum}`}
                 </div>
                 <div style={{ fontSize: '10.5px', fontWeight: 700, color: isWon ? '#059669' : isPending ? '#d97706' : isCurrent ? '#0369a1' : isFinal ? '#d97706' : '#94a3b8', marginTop: '2px' }}>
-                  {isWon ? 'WIN' : isPending ? `${choice || 'PENDING'} ⏳` : isCurrent ? 'READY' : isFinal ? '$5' : '—'}
+                  {isWon ? 'WIN' : isPending ? `${choice || 'PENDING'} ⏳` : isCurrent ? 'READY' : isFinal ? '$10' : '—'}
                 </div>
               </div>
             )
@@ -577,6 +577,8 @@ export function PolymarketSpeedGameCard({
       open={claimModalOpen}
       onClose={() => setClaimModalOpen(false)}
       userId={getCurrentUserId()}
+      gameType="DIRECTION_5M"
+      amount={10}
       onSuccess={handleClaimSuccess}
     />
     </>
