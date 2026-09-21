@@ -5673,12 +5673,14 @@ export default function Page() {
               >
                 <Code2 size={16} /> Strategies
               </a>
+              {/* Billing 임시 비활성화 — 다시 보이려면 이 주석 해제
               <a
                 className={botConsoleActiveTab === 'billing' ? 'active' : ''}
                 onClick={() => setBotConsoleActiveTab('billing')}
               >
                 <CreditCard size={16} /> Billing
               </a>
+              */}
               <a
                 className={botConsoleActiveTab === 'telegram' ? 'active' : ''}
                 onClick={() => setBotConsoleActiveTab('telegram')}

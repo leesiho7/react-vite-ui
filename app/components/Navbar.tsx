@@ -325,7 +325,7 @@ export default function Navbar({
               )}
             </div>
 
-            {/* ── UPGRADE MODEL 버튼 ── */}
+            {/* ── UPGRADE MODEL 버튼 (임시 비활성화 — 다시 보이려면 이 주석 해제)
             <button
               type="button"
               className="upgrade-model-button text-[10px] sm:text-[11px] px-2.5 sm:px-3 py-1.5"
@@ -334,6 +334,7 @@ export default function Navbar({
             >
               ✦ UPGRADE MODEL
             </button>
+            */}
 
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l border-[#27272a]">
@@ -671,6 +672,7 @@ export default function Navbar({
                 ))}
               </div>
 
+              {/* UPGRADE MODEL (모바일) 임시 비활성화 — 다시 보이려면 이 주석 해제
               <button
                 type="button"
                 onClick={() => {
@@ -681,6 +683,7 @@ export default function Navbar({
               >
                 ✦ UPGRADE MODEL
               </button>
+              */}
             </div>
           </div>
         </>
