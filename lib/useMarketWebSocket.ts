@@ -216,26 +216,57 @@ export function useMarketWebSocket(symbol: string) {
     if (isTrad) return;
 
     const pair = getNormalizedPair(symbol);
-    setConnectionStatus('CONNECTING');
 
     // Binance Combined Stream: Trade (100ms real-time execution) + Ticker + 100ms Depth10 + 1h Kline + 5m Kline
     const streamUrl = `wss://stream.binance.com:9443/stream?streams=${pair}@trade/${pair}@ticker/${pair}@depth10@100ms/${pair}@kline_1h/${pair}@kline_5m`;
-    
-    let ws: WebSocket;
-    try {
-      ws = new WebSocket(streamUrl);
-      wsRef.current = ws;
-    } catch (e) {
-      console.warn('[WebSocket] Direct connection failed:', e);
-      setConnectionStatus('DISCONNECTED');
-      return;
-    }
 
-    ws.onopen = () => {
-      setConnectionStatus('CONNECTED');
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let reconnectAttempt = 0;
+    let cancelled = false;
+
+    // 이 소켓이 끊기면 5분/1시간 kline이 더 이상 갱신되지 않아 라운드 경계 감지
+    // useEffect(app/page.tsx, PolymarketSpeedGameCard.tsx)가 영영 발화하지 않는다 —
+    // 그러면 정산 자체는 서버 스케줄러가 이미 처리했어도 화면엔 "⏳ PENDING"이 무한히
+    // 남는다. 그래서 onclose/onerror에서 반드시 재연결해야 한다.
+    const connect = () => {
+      if (cancelled) return;
+      setConnectionStatus('CONNECTING');
+      try {
+        ws = new WebSocket(streamUrl);
+      } catch (e) {
+        console.warn('[WebSocket] Direct connection failed:', e);
+        setConnectionStatus('DISCONNECTED');
+        scheduleReconnect();
+        return;
+      }
+      wsRef.current = ws;
+      attachHandlers(ws);
     };
 
-    ws.onmessage = (event) => {
+    const scheduleReconnect = () => {
+      if (cancelled) return;
+      const delay = Math.min(30000, 1000 * Math.pow(2, reconnectAttempt));
+      reconnectAttempt += 1;
+      reconnectTimer = setTimeout(connect, delay);
+    };
+
+    const attachHandlers = (socket: WebSocket) => {
+      socket.onopen = () => {
+        reconnectAttempt = 0;
+        setConnectionStatus('CONNECTED');
+      };
+      socket.onmessage = handleMessage;
+      socket.onerror = () => {
+        setConnectionStatus('DISCONNECTED');
+      };
+      socket.onclose = () => {
+        setConnectionStatus('DISCONNECTED');
+        scheduleReconnect();
+      };
+    };
+
+    const handleMessage = (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data);
         const stream = payload.stream || '';
@@ -349,16 +380,18 @@ export function useMarketWebSocket(symbol: string) {
       }
     };
 
-    ws.onerror = () => {
-      setConnectionStatus('DISCONNECTED');
-    };
-
-    ws.onclose = () => {
-      setConnectionStatus('DISCONNECTED');
-    };
+    connect();
 
     return () => {
+      cancelled = true;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
       if (ws) {
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
         ws.close();
       }
     };
