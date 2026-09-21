@@ -653,7 +653,7 @@ const getUserSessionKey = (user?: AuthResponse | null) => {
   return user?.username ? `aether_agent_sessions_${user.username.replace(/[^a-zA-Z0-9_]/g, '_')}` : 'aether_agent_sessions_guest'
 }
 
-const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET'])
+const symbolStopWords = new Set(['THE', 'AND', 'FOR', 'WITH', 'FROM', 'THIS', 'THAT', 'WHAT', 'WHY', 'HOW', 'IS', 'ARE', 'CAN', 'YOU', 'NOW', 'BUY', 'SELL', 'HOLD', 'GUIDE', 'MODE', 'INSIGHT', 'ANALYZE', 'ANALYSIS', 'RISK', 'PRICE', 'ASSET', 'MARKET', 'ALL', 'NEW', 'TOP', 'GOOD', 'BAD', 'WHO', 'WHEN', 'WHERE', 'GET', 'GIVE', 'SHOW', 'TELL', 'LIST'])
 const assetAliases: Record<string, string> = {
   '리플': 'XRP/USD', '리플코인': 'XRP/USD', '엑스알피': 'XRP/USD',
   '비트코인': 'BTC/USD', '비트': 'BTC/USD', '이더리움': 'ETH/USD', '이더': 'ETH/USD',
