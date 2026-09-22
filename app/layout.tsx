@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://aetherquantstudio.com'),
   title: 'AETHER — Market Intelligence Terminal',
   description: 'Institutional-grade market intelligence for decision makers.',
+  keywords: ['퀀트', 'AI 트레이딩', '바이낸스 호가창', '비트코인 선물', 'ONNX', 'AETHER', '코인 10연승', '퀀트 매매 분석'],
   generator: 'v0.app',
   icons: {
     icon: '/brand-logo.png',
