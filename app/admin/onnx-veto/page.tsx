@@ -164,6 +164,12 @@ export default function OnnxVetoDashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 mb-4">
               <StatTile label="Net Return" value={vf ? `${vf.totalReturnPct.toFixed(1)}%` : '—'} tone={vf ? (vf.totalReturnPct >= 0 ? 'good' : 'bad') : 'neutral'} />
               <StatTile label="Win Rate" value={vf ? `${(vf.winRate * 100).toFixed(1)}%` : '—'} tone={vf ? (vf.winRate >= 0.5 ? 'good' : 'bad') : 'neutral'} />
+              <StatTile
+                label="OOS Win Rate"
+                value={vf ? `${(vf.outOfSampleWinRate * 100).toFixed(1)}%` : '—'}
+                tone={vf ? (vf.outOfSampleWinRate >= 0.5 ? 'good' : 'bad') : 'neutral'}
+                hint={vf ? `학습에 안 쓰인 구간 ${vf.outOfSampleTrades}건 — 표본이 적으면(20건 미만) 신뢰도 낮음` : undefined}
+              />
               <StatTile label="Sharpe" value={vf ? vf.sharpeRatio.toFixed(2) : '—'} tone={vf ? (vf.sharpeRatio >= 0 ? 'good' : 'bad') : 'neutral'} />
               <StatTile label="Trades" value={vf ? String(vf.totalTrades) : '—'} />
               <StatTile label="Signal Rejects" value={backtest?.reliable ? String(backtest.vetoedEntrySignals) : '—'} hint="이 백테스트 구간에서 ONNX가 거부한 진입 신호 수" />
