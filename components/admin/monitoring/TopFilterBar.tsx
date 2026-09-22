@@ -25,6 +25,22 @@ const TIMEFRAMES: { value: string; label: string; implemented: boolean }[] = [
   { value: 'W1', label: 'W1 (미구현)', implemented: false }
 ]
 
+/** /api/ml/veto-backtest?symbol=...&archetype=TREND_FOLLOWING 를 실제로 돌려서 확인한 결과다
+ *  (2026-09-22). BTC/ETH/SOL/XRP는 reliable:true. BNB는 캔들 자체가 0봉(거래소 히스토리컬
+ *  백필 미수집), ADA/SUI/DOGE는 캔들은 있지만 veto-filtered 거래 표본이 20건 미만이라
+ *  BacktestEngine이 신뢰 불가로 표시한다 — 지어낸 값을 보여주는 대신, 실제로 안정적인
+ *  자산만 활성화하고 나머지는 회색으로 남겨서 "아직 표본이 부족하다"를 그대로 노출한다. */
+const ASSETS: { value: string; label: string; implemented: boolean }[] = [
+  { value: 'BTC', label: 'BTC', implemented: true },
+  { value: 'ETH', label: 'ETH', implemented: true },
+  { value: 'SOL', label: 'SOL', implemented: true },
+  { value: 'XRP', label: 'XRP', implemented: true },
+  { value: 'BNB', label: 'BNB (캔들 미수집)', implemented: false },
+  { value: 'ADA', label: 'ADA (표본 부족)', implemented: false },
+  { value: 'SUI', label: 'SUI (표본 부족)', implemented: false },
+  { value: 'DOGE', label: 'DOGE (표본 부족)', implemented: false }
+]
+
 /**
  * 얇은 다크 바에 필터 드롭다운을 한 줄로 배치한다. 실제로 동작하지 않는 옵션(전체 전략
  * 집계, H1 외 타임프레임)은 지우지 않고 드롭다운 안에 회색(비활성)으로 남겨서 "이건 아직
@@ -59,7 +75,13 @@ export default function TopFilterBar({
           ))}
         </FilterSelect>
 
-        <FilterInput label="Asset" value={symbol} onChange={onSymbolChange} />
+        <FilterSelect label="Asset" value={symbol} onChange={onSymbolChange}>
+          {ASSETS.map((a) => (
+            <option key={a.value} value={a.value} disabled={!a.implemented} className={!a.implemented ? 'text-[#555555]' : ''}>
+              {a.label}
+            </option>
+          ))}
+        </FilterSelect>
 
         <FilterSelect label="Timeframe" value="H1" onChange={() => {}} disabled={false}>
           {TIMEFRAMES.map((tf) => (
@@ -121,19 +143,6 @@ function FilterSelect({
       >
         {children}
       </select>
-    </label>
-  )
-}
-
-function FilterInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <label className="flex items-center gap-1.5 text-[9px] text-[#888888]">
-      {label}:
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[9px] text-[#dddddd] px-1.5 py-1 w-16"
-      />
     </label>
   )
 }
