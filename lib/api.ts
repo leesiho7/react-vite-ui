@@ -120,14 +120,12 @@ export async function fetchPredictionLeaderboard(limit = 10): Promise<Prediction
       return await res.json();
     }
   } catch (err) {
-    console.warn('[API] Fallback for fetchPredictionLeaderboard:', err);
+    console.warn('[API] fetchPredictionLeaderboard failed:', err);
   }
 
-  return [
-    { rank: 1, userId: 101, nickname: 'Oracle_Sniper', tier: 'ORACLE', currentStreak: 12, maxStreak: 15, currentStreak5m: 0, currentStreak1h: 0, winRatePct: 88.5, totalPredictions: 45, wonPredictions: 40, totalEarnedTokens: 420.0 },
-    { rank: 2, userId: 102, nickname: 'Alpha_QuantMaster', tier: 'GRAND_MASTER', currentStreak: 8, maxStreak: 11, currentStreak5m: 0, currentStreak1h: 0, winRatePct: 82.0, totalPredictions: 60, wonPredictions: 49, totalEarnedTokens: 310.5 },
-    { rank: 3, userId: 103, nickname: 'Seoul_HedgeAnt', tier: 'MASTER', currentStreak: 6, maxStreak: 9, currentStreak5m: 0, currentStreak1h: 0, winRatePct: 78.4, totalPredictions: 38, wonPredictions: 30, totalEarnedTokens: 245.0 }
-  ];
+  // 백엔드 호출 실패 시 실제 유저처럼 보이는 가짜 랭킹을 지어내지 않는다 — 빈 배열을 돌려주면
+  // PredictionLeaderboardPanel이 이미 "아직 예측 기록이 없습니다" 빈 상태를 정직하게 보여준다.
+  return [];
 }
 
 export interface SubmitPredictionPayload {
@@ -359,26 +357,19 @@ export async function fetchBotLogsApi(instanceId: number, limit = 50) {
 /**
  * 4. AI vs Human 배틀 현황 조회
  */
-export async function fetchHiveMindBattle(symbol = 'BTCUSDT'): Promise<HiveMindBattle> {
+export async function fetchHiveMindBattle(symbol = 'BTCUSDT'): Promise<HiveMindBattle | null> {
   try {
     const res = await fetch(`${API_BASE}/prediction/battle?symbol=${symbol}`);
     if (res.ok) {
       return await res.json();
     }
   } catch (err) {
-    console.warn('[API] Fallback for fetchHiveMindBattle:', err);
+    console.warn('[API] fetchHiveMindBattle failed:', err);
   }
 
-  return {
-    symbol,
-    aiConfidenceScore: 0.82,
-    aiDecision: 'BULLISH',
-    humanBullPercentage: 50.0,
-    humanBearPercentage: 50.0,
-    totalHumanVotes: 0,
-    winningSide: 'AI_VS_HUMAN_CONFLICT',
-    battleCommentary: '실시간 참여자 대기 중'
-  };
+  // 백엔드 호출 실패 시 AI 확신도 82%/BULLISH 같은 그럴듯한 숫자를 지어내지 않는다 — 호출부
+  // (page.tsx)의 battle 상태는 이미 HiveMindBattle | null 로 선언돼 있어 null을 그대로 받는다.
+  return null;
 }
 
 /**
@@ -391,14 +382,12 @@ export async function fetchArenaLeaderboard(season = 'SEASON_1', limit = 10): Pr
       return await res.json();
     }
   } catch (err) {
-    console.warn('[API] Fallback for fetchArenaLeaderboard:', err);
+    console.warn('[API] fetchArenaLeaderboard failed:', err);
   }
 
-  return [
-    { id: 1, name: 'Adaptive Trend Matrix', authorNickname: 'mina.k', season: 'SEASON_1', totalReturnPct: 42.8, profitFactor: 2.65, winRatePct: 78.4, maxDrawdownPct: 8.4, copyCount: 342, entryRules: 'RSI < 30 & SMA 20 > 50', exitRules: 'RSI > 70' },
-    { id: 2, name: 'Regime Switch Alpha', authorNickname: 'quant-lab', season: 'SEASON_1', totalReturnPct: 36.1, profitFactor: 2.31, winRatePct: 72.0, maxDrawdownPct: 11.2, copyCount: 218, entryRules: 'Bollinger Lower Breakout', exitRules: 'SMA 20 DeadCross' },
-    { id: 3, name: 'Volatility Carry Lite', authorNickname: 'open-hedge', season: 'SEASON_1', totalReturnPct: 29.7, profitFactor: 2.14, winRatePct: 69.5, maxDrawdownPct: 6.8, copyCount: 175, entryRules: 'RSI Oversold + Volume Surge', exitRules: 'Profit Target 5%' }
-  ];
+  // 백엔드 호출 실패 시 수익률/승률이 그럴듯한 가짜 전략 3개를 지어내지 않는다 — 빈 배열이면
+  // strategies 상태가 그냥 빈 채로 남는다.
+  return [];
 }
 
 /**

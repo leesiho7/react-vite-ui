@@ -4694,7 +4694,14 @@ export default function Page() {
                 </span>
               </div>
               <div style={{ fontSize: '10px', color: '#475569' }}>
-                {language === 'en' ? 'AI Quant Model Forecast:' : language === 'cn' ? 'AI 量化模型预测:' : 'AI 퀀트 모델 예측:'} <strong style={{ color: (battle?.aiDecision || 'BULLISH') === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle?.aiDecision || 'BULLISH'}</strong> ({language === 'en' ? 'Conf:' : language === 'cn' ? '置信度:' : '신뢰도:'} {Math.round((battle?.aiConfidenceScore || 0.82) * 100)}%)
+                {language === 'en' ? 'AI Quant Model Forecast:' : language === 'cn' ? 'AI 量化模型预测:' : 'AI 퀀트 모델 예측:'}{' '}
+                {battle ? (
+                  <>
+                    <strong style={{ color: battle.aiDecision === 'BULLISH' ? '#0f766e' : '#dc2626' }}>{battle.aiDecision}</strong> ({language === 'en' ? 'Conf:' : language === 'cn' ? '置信度:' : '신뢰도:'} {Math.round(battle.aiConfidenceScore * 100)}%)
+                  </>
+                ) : (
+                  <span style={{ color: '#94a3b8' }}>{language === 'en' ? 'Unavailable' : language === 'cn' ? '数据不可用' : '데이터 없음'}</span>
+                )}
               </div>
             </div>
 
