@@ -209,6 +209,7 @@ export default function Navbar({
 
             {/* 다국어 동기화 메뉴 리스트 (데스크톱) */}
             <ul className="hidden md:flex items-center gap-x-5 lg:gap-x-7 text-[12px] font-medium text-[#a1a1aa] list-none p-0 m-0 whitespace-nowrap overflow-x-auto scrollbar-none">
+              {/* 10연승 리그 임시 비활성화 — 사용자 요청으로 내비게이션에서 숨김 (기능 자체는 유지)
               <li>
                 <button
                   type="button"
@@ -219,6 +220,7 @@ export default function Navbar({
                   {menuText.league}
                 </button>
               </li>
+              */}
 
               <li>
                 <button
@@ -509,6 +511,7 @@ export default function Navbar({
 
             {/* 주요 메뉴 카드 그리드 */}
             <div className="grid grid-cols-2 gap-2.5 mb-4">
+              {/* 10연승 리그 임시 비활성화 — 사용자 요청으로 내비게이션에서 숨김 (기능 자체는 유지)
               <button
                 type="button"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
@@ -525,6 +528,7 @@ export default function Navbar({
                   <div className="text-[9px] text-[#94a3b8]">10연승 실시간 랭킹</div>
                 </div>
               </button>
+              */}
 
               <button
                 type="button"
