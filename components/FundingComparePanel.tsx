@@ -6,6 +6,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchFundingCompare, type FundingCompareRow, type ExchangeFundingEntry } from '../lib/api';
+import { pairEconomics } from '../lib/fundingMath';
 
 const EXCHANGE_ORDER: ExchangeFundingEntry['exchange'][] = ['BINANCE', 'BYBIT', 'OKX', 'BITUNIX', 'HYPERLIQUID'];
 const EXCHANGE_LABEL: Record<string, string> = {
@@ -100,12 +101,20 @@ export function FundingComparePanel({ language = 'ko' }: { language?: 'en' | 'cn
                 <div style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>ANNUALIZED</div>
               </th>
               <th style={{ padding: '10px 12px' }}>{tr('숏 ▸ 롱', 'SHORT ▸ LONG')}</th>
+              <th style={{ padding: '10px 12px' }} title={tr('(숏 거래소 마크가격 − 롱 거래소 마크가격) / 롱 거래소 마크가격. 양수면 비싼 쪽에서 숏이라 진입이 유리합니다.', '(short venue mark − long venue mark) / long venue mark. Positive means you short the richer venue — a favorable entry.')}>
+                {tr('가격 괴리', 'MARK GAP')}
+                <div style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>MARK PRICE</div>
+              </th>
+              <th style={{ padding: '10px 12px' }} title={tr('가격 괴리로 인한 진입 손해를 펀딩 차이로 메우는 데 걸리는 일수 (현재 요율 유지 가정)', 'Days of funding spread needed to recoup an unfavorable entry gap (assumes the current rate persists)')}>
+                {tr('손익분기', 'BREAK-EVEN')}
+                <div style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>DAYS</div>
+              </th>
             </tr>
           </thead>
           <tbody>
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={EXCHANGE_ORDER.length + 3} style={{ padding: '28px 12px', textAlign: 'center', color: '#74808c', background: '#f8fafb' }}>
+                <td colSpan={EXCHANGE_ORDER.length + 5} style={{ padding: '28px 12px', textAlign: 'center', color: '#74808c', background: '#f8fafb' }}>
                   {status === 'loading'
                     ? tr('거래소 간 펀딩비를 불러오는 중…', 'Loading cross-exchange funding…')
                     : tr('데이터 없음 — 추정값을 표시하지 않습니다.', 'No data — no estimated values are shown.')}
@@ -116,6 +125,7 @@ export function FundingComparePanel({ language = 'ko' }: { language?: 'en' | 'cn
               const byEx = new Map(row.entries.map((e) => [e.exchange, e]));
               const maxEx = row.differential?.shortExchange;
               const minEx = row.differential?.longExchange;
+              const econ = pairEconomics(row.entries, row.differential);
               return (
                 <tr key={row.symbol} style={{ borderBottom: '1px solid #edf0f2', background: idx % 2 === 0 ? '#ffffff' : '#fcfdfe' }}>
                   <td style={{ padding: '12px' }}>
@@ -167,6 +177,28 @@ export function FundingComparePanel({ language = 'ko' }: { language?: 'en' | 'cn
                       <span style={{ color: '#cbd5e1' }}>—</span>
                     )}
                   </td>
+                  <td style={{ padding: '12px' }} title={tr('마크 가격 기준 — 실제 체결 가능한 가격이 아닙니다', 'Based on mark prices — not executable prices')}>
+                    {econ && econ.markGapPct !== null ? (
+                      <strong style={{ color: econ.markGapPct >= 0 ? '#0f766e' : '#ac5d59', fontSize: '11px' }}>
+                        {signed(econ.markGapPct, 3)}
+                      </strong>
+                    ) : (
+                      <span style={{ color: '#cbd5e1' }} title={tr('한쪽 거래소의 마크 가격을 받지 못했습니다', 'Mark price unavailable for one leg')}>—</span>
+                    )}
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    {econ && econ.breakEvenDays !== null ? (
+                      econ.breakEvenDays === 0 ? (
+                        <span style={{ color: '#0f766e', fontWeight: 600 }}>{tr('즉시 유리', 'in favor')}</span>
+                      ) : (
+                        <strong style={{ color: econ.breakEvenDays > 7 ? '#ac5d59' : '#18334a', fontSize: '11px' }}>
+                          {econ.breakEvenDays < 10 ? econ.breakEvenDays.toFixed(1) : Math.round(econ.breakEvenDays).toString()}{tr('일', 'd')}
+                        </strong>
+                      )
+                    ) : (
+                      <span style={{ color: '#cbd5e1' }}>—</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -182,7 +214,7 @@ export function FundingComparePanel({ language = 'ko' }: { language?: 'en' | 'cn
         </div>
         <div>
           {tr(
-            '⚠ 연환산은 "지금 요율이 계속된다"는 단순 가정이며 예측이 아닙니다. 펀딩비는 정산마다 바뀝니다. 수수료, 슬리피지, 거래소 간 가격 괴리(베이시스), 증거금·청산 위험, 이체 비용은 반영하지 않았습니다. 거래소마다 "현재 요율"의 의미가 조금 다릅니다(Binance는 마지막 확정값, Bybit·OKX는 이번 주기 요율).',
+            'ℹ 가격 괴리와 손익분기: 펀딩 차이가 연 4%여도, 두 거래소 가격이 이미 벌어져 있으면 진입하는 순간 그만큼 손해일 수 있습니다. 그 손해를 하루치 펀딩 차이로 메우는 데 걸리는 일수를 \ "지금 요율이 계속된다"는 단순 가정이며 예측이 아닙니다. 펀딩비는 정산마다 바뀝니다. 수수료, 슬리피지, 거래소 간 가격 괴리(베이시스), 증거금·청산 위험, 이체 비용은 반영하지 않았습니다. 거래소마다 "현재 요율"의 의미가 조금 다릅니다(Binance는 마지막 확정값, Bybit·OKX는 이번 주기 요율).',
             '⚠ Annualized assumes today’s rate persists — it is not a forecast, and funding changes every settlement. Fees, slippage, price basis between venues, margin/liquidation risk and transfer costs are not included. "Current rate" differs slightly by venue (Binance: last settled; Bybit/OKX: current period).'
           )}
         </div>
