@@ -122,6 +122,53 @@ export function okxBookToLevels(state: OkxBookState, depth = 20): { bids: L2Leve
   return { bids: accumulate(bids), asks: accumulate(asks) };
 }
 
+/** 'BTCUSDT' -> 'BTCUSDT'. USDT 선물 심볼이 아니면 null. */
+export function toBitunixSymbol(symbol: string): string | null {
+  const s = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return s.endsWith('USDT') && s.length > 4 ? s : null;
+}
+
+export type BitunixDepthResult =
+  | { kind: 'book'; bids: L2Level[]; asks: L2Level[] }
+  | { kind: 'no_market' }
+  | { kind: 'ignored' };
+
+/**
+ * Bitunix 선물 `depth_book15` 메시지 파싱. 매 메시지가 15단계 전체 스냅샷이다(증분 아님).
+ * 형식: {"ch":"depth_book15","symbol":"BTCUSDT","ts":…,"data":{"b":[["가격","수량"],…],"a":[…]}}
+ * 존재하지 않는 심볼은 오류 대신 빈 문자열 단계([["",""],…])로 응답한다 — 가격 0 으로 읽지 않고 no_market 으로 구분한다.
+ * 연결 확인({"op":"connect"})·pong 은 ignored.
+ */
+export function parseBitunixDepth(raw: unknown): BitunixDepthResult {
+  if (typeof raw !== 'object' || raw === null) return { kind: 'ignored' };
+  const msg = raw as Record<string, any>;
+  if (typeof msg.ch !== 'string' || !msg.ch.startsWith('depth_book') || typeof msg.data !== 'object' || msg.data === null) {
+    return { kind: 'ignored' };
+  }
+  const read = (levels: unknown) => {
+    const rows: Array<{ price: number; qty: number }> = [];
+    let sawEmpty = false;
+    if (!Array.isArray(levels)) return { rows, sawEmpty: false };
+    for (const lv of levels) {
+      if (!Array.isArray(lv) || lv.length < 2) continue;
+      if (lv[0] === '' || lv[1] === '') {
+        sawEmpty = true;
+        continue;
+      }
+      const price = parseFloat(String(lv[0]));
+      const qty = parseFloat(String(lv[1]));
+      if (Number.isFinite(price) && Number.isFinite(qty) && price > 0 && qty > 0) rows.push({ price, qty });
+    }
+    return { rows, sawEmpty };
+  };
+  const b = read(msg.data.b);
+  const a = read(msg.data.a);
+  if (b.rows.length === 0 && a.rows.length === 0) {
+    return b.sawEmpty || a.sawEmpty ? { kind: 'no_market' } : { kind: 'ignored' };
+  }
+  return { kind: 'book', bids: accumulate(b.rows), asks: accumulate(a.rows) };
+}
+
 export interface UpbitOrderbookMessage {
   code: string;
   bids: Array<{ price: number; qty: number }>; // KRW, 최우선 호가부터

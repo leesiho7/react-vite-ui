@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { fetchFundingRates, type FundingRateRow } from '../lib/api';
-import { useOkxOrderbook, useUpbitOrderbook } from '../lib/useExchangeOrderbooks';
+import { useBitunixOrderbook, useOkxOrderbook, useUpbitOrderbook } from '../lib/useExchangeOrderbooks';
 import { applyBybitMessage, createOkxBookState, okxBookToLevels } from '../lib/exchangeOrderbookParsers';
 import { ArrowLeftRight, TrendingUp, ShieldCheck, Zap, RefreshCw, Calculator, DollarSign, Activity, Layers, ExternalLink, Flame, CheckCircle, ArrowRight } from 'lucide-react';
 
@@ -69,6 +69,8 @@ export interface ExchangeInfo {
   marketType: string;
   /** 실제 호가 WebSocket이 연결된 거래소인지. false 면 회색(미구현)으로 표시하고 값을 만들어 내지 않는다. */
   live: boolean;
+  /** 호가가 현물인지 무기한 선물인지. 서로 다른 종류를 비교한 스프레드에는 베이시스가 섞인다. */
+  kind: 'SPOT' | 'PERP';
 }
 
 export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
@@ -79,7 +81,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     color: '#f59e0b',
     badgeBg: '#fef3c7',
     marketType: 'Global Spot L2',
-    live: true
+    live: true,
+    kind: 'SPOT'
   },
   BYBIT: {
     id: 'BYBIT',
@@ -88,7 +91,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     color: '#0284c7',
     badgeBg: '#e0f2fe',
     marketType: 'Global Derivatives/Spot',
-    live: true
+    live: true,
+    kind: 'SPOT'
   },
   OKX: {
     id: 'OKX',
@@ -97,7 +101,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     color: '#10b981',
     badgeBg: '#d1fae5',
     marketType: 'Institutional Web3/Spot',
-    live: true
+    live: true,
+    kind: 'SPOT'
   },
   UPBIT: {
     id: 'UPBIT',
@@ -106,7 +111,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     color: '#004fff',
     badgeBg: '#e0e7ff',
     marketType: 'KRW Orderbook (USDT 환산)',
-    live: true
+    live: true,
+    kind: 'SPOT'
   },
   BITUNIX: {
     id: 'BITUNIX',
@@ -114,8 +120,9 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'BITUNIX PERP FEED',
     color: '#8b5cf6',
     badgeBg: '#ede9fe',
-    marketType: 'Emerging High-Beta Venue',
-    live: false
+    marketType: 'USDT-M Perpetual',
+    live: true,
+    kind: 'PERP'
   }
 };
 
@@ -521,11 +528,12 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
       };
     }, [cleanPairBybit]);
 
-  // 거래소별 호가. 실제 WebSocket 이 연결된 거래소(Binance·Bybit 현물, OKX 현물, Upbit KRW 현물)만 값이 있다.
-  // Bitunix 는 아직 연결이 없어 비워 두고 NOT_CONNECTED(미구현)로 표시한다.
-  // (예전에는 OKX/Upbit/Bitunix 호가를 Binance 호가에 고정 비율을 곱해 만들어 냈고 상태도 항상 CONNECTED 였다.)
+  // 거래소별 호가. 전부 거래소 공개 WebSocket 의 실제 호가다: Binance·Bybit·OKX 현물, Upbit KRW 현물(USDT 환산),
+  // Bitunix USDT 무기한 선물. (예전에는 OKX/Upbit/Bitunix 호가를 Binance 호가에 고정 비율을 곱해 만들어 냈고
+  // 상태도 항상 CONNECTED 였다.) 연결이 없는 거래소가 생기면 NOT_CONNECTED(미구현)로 비워 둔다.
   const okxFeed = useOkxOrderbook(symbol);
   const upbitFeed = useUpbitOrderbook(symbol);
+  const bitunixFeed = useBitunixOrderbook(symbol);
 
   type BookStatus = 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED' | 'NOT_CONNECTED' | 'NO_MARKET';
   const exchangeBooks = useMemo<Record<ExchangeId, { bids: L2Item[]; asks: L2Item[]; status: BookStatus }>>(() => ({
@@ -533,8 +541,8 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
     BYBIT: { bids: bybitBids, asks: bybitAsks, status: bybitWsStatus },
     OKX: { bids: okxFeed.bids, asks: okxFeed.asks, status: okxFeed.status },
     UPBIT: { bids: upbitFeed.bids, asks: upbitFeed.asks, status: upbitFeed.status },
-    BITUNIX: { bids: [], asks: [], status: 'NOT_CONNECTED' }
-  }), [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus, okxFeed, upbitFeed]);
+    BITUNIX: { bids: bitunixFeed.bids, asks: bitunixFeed.asks, status: bitunixFeed.status }
+  }), [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus, okxFeed, upbitFeed, bitunixFeed]);
   // Selected Orderbooks for Exchange A & Exchange B
   const bookA = exchangeBooks[exchangeA];
   const bookB = exchangeBooks[exchangeB];
@@ -716,7 +724,9 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
             {noMarketIds.length > 0 && (
               <span style={{ color: '#64748b' }}> · {tr(`${noMarketIds.map((e) => EXCHANGES[e].name).join(', ')} 미상장`, `not listed on ${noMarketIds.map((e) => EXCHANGES[e].name).join(', ')}`)}</span>
             )}
-            <span style={{ color: '#64748b' }}> · {tr(`${notConnectedCount}개 미구현`, `${notConnectedCount} not implemented`)}</span>
+            {notConnectedCount > 0 && (
+              <span style={{ color: '#64748b' }}> · {tr(`${notConnectedCount}개 미구현`, `${notConnectedCount} not implemented`)}</span>
+            )}
           </div>
           <div title={tr('수신 시각 − 거래소 이벤트 시각. 브라우저·거래소 시계 차이가 포함되어 왕복 지연(RTT)이 아닙니다.', 'Receive time − exchange event time. Includes browser/exchange clock skew; not a round-trip time.')}>
             <span>FEED LAG: </span>
@@ -825,6 +835,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               </span>
               <span style={{ fontSize: '9px', color: '#64748b' }}>
                 {tr('🟢 +0.4% 이상 초록색 · 회색 = 미연결/미구현 · 수수료 반영 전', '🟢 Green at +0.4% or more · Gray = not connected / not implemented · before fees')}
+                <span style={{ color: '#f59e0b' }}> · {tr('⚠ Bitunix(PERP)는 무기한 선물 호가라 현물과의 차이에 베이시스가 포함됩니다', '⚠ Bitunix (PERP) is perpetual futures — spreads vs spot include basis')}</span>
                 {upbitFeed.krwPerUsdt !== null && (
                   <span> · 🇰🇷 {tr(`Upbit KRW→USDT 환산: ${upbitFeed.krwPerUsdt.toLocaleString(undefined, { maximumFractionDigits: 1 })} KRW/USDT (Upbit KRW-USDT 호가 중간가)`, `Upbit KRW→USDT at ${upbitFeed.krwPerUsdt.toLocaleString(undefined, { maximumFractionDigits: 1 })} KRW/USDT (mid of Upbit's KRW-USDT book)`)}</span>
                 )}
@@ -844,6 +855,9 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                         </div>
                         {!EXCHANGES[ex].live && (
                           <div style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>{tr('(미구현)', '(not implemented)')}</div>
+                        )}
+                        {EXCHANGES[ex].kind === 'PERP' && (
+                          <div title={tr('무기한 선물 호가 — 현물과의 차이에는 베이시스가 포함됩니다', 'Perpetual futures quotes — differences vs spot include basis')} style={{ fontSize: '8px', fontWeight: 700, color: '#f59e0b' }}>PERP</div>
                         )}
                       </th>
                     ))}

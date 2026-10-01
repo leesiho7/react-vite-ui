@@ -14,7 +14,9 @@ import {
   applyOkxMessage,
   createOkxBookState,
   okxBookToLevels,
+  parseBitunixDepth,
   parseUpbitOrderbook,
+  toBitunixSymbol,
   toOkxInstId,
   toUpbitCode,
   upbitToUsdtLevels,
@@ -44,11 +46,18 @@ function runReconnectingSocket(opts: {
   onMessage: (data: unknown) => void;
   onDown: () => void; // 끊김/정체 시 호가 비우기
   setStatus: (s: FeedStatus) => void;
+  /** 거래소가 요구하는 주기적 핑 (예: Bitunix {"op":"ping","ping":<초>}) */
+  heartbeat?: { intervalMs: number; payload: () => unknown };
 }): () => void {
   let disposed = false;
   let ws: WebSocket | null = null;
   let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let watchdog: ReturnType<typeof setInterval> | null = null;
+  let pinger: ReturnType<typeof setInterval> | null = null;
+  const stopPinger = () => {
+    if (pinger) clearInterval(pinger);
+    pinger = null;
+  };
   let backoff = BACKOFF_MIN_MS;
   let lastMsgAt = Date.now();
   const decoder = new TextDecoder();
@@ -78,6 +87,13 @@ function runReconnectingSocket(opts: {
       if (disposed || ws !== mine) return;
       lastMsgAt = Date.now();
       opts.onOpen(mine);
+      if (opts.heartbeat) {
+        stopPinger();
+        const hb = opts.heartbeat;
+        pinger = setInterval(() => {
+          if (mine.readyState === WebSocket.OPEN) mine.send(JSON.stringify(hb.payload()));
+        }, hb.intervalMs);
+      }
     };
     mine.onmessage = (ev) => {
       if (disposed || ws !== mine) return;
@@ -95,6 +111,7 @@ function runReconnectingSocket(opts: {
     };
     mine.onclose = () => {
       if (disposed || ws !== mine) return;
+      stopPinger();
       scheduleRetry();
     };
   }
@@ -117,6 +134,7 @@ function runReconnectingSocket(opts: {
     disposed = true;
     if (retryTimer) clearTimeout(retryTimer);
     if (watchdog) clearInterval(watchdog);
+    stopPinger();
     if (ws) {
       try {
         ws.close();
@@ -301,6 +319,78 @@ export function useUpbitOrderbook(symbol: string): UpbitFeed {
       cancelled = true;
       clearInterval(flush);
       if (stop) stop();
+    };
+  }, [symbol]);
+
+  return feed;
+}
+
+/**
+ * Bitunix **USDT 무기한 선물** 호가 (depth_book15: 매 메시지가 15단계 전체 스냅샷).
+ * 현물 거래소(Binance·Bybit·OKX·Upbit)와 비교하면 차이에 현물-선물 베이시스가 포함된다 — 호출부가 화면에 밝혀야 한다.
+ * 존재하지 않는 심볼은 서버가 오류 없이 빈 문자열 호가를 보내므로 그것을 NO_MARKET 으로 구분한다.
+ */
+export function useBitunixOrderbook(symbol: string): OrderbookFeed {
+  const [feed, setFeed] = useState<OrderbookFeed>(EMPTY);
+  const pending = useRef<{ bids: L2Level[]; asks: L2Level[] } | null>(null);
+
+  useEffect(() => {
+    const sym = toBitunixSymbol(symbol);
+    if (!sym) {
+      setFeed({ bids: [], asks: [], status: 'NO_MARKET' });
+      return;
+    }
+
+    setFeed({ bids: [], asks: [], status: 'CONNECTING' });
+    pending.current = null;
+    let noMarket = false;
+    let status: FeedStatus = 'CONNECTING';
+
+    const publish = (s: FeedStatus) => {
+      status = s;
+      setFeed((prev) => (prev.status === s ? prev : { ...prev, status: s }));
+    };
+
+    const flush = setInterval(() => {
+      if (pending.current) {
+        const p = pending.current;
+        pending.current = null;
+        setFeed({ bids: p.bids, asks: p.asks, status });
+      }
+    }, FLUSH_MS);
+
+    const stop = runReconnectingSocket({
+      open: () => new WebSocket('wss://fapi.bitunix.com/public/'), // 끝의 '/' 필수 (없으면 연결이 거부된다)
+      onOpen: (ws) => {
+        ws.send(JSON.stringify({ op: 'subscribe', args: [{ symbol: sym, ch: 'depth_book15' }] }));
+      },
+      onMessage: (data) => {
+        const r = parseBitunixDepth(data);
+        if (r.kind === 'no_market') {
+          noMarket = true;
+          pending.current = null;
+          setFeed({ bids: [], asks: [], status: 'NO_MARKET' });
+          return;
+        }
+        if (r.kind === 'book' && !noMarket) {
+          pending.current = { bids: r.bids, asks: r.asks };
+          if (status !== 'CONNECTED') publish('CONNECTED');
+        }
+      },
+      onDown: () => {
+        pending.current = null;
+        if (!noMarket) setFeed({ bids: [], asks: [], status: 'DISCONNECTED' });
+      },
+      setStatus: (s) => {
+        if (noMarket) return;
+        publish(s);
+      },
+      heartbeat: { intervalMs: 20_000, payload: () => ({ op: 'ping', ping: Math.floor(Date.now() / 1000) }) },
+    });
+
+    return () => {
+      clearInterval(flush);
+      stop();
     };
   }, [symbol]);
 
