@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { fetchFundingRates, type FundingRateRow } from '../lib/api';
+import { useOkxOrderbook, useUpbitOrderbook } from '../lib/useExchangeOrderbooks';
+import { applyBybitMessage, createOkxBookState, okxBookToLevels } from '../lib/exchangeOrderbookParsers';
 import { ArrowLeftRight, TrendingUp, ShieldCheck, Zap, RefreshCw, Calculator, DollarSign, Activity, Layers, ExternalLink, Flame, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface L2Item {
@@ -95,7 +97,7 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     color: '#10b981',
     badgeBg: '#d1fae5',
     marketType: 'Institutional Web3/Spot',
-    live: false
+    live: true
   },
   UPBIT: {
     id: 'UPBIT',
@@ -103,8 +105,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'UPBIT SPOT (김프 연동)',
     color: '#004fff',
     badgeBg: '#e0e7ff',
-    marketType: 'KRW Orderbook (USD 환산)',
-    live: false
+    marketType: 'KRW Orderbook (USDT 환산)',
+    live: true
   },
   BITUNIX: {
     id: 'BITUNIX',
@@ -159,7 +161,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
   const isEn = language === 'en';
   const tr = (ko: string, en: string) => (isEn ? en : ko);
   const localizeExchangeText = (s: string) =>
-    isEn ? s.replace('김프 연동', 'Kimchi Premium').replace('USD 환산', 'USD converted') : s;
+    isEn ? s.replace('김프 연동', 'Kimchi Premium').replace('USDT 환산', 'USDT converted') : s;
   const [activeTab, setActiveTab] = useState<'HEATMAP_ARBITRAGE' | 'DUAL_L2' | 'SINGLE_L2' | 'FUNDING_RATES'>('HEATMAP_ARBITRAGE');
   const [symbol, setSymbol] = useState<string>(defaultSymbol);
   const [precision, setPrecision] = useState<number>(2);
@@ -400,11 +402,25 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
         }
       };
 
-      ws.onerror = () => setBinanceWsStatus('DISCONNECTED');
-      ws.onclose = () => setBinanceWsStatus('DISCONNECTED');
+      // 끊기면 오래된 호가를 남겨 두지 않고 비운다 (히트맵이 낡은 값으로 계산되지 않도록).
+      const clearBinance = () => {
+        pendingBidsRef.current = null;
+        pendingAsksRef.current = null;
+        setBinanceBids([]);
+        setBinanceAsks([]);
+        setBinanceWsStatus('DISCONNECTED');
+      };
+      ws.onerror = clearBinance;
+      ws.onclose = clearBinance;
 
       return () => {
-        if (ws) ws.close();
+        if (ws) {
+          // 이전 소켓의 늦은 onclose 가 새 연결의 상태/호가를 덮어쓰지 않도록 핸들러를 먼저 뗀다
+          ws.onmessage = null;
+          ws.onerror = null;
+          ws.onclose = null;
+          ws.close();
+        }
       };
     }, [cleanPairBinance]);
 
@@ -427,8 +443,15 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
       return () => clearInterval(bybitFlushTimer);
     }, []);
 
+    const bybitBookRef = useRef(createOkxBookState());
+
     useEffect(() => {
       setBybitWsStatus('CONNECTING');
+      // 심볼이 바뀌었을 때 이전 심볼의 호가가 남지 않게 비운다
+      pendingBybitBidsRef.current = null;
+      pendingBybitAsksRef.current = null;
+      setBybitBids([]);
+      setBybitAsks([]);
 
       const bybitUrl = 'wss://stream.bybit.com/v5/public/spot';
       let wsBybit: WebSocket;
@@ -458,61 +481,60 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
         }, 20000);
       };
 
+      // Bybit 은 첫 메시지만 전체 스냅샷이고 이후는 변경분(delta)이다 — 로컬 호가창에 반영해 상위 20단계를 만든다.
+      // (예전 코드는 delta 를 호가창 전체로 덮어써서 삭제된 호가가 최우선 호가로 보였다.)
+      bybitBookRef.current = createOkxBookState();
       wsBybit.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          if (msg.topic && msg.topic.startsWith('orderbook')) {
-            const data = msg.data || {};
-            const rawBids: [string, string][] = data.b || [];
-            const rawAsks: [string, string][] = data.a || [];
-
-            if (rawBids.length > 0 || rawAsks.length > 0) {
-              let bidTotalB = 0;
-              const parsedBidsB: L2Item[] = rawBids.map(([p, q]) => {
-                const priceNum = parseFloat(p);
-                const qtyNum = parseFloat(q);
-                bidTotalB += qtyNum;
-                return { price: priceNum, qty: qtyNum, total: bidTotalB };
-              });
-
-              let askTotalB = 0;
-              const parsedAsksB: L2Item[] = rawAsks.map(([p, q]) => {
-                const priceNum = parseFloat(p);
-                const qtyNum = parseFloat(q);
-                askTotalB += qtyNum;
-                return { price: priceNum, qty: qtyNum, total: askTotalB };
-              });
-
-              if (parsedBidsB.length > 0) pendingBybitBidsRef.current = parsedBidsB;
-              if (parsedAsksB.length > 0) pendingBybitAsksRef.current = parsedAsksB;
-            }
+          if (applyBybitMessage(bybitBookRef.current, msg)) {
+            const lv = okxBookToLevels(bybitBookRef.current, 20);
+            if (lv.bids.length > 0) pendingBybitBidsRef.current = lv.bids;
+            if (lv.asks.length > 0) pendingBybitAsksRef.current = lv.asks;
           }
         } catch (err) {
           // ignore parse error
         }
       };
 
-      wsBybit.onerror = () => setBybitWsStatus('DISCONNECTED');
-      wsBybit.onclose = () => setBybitWsStatus('DISCONNECTED');
+      // 끊기면 오래된 호가를 남겨 두지 않고 비운다 (히트맵이 낡은 값으로 계산되지 않도록).
+      const clearBybit = () => {
+        bybitBookRef.current = createOkxBookState();
+        pendingBybitBidsRef.current = null;
+        pendingBybitAsksRef.current = null;
+        setBybitBids([]);
+        setBybitAsks([]);
+        setBybitWsStatus('DISCONNECTED');
+      };
+      wsBybit.onerror = clearBybit;
+      wsBybit.onclose = clearBybit;
 
       return () => {
         if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
-        if (wsBybit) wsBybit.close();
+        if (wsBybit) {
+          // 이전 소켓의 늦은 onclose 가 새 연결의 상태/호가를 덮어쓰지 않도록 핸들러를 먼저 뗀다
+          wsBybit.onmessage = null;
+          wsBybit.onerror = null;
+          wsBybit.onclose = null;
+          wsBybit.close();
+        }
       };
     }, [cleanPairBybit]);
 
-  // 거래소별 호가. 실제 WebSocket 이 연결된 거래소(Binance 현물, Bybit 현물)만 값이 있다.
-  // OKX / Upbit / Bitunix 는 예전에 Binance 호가에 고정 비율(0.9998, 1.0082, 1.0035 …)을 곱해 만들어 냈고
-  // 상태도 항상 CONNECTED 로 표시했다 — 실제로는 연결이 없으므로 비워 두고 NOT_CONNECTED 로 표시한다.
-  type BookStatus = 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED' | 'NOT_CONNECTED';
+  // 거래소별 호가. 실제 WebSocket 이 연결된 거래소(Binance·Bybit 현물, OKX 현물, Upbit KRW 현물)만 값이 있다.
+  // Bitunix 는 아직 연결이 없어 비워 두고 NOT_CONNECTED(미구현)로 표시한다.
+  // (예전에는 OKX/Upbit/Bitunix 호가를 Binance 호가에 고정 비율을 곱해 만들어 냈고 상태도 항상 CONNECTED 였다.)
+  const okxFeed = useOkxOrderbook(symbol);
+  const upbitFeed = useUpbitOrderbook(symbol);
+
+  type BookStatus = 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED' | 'NOT_CONNECTED' | 'NO_MARKET';
   const exchangeBooks = useMemo<Record<ExchangeId, { bids: L2Item[]; asks: L2Item[]; status: BookStatus }>>(() => ({
     BINANCE: { bids: binanceBids, asks: binanceAsks, status: binanceWsStatus },
     BYBIT: { bids: bybitBids, asks: bybitAsks, status: bybitWsStatus },
-    OKX: { bids: [], asks: [], status: 'NOT_CONNECTED' },
-    UPBIT: { bids: [], asks: [], status: 'NOT_CONNECTED' },
+    OKX: { bids: okxFeed.bids, asks: okxFeed.asks, status: okxFeed.status },
+    UPBIT: { bids: upbitFeed.bids, asks: upbitFeed.asks, status: upbitFeed.status },
     BITUNIX: { bids: [], asks: [], status: 'NOT_CONNECTED' }
-  }), [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus]);
-
+  }), [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus, okxFeed, upbitFeed]);
   // Selected Orderbooks for Exchange A & Exchange B
   const bookA = exchangeBooks[exchangeA];
   const bookB = exchangeBooks[exchangeB];
@@ -585,11 +607,14 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
 
   // 연결 상태 요약 (상단 바)
   const liveExchangeIds = exchangeList.filter((e) => EXCHANGES[e].live);
-  const connectedLiveCount = liveExchangeIds.filter((e) => exchangeBooks[e].status === 'CONNECTED').length;
+  // 이 심볼이 상장되지 않은 거래소(NO_MARKET)는 연결 실패가 아니므로 분모에서 뺀다.
+  const noMarketIds = liveExchangeIds.filter((e) => exchangeBooks[e].status === 'NO_MARKET');
+  const expectedLiveIds = liveExchangeIds.filter((e) => exchangeBooks[e].status !== 'NO_MARKET');
+  const connectedLiveCount = expectedLiveIds.filter((e) => exchangeBooks[e].status === 'CONNECTED').length;
   const notConnectedCount = exchangeList.length - liveExchangeIds.length;
 
   const statusLabel = (s: BookStatus) =>
-    s === 'CONNECTED' ? 'CONNECTED' : s === 'CONNECTING' ? 'CONNECTING' : s === 'DISCONNECTED' ? 'DISCONNECTED' : tr('미구현', 'NOT IMPLEMENTED');
+    s === 'CONNECTED' ? 'CONNECTED' : s === 'CONNECTING' ? 'CONNECTING' : s === 'DISCONNECTED' ? 'DISCONNECTED' : s === 'NO_MARKET' ? tr('미상장', 'NOT LISTED') : tr('미구현', 'NOT IMPLEMENTED');
   const statusColor = (s: BookStatus) =>
     s === 'CONNECTED' ? '#10b981' : s === 'CONNECTING' ? '#f59e0b' : s === 'DISCONNECTED' ? '#ef4444' : '#94a3b8';
 
@@ -685,9 +710,12 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '9.5px', color: '#94a3b8' }}>
           <div>
             <span>LIVE LINKS: </span>
-            <strong style={{ color: connectedLiveCount === liveExchangeIds.length ? '#10b981' : connectedLiveCount > 0 ? '#f59e0b' : '#ef4444' }}>
-              ● {connectedLiveCount}/{liveExchangeIds.length} CONNECTED
+            <strong style={{ color: connectedLiveCount === expectedLiveIds.length ? '#10b981' : connectedLiveCount > 0 ? '#f59e0b' : '#ef4444' }}>
+              ● {connectedLiveCount}/{expectedLiveIds.length} CONNECTED
             </strong>
+            {noMarketIds.length > 0 && (
+              <span style={{ color: '#64748b' }}> · {tr(`${noMarketIds.map((e) => EXCHANGES[e].name).join(', ')} 미상장`, `not listed on ${noMarketIds.map((e) => EXCHANGES[e].name).join(', ')}`)}</span>
+            )}
             <span style={{ color: '#64748b' }}> · {tr(`${notConnectedCount}개 미구현`, `${notConnectedCount} not implemented`)}</span>
           </div>
           <div title={tr('수신 시각 − 거래소 이벤트 시각. 브라우저·거래소 시계 차이가 포함되어 왕복 지연(RTT)이 아닙니다.', 'Receive time − exchange event time. Includes browser/exchange clock skew; not a round-trip time.')}>
@@ -796,7 +824,10 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 {tr('실시간 거래소 간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 하단 오더북 전환)', 'Live cross-exchange spread matrix (click a cell to switch the orderbooks below)')}
               </span>
               <span style={{ fontSize: '9px', color: '#64748b' }}>
-                {tr('🟢 +0.4% 이상 초록색 · 회색(미구현) = 실시간 호가 미연결 거래소 · 수수료 반영 전', '🟢 Green at +0.4% or more · Gray (not implemented) = no live orderbook connection · before fees')}
+                {tr('🟢 +0.4% 이상 초록색 · 회색 = 미연결/미구현 · 수수료 반영 전', '🟢 Green at +0.4% or more · Gray = not connected / not implemented · before fees')}
+                {upbitFeed.krwPerUsdt !== null && (
+                  <span> · 🇰🇷 {tr(`Upbit KRW→USDT 환산: ${upbitFeed.krwPerUsdt.toLocaleString(undefined, { maximumFractionDigits: 1 })} KRW/USDT (Upbit KRW-USDT 호가 중간가)`, `Upbit KRW→USDT at ${upbitFeed.krwPerUsdt.toLocaleString(undefined, { maximumFractionDigits: 1 })} KRW/USDT (mid of Upbit's KRW-USDT book)`)}</span>
+                )}
               </span>
             </div>
 
@@ -968,7 +999,13 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
 
               {bookA.bids.length === 0 && bookA.asks.length === 0 && (
                 <div style={{ marginTop: '10px', padding: '10px', fontSize: '10px', color: '#94a3b8', background: '#f8fafb', border: '1px dashed #cbd5e1', borderRadius: '3px', textAlign: 'center' }}>
-                  {bookA.status === 'NOT_CONNECTED' ? tr('미구현 — 이 거래소의 실시간 호가는 아직 연결되지 않았습니다.', 'Not implemented — no live orderbook connection for this exchange yet.') : tr('데이터 대기 중…', 'Waiting for data…')}
+                  {bookA.status === 'NOT_CONNECTED'
+                    ? tr('미구현 — 이 거래소의 실시간 호가는 아직 연결되지 않았습니다.', 'Not implemented — no live orderbook connection for this exchange yet.')
+                    : bookA.status === 'NO_MARKET'
+                    ? tr('이 거래소에는 해당 마켓이 상장되어 있지 않습니다.', 'This market is not listed on this exchange.')
+                    : bookA.status === 'DISCONNECTED'
+                    ? tr('연결이 끊겼습니다 — 재연결을 시도하고 있습니다.', 'Disconnected — retrying the connection.')
+                    : tr('데이터 대기 중…', 'Waiting for data…')}
                 </div>
               )}
 
@@ -1030,7 +1067,13 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
 
               {bookB.bids.length === 0 && bookB.asks.length === 0 && (
                 <div style={{ marginTop: '10px', padding: '10px', fontSize: '10px', color: '#94a3b8', background: '#f8fafb', border: '1px dashed #cbd5e1', borderRadius: '3px', textAlign: 'center' }}>
-                  {bookB.status === 'NOT_CONNECTED' ? tr('미구현 — 이 거래소의 실시간 호가는 아직 연결되지 않았습니다.', 'Not implemented — no live orderbook connection for this exchange yet.') : tr('데이터 대기 중…', 'Waiting for data…')}
+                  {bookB.status === 'NOT_CONNECTED'
+                    ? tr('미구현 — 이 거래소의 실시간 호가는 아직 연결되지 않았습니다.', 'Not implemented — no live orderbook connection for this exchange yet.')
+                    : bookB.status === 'NO_MARKET'
+                    ? tr('이 거래소에는 해당 마켓이 상장되어 있지 않습니다.', 'This market is not listed on this exchange.')
+                    : bookB.status === 'DISCONNECTED'
+                    ? tr('연결이 끊겼습니다 — 재연결을 시도하고 있습니다.', 'Disconnected — retrying the connection.')
+                    : tr('데이터 대기 중…', 'Waiting for data…')}
                 </div>
               )}
 
