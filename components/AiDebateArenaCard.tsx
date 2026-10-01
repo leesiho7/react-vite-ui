@@ -14,6 +14,8 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', language = 'ko' }: AiDeb
   const [debate, setDebate] = useState<AiDebateResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const isEn = language === 'en';
+  const isCn = language === 'cn';
+  const pick = (ko: string, en: string, cn: string) => (isEn ? en : isCn ? cn : ko);
 
   const loadDebate = async () => {
     setLoading(true);
@@ -53,13 +55,15 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', language = 'ko' }: AiDeb
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>💬</span>
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-              {isEn ? "Wall Street's Three Legends: Quotes" : '월가 3대 거장의 명언'}
+              {pick('월가 3대 거장의 명언', "Wall Street's Three Legends: Quotes", '华尔街三大传奇人物名言')}
             </h3>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}>
-            {isEn
-              ? 'Warren Buffett · Jim Simons · Ray Dalio — not a trading signal for any specific asset, but investment-philosophy quotes the three legends have shared publicly.'
-              : '워런 버핏 · 짐 시몬스 · 레이 달리오 — 특정 종목에 대한 매매 신호가 아닌, 세 거장이 공개적으로 남긴 투자 철학 명언입니다.'}
+            {pick(
+              '워런 버핏 · 짐 시몬스 · 레이 달리오 — 특정 종목에 대한 매매 신호가 아닌, 세 거장이 공개적으로 남긴 투자 철학 명언입니다.',
+              'Warren Buffett · Jim Simons · Ray Dalio — not a trading signal for any specific asset, but investment-philosophy quotes the three legends have shared publicly.',
+              '沃伦·巴菲特 · 詹姆斯·西蒙斯 · 瑞·达利欧 —— 并非针对任何具体标的的交易信号，而是三位大师公开分享过的投资哲学名言。'
+            )}
           </p>
         </div>
 
@@ -84,7 +88,7 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT', language = 'ko' }: AiDeb
             }}
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            {loading ? (isEn ? 'Loading…' : '불러오는 중…') : (isEn ? 'Show another quote' : '다른 명언 보기')}
+            {loading ? pick('불러오는 중…', 'Loading…', '加载中…') : pick('다른 명언 보기', 'Show another quote', '换一句名言')}
           </button>
         </div>
       </div>
