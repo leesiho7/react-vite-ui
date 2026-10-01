@@ -214,3 +214,87 @@ export function upbitToUsdtLevels(
     accumulate(rows.slice(0, depth).map((r) => ({ price: r.price / krwPerUsdt, qty: r.qty })));
   return { bids: conv(msg.bids), asks: conv(msg.asks) };
 }
+
+export interface BinanceTrade {
+  id: number;
+  price: number;
+  qty: number;
+  isBuyerMaker: boolean;
+  /** 거래소 이벤트 시각(ms). 지연 측정은 이 값이 있는 메시지에서만 할 수 있다. */
+  eventTime: number;
+  /** 체결 시각(ms) */
+  tradeTime: number;
+}
+
+export type BinanceStreamResult =
+  | { kind: 'depth'; bids: L2Level[]; asks: L2Level[] }
+  | { kind: 'trade'; trade: BinanceTrade }
+  | { kind: 'ignored' };
+
+/**
+ * Binance 현물 combined stream 메시지 파싱 ({"stream":"btcusdt@depth20@100ms"|"btcusdt@trade","data":{…}}).
+ * depth20 은 매 메시지가 상위 20단계 전체 스냅샷이다 (증분 아님).
+ * 주의: depth 메시지에는 이벤트 시각(E)이 없다 — 지연은 E 가 있는 trade 메시지에서만 측정할 수 있다.
+ * (예전 코드는 depth 에서도 E 가 없으면 now 로 대신해 지연을 항상 1ms 로 기록했다.)
+ */
+export function parseBinanceStream(raw: unknown): BinanceStreamResult {
+  if (typeof raw !== 'object' || raw === null) return { kind: 'ignored' };
+  const msg = raw as Record<string, any>;
+  const stream: string = typeof msg.stream === 'string' ? msg.stream : '';
+  const data = msg.data;
+  if (typeof data !== 'object' || data === null) return { kind: 'ignored' };
+
+  if (stream.endsWith('@depth20@100ms')) {
+    const read = (levels: unknown) => {
+      const rows: Array<{ price: number; qty: number }> = [];
+      if (!Array.isArray(levels)) return rows;
+      for (const lv of levels) {
+        if (!Array.isArray(lv) || lv.length < 2) continue;
+        const price = parseFloat(String(lv[0]));
+        const qty = parseFloat(String(lv[1]));
+        if (Number.isFinite(price) && Number.isFinite(qty) && price > 0 && qty > 0) rows.push({ price, qty });
+      }
+      return rows;
+    };
+    const bids = read(data.bids);
+    const asks = read(data.asks);
+    if (bids.length === 0 && asks.length === 0) return { kind: 'ignored' };
+    return { kind: 'depth', bids: accumulate(bids), asks: accumulate(asks) };
+  }
+
+  if (stream.endsWith('@trade')) {
+    const price = parseFloat(String(data.p));
+    const qty = parseFloat(String(data.q));
+    const eventTime = Number(data.E);
+    const tradeTime = Number(data.T);
+    if (!Number.isFinite(price) || !Number.isFinite(qty) || !Number.isFinite(eventTime) || !Number.isFinite(tradeTime)) {
+      return { kind: 'ignored' };
+    }
+    return {
+      kind: 'trade',
+      trade: { id: Number(data.t), price, qty, isBuyerMaker: Boolean(data.m), eventTime, tradeTime },
+    };
+  }
+  return { kind: 'ignored' };
+}
+
+/** Bybit 구독 응답이 "존재하지 않는 심볼" 오류인지: {"success":false,"ret_msg":"Invalid symbol :[orderbook.50.X]"} */
+export function isBybitInvalidSymbol(raw: unknown): boolean {
+  if (typeof raw !== 'object' || raw === null) return false;
+  const msg = raw as Record<string, any>;
+  return msg.op === 'subscribe' && msg.success === false && /invalid symbol/i.test(String(msg.ret_msg ?? ''));
+}
+
+/** 최근 N개 지연 표본으로 통계를 만든다. 표본이 없으면 null — 값을 지어내지 않는다. */
+export function latencyStats(samples: number[]): { current: number; avg: number; min: number; max: number; jitter: number } | null {
+  if (samples.length === 0) return null;
+  const current = samples[samples.length - 1];
+  const avg = samples.reduce((a, b) => a + b, 0) / samples.length;
+  return {
+    current,
+    avg: Math.round(avg * 10) / 10,
+    min: Math.min(...samples),
+    max: Math.max(...samples),
+    jitter: Math.round(Math.abs(current - avg) * 10) / 10,
+  };
+}

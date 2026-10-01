@@ -1,0 +1,384 @@
+[
+  {
+    "type": "orderbook",
+    "code": "KRW-BTC",
+    "timestamp": 1790871227986,
+    "total_ask_size": 3.44602069,
+    "total_bid_size": 1.87355565,
+    "orderbook_units": [
+      {
+        "ask_price": 114918000,
+        "bid_price": 114900000,
+        "ask_size": 0.09553934,
+        "bid_size": 0.00018552
+      },
+      {
+        "ask_price": 114919000,
+        "bid_price": 114877000,
+        "ask_size": 0.03594033,
+        "bid_size": 0.00581704
+      },
+      {
+        "ask_price": 114931000,
+        "bid_price": 114876000,
+        "ask_size": 0.46549046,
+        "bid_size": 0.02155549
+      },
+      {
+        "ask_price": 114937000,
+        "bid_price": 114865000,
+        "ask_size": 0.04212224,
+        "bid_size": 0.00020018
+      },
+      {
+        "ask_price": 114938000,
+        "bid_price": 114842000,
+        "ask_size": 0.01693781,
+        "bid_size": 0.00004946
+      },
+      {
+        "ask_price": 114940000,
+        "bid_price": 114809000,
+        "ask_size": 0.2312485,
+        "bid_size": 0.10963014
+      },
+      {
+        "ask_price": 114941000,
+        "bid_price": 114808000,
+        "ask_size": 0.00047423,
+        "bid_size": 0.1111951
+      },
+      {
+        "ask_price": 114942000,
+        "bid_price": 114800000,
+        "ask_size": 0.03084,
+        "bid_size": 0.01868242
+      },
+      {
+        "ask_price": 114943000,
+        "bid_price": 114790000,
+        "ask_size": 1.27734661,
+        "bid_size": 0.09582822
+      },
+      {
+        "ask_price": 114944000,
+        "bid_price": 114789000,
+        "ask_size": 0.2683786,
+        "bid_size": 0.11634
+      },
+      {
+        "ask_price": 114945000,
+        "bid_price": 114788000,
+        "ask_size": 0.02677971,
+        "bid_size": 0.06234
+      },
+      {
+        "ask_price": 114947000,
+        "bid_price": 114784000,
+        "ask_size": 0.13698295,
+        "bid_size": 0.05028
+      },
+      {
+        "ask_price": 114948000,
+        "bid_price": 114776000,
+        "ask_size": 0.04025508,
+        "bid_size": 0.02155549
+      },
+      {
+        "ask_price": 114950000,
+        "bid_price": 114772000,
+        "ask_size": 0.1052423,
+        "bid_size": 0.05931
+      },
+      {
+        "ask_price": 114951000,
+        "bid_price": 114771000,
+        "ask_size": 0.13434628,
+        "bid_size": 0.00719399
+      },
+      {
+        "ask_price": 114952000,
+        "bid_price": 114767000,
+        "ask_size": 0.08699434,
+        "bid_size": 0.05088
+      },
+      {
+        "ask_price": 114953000,
+        "bid_price": 114766000,
+        "ask_size": 0.10202278,
+        "bid_size": 0.04818
+      },
+      {
+        "ask_price": 114955000,
+        "bid_price": 114764000,
+        "ask_size": 0.08680686,
+        "bid_size": 0.05232
+      },
+      {
+        "ask_price": 114956000,
+        "bid_price": 114761000,
+        "ask_size": 0.00528,
+        "bid_size": 0.1116
+      },
+      {
+        "ask_price": 114957000,
+        "bid_price": 114760000,
+        "ask_size": 0.01044129,
+        "bid_size": 0.0489
+      },
+      {
+        "ask_price": 114958000,
+        "bid_price": 114757000,
+        "ask_size": 0.00004354,
+        "bid_size": 0.000654
+      },
+      {
+        "ask_price": 114959000,
+        "bid_price": 114755000,
+        "ask_size": 0.05424773,
+        "bid_size": 0.02988
+      },
+      {
+        "ask_price": 114960000,
+        "bid_price": 114752000,
+        "ask_size": 0.00828231,
+        "bid_size": 0.0465
+      },
+      {
+        "ask_price": 114961000,
+        "bid_price": 114747000,
+        "ask_size": 0.01819861,
+        "bid_size": 0.00273285
+      },
+      {
+        "ask_price": 114963000,
+        "bid_price": 114742000,
+        "ask_size": 0.10278,
+        "bid_size": 0.19254
+      },
+      {
+        "ask_price": 114964000,
+        "bid_price": 114738000,
+        "ask_size": 0.00882892,
+        "bid_size": 0.00013145
+      },
+      {
+        "ask_price": 114965000,
+        "bid_price": 114736000,
+        "ask_size": 0.00022127,
+        "bid_size": 0.00308713
+      },
+      {
+        "ask_price": 114966000,
+        "bid_price": 114734000,
+        "ask_size": 0.00377486,
+        "bid_size": 0.0119
+      },
+      {
+        "ask_price": 114967000,
+        "bid_price": 114732000,
+        "ask_size": 0.04147574,
+        "bid_size": 0.594
+      },
+      {
+        "ask_price": 114969000,
+        "bid_price": 114730000,
+        "ask_size": 0.008698,
+        "bid_size": 0.00008717
+      }
+    ],
+    "stream_type": "SNAPSHOT",
+    "level": 0
+  },
+  {
+    "type": "orderbook",
+    "code": "KRW-USDT",
+    "timestamp": 1790871225704,
+    "total_ask_size": 8138799.90359246,
+    "total_bid_size": 11559112.98566259,
+    "orderbook_units": [
+      {
+        "ask_price": 1364,
+        "bid_price": 1363,
+        "ask_size": 413657.84635099,
+        "bid_size": 700634.85818959
+      },
+      {
+        "ask_price": 1365,
+        "bid_price": 1362,
+        "ask_size": 516157.44228718,
+        "bid_size": 75259.15913452
+      },
+      {
+        "ask_price": 1366,
+        "bid_price": 1361,
+        "ask_size": 382462.29048858,
+        "bid_size": 236438.17071774
+      },
+      {
+        "ask_price": 1367,
+        "bid_price": 1360,
+        "ask_size": 338186.61134807,
+        "bid_size": 518477.95945077
+      },
+      {
+        "ask_price": 1368,
+        "bid_price": 1359,
+        "ask_size": 174936.53547087,
+        "bid_size": 97496.97356081
+      },
+      {
+        "ask_price": 1369,
+        "bid_price": 1358,
+        "ask_size": 133951.85671599,
+        "bid_size": 387202.86440647
+      },
+      {
+        "ask_price": 1370,
+        "bid_price": 1357,
+        "ask_size": 315868.27263094,
+        "bid_size": 387016.30222429
+      },
+      {
+        "ask_price": 1371,
+        "bid_price": 1356,
+        "ask_size": 141153.4739275,
+        "bid_size": 258854.4576103
+      },
+      {
+        "ask_price": 1372,
+        "bid_price": 1355,
+        "ask_size": 86638.35292381,
+        "bid_size": 259637.45563296
+      },
+      {
+        "ask_price": 1373,
+        "bid_price": 1354,
+        "ask_size": 161433.02443328,
+        "bid_size": 325322.5144362
+      },
+      {
+        "ask_price": 1374,
+        "bid_price": 1353,
+        "ask_size": 315329.30113233,
+        "bid_size": 697645.37785716
+      },
+      {
+        "ask_price": 1375,
+        "bid_price": 1352,
+        "ask_size": 164596.30580074,
+        "bid_size": 645508.06345249
+      },
+      {
+        "ask_price": 1376,
+        "bid_price": 1351,
+        "ask_size": 181629.52849917,
+        "bid_size": 583710.27140246
+      },
+      {
+        "ask_price": 1377,
+        "bid_price": 1350,
+        "ask_size": 215044.24831154,
+        "bid_size": 912970.84125883
+      },
+      {
+        "ask_price": 1378,
+        "bid_price": 1349,
+        "ask_size": 133220.62502399,
+        "bid_size": 290415.10132746
+      },
+      {
+        "ask_price": 1379,
+        "bid_price": 1348,
+        "ask_size": 597947.2543594,
+        "bid_size": 354439.52593691
+      },
+      {
+        "ask_price": 1380,
+        "bid_price": 1347,
+        "ask_size": 319578.99655658,
+        "bid_size": 259454.04616812
+      },
+      {
+        "ask_price": 1381,
+        "bid_price": 1346,
+        "ask_size": 424281.77740806,
+        "bid_size": 452369.55886527
+      },
+      {
+        "ask_price": 1382,
+        "bid_price": 1345,
+        "ask_size": 1807813.5473025,
+        "bid_size": 416437.22257335
+      },
+      {
+        "ask_price": 1383,
+        "bid_price": 1344,
+        "ask_size": 296282.55439372,
+        "bid_size": 499636.13670418
+      },
+      {
+        "ask_price": 1384,
+        "bid_price": 1343,
+        "ask_size": 67897.55139808,
+        "bid_size": 737024.37910397
+      },
+      {
+        "ask_price": 1385,
+        "bid_price": 1342,
+        "ask_size": 132302.65774961,
+        "bid_size": 405415.15200287
+      },
+      {
+        "ask_price": 1386,
+        "bid_price": 1341,
+        "ask_size": 128292.11877075,
+        "bid_size": 283769.06619245
+      },
+      {
+        "ask_price": 1387,
+        "bid_price": 1340,
+        "ask_size": 45298.00921878,
+        "bid_size": 716459.46322982
+      },
+      {
+        "ask_price": 1388,
+        "bid_price": 1339,
+        "ask_size": 34348.64772857,
+        "bid_size": 353688.17056076
+      },
+      {
+        "ask_price": 1389,
+        "bid_price": 1338,
+        "ask_size": 110020.80287848,
+        "bid_size": 249425.91501427
+      },
+      {
+        "ask_price": 1390,
+        "bid_price": 1337.5,
+        "ask_size": 326288.71744548,
+        "bid_size": 323.46598129
+      },
+      {
+        "ask_price": 1391,
+        "bid_price": 1337,
+        "ask_size": 105471.99323383,
+        "bid_size": 276198.86149286
+      },
+      {
+        "ask_price": 1392,
+        "bid_price": 1336.5,
+        "ask_size": 31246.61256581,
+        "bid_size": 36.45632248
+      },
+      {
+        "ask_price": 1393,
+        "bid_price": 1336,
+        "ask_size": 37462.94723783,
+        "bid_size": 177845.19485194
+      }
+    ],
+    "stream_type": "SNAPSHOT",
+    "level": 0
+  }
+]

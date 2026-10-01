@@ -11,9 +11,13 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   type L2Level,
+  applyBybitMessage,
   applyOkxMessage,
   createOkxBookState,
+  isBybitInvalidSymbol,
+  latencyStats,
   okxBookToLevels,
+  parseBinanceStream,
   parseBitunixDepth,
   parseUpbitOrderbook,
   toBitunixSymbol,
@@ -395,4 +399,216 @@ export function useBitunixOrderbook(symbol: string): OrderbookFeed {
   }, [symbol]);
 
   return feed;
+}
+
+/** Bybit 현물 호가 (orderbook.50: 스냅샷 + delta, 상위 20단계). 존재하지 않는 심볼은 NO_MARKET. */
+export function useBybitOrderbook(symbol: string): OrderbookFeed {
+  const [feed, setFeed] = useState<OrderbookFeed>(EMPTY);
+  const pending = useRef<{ bids: L2Level[]; asks: L2Level[] } | null>(null);
+
+  useEffect(() => {
+    const sym = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!sym.endsWith('USDT') || sym.length <= 4) {
+      setFeed({ bids: [], asks: [], status: 'NO_MARKET' });
+      return;
+    }
+
+    setFeed({ bids: [], asks: [], status: 'CONNECTING' });
+    pending.current = null;
+    const state = createOkxBookState();
+    let noMarket = false;
+    let status: FeedStatus = 'CONNECTING';
+
+    const publish = (s: FeedStatus) => {
+      status = s;
+      setFeed((prev) => (prev.status === s ? prev : { ...prev, status: s }));
+    };
+
+    const flush = setInterval(() => {
+      if (pending.current) {
+        const p = pending.current;
+        pending.current = null;
+        setFeed({ bids: p.bids, asks: p.asks, status });
+      }
+    }, FLUSH_MS);
+
+    const stop = runReconnectingSocket({
+      open: () => new WebSocket('wss://stream.bybit.com/v5/public/spot'),
+      onOpen: (ws) => {
+        state.bids.clear();
+        state.asks.clear();
+        ws.send(JSON.stringify({ op: 'subscribe', args: [`orderbook.50.${sym}`] }));
+      },
+      onMessage: (data) => {
+        if (isBybitInvalidSymbol(data)) {
+          noMarket = true;
+          pending.current = null;
+          setFeed({ bids: [], asks: [], status: 'NO_MARKET' });
+          return;
+        }
+        if (!noMarket && applyBybitMessage(state, data)) {
+          const lv = okxBookToLevels(state, 20);
+          if (lv.bids.length > 0 && lv.asks.length > 0) {
+            pending.current = lv;
+            if (status !== 'CONNECTED') publish('CONNECTED');
+          }
+        }
+      },
+      onDown: () => {
+        state.bids.clear();
+        state.asks.clear();
+        pending.current = null;
+        if (!noMarket) setFeed({ bids: [], asks: [], status: 'DISCONNECTED' });
+      },
+      setStatus: (s) => {
+        if (noMarket) return;
+        publish(s);
+      },
+      heartbeat: { intervalMs: 20_000, payload: () => ({ op: 'ping' }) },
+    });
+
+    return () => {
+      clearInterval(flush);
+      stop();
+    };
+  }, [symbol]);
+
+  return feed;
+}
+
+export interface TradeRow {
+  id: number;
+  /** HH:MM:SS.mmm */
+  time: string;
+  price: number;
+  qty: number;
+  isBuyerMaker: boolean;
+}
+
+export interface StreamStats {
+  currentMs: number;
+  avgMs: number;
+  minMs: number;
+  maxMs: number;
+  jitter: number;
+  msgPerSec: number;
+  totalPackets: number;
+}
+
+export interface BinanceStreamFeed extends OrderbookFeed {
+  trades: TradeRow[];
+  /** 수신 시각 − 거래소 이벤트 시각(trade 메시지 기준). 측정 전이거나 끊긴 동안은 null — 초기값을 지어내지 않는다. */
+  stats: StreamStats | null;
+}
+
+/**
+ * Binance 현물 호가(depth20@100ms, 전체 스냅샷) + 체결(trade) 스트림.
+ * 지연 통계는 이벤트 시각(E)이 있는 trade 메시지에서만 계산한다 — depth 메시지에는 E 가 없다.
+ */
+export function useBinanceStream(symbol: string): BinanceStreamFeed {
+  const [feed, setFeed] = useState<OrderbookFeed>(EMPTY);
+  const [trades, setTrades] = useState<TradeRow[]>([]);
+  const [stats, setStats] = useState<StreamStats | null>(null);
+  const pendingBook = useRef<{ bids: L2Level[]; asks: L2Level[] } | null>(null);
+  const pendingTrades = useRef<TradeRow[]>([]);
+
+  useEffect(() => {
+    const pair = symbol.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!pair.endsWith('usdt') || pair.length <= 4) {
+      setFeed({ bids: [], asks: [], status: 'NO_MARKET' });
+      setTrades([]);
+      setStats(null);
+      return;
+    }
+
+    setFeed({ bids: [], asks: [], status: 'CONNECTING' });
+    setTrades([]);
+    setStats(null);
+    pendingBook.current = null;
+    pendingTrades.current = [];
+    let status: FeedStatus = 'CONNECTING';
+    const samples: number[] = [];
+    let packets = 0;
+    let totalPackets = 0;
+
+    const publish = (s: FeedStatus) => {
+      status = s;
+      setFeed((prev) => (prev.status === s ? prev : { ...prev, status: s }));
+    };
+
+    const flush = setInterval(() => {
+      if (pendingBook.current) {
+        const p = pendingBook.current;
+        pendingBook.current = null;
+        setFeed({ bids: p.bids, asks: p.asks, status });
+      }
+      if (pendingTrades.current.length > 0) {
+        const fresh = pendingTrades.current;
+        pendingTrades.current = [];
+        setTrades((prev) => [...fresh, ...prev].slice(0, 20));
+      }
+    }, FLUSH_MS);
+
+    const statsTimer = setInterval(() => {
+      const s = latencyStats(samples);
+      const rate = packets;
+      packets = 0;
+      if (!s) return; // 아직 측정할 trade 가 없다
+      setStats({
+        currentMs: s.current,
+        avgMs: s.avg,
+        minMs: s.min,
+        maxMs: s.max,
+        jitter: s.jitter,
+        msgPerSec: rate,
+        totalPackets,
+      });
+    }, 1000);
+
+    const stop = runReconnectingSocket({
+      open: () => new WebSocket(`wss://stream.binance.com:9443/stream?streams=${pair}@depth20@100ms/${pair}@trade`),
+      onOpen: () => {
+        /* combined stream: 구독 메시지가 필요 없다 */
+      },
+      onMessage: (data) => {
+        packets += 1;
+        totalPackets += 1;
+        const r = parseBinanceStream(data);
+        if (r.kind === 'depth') {
+          pendingBook.current = { bids: r.bids, asks: r.asks };
+          if (status !== 'CONNECTED') publish('CONNECTED');
+        } else if (r.kind === 'trade') {
+          samples.push(Date.now() - r.trade.eventTime);
+          if (samples.length > 50) samples.shift();
+          const d = new Date(r.trade.tradeTime);
+          pendingTrades.current.unshift({
+            id: r.trade.id,
+            time: `${d.toTimeString().split(' ')[0]}.${String(d.getMilliseconds()).padStart(3, '0')}`,
+            price: r.trade.price,
+            qty: r.trade.qty,
+            isBuyerMaker: r.trade.isBuyerMaker,
+          });
+          if (pendingTrades.current.length > 20) pendingTrades.current.length = 20;
+        }
+      },
+      onDown: () => {
+        pendingBook.current = null;
+        pendingTrades.current = [];
+        samples.length = 0;
+        packets = 0;
+        setStats(null);
+        setTrades([]);
+        setFeed({ bids: [], asks: [], status: 'DISCONNECTED' });
+      },
+      setStatus: publish,
+    });
+
+    return () => {
+      clearInterval(flush);
+      clearInterval(statsTimer);
+      stop();
+    };
+  }, [symbol]);
+
+  return { ...feed, trades, stats };
 }

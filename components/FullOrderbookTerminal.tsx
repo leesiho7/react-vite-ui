@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { fetchFundingRates, type FundingRateRow } from '../lib/api';
-import { useBitunixOrderbook, useOkxOrderbook, useUpbitOrderbook } from '../lib/useExchangeOrderbooks';
-import { applyBybitMessage, createOkxBookState, okxBookToLevels } from '../lib/exchangeOrderbookParsers';
+import { FundingComparePanel } from './FundingComparePanel';
+import { useBinanceStream, useBitunixOrderbook, useBybitOrderbook, useOkxOrderbook, useUpbitOrderbook } from '../lib/useExchangeOrderbooks';
 import { ArrowLeftRight, TrendingUp, ShieldCheck, Zap, RefreshCw, Calculator, DollarSign, Activity, Layers, ExternalLink, Flame, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface L2Item {
@@ -177,18 +177,15 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
   const [exchangeA, setExchangeA] = useState<ExchangeId>('BINANCE');
   const [exchangeB, setExchangeB] = useState<ExchangeId>('BYBIT');
 
-  // Real-time Orderbook Data Streams — 거래소 WebSocket 에서 첫 메시지를 받기 전에는 비어 있다.
-  // (예전에는 하드코딩한 스냅샷으로 시작해, 연결 전·연결 실패 시에도 그럴듯한 호가가 보였다.)
-  const [binanceBids, setBinanceBids] = useState<L2Item[]>([]);
-  const [binanceAsks, setBinanceAsks] = useState<L2Item[]>([]);
-  const [binanceWsStatus, setBinanceWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTING');
-
-  const [bybitBids, setBybitBids] = useState<L2Item[]>([]);
-  const [bybitAsks, setBybitAsks] = useState<L2Item[]>([]);
-  const [bybitWsStatus, setBybitWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTING');
-
-  const [trades, setTrades] = useState<TradeItem[]>([]);
-
+  // 실시간 호가·체결 — 거래소 공개 WebSocket 에 직접 연결하고, 끊기면 호가를 비운 뒤 자동 재연결한다.
+  // 첫 메시지를 받기 전에는 비어 있다. (예전에는 하드코딩한 스냅샷으로 시작해 연결 전·실패 시에도 그럴듯한 호가가 보였고,
+  // Binance·Bybit 는 끊겨도 재연결이 없었다.)
+  const binanceStream = useBinanceStream(symbol);
+  const bybitFeed = useBybitOrderbook(symbol);
+  const binanceBids: L2Item[] = binanceStream.bids;
+  const binanceAsks: L2Item[] = binanceStream.asks;
+  const binanceWsStatus = binanceStream.status;
+  const trades: TradeItem[] = binanceStream.trades;
   // Calculator State for Delta Neutral Funding Yield
   const [calcModalOpen, setCalcModalOpen] = useState(false);
   const [selectedFundingAsset, setSelectedFundingAsset] = useState<FundingRateRow | null>(null);
@@ -260,274 +257,9 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
     ? Math.min(...fundingRows.map((r) => r.nextFundingTime))
     : null;
 
-  // 피드 지연 측정값 — 실제 메시지를 받아 계산하기 전에는 null (예전엔 12ms/36msg·s 초기값이 박혀 있었다).
-  // 측정 방식: 수신 시각 − 거래소 이벤트 시각. 브라우저/거래소 시계 차이가 섞이므로 왕복 지연(RTT)이 아니다.
-  const [stats, setStats] = useState<LatencyStats | null>(null);
-
-  const latencyHistoryRef = useRef<number[]>([]);
-  const packetCountRef = useRef<number>(0);
-  const lastSecTimeRef = useRef<number>(Date.now());
-  const wsBinanceRef = useRef<WebSocket | null>(null);
-  const wsBybitRef = useRef<WebSocket | null>(null);
-  const bybitPingTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const cleanPairBinance = useMemo(() => {
-    return symbol.toLowerCase().replace(/[^a-z0-9]/g, '');
-  }, [symbol]);
-
-  const cleanPairBybit = useMemo(() => {
-    return symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  }, [symbol]);
-
-    // Throttled buffer references for buttery smooth 60fps UI
-    const pendingBidsRef = useRef<L2Item[] | null>(null);
-    const pendingAsksRef = useRef<L2Item[] | null>(null);
-    const pendingTradesRef = useRef<TradeItem[]>([]);
-
-    useEffect(() => {
-      const flushTimer = setInterval(() => {
-        if (pendingBidsRef.current) {
-          setBinanceBids(pendingBidsRef.current);
-          pendingBidsRef.current = null;
-        }
-        if (pendingAsksRef.current) {
-          setBinanceAsks(pendingAsksRef.current);
-          pendingAsksRef.current = null;
-        }
-        if (pendingTradesRef.current.length > 0) {
-          setTrades((prev) => [...pendingTradesRef.current, ...prev].slice(0, 20));
-          pendingTradesRef.current = [];
-        }
-      }, 100);
-
-      return () => clearInterval(flushTimer);
-    }, []);
-
-    // 1. Binance WebSocket Connection
-    useEffect(() => {
-      setBinanceWsStatus('CONNECTING');
-      latencyHistoryRef.current = [];
-      packetCountRef.current = 0;
-
-      const url = `wss://stream.binance.com:9443/stream?streams=${cleanPairBinance}@depth20@100ms/${cleanPairBinance}@trade`;
-
-      let ws: WebSocket;
-      try {
-        ws = new WebSocket(url);
-        wsBinanceRef.current = ws;
-      } catch (e) {
-        console.warn('[Binance WS] Initialization error:', e);
-        setBinanceWsStatus('DISCONNECTED');
-        return;
-      }
-
-      ws.onopen = () => {
-        setBinanceWsStatus('CONNECTED');
-      };
-
-      ws.onmessage = (event) => {
-        const now = Date.now();
-        packetCountRef.current += 1;
-
-        try {
-          const payload = JSON.parse(event.data);
-          const stream: string = payload.stream || '';
-          const data = payload.data || {};
-
-          const eventTime: number = data.E || data.T || now;
-          const latency = Math.max(1, Math.min(120, now - eventTime));
-
-          const hist = latencyHistoryRef.current;
-          hist.push(latency);
-          if (hist.length > 50) hist.shift();
-
-          const sum = hist.reduce((a, b) => a + b, 0);
-          const avg = sum / hist.length;
-          const min = Math.min(...hist);
-          const max = Math.max(...hist);
-          const jitter = Math.abs(latency - avg);
-
-          if (now - lastSecTimeRef.current >= 1000) {
-            const msgRate = packetCountRef.current;
-            packetCountRef.current = 0;
-            lastSecTimeRef.current = now;
-
-            setStats({
-              currentMs: latency,
-              avgMs: parseFloat(avg.toFixed(1)),
-              minMs: min,
-              maxMs: max,
-              jitter: parseFloat(jitter.toFixed(1)),
-              msgPerSec: msgRate,
-              totalPackets: (stats?.totalPackets || 0) + msgRate
-            });
-          }
-
-          if (stream.endsWith('@depth20@100ms')) {
-            const rawBids: [string, string][] = data.bids || [];
-            const rawAsks: [string, string][] = data.asks || [];
-
-            let bidTotalA = 0;
-            const parsedBidsA: L2Item[] = rawBids.map(([p, q]) => {
-              const priceNum = parseFloat(p);
-              const qtyNum = parseFloat(q);
-              bidTotalA += qtyNum;
-              return { price: priceNum, qty: qtyNum, total: bidTotalA };
-            });
-
-            let askTotalA = 0;
-            const parsedAsksA: L2Item[] = rawAsks.map(([p, q]) => {
-              const priceNum = parseFloat(p);
-              const qtyNum = parseFloat(q);
-              askTotalA += qtyNum;
-              return { price: priceNum, qty: qtyNum, total: askTotalA };
-            });
-
-            pendingBidsRef.current = parsedBidsA;
-            pendingAsksRef.current = parsedAsksA;
-          }
-
-          if (stream.endsWith('@trade')) {
-            const tradeTime = new Date(data.T || now);
-            const timeStr = `${tradeTime.toTimeString().split(' ')[0]}.${String(tradeTime.getMilliseconds()).padStart(3, '0')}`;
-
-            const newTrade: TradeItem = {
-              id: data.t || Math.random(),
-              time: timeStr,
-              price: parseFloat(data.p || '0'),
-              qty: parseFloat(data.q || '0'),
-              isBuyerMaker: data.m
-            };
-
-            pendingTradesRef.current.unshift(newTrade);
-            if (pendingTradesRef.current.length > 20) {
-              pendingTradesRef.current = pendingTradesRef.current.slice(0, 20);
-            }
-          }
-        } catch (err) {
-          // ignore parse error
-        }
-      };
-
-      // 끊기면 오래된 호가를 남겨 두지 않고 비운다 (히트맵이 낡은 값으로 계산되지 않도록).
-      const clearBinance = () => {
-        pendingBidsRef.current = null;
-        pendingAsksRef.current = null;
-        setBinanceBids([]);
-        setBinanceAsks([]);
-        setBinanceWsStatus('DISCONNECTED');
-      };
-      ws.onerror = clearBinance;
-      ws.onclose = clearBinance;
-
-      return () => {
-        if (ws) {
-          // 이전 소켓의 늦은 onclose 가 새 연결의 상태/호가를 덮어쓰지 않도록 핸들러를 먼저 뗀다
-          ws.onmessage = null;
-          ws.onerror = null;
-          ws.onclose = null;
-          ws.close();
-        }
-      };
-    }, [cleanPairBinance]);
-
-    // 2. Bybit Real-time V5 WebSocket Connection with Throttled Buffer
-    const pendingBybitBidsRef = useRef<L2Item[] | null>(null);
-    const pendingBybitAsksRef = useRef<L2Item[] | null>(null);
-
-    useEffect(() => {
-      const bybitFlushTimer = setInterval(() => {
-        if (pendingBybitBidsRef.current) {
-          setBybitBids(pendingBybitBidsRef.current);
-          pendingBybitBidsRef.current = null;
-        }
-        if (pendingBybitAsksRef.current) {
-          setBybitAsks(pendingBybitAsksRef.current);
-          pendingBybitAsksRef.current = null;
-        }
-      }, 100);
-
-      return () => clearInterval(bybitFlushTimer);
-    }, []);
-
-    const bybitBookRef = useRef(createOkxBookState());
-
-    useEffect(() => {
-      setBybitWsStatus('CONNECTING');
-      // 심볼이 바뀌었을 때 이전 심볼의 호가가 남지 않게 비운다
-      pendingBybitBidsRef.current = null;
-      pendingBybitAsksRef.current = null;
-      setBybitBids([]);
-      setBybitAsks([]);
-
-      const bybitUrl = 'wss://stream.bybit.com/v5/public/spot';
-      let wsBybit: WebSocket;
-
-      try {
-        wsBybit = new WebSocket(bybitUrl);
-        wsBybitRef.current = wsBybit;
-      } catch (e) {
-        console.warn('[Bybit WS] Initialization error:', e);
-        setBybitWsStatus('DISCONNECTED');
-        return;
-      }
-
-      wsBybit.onopen = () => {
-        setBybitWsStatus('CONNECTED');
-        const subPayload = {
-          op: 'subscribe',
-          args: [`orderbook.50.${cleanPairBybit}`]
-        };
-        wsBybit.send(JSON.stringify(subPayload));
-
-        if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
-        bybitPingTimerRef.current = setInterval(() => {
-          if (wsBybit.readyState === WebSocket.OPEN) {
-            wsBybit.send(JSON.stringify({ op: 'ping' }));
-          }
-        }, 20000);
-      };
-
-      // Bybit 은 첫 메시지만 전체 스냅샷이고 이후는 변경분(delta)이다 — 로컬 호가창에 반영해 상위 20단계를 만든다.
-      // (예전 코드는 delta 를 호가창 전체로 덮어써서 삭제된 호가가 최우선 호가로 보였다.)
-      bybitBookRef.current = createOkxBookState();
-      wsBybit.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (applyBybitMessage(bybitBookRef.current, msg)) {
-            const lv = okxBookToLevels(bybitBookRef.current, 20);
-            if (lv.bids.length > 0) pendingBybitBidsRef.current = lv.bids;
-            if (lv.asks.length > 0) pendingBybitAsksRef.current = lv.asks;
-          }
-        } catch (err) {
-          // ignore parse error
-        }
-      };
-
-      // 끊기면 오래된 호가를 남겨 두지 않고 비운다 (히트맵이 낡은 값으로 계산되지 않도록).
-      const clearBybit = () => {
-        bybitBookRef.current = createOkxBookState();
-        pendingBybitBidsRef.current = null;
-        pendingBybitAsksRef.current = null;
-        setBybitBids([]);
-        setBybitAsks([]);
-        setBybitWsStatus('DISCONNECTED');
-      };
-      wsBybit.onerror = clearBybit;
-      wsBybit.onclose = clearBybit;
-
-      return () => {
-        if (bybitPingTimerRef.current) clearInterval(bybitPingTimerRef.current);
-        if (wsBybit) {
-          // 이전 소켓의 늦은 onclose 가 새 연결의 상태/호가를 덮어쓰지 않도록 핸들러를 먼저 뗀다
-          wsBybit.onmessage = null;
-          wsBybit.onerror = null;
-          wsBybit.onclose = null;
-          wsBybit.close();
-        }
-      };
-    }, [cleanPairBybit]);
-
+  // 피드 지연 측정값 — Binance trade 메시지의 이벤트 시각으로 계산하고, 측정 전·끊김 동안은 null (초기값을 지어내지 않는다).
+  // 수신 시각 − 거래소 이벤트 시각이라 브라우저/거래소 시계 차이가 섞이므로 왕복 지연(RTT)이 아니다.
+  const stats: LatencyStats | null = binanceStream.stats;
   // 거래소별 호가. 전부 거래소 공개 WebSocket 의 실제 호가다: Binance·Bybit·OKX 현물, Upbit KRW 현물(USDT 환산),
   // Bitunix USDT 무기한 선물. (예전에는 OKX/Upbit/Bitunix 호가를 Binance 호가에 고정 비율을 곱해 만들어 냈고
   // 상태도 항상 CONNECTED 였다.) 연결이 없는 거래소가 생기면 NOT_CONNECTED(미구현)로 비워 둔다.
@@ -537,12 +269,12 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
 
   type BookStatus = 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED' | 'NOT_CONNECTED' | 'NO_MARKET';
   const exchangeBooks = useMemo<Record<ExchangeId, { bids: L2Item[]; asks: L2Item[]; status: BookStatus }>>(() => ({
-    BINANCE: { bids: binanceBids, asks: binanceAsks, status: binanceWsStatus },
-    BYBIT: { bids: bybitBids, asks: bybitAsks, status: bybitWsStatus },
+    BINANCE: { bids: binanceStream.bids, asks: binanceStream.asks, status: binanceStream.status },
+    BYBIT: { bids: bybitFeed.bids, asks: bybitFeed.asks, status: bybitFeed.status },
     OKX: { bids: okxFeed.bids, asks: okxFeed.asks, status: okxFeed.status },
     UPBIT: { bids: upbitFeed.bids, asks: upbitFeed.asks, status: upbitFeed.status },
     BITUNIX: { bids: bitunixFeed.bids, asks: bitunixFeed.asks, status: bitunixFeed.status }
-  }), [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus, okxFeed, upbitFeed, bitunixFeed]);
+  }), [binanceStream.bids, binanceStream.asks, binanceStream.status, bybitFeed, okxFeed, upbitFeed, bitunixFeed]);
   // Selected Orderbooks for Exchange A & Exchange B
   const bookA = exchangeBooks[exchangeA];
   const bookB = exchangeBooks[exchangeB];
@@ -1337,6 +1069,8 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               ))}
             </tbody>
           </table>
+
+          <FundingComparePanel language={language} />
         </div>
       )}
 

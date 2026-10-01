@@ -1384,6 +1384,58 @@ export async function fetchFundingRates(symbols?: string[]): Promise<FundingRate
   return null;
 }
 
+/** 거래소 한 곳의 정규화된 무기한 선물 펀딩. null 필드는 그 거래소가 제공하지 않는 값. */
+export interface ExchangeFundingEntry {
+  exchange: 'BINANCE' | 'BYBIT' | 'OKX' | 'BITUNIX' | 'HYPERLIQUID';
+  symbol: string;
+  /** 한 정산 주기당 펀딩비(%). 양수면 롱이 숏에게 지급 */
+  fundingRatePct: number;
+  intervalHours: number;
+  nextFundingTime: number;
+  /** 현재 요율이 유지된다는 단순 가정의 연환산(%, 복리 아님) — 예측이 아님 */
+  annualizedPct: number;
+  markPrice: number | null;
+  openInterestUsd: number | null;
+  volume24hUsd: number | null;
+}
+
+export interface FundingDifferential {
+  /** 펀딩이 가장 높은 곳 — 여기서 숏을 잡으면 수취 */
+  shortExchange: string;
+  /** 펀딩이 가장 낮은 곳 — 여기서 롱을 잡으면 가장 덜 낸다 */
+  longExchange: string;
+  /** 두 거래소의 연환산 차이(%) — 수수료·베이시스·이체 비용 반영 전 */
+  annualizedPct: number;
+}
+
+export interface FundingCompareRow {
+  symbol: string;
+  entries: ExchangeFundingEntry[];
+  differential?: FundingDifferential;
+}
+
+export interface FundingCompareResponse {
+  available: boolean;
+  exchanges?: string[];
+  fetchedAt?: number;
+  rows?: FundingCompareRow[];
+  message?: string;
+}
+
+/** 거래소 간 펀딩비 비교 조회. 실패하면 null — 호출부는 "데이터 없음"으로 표시해야 한다. */
+export async function fetchFundingCompare(symbols?: string[]): Promise<FundingCompareResponse | null> {
+  try {
+    const qs = symbols && symbols.length ? `?symbols=${encodeURIComponent(symbols.join(','))}` : '';
+    const res = await fetch(`${API_BASE}/market/funding-compare${qs}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchFundingCompare failed:', err);
+  }
+  return null;
+}
+
 export async function fetchAiDebate(symbol = 'BTCUSDT', lang = 'ko'): Promise<AiDebateResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/ai/debate?symbol=${symbol}&lang=${lang}`);
