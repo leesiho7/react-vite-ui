@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { fetchFundingRates, type FundingRateRow } from '../lib/api';
 import { ArrowLeftRight, TrendingUp, ShieldCheck, Zap, RefreshCw, Calculator, DollarSign, Activity, Layers, ExternalLink, Flame, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface L2Item {
@@ -26,19 +27,6 @@ interface LatencyStats {
   jitter: number;
   msgPerSec: number;
   totalPackets: number;
-}
-
-interface FundingRateItem {
-  symbol: string;
-  name: string;
-  primaryExchange: string;
-  hedgeExchange: string;
-  rate8h: number;
-  apy: number;
-  nextPayout: string;
-  openInterestUsd: string;
-  volume24h: string;
-  status: 'OPTIMAL' | 'STABLE' | 'CAUTION';
 }
 
 export type ExchangeId = 'BINANCE' | 'BYBIT' | 'OKX' | 'UPBIT' | 'BITUNIX';
@@ -122,16 +110,42 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
   }
 };
 
-const initialFundingRates: FundingRateItem[] = [
-  { symbol: 'SUIUSDT', name: 'Sui Network', primaryExchange: 'Binance Perp', hedgeExchange: 'Bybit Spot', rate8h: 0.042, apy: 45.99, nextPayout: '02:44:18', openInterestUsd: '$342M', volume24h: '$1.2B', status: 'OPTIMAL' },
-  { symbol: 'DOGEUSDT', name: 'Dogecoin', primaryExchange: 'Binance Perp', hedgeExchange: 'Coinbase Spot', rate8h: 0.038, apy: 41.61, nextPayout: '02:44:18', openInterestUsd: '$580M', volume24h: '$2.8B', status: 'OPTIMAL' },
-  { symbol: 'SOLUSDT', name: 'Solana', primaryExchange: 'Binance Perp', hedgeExchange: 'Bybit Spot', rate8h: 0.029, apy: 31.75, nextPayout: '02:44:18', openInterestUsd: '$1.4B', volume24h: '$4.1B', status: 'OPTIMAL' },
-  { symbol: 'BNBUSDT', name: 'Binance Coin', primaryExchange: 'Binance Perp', hedgeExchange: 'OKX Spot', rate8h: 0.024, apy: 26.28, nextPayout: '02:44:18', openInterestUsd: '$420M', volume24h: '$890M', status: 'STABLE' },
-  { symbol: 'BTCUSDT', name: 'Bitcoin', primaryExchange: 'Binance Perp', hedgeExchange: 'Upbit/KRW Spot', rate8h: 0.018, apy: 19.71, nextPayout: '02:44:18', openInterestUsd: '$8.2B', volume24h: '$24.5B', status: 'STABLE' },
-  { symbol: 'ETHUSDT', name: 'Ethereum', primaryExchange: 'Binance Perp', hedgeExchange: 'Bybit Spot', rate8h: 0.015, apy: 16.42, nextPayout: '02:44:18', openInterestUsd: '$4.1B', volume24h: '$12.8B', status: 'STABLE' },
-  { symbol: 'ADAUSDT', name: 'Cardano', primaryExchange: 'Binance Perp', hedgeExchange: 'Kraken Spot', rate8h: 0.019, apy: 20.80, nextPayout: '02:44:18', openInterestUsd: '$210M', volume24h: '$620M', status: 'STABLE' },
-  { symbol: 'XRPUSDT', name: 'Ripple', primaryExchange: 'Binance Perp', hedgeExchange: 'Bybit Spot', rate8h: 0.021, apy: 23.00, nextPayout: '02:44:18', openInterestUsd: '$890M', volume24h: '$3.4B', status: 'STABLE' },
-];
+// 펀딩 매트릭스에 쓰는 종목 표시 이름. 이름은 라벨일 뿐이고, 펀딩비·미결제약정·거래량·정산 시각은
+// 전부 백엔드(/api/market/funding-rates → Binance USDⓈ-M Futures 공개 API)에서 받아온 실제 값이다.
+const FUNDING_ASSET_NAMES: Record<string, string> = {
+  SUIUSDT: 'Sui Network',
+  DOGEUSDT: 'Dogecoin',
+  SOLUSDT: 'Solana',
+  BNBUSDT: 'Binance Coin',
+  BTCUSDT: 'Bitcoin',
+  ETHUSDT: 'Ethereum',
+  ADAUSDT: 'Cardano',
+  XRPUSDT: 'Ripple',
+};
+
+const FUNDING_REFRESH_MS = 30_000;
+
+function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = String(Math.floor(total / 3600)).padStart(2, '0');
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+  const s = String(total % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+/** 큰 USD 금액을 $342.1M / $8.20B 형태로. 값이 없으면 '—' (지어내지 않는다). */
+function formatUsdCompact(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `$${(value / 1e3).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
+function formatSignedPct(value: number, digits: number): string {
+  return `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`;
+}
 
 const defaultSnapshotBids: L2Item[] = [
   { price: 67840.5, qty: 1.42, total: 1.42 },
@@ -182,8 +196,74 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
 
   // Calculator State for Delta Neutral Funding Yield
   const [calcModalOpen, setCalcModalOpen] = useState(false);
-  const [selectedFundingAsset, setSelectedFundingAsset] = useState<FundingRateItem>(initialFundingRates[0]);
+  const [selectedFundingAsset, setSelectedFundingAsset] = useState<FundingRateRow | null>(null);
   const [calcCapital, setCalcCapital] = useState<number>(10000);
+
+  // 펀딩비 실데이터 — 펀딩 탭이 열려 있는 동안만 30초마다 갱신한다.
+  const [fundingRows, setFundingRows] = useState<FundingRateRow[]>([]);
+  const [fundingStatus, setFundingStatus] = useState<'loading' | 'ok' | 'unavailable'>('loading');
+  const [fundingFetchedAt, setFundingFetchedAt] = useState<number | null>(null);
+  // 서버 렌더와 시각이 어긋나지 않도록 마운트 후에만 시계를 켠다.
+  const [fundingNowMs, setFundingNowMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'FUNDING_RATES') return;
+    let cancelled = false;
+    const load = async () => {
+      const res = await fetchFundingRates();
+      if (cancelled) return;
+      if (res && res.available && res.items && res.items.length > 0) {
+        setFundingRows(res.items);
+        setFundingFetchedAt(res.fetchedAt ?? Date.now());
+        setFundingStatus('ok');
+      } else {
+        // 장애 시 이전 값을 "현재 값"처럼 남겨 두지 않는다 — 비우고 데이터 없음으로 표시한다.
+        setFundingRows([]);
+        setFundingStatus('unavailable');
+      }
+    };
+    setFundingStatus((s) => (s === 'ok' ? s : 'loading'));
+    load();
+    const id = setInterval(load, FUNDING_REFRESH_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'FUNDING_RATES') return;
+    setFundingNowMs(Date.now());
+    const id = setInterval(() => setFundingNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [activeTab]);
+
+  // 시뮬레이터: 표에서 연 경우 그 행을 쓰고, 오더북 바에서 연 경우 해당 심볼의 실제 값을 따로 조회한다.
+  // 거래소에 없는 심볼(예: 업비트 전용)이면 지어내지 않고 "데이터 없음"을 보여준다.
+  const [simStatus, setSimStatus] = useState<'ok' | 'loading' | 'unavailable'>('ok');
+  const openSimulator = async (sym: string, row?: FundingRateRow) => {
+    setCalcModalOpen(true);
+    if (row) {
+      setSelectedFundingAsset(row);
+      setSimStatus('ok');
+      return;
+    }
+    setSelectedFundingAsset(null);
+    setSimStatus('loading');
+    const res = await fetchFundingRates([sym]);
+    const found = res && res.available ? res.items?.find((i) => i.symbol === sym) : undefined;
+    if (found) {
+      setSelectedFundingAsset(found);
+      setSimStatus('ok');
+    } else {
+      setSimStatus('unavailable');
+    }
+  };
+
+  // 헤더 카운트다운: 표에 있는 심볼 중 가장 먼저 도래하는 실제 정산 시각
+  const soonestFundingMs = fundingRows.length > 0
+    ? Math.min(...fundingRows.map((r) => r.nextFundingTime))
+    : null;
 
   // Latency benchmark
   const [stats, setStats] = useState<LatencyStats>({
@@ -871,10 +951,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 </span>
               </div>
               <button
-                onClick={() => {
-                  setSelectedFundingAsset(initialFundingRates.find(f => f.symbol === symbol) || initialFundingRates[0]);
-                  setCalcModalOpen(true);
-                }}
+                onClick={() => openSimulator(symbol)}
                 style={{ background: '#0f766e', border: '1px solid #14b8a6', color: '#ffffff', padding: '5px 10px', fontSize: '9.5px', fontWeight: 600, cursor: 'pointer', borderRadius: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
                 <Calculator size={11} />
@@ -1106,12 +1183,21 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 {tr('델타 뉴트럴(Delta-Neutral) 무위험 펀딩비 차익거래 매트릭스', 'Delta-Neutral Risk-Free Funding Rate Arbitrage Matrix')}
               </strong>
               <p style={{ fontSize: '10px', color: '#64748b', margin: '4px 0 0' }}>
-                {tr('가격 변동 위험 0% (현물 1배수 매수 + 무기한 선물 1배수 숏 헤지). 8시간 주기 펀딩비 수취로 연 15%~45% 복리 이자 창출.', '0% price-movement risk (1x spot long + 1x perpetual futures short hedge). Collecting funding every 8 hours yields 15%–45% annualized compounded interest.')}
+                {tr('현물 1배 매수 + 무기한 선물 1배 숏으로 가격 변동 노출을 상쇄하고 펀딩비를 수취하는 전략입니다. 아래 수치는 Binance USDⓈ-M 선물의 실제 펀딩비이며 수익은 보장되지 않습니다 (펀딩비 변동·수수료·기준가 괴리 위험).', 'Offsets price exposure with a 1x spot long + 1x perpetual short and collects funding. Figures below are live Binance USDⓈ-M funding rates; returns are not guaranteed (funding changes, fees and basis risk apply).')}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <span style={{ fontSize: '9px', color: '#74808c' }}>NEXT SETTLEMENT COUNTDOWN</span>
-              <strong style={{ display: 'block', fontSize: '16px', color: '#0369a1' }}>02:44:18</strong>
+              <strong style={{ display: 'block', fontSize: '16px', color: soonestFundingMs === null ? '#94a3b8' : '#0369a1' }}>
+                {fundingNowMs === null || soonestFundingMs === null ? '--:--:--' : formatCountdown(soonestFundingMs - fundingNowMs)}
+              </strong>
+              <span style={{ fontSize: '8.5px', color: '#94a3b8' }}>
+                {fundingStatus === 'ok' && fundingFetchedAt
+                  ? tr(`Binance 실제 정산 시각 기준 · ${new Date(fundingFetchedAt).toLocaleTimeString()} 갱신`, `Based on Binance's actual settlement times · updated ${new Date(fundingFetchedAt).toLocaleTimeString()}`)
+                  : fundingStatus === 'loading'
+                  ? tr('불러오는 중…', 'Loading…')
+                  : tr('데이터 없음 (거래소 응답 없음)', 'No data (exchange unavailable)')}
+              </span>
             </div>
           </div>
 
@@ -1119,42 +1205,53 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
             <thead>
               <tr style={{ background: '#0b131e', color: '#94a3b8', textAlign: 'left', borderBottom: '1px solid #1e293b' }}>
                 <th style={{ padding: '10px 12px' }}>RANK / ASSET</th>
-                <th style={{ padding: '10px 12px' }}>PRIMARY / HEDGE PAIR</th>
-                <th style={{ padding: '10px 12px' }}>8H FUNDING RATE</th>
-                <th style={{ padding: '10px 12px' }}>ANNUALIZED APY</th>
+                <th style={{ padding: '10px 12px' }}>VENUE</th>
+                <th style={{ padding: '10px 12px' }}>FUNDING RATE</th>
+                <th style={{ padding: '10px 12px' }}>ANNUALIZED (SIMPLE)</th>
                 <th style={{ padding: '10px 12px' }}>OPEN INTEREST</th>
                 <th style={{ padding: '10px 12px' }}>24H VOLUME</th>
+                <th style={{ padding: '10px 12px' }}>NEXT SETTLEMENT</th>
                 <th style={{ padding: '10px 12px', textAlign: 'right' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {initialFundingRates.map((row, idx) => (
+              {fundingRows.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ padding: '28px 12px', textAlign: 'center', color: '#74808c', background: '#f8fafb' }}>
+                    {fundingStatus === 'loading'
+                      ? tr('펀딩비 데이터를 불러오는 중…', 'Loading funding rates…')
+                      : tr('데이터 없음 — 거래소에서 펀딩비를 받지 못했습니다. 추정값을 표시하지 않습니다.', 'No data — funding rates could not be fetched from the exchange. No estimated values are shown.')}
+                  </td>
+                </tr>
+              )}
+              {[...fundingRows].sort((a, b) => b.annualizedPct - a.annualizedPct).map((row, idx) => (
                 <tr key={row.symbol} style={{ borderBottom: '1px solid #edf0f2', background: idx % 2 === 0 ? '#ffffff' : '#fcfdfe' }}>
                   <td style={{ padding: '12px' }}>
                     <strong style={{ color: '#18334a' }}>#{idx + 1} {row.symbol}</strong>
-                    <small style={{ color: '#74808c', display: 'block' }}>{row.name}</small>
+                    <small style={{ color: '#74808c', display: 'block' }}>{FUNDING_ASSET_NAMES[row.symbol] ?? ''}</small>
                   </td>
                   <td style={{ padding: '12px' }}>
-                    <span style={{ color: '#0369a1', fontWeight: 600 }}>{row.primaryExchange}</span>
-                    <span style={{ color: '#74808c' }}> ⇄ {row.hedgeExchange}</span>
+                    <span style={{ color: '#0369a1', fontWeight: 600 }}>Binance USDⓈ-M Perp</span>
                   </td>
                   <td style={{ padding: '12px' }}>
-                    <strong style={{ color: '#2b866d', fontSize: '11px' }}>+{row.rate8h}%</strong>
-                    <small style={{ color: '#74808c', display: 'block' }}>Per 8 Hours</small>
+                    <strong style={{ color: row.fundingRatePct >= 0 ? '#2b866d' : '#ac5d59', fontSize: '11px' }}>
+                      {formatSignedPct(row.fundingRatePct, 4)}
+                    </strong>
+                    <small style={{ color: '#74808c', display: 'block' }}>{tr(`${row.fundingIntervalHours}시간당`, `Per ${row.fundingIntervalHours} Hours`)}</small>
                   </td>
                   <td style={{ padding: '12px' }}>
-                    <strong style={{ color: '#0f766e', fontSize: '13px', fontWeight: 700 }}>
-                      +{row.apy.toFixed(2)}% APY
+                    <strong style={{ color: row.annualizedPct >= 0 ? '#0f766e' : '#ac5d59', fontSize: '13px', fontWeight: 700 }}>
+                      {formatSignedPct(row.annualizedPct, 2)}
                     </strong>
                   </td>
-                  <td style={{ padding: '12px', color: '#18334a' }}>{row.openInterestUsd}</td>
-                  <td style={{ padding: '12px', color: '#74808c' }}>{row.volume24h}</td>
+                  <td style={{ padding: '12px', color: '#18334a' }}>{formatUsdCompact(row.openInterestUsd)}</td>
+                  <td style={{ padding: '12px', color: '#74808c' }}>{formatUsdCompact(row.volume24hUsd)}</td>
+                  <td style={{ padding: '12px', color: '#18334a', fontFamily: 'var(--font-mono)' }}>
+                    {fundingNowMs === null ? '--:--:--' : formatCountdown(row.nextFundingTime - fundingNowMs)}
+                  </td>
                   <td style={{ padding: '12px', textAlign: 'right' }}>
                     <button
-                      onClick={() => {
-                        setSelectedFundingAsset(row);
-                        setCalcModalOpen(true);
-                      }}
+                      onClick={() => openSimulator(row.symbol, row)}
                       style={{
                         background: '#0f766e',
                         border: '1px solid #14b8a6',
@@ -1182,7 +1279,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
           <div style={{ width: '480px', background: '#ffffff', border: '1px solid #d8dee4', borderRadius: '4px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.3)', fontFamily: "var(--font-mono)" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #edf0f2', paddingBottom: '12px', marginBottom: '16px' }}>
               <strong style={{ fontSize: '14px', color: '#18334a' }}>
-                🧮 {selectedFundingAsset.symbol} {tr('델타 뉴트럴 차익거래 시뮬레이터', 'Delta-Neutral Arbitrage Simulator')}
+                🧮 {selectedFundingAsset?.symbol ?? ''} {tr('델타 뉴트럴 차익거래 시뮬레이터', 'Delta-Neutral Arbitrage Simulator')}
               </strong>
               <button onClick={() => setCalcModalOpen(false)} style={{ border: 0, background: 'none', color: '#74808c', fontSize: '14px', cursor: 'pointer' }}>×</button>
             </div>
@@ -1210,24 +1307,44 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '6px' }}>
                 <span style={{ color: '#18334a', fontWeight: 600 }}>{tr('순 시장 노출도 (Net Delta):', 'Net Market Exposure (Net Delta):')}</span>
-                <strong style={{ color: '#0369a1' }}>{tr('0.00% (완전 무위험)', '0.00% (fully hedged)')}</strong>
+                <strong style={{ color: '#0369a1' }}>{tr('0.00% (명목 금액 기준 헤지)', '0.00% (hedged by notional)')}</strong>
               </div>
             </div>
 
-            <div style={{ background: '#022c22', border: '1px solid #059669', padding: '14px', borderRadius: '4px', color: '#f8fafc', marginBottom: '18px', fontSize: '11px', display: 'grid', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>{tr('8시간 주기 예상 이자 수취:', 'Expected funding per 8 hours:')}</span>
-                <strong style={{ color: '#34d399' }}>+${((calcCapital / 2) * (selectedFundingAsset.rate8h / 100)).toFixed(2)} USD</strong>
+            {selectedFundingAsset ? (() => {
+              // 펀딩비는 선물 숏 포지션(원금의 50%) 명목 금액에 붙는다. 양수면 숏이 수취, 음수면 숏이 지급한다.
+              const perpNotional = calcCapital / 2;
+              const interval = selectedFundingAsset.fundingIntervalHours;
+              const perPayout = perpNotional * (selectedFundingAsset.fundingRatePct / 100);
+              const payouts30d = (30 * 24) / interval;
+              const earning = perPayout >= 0;
+              const money = (v: number) => `${v >= 0 ? '+' : '-'}$${Math.abs(v).toFixed(2)} USD`;
+              return (
+                <div style={{ background: earning ? '#022c22' : '#3b1214', border: `1px solid ${earning ? '#059669' : '#b91c1c'}`, padding: '14px', borderRadius: '4px', color: '#f8fafc', marginBottom: '18px', fontSize: '11px', display: 'grid', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{tr(`${interval}시간 주기 펀딩 (현재 요율 기준):`, `Funding per ${interval}h (at current rate):`)}</span>
+                    <strong style={{ color: earning ? '#34d399' : '#f87171' }}>{money(perPayout)}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{tr(`30일 누적 (${payouts30d}회 정산, 요율 고정 가정):`, `30-day total (${payouts30d} payouts, rate held constant):`)}</span>
+                    <strong style={{ color: earning ? '#34d399' : '#f87171' }}>{money(perPayout * payouts30d)}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: `1px solid ${earning ? '#065f46' : '#7f1d1d'}`, paddingTop: '6px', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 600 }}>{tr('연환산 (단순, 요율 고정 가정):', 'Annualized (simple, rate held constant):')}</span>
+                    <strong style={{ color: earning ? '#10b981' : '#f87171', fontSize: '15px' }}>{formatSignedPct(selectedFundingAsset.annualizedPct, 2)}</strong>
+                  </div>
+                  <small style={{ color: '#94a3b8', fontSize: '9px', lineHeight: 1.5 }}>
+                    {tr('수수료·슬리피지·현물/선물 가격 괴리는 반영하지 않았고, 펀딩비는 정산마다 바뀝니다. 예측이 아닌 현재 요율 기준의 단순 계산입니다.', 'Excludes fees, slippage and spot/perp basis; funding changes every settlement. A simple calculation at the current rate, not a forecast.')}
+                  </small>
+                </div>
+              );
+            })() : (
+              <div style={{ background: '#f8fafb', border: '1px dashed #cbd5e1', padding: '18px', borderRadius: '4px', marginBottom: '18px', fontSize: '11px', textAlign: 'center', color: '#64748b' }}>
+                {simStatus === 'loading'
+                  ? tr('펀딩비 데이터를 불러오는 중…', 'Loading funding data…')
+                  : tr('데이터 없음 — 이 심볼의 펀딩비를 거래소에서 받지 못했습니다. (Binance USDⓈ-M 선물에 없는 심볼일 수 있습니다)', 'No data — could not fetch this symbol\'s funding rate. (It may not be listed on Binance USDⓈ-M futures.)')}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>{tr('30일 복리 누적 수익 (90회 수취):', '30-day cumulative return (90 payouts):')}</span>
-                <strong style={{ color: '#34d399' }}>+${((calcCapital / 2) * (selectedFundingAsset.rate8h / 100) * 90).toFixed(2)} USD</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #065f46', paddingTop: '6px', fontSize: '12px' }}>
-                <span style={{ fontWeight: 600 }}>{tr('연간 환산 예상 수익률 (APY):', 'Annualized Expected Yield (APY):')}</span>
-                <strong style={{ color: '#10b981', fontSize: '15px' }}>+{selectedFundingAsset.apy.toFixed(2)}% APY</strong>
-              </div>
-            </div>
+            )}
 
             <button
               onClick={() => setCalcModalOpen(false)}

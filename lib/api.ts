@@ -1345,6 +1345,45 @@ export async function fetchFractalGhost(symbol = 'BTCUSDT', timeFrame = 'H1', li
 /**
  * 24. 월가 3대 거장의 명언 API — 실시간 매수/매도 신호가 아닌 공개적으로 알려진 명언 인용.
  */
+/** 무기한 선물 펀딩비 실데이터 한 건 (Binance USDⓈ-M Futures). null 필드는 거래소에서 확보하지 못한 값. */
+export interface FundingRateRow {
+  symbol: string;
+  markPrice: number | null;
+  /** 마지막 확정 펀딩비(%, 한 정산 주기당). 양수면 롱이 숏에게 지급 */
+  fundingRatePct: number;
+  fundingIntervalHours: number;
+  /** 다음 정산 시각 (epoch ms) */
+  nextFundingTime: number;
+  /** 현재 펀딩비가 유지된다는 단순 가정의 연환산(%, 복리 아님) — 예측이 아님 */
+  annualizedPct: number;
+  openInterestUsd: number | null;
+  volume24hUsd: number | null;
+  source: string;
+  fetchedAt: number;
+}
+
+export interface FundingRatesResponse {
+  available: boolean;
+  source?: string;
+  fetchedAt?: number;
+  items?: FundingRateRow[];
+  message?: string;
+}
+
+/** 펀딩비 실데이터 조회. 서버/거래소 장애 시 null — 호출부는 "데이터 없음"으로 표시해야 한다. */
+export async function fetchFundingRates(symbols?: string[]): Promise<FundingRatesResponse | null> {
+  try {
+    const qs = symbols && symbols.length ? `?symbols=${encodeURIComponent(symbols.join(','))}` : '';
+    const res = await fetch(`${API_BASE}/market/funding-rates${qs}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('[API] fetchFundingRates failed:', err);
+  }
+  return null;
+}
+
 export async function fetchAiDebate(symbol = 'BTCUSDT', lang = 'ko'): Promise<AiDebateResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/ai/debate?symbol=${symbol}&lang=${lang}`);
