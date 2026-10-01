@@ -65,6 +65,8 @@ export interface ExchangeInfo {
   color: string;
   badgeBg: string;
   marketType: string;
+  /** 실제 호가 WebSocket이 연결된 거래소인지. false 면 회색(미구현)으로 표시하고 값을 만들어 내지 않는다. */
+  live: boolean;
 }
 
 export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
@@ -74,7 +76,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'BINANCE SPOT DIRECT',
     color: '#f59e0b',
     badgeBg: '#fef3c7',
-    marketType: 'Global Spot L2'
+    marketType: 'Global Spot L2',
+    live: true
   },
   BYBIT: {
     id: 'BYBIT',
@@ -82,7 +85,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'BYBIT V5 DIRECT',
     color: '#0284c7',
     badgeBg: '#e0f2fe',
-    marketType: 'Global Derivatives/Spot'
+    marketType: 'Global Derivatives/Spot',
+    live: true
   },
   OKX: {
     id: 'OKX',
@@ -90,7 +94,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'OKX V5 FAST-STREAM',
     color: '#10b981',
     badgeBg: '#d1fae5',
-    marketType: 'Institutional Web3/Spot'
+    marketType: 'Institutional Web3/Spot',
+    live: false
   },
   UPBIT: {
     id: 'UPBIT',
@@ -98,7 +103,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'UPBIT SPOT (김프 연동)',
     color: '#004fff',
     badgeBg: '#e0e7ff',
-    marketType: 'KRW Orderbook (USD 환산)'
+    marketType: 'KRW Orderbook (USD 환산)',
+    live: false
   },
   BITUNIX: {
     id: 'BITUNIX',
@@ -106,7 +112,8 @@ export const EXCHANGES: Record<ExchangeId, ExchangeInfo> = {
     tag: 'BITUNIX PERP FEED',
     color: '#8b5cf6',
     badgeBg: '#ede9fe',
-    marketType: 'Emerging High-Beta Venue'
+    marketType: 'Emerging High-Beta Venue',
+    live: false
   }
 };
 
@@ -147,28 +154,6 @@ function formatSignedPct(value: number, digits: number): string {
   return `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`;
 }
 
-const defaultSnapshotBids: L2Item[] = [
-  { price: 67840.5, qty: 1.42, total: 1.42 },
-  { price: 67839.0, qty: 2.15, total: 3.57 },
-  { price: 67838.0, qty: 0.85, total: 4.42 },
-  { price: 67837.5, qty: 3.20, total: 7.62 },
-  { price: 67836.0, qty: 1.10, total: 8.72 },
-  { price: 67835.0, qty: 4.50, total: 13.22 },
-  { price: 67834.0, qty: 2.30, total: 15.52 },
-  { price: 67833.0, qty: 0.95, total: 16.47 },
-];
-
-const defaultSnapshotAsks: L2Item[] = [
-  { price: 67841.5, qty: 1.25, total: 1.25 },
-  { price: 67842.0, qty: 2.05, total: 3.30 },
-  { price: 67843.5, qty: 1.80, total: 5.10 },
-  { price: 67844.0, qty: 0.90, total: 6.00 },
-  { price: 67845.5, qty: 3.40, total: 9.40 },
-  { price: 67846.0, qty: 1.60, total: 11.00 },
-  { price: 67847.5, qty: 2.80, total: 13.80 },
-  { price: 67848.0, qty: 1.15, total: 14.95 },
-];
-
 export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'ko' }: { defaultSymbol?: string; language?: 'en' | 'cn' | 'ko' }) {
   // 영문 모드만 영문으로, 그 외(ko/cn)는 기존 한국어 유지
   const isEn = language === 'en';
@@ -183,14 +168,15 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
   const [exchangeA, setExchangeA] = useState<ExchangeId>('BINANCE');
   const [exchangeB, setExchangeB] = useState<ExchangeId>('BYBIT');
 
-  // Real-time Orderbook Data Streams (Initialized with Instant Snapshot)
-  const [binanceBids, setBinanceBids] = useState<L2Item[]>(defaultSnapshotBids);
-  const [binanceAsks, setBinanceAsks] = useState<L2Item[]>(defaultSnapshotAsks);
-  const [binanceWsStatus, setBinanceWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTED');
-  
-  const [bybitBids, setBybitBids] = useState<L2Item[]>(defaultSnapshotBids);
-  const [bybitAsks, setBybitAsks] = useState<L2Item[]>(defaultSnapshotAsks);
-  const [bybitWsStatus, setBybitWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTED');
+  // Real-time Orderbook Data Streams — 거래소 WebSocket 에서 첫 메시지를 받기 전에는 비어 있다.
+  // (예전에는 하드코딩한 스냅샷으로 시작해, 연결 전·연결 실패 시에도 그럴듯한 호가가 보였다.)
+  const [binanceBids, setBinanceBids] = useState<L2Item[]>([]);
+  const [binanceAsks, setBinanceAsks] = useState<L2Item[]>([]);
+  const [binanceWsStatus, setBinanceWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTING');
+
+  const [bybitBids, setBybitBids] = useState<L2Item[]>([]);
+  const [bybitAsks, setBybitAsks] = useState<L2Item[]>([]);
+  const [bybitWsStatus, setBybitWsStatus] = useState<'CONNECTED' | 'CONNECTING' | 'DISCONNECTED'>('CONNECTING');
 
   const [trades, setTrades] = useState<TradeItem[]>([]);
 
@@ -265,16 +251,9 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
     ? Math.min(...fundingRows.map((r) => r.nextFundingTime))
     : null;
 
-  // Latency benchmark
-  const [stats, setStats] = useState<LatencyStats>({
-    currentMs: 12,
-    avgMs: 14.2,
-    minMs: 8,
-    maxMs: 35,
-    jitter: 2.1,
-    msgPerSec: 36,
-    totalPackets: 0
-  });
+  // 피드 지연 측정값 — 실제 메시지를 받아 계산하기 전에는 null (예전엔 12ms/36msg·s 초기값이 박혀 있었다).
+  // 측정 방식: 수신 시각 − 거래소 이벤트 시각. 브라우저/거래소 시계 차이가 섞이므로 왕복 지연(RTT)이 아니다.
+  const [stats, setStats] = useState<LatencyStats | null>(null);
 
   const latencyHistoryRef = useRef<number[]>([]);
   const packetCountRef = useRef<number>(0);
@@ -371,7 +350,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               maxMs: max,
               jitter: parseFloat(jitter.toFixed(1)),
               msgPerSec: msgRate,
-              totalPackets: (stats.totalPackets || 0) + msgRate
+              totalPackets: (stats?.totalPackets || 0) + msgRate
             });
           }
 
@@ -522,93 +501,65 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
       };
     }, [cleanPairBybit]);
 
-  // Derive Multi-Exchange Orderbooks for all 5 exchanges
-  const baseBid = binanceBids[0]?.price || 67800;
-  const baseAsk = binanceAsks[0]?.price || 67801;
-
-  const exchangeBooks = useMemo(() => {
-    const activeBybitBids = bybitBids.length > 0 ? bybitBids : binanceBids.map(b => ({ ...b, price: b.price * 1.0002 }));
-    const activeBybitAsks = bybitAsks.length > 0 ? bybitAsks : binanceAsks.map(a => ({ ...a, price: a.price * 1.0002 }));
-
-    // OKX: Competitive tight spread with slight variance
-    const okxBids: L2Item[] = binanceBids.map(b => ({ ...b, price: b.price * 0.9998, qty: b.qty * 1.2 }));
-    const okxAsks: L2Item[] = binanceAsks.map(a => ({ ...a, price: a.price * 0.9997, qty: a.qty * 1.1 }));
-
-    // Upbit: Kimchi Premium (+0.65% ~ +1.15% KRW basis)
-    const kimchiFactor = 1.0082; // +0.82% average Kimchi Premium
-    const upbitBids: L2Item[] = binanceBids.map(b => ({ ...b, price: b.price * kimchiFactor, qty: b.qty * 0.85 }));
-    const upbitAsks: L2Item[] = binanceAsks.map(a => ({ ...a, price: a.price * kimchiFactor, qty: a.qty * 0.9 }));
-
-    // Bitunix: High-beta variance (+0.25% ~ +0.45% spread window)
-    const bitunixBids: L2Item[] = binanceBids.map(b => ({ ...b, price: b.price * 1.0035, qty: b.qty * 0.95 }));
-    const bitunixAsks: L2Item[] = binanceAsks.map(a => ({ ...a, price: a.price * 1.0038, qty: a.qty * 0.98 }));
-
-    return {
-      BINANCE: { bids: binanceBids, asks: binanceAsks, status: binanceWsStatus },
-      BYBIT: { bids: activeBybitBids, asks: activeBybitAsks, status: bybitWsStatus },
-      OKX: { bids: okxBids, asks: okxAsks, status: 'CONNECTED' as const },
-      UPBIT: { bids: upbitBids, asks: upbitAsks, status: 'CONNECTED' as const },
-      BITUNIX: { bids: bitunixBids, asks: bitunixAsks, status: 'CONNECTED' as const }
-    };
-  }, [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus]);
+  // 거래소별 호가. 실제 WebSocket 이 연결된 거래소(Binance 현물, Bybit 현물)만 값이 있다.
+  // OKX / Upbit / Bitunix 는 예전에 Binance 호가에 고정 비율(0.9998, 1.0082, 1.0035 …)을 곱해 만들어 냈고
+  // 상태도 항상 CONNECTED 로 표시했다 — 실제로는 연결이 없으므로 비워 두고 NOT_CONNECTED 로 표시한다.
+  type BookStatus = 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED' | 'NOT_CONNECTED';
+  const exchangeBooks = useMemo<Record<ExchangeId, { bids: L2Item[]; asks: L2Item[]; status: BookStatus }>>(() => ({
+    BINANCE: { bids: binanceBids, asks: binanceAsks, status: binanceWsStatus },
+    BYBIT: { bids: bybitBids, asks: bybitAsks, status: bybitWsStatus },
+    OKX: { bids: [], asks: [], status: 'NOT_CONNECTED' },
+    UPBIT: { bids: [], asks: [], status: 'NOT_CONNECTED' },
+    BITUNIX: { bids: [], asks: [], status: 'NOT_CONNECTED' }
+  }), [binanceBids, binanceAsks, bybitBids, bybitAsks, binanceWsStatus, bybitWsStatus]);
 
   // Selected Orderbooks for Exchange A & Exchange B
   const bookA = exchangeBooks[exchangeA];
   const bookB = exchangeBooks[exchangeB];
 
-  const bestBidA = bookA.bids[0]?.price || baseBid;
-  const bestAskA = bookA.asks[0]?.price || baseAsk;
-  const bestBidB = bookB.bids[0]?.price || baseBid;
-  const bestAskB = bookB.asks[0]?.price || baseAsk;
+  // 호가가 없으면 null — 임의의 기준가(예전엔 67800)로 대신 채우지 않는다.
+  const bestBidA: number | null = bookA.bids[0]?.price ?? null;
+  const bestAskA: number | null = bookA.asks[0]?.price ?? null;
+  const bestBidB: number | null = bookB.bids[0]?.price ?? null;
+  const bestAskB: number | null = bookB.asks[0]?.price ?? null;
 
-  // Real-time 5x5 Cross Arbitrage Matrix Calculation
+  // Cross Arbitrage Matrix — 양쪽 모두 실제 호가가 있는 쌍만 계산하고, 나머지는 null(표본 없음)로 둔다.
   const exchangeList: ExchangeId[] = ['BINANCE', 'BYBIT', 'OKX', 'UPBIT', 'BITUNIX'];
 
   const heatmapMatrix = useMemo(() => {
-    let bestRoute = {
-      buyEx: 'OKX' as ExchangeId,
-      sellEx: 'UPBIT' as ExchangeId,
-      spreadPct: -999,
-      buyPrice: 0,
-      sellPrice: 0
-    };
+    type Route = { buyEx: ExchangeId; sellEx: ExchangeId; spreadPct: number; buyPrice: number; sellPrice: number };
+    const best: { route: Route | null } = { route: null };
 
-    const matrix: Record<ExchangeId, Record<ExchangeId, number>> = {
-      BINANCE: {} as any,
-      BYBIT: {} as any,
-      OKX: {} as any,
-      UPBIT: {} as any,
-      BITUNIX: {} as any
-    };
+    const matrix = {} as Record<ExchangeId, Record<ExchangeId, number | null>>;
+    exchangeList.forEach((a) => {
+      matrix[a] = {} as Record<ExchangeId, number | null>;
+    });
 
     exchangeList.forEach((buyEx) => {
       exchangeList.forEach((sellEx) => {
         if (buyEx === sellEx) {
-          matrix[buyEx][sellEx] = 0;
+          matrix[buyEx][sellEx] = null;
           return;
         }
 
-        const buyAsk = exchangeBooks[buyEx].asks[0]?.price || baseAsk;
-        const sellBid = exchangeBooks[sellEx].bids[0]?.price || baseBid;
+        const buyAsk = exchangeBooks[buyEx].asks[0]?.price;
+        const sellBid = exchangeBooks[sellEx].bids[0]?.price;
+        if (!EXCHANGES[buyEx].live || !EXCHANGES[sellEx].live || !buyAsk || !sellBid) {
+          matrix[buyEx][sellEx] = null;
+          return;
+        }
 
-        const spPct = buyAsk > 0 ? ((sellBid - buyAsk) / buyAsk) * 100 : 0;
+        const spPct = ((sellBid - buyAsk) / buyAsk) * 100;
         matrix[buyEx][sellEx] = spPct;
 
-        if (spPct > bestRoute.spreadPct) {
-          bestRoute = {
-            buyEx,
-            sellEx,
-            spreadPct: spPct,
-            buyPrice: buyAsk,
-            sellPrice: sellBid
-          };
+        if (best.route === null || spPct > best.route.spreadPct) {
+          best.route = { buyEx, sellEx, spreadPct: spPct, buyPrice: buyAsk, sellPrice: sellBid };
         }
       });
     });
 
-    return { matrix, bestRoute };
-  }, [exchangeBooks, baseAsk, baseBid]);
-
+    return { matrix, bestRoute: best.route };
+  }, [exchangeBooks]);
   // Quick swap handler
   const handleSwapExchanges = () => {
     const temp = exchangeA;
@@ -618,6 +569,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
 
   const handleSelectHeatmapCell = (buy: ExchangeId, sell: ExchangeId) => {
     if (buy === sell) return;
+    if (!EXCHANGES[buy].live || !EXCHANGES[sell].live) return; // 미구현 거래소는 선택할 수 없다
     setExchangeA(buy);
     setExchangeB(sell);
     setActiveTab('HEATMAP_ARBITRAGE');
@@ -626,8 +578,20 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
   const maxTotalA = Math.max(bookA.bids[bookA.bids.length - 1]?.total || 1, bookA.asks[bookA.asks.length - 1]?.total || 1);
   const maxTotalB = Math.max(bookB.bids[bookB.bids.length - 1]?.total || 1, bookB.asks[bookB.asks.length - 1]?.total || 1);
 
-  const currentPairSpreadPct = bestAskA > 0 ? ((bestBidB - bestAskA) / bestAskA) * 100 : 0;
-  const isCurrentProfitable = currentPairSpreadPct > 0.015;
+  // 양쪽 호가가 모두 있을 때만 계산한다. 없으면 null(표시: —).
+  const currentPairSpreadPct: number | null =
+    bestAskA !== null && bestBidB !== null && bestAskA > 0 ? ((bestBidB - bestAskA) / bestAskA) * 100 : null;
+  const isCurrentProfitable = currentPairSpreadPct !== null && currentPairSpreadPct > 0.015;
+
+  // 연결 상태 요약 (상단 바)
+  const liveExchangeIds = exchangeList.filter((e) => EXCHANGES[e].live);
+  const connectedLiveCount = liveExchangeIds.filter((e) => exchangeBooks[e].status === 'CONNECTED').length;
+  const notConnectedCount = exchangeList.length - liveExchangeIds.length;
+
+  const statusLabel = (s: BookStatus) =>
+    s === 'CONNECTED' ? 'CONNECTED' : s === 'CONNECTING' ? 'CONNECTING' : s === 'DISCONNECTED' ? 'DISCONNECTED' : tr('미구현', 'NOT IMPLEMENTED');
+  const statusColor = (s: BookStatus) =>
+    s === 'CONNECTED' ? '#10b981' : s === 'CONNECTING' ? '#f59e0b' : s === 'DISCONNECTED' ? '#ef4444' : '#94a3b8';
 
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden', fontFamily: "var(--font-sans)", letterSpacing: "-0.015em" }}>
@@ -652,7 +616,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               }}
             >
               <Activity size={12} />
-              {tr('5대 거래소 크로스 히트맵 매트릭스', '5-Exchange Cross Heatmap Matrix')}
+              {tr('거래소 크로스 히트맵 매트릭스', 'Cross-Exchange Heatmap Matrix')}
             </button>
             <button
               onClick={() => setActiveTab('SINGLE_L2')}
@@ -690,7 +654,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               }}
             >
               <TrendingUp size={12} />
-              {tr('무위험 펀딩비 APY 매트릭스', 'Risk-Free Funding APY Matrix')}
+              {tr('펀딩비 APY 매트릭스', 'Funding APY Matrix')}
             </button>
           </div>
 
@@ -720,20 +684,21 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
         {/* Realtime Dual Link Status & Latency Readout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '9.5px', color: '#94a3b8' }}>
           <div>
-            <span>MULTI-LINK: </span>
-            <strong style={{ color: '#10b981' }}>
-              ● 5 EXCHANGES SYNCED
+            <span>LIVE LINKS: </span>
+            <strong style={{ color: connectedLiveCount === liveExchangeIds.length ? '#10b981' : connectedLiveCount > 0 ? '#f59e0b' : '#ef4444' }}>
+              ● {connectedLiveCount}/{liveExchangeIds.length} CONNECTED
             </strong>
+            <span style={{ color: '#64748b' }}> · {tr(`${notConnectedCount}개 미구현`, `${notConnectedCount} not implemented`)}</span>
           </div>
-          <div>
-            <span>RTT: </span>
-            <strong style={{ color: stats.currentMs < 25 ? '#10b981' : '#f59e0b', fontSize: '11px' }}>
-              {stats.currentMs} ms
+          <div title={tr('수신 시각 − 거래소 이벤트 시각. 브라우저·거래소 시계 차이가 포함되어 왕복 지연(RTT)이 아닙니다.', 'Receive time − exchange event time. Includes browser/exchange clock skew; not a round-trip time.')}>
+            <span>FEED LAG: </span>
+            <strong style={{ color: stats === null ? '#64748b' : stats.currentMs < 25 ? '#10b981' : '#f59e0b', fontSize: '11px' }}>
+              {stats === null ? '—' : `${stats.currentMs} ms`}
             </strong>
           </div>
           <div>
             <span>THROUGHPUT: </span>
-            <strong style={{ color: '#38bdf8' }}>{stats.msgPerSec} msg/s</strong>
+            <strong style={{ color: stats === null ? '#64748b' : '#38bdf8' }}>{stats === null ? '—' : `${stats.msgPerSec} msg/s`}</strong>
           </div>
         </div>
       </div>
@@ -766,6 +731,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               }}>
                 GLOBAL BEST ARBITRAGE ROUTE
               </div>
+              {heatmapMatrix.bestRoute ? (
               <div style={{ color: '#f8fafc', fontSize: '12.5px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                 <span style={{ color: '#cbd5e1' }}>{tr('최적 매수: ', 'Best Buy: ')}</span>
                 <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.buyEx].color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -779,23 +745,29 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                   {EXCHANGES[heatmapMatrix.bestRoute.sellEx].name} (${heatmapMatrix.bestRoute.sellPrice.toFixed(precision)})
                 </strong>
               </div>
+              ) : (
+              <div style={{ color: '#94a3b8', fontSize: '12px' }}>
+                {tr('데이터 대기 중 — 실시간 호가가 연결된 거래소(Binance, Bybit)의 첫 호가를 기다리고 있습니다.', 'Waiting for data — the first live orderbook from the connected exchanges (Binance, Bybit).')}
+              </div>
+              )}
             </div>
 
+            {heatmapMatrix.bestRoute && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px', color: '#cbd5e1' }}>
-              <div>
-                <span>NET SPREAD: </span>
-                <strong style={{ color: '#34d399', fontSize: '14px' }}>
-                  +{heatmapMatrix.bestRoute.spreadPct.toFixed(4)}%
+              <div title={tr('수수료·슬리피지·이체 비용 반영 전 호가 차이입니다.', 'Raw quote difference before fees, slippage and transfer costs.')}>
+                <span>GROSS SPREAD: </span>
+                <strong style={{ color: heatmapMatrix.bestRoute.spreadPct > 0 ? '#34d399' : '#94a3b8', fontSize: '14px' }}>
+                  {formatSignedPct(heatmapMatrix.bestRoute.spreadPct, 4)}
                 </strong>
               </div>
-              <div>
-                <span>EST. PROFIT ($10K): </span>
-                <strong style={{ color: '#10b981', fontSize: '13px' }}>
-                  +${(10000 * (heatmapMatrix.bestRoute.spreadPct / 100)).toFixed(2)} USD
+              <div title={tr('수수료·슬리피지 반영 전, 호가창 최우선 호가 기준 단순 계산입니다.', 'Before fees and slippage; simple calculation at the top of the book.')}>
+                <span>GROSS ON $10K: </span>
+                <strong style={{ color: heatmapMatrix.bestRoute.spreadPct > 0 ? '#10b981' : '#94a3b8', fontSize: '13px' }}>
+                  {heatmapMatrix.bestRoute.spreadPct >= 0 ? '+' : '-'}${Math.abs(10000 * (heatmapMatrix.bestRoute.spreadPct / 100)).toFixed(2)} USD
                 </strong>
               </div>
               <button
-                onClick={() => handleSelectHeatmapCell(heatmapMatrix.bestRoute.buyEx, heatmapMatrix.bestRoute.sellEx)}
+                onClick={() => heatmapMatrix.bestRoute && handleSelectHeatmapCell(heatmapMatrix.bestRoute.buyEx, heatmapMatrix.bestRoute.sellEx)}
                 style={{
                   background: '#0f766e',
                   border: '1px solid #14b8a6',
@@ -814,16 +786,17 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 {tr('최적 경로 즉시 점검 ↗', 'Inspect Best Route ↗')}
               </button>
             </div>
+            )}
           </div>
 
           {/* 5x5 Cross Arbitrage Heatmap Table */}
           <div style={{ padding: '18px 20px', background: '#0b131e', borderBottom: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', letterSpacing: '.06em', fontWeight: 600 }}>
-                {tr('5대 거래소 실시간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 상단 오더북 자동 전환)', 'Live 5-exchange cross-spread matrix (click a cell to switch the orderbook above)')}
+                {tr('실시간 거래소 간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 하단 오더북 전환)', 'Live cross-exchange spread matrix (click a cell to switch the orderbooks below)')}
               </span>
               <span style={{ fontSize: '9px', color: '#64748b' }}>
-                {tr('🟢 +0.4% 이상 초록색 (수익 기회) · 🇰🇷 업비트 환율(1,440 KRW/USD) 김프 자동 산출', '🟢 Green at +0.4% or more (opportunity) · 🇰🇷 Kimchi premium auto-computed at Upbit rate (1,440 KRW/USD)')}
+                {tr('🟢 +0.4% 이상 초록색 · 회색(미구현) = 실시간 호가 미연결 거래소 · 수수료 반영 전', '🟢 Green at +0.4% or more · Gray (not implemented) = no live orderbook connection · before fees')}
               </span>
             </div>
 
@@ -833,11 +806,14 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                   <tr style={{ background: '#111c2a', color: '#94a3b8', borderBottom: '1px solid #334155' }}>
                     <th style={{ padding: '8px 10px', textAlign: 'left', color: '#64748b', fontSize: '9px' }}>{tr('매수 (ASK) ➔ 매도 (BID)', 'Buy (ASK) ➔ Sell (BID)')}</th>
                     {exchangeList.map((ex) => (
-                      <th key={ex} style={{ padding: '8px 10px', color: EXCHANGES[ex].color }}>
+                      <th key={ex} style={{ padding: '8px 10px', color: EXCHANGES[ex].live ? EXCHANGES[ex].color : '#475569', opacity: EXCHANGES[ex].live ? 1 : 0.6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                           <ExchangeLogo exchange={ex} size={14} />
                           {EXCHANGES[ex].name}
                         </div>
+                        {!EXCHANGES[ex].live && (
+                          <div style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>{tr('(미구현)', '(not implemented)')}</div>
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -845,10 +821,11 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 <tbody>
                   {exchangeList.map((buyEx) => (
                     <tr key={buyEx} style={{ borderBottom: '1px solid #1e293b' }}>
-                      <td style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: EXCHANGES[buyEx].color, background: '#0d1724' }}>
+                      <td style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: EXCHANGES[buyEx].live ? EXCHANGES[buyEx].color : '#475569', background: '#0d1724', opacity: EXCHANGES[buyEx].live ? 1 : 0.6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <ExchangeLogo exchange={buyEx} size={14} />
                           {EXCHANGES[buyEx].name} {tr('매수', 'Buy')}
+                          {!EXCHANGES[buyEx].live && <span style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>{tr('(미구현)', '(not implemented)')}</span>}
                         </div>
                       </td>
                       {exchangeList.map((sellEx) => {
@@ -861,7 +838,21 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                         }
 
                         const spreadPct = heatmapMatrix.matrix[buyEx][sellEx];
-                        const isBest = heatmapMatrix.bestRoute.buyEx === buyEx && heatmapMatrix.bestRoute.sellEx === sellEx;
+
+                        // 표본 없음(미구현 거래소이거나 호가 대기 중): 0% 가 아니라 별도의 회색 칸으로 구분한다.
+                        if (spreadPct === null) {
+                          return (
+                            <td
+                              key={sellEx}
+                              title={tr('데이터 없음 — 실시간 호가가 연결되지 않았습니다', 'No data — no live orderbook connected')}
+                              style={{ padding: '9px', color: '#475569', background: '#0a0f17', border: '1px dashed #1e293b', cursor: 'not-allowed' }}
+                            >
+                              —
+                            </td>
+                          );
+                        }
+
+                        const isBest = heatmapMatrix.bestRoute?.buyEx === buyEx && heatmapMatrix.bestRoute?.sellEx === sellEx;
                         const isHigh = spreadPct > 0.4;
                         const isMed = spreadPct > 0.1;
                         const isPos = spreadPct > 0;
@@ -916,7 +907,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '3px', background: '#ffffff', color: '#18334a' }}
               >
                 {exchangeList.map(ex => (
-                  <option key={ex} value={ex}>{EXCHANGES[ex].name} ({localizeExchangeText(EXCHANGES[ex].marketType)})</option>
+                  <option key={ex} value={ex} disabled={!EXCHANGES[ex].live}>{EXCHANGES[ex].name} ({localizeExchangeText(EXCHANGES[ex].marketType)}){EXCHANGES[ex].live ? '' : tr(' — 미구현', ' — not implemented')}</option>
                 ))}
               </select>
 
@@ -935,7 +926,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '3px', background: '#ffffff', color: '#18334a' }}
               >
                 {exchangeList.map(ex => (
-                  <option key={ex} value={ex}>{EXCHANGES[ex].name} ({localizeExchangeText(EXCHANGES[ex].marketType)})</option>
+                  <option key={ex} value={ex} disabled={!EXCHANGES[ex].live}>{EXCHANGES[ex].name} ({localizeExchangeText(EXCHANGES[ex].marketType)}){EXCHANGES[ex].live ? '' : tr(' — 미구현', ' — not implemented')}</option>
                 ))}
               </select>
             </div>
@@ -944,10 +935,10 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
               <div>
                 <span style={{ color: '#64748b' }}>{tr('선택 페어 스프레드: ', 'Selected Pair Spread: ')}</span>
                 <strong style={{ color: isCurrentProfitable ? '#2b866d' : '#ac5d59', fontSize: '13px' }}>
-                  {currentPairSpreadPct > 0 ? `+${currentPairSpreadPct.toFixed(4)}%` : `${currentPairSpreadPct.toFixed(4)}%`}
+                  {currentPairSpreadPct === null ? '—' : formatSignedPct(currentPairSpreadPct, 4)}
                 </strong>
                 <span style={{ color: '#74808c', fontSize: '9.5px', marginLeft: '5px' }}>
-                  (${Math.abs(bestBidB - bestAskA).toFixed(precision)} Gap)
+                  {bestBidB !== null && bestAskA !== null ? `($${Math.abs(bestBidB - bestAskA).toFixed(precision)} Gap)` : ''}
                 </span>
               </div>
               <button
@@ -968,12 +959,18 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <ExchangeLogo exchange={exchangeA} size={18} />
                   {localizeExchangeText(EXCHANGES[exchangeA].tag)}
-                  <span style={{ fontSize: '8px', color: bookA.status === 'CONNECTED' ? '#10b981' : '#ef4444', padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
-                    ● {bookA.status}
+                  <span style={{ fontSize: '8px', color: statusColor(bookA.status), padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
+                    ● {statusLabel(bookA.status)}
                   </span>
                 </strong>
-                <span style={{ fontSize: '9px', color: '#64748b' }}>SPREAD: ${(bestAskA - bestBidA).toFixed(precision)}</span>
+                <span style={{ fontSize: '9px', color: '#64748b' }}>SPREAD: {bestAskA !== null && bestBidA !== null ? `$${(bestAskA - bestBidA).toFixed(precision)}` : '—'}</span>
               </div>
+
+              {bookA.bids.length === 0 && bookA.asks.length === 0 && (
+                <div style={{ marginTop: '10px', padding: '10px', fontSize: '10px', color: '#94a3b8', background: '#f8fafb', border: '1px dashed #cbd5e1', borderRadius: '3px', textAlign: 'center' }}>
+                  {bookA.status === 'NOT_CONNECTED' ? tr('미구현 — 이 거래소의 실시간 호가는 아직 연결되지 않았습니다.', 'Not implemented — no live orderbook connection for this exchange yet.') : tr('데이터 대기 중…', 'Waiting for data…')}
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
                 {/* Bids */}
@@ -1024,12 +1021,18 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
                 <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <ExchangeLogo exchange={exchangeB} size={18} />
                   {localizeExchangeText(EXCHANGES[exchangeB].tag)}
-                  <span style={{ fontSize: '8px', color: bookB.status === 'CONNECTED' ? '#0369a1' : '#ef4444', padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
-                    ● {bookB.status}
+                  <span style={{ fontSize: '8px', color: statusColor(bookB.status), padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
+                    ● {statusLabel(bookB.status)}
                   </span>
                 </strong>
-                <span style={{ fontSize: '9px', color: '#64748b' }}>SPREAD: ${(bestAskB - bestBidB).toFixed(precision)}</span>
+                <span style={{ fontSize: '9px', color: '#64748b' }}>SPREAD: {bestAskB !== null && bestBidB !== null ? `$${(bestAskB - bestBidB).toFixed(precision)}` : '—'}</span>
               </div>
+
+              {bookB.bids.length === 0 && bookB.asks.length === 0 && (
+                <div style={{ marginTop: '10px', padding: '10px', fontSize: '10px', color: '#94a3b8', background: '#f8fafb', border: '1px dashed #cbd5e1', borderRadius: '3px', textAlign: 'center' }}>
+                  {bookB.status === 'NOT_CONNECTED' ? tr('미구현 — 이 거래소의 실시간 호가는 아직 연결되지 않았습니다.', 'Not implemented — no live orderbook connection for this exchange yet.') : tr('데이터 대기 중…', 'Waiting for data…')}
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
                 {/* Bids */}
@@ -1103,6 +1106,13 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
       {/* ── SINGLE L2 DEPTH 100MS VIEW ── */}
       {activeTab === 'SINGLE_L2' && (
         <div>
+          {binanceBids.length === 0 && binanceAsks.length === 0 && (
+            <div style={{ margin: '14px 14px 0', padding: '10px', fontSize: '10px', color: '#94a3b8', background: '#f8fafb', border: '1px dashed #cbd5e1', borderRadius: '3px', textAlign: 'center' }}>
+              {binanceWsStatus === 'DISCONNECTED'
+                ? tr('연결이 끊겼습니다 — Binance 호가를 받지 못하고 있습니다.', 'Disconnected — not receiving Binance orderbook data.')
+                : tr('데이터 대기 중…', 'Waiting for data…')}
+            </div>
+          )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 280px', minHeight: '460px' }}>
             {/* Asks (Sell Orders) */}
             <div style={{ borderRight: '1px solid #edf0f2', padding: '14px' }}>
@@ -1180,7 +1190,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
             <div>
               <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <ShieldCheck size={16} color="#2b866d" />
-                {tr('델타 뉴트럴(Delta-Neutral) 무위험 펀딩비 차익거래 매트릭스', 'Delta-Neutral Risk-Free Funding Rate Arbitrage Matrix')}
+                {tr('델타 뉴트럴(Delta-Neutral) 펀딩비 차익거래 매트릭스', 'Delta-Neutral Funding Rate Arbitrage Matrix')}
               </strong>
               <p style={{ fontSize: '10px', color: '#64748b', margin: '4px 0 0' }}>
                 {tr('현물 1배 매수 + 무기한 선물 1배 숏으로 가격 변동 노출을 상쇄하고 펀딩비를 수취하는 전략입니다. 아래 수치는 Binance USDⓈ-M 선물의 실제 펀딩비이며 수익은 보장되지 않습니다 (펀딩비 변동·수수료·기준가 괴리 위험).', 'Offsets price exposure with a 1x spot long + 1x perpetual short and collects funding. Figures below are live Binance USDⓈ-M funding rates; returns are not guaranteed (funding changes, fees and basis risk apply).')}
@@ -1359,13 +1369,18 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'k
       {/* ── Bottom Protocol Status Bar ── */}
       <div style={{ background: '#f8fafb', borderTop: '1px solid #d8dee4', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '9.5px', color: '#74808c', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <span>INFRASTRUCTURE: </span>
-          <strong style={{ color: '#18334a' }}>HETZNER DOCKER EDGE · 5-EXCHANGE MULTI-WEBSOCKET ARBITRAGE ENGINE</strong>
+          <span>DATA SOURCES: </span>
+          <strong style={{ color: '#18334a' }}>
+            {tr(
+              '호가: Binance 현물·Bybit 현물 WebSocket (브라우저 직접 연결) · 펀딩비: Binance USDⓈ-M REST (AETHER 서버 경유)',
+              'Orderbooks: Binance Spot & Bybit Spot WebSocket (direct from browser) · Funding: Binance USDⓈ-M REST (via AETHER server)'
+            )}
+          </strong>
         </div>
-        <div>
-          <span>AVERAGE PACKET JITTER: </span>
-          <strong style={{ color: stats.jitter < 4 ? '#2b866d' : '#b9812c' }}>
-            ±{stats.jitter} ms (JITTER GUARD ACTIVE)
+        <div title={tr('최근 50개 메시지의 피드 지연 편차. 측정 전에는 표시하지 않습니다.', 'Deviation of feed lag over the last 50 messages. Not shown until measured.')}>
+          <span>FEED JITTER: </span>
+          <strong style={{ color: stats === null ? '#94a3b8' : stats.jitter < 4 ? '#2b866d' : '#b9812c' }}>
+            {stats === null ? '—' : `±${stats.jitter} ms`}
           </strong>
         </div>
       </div>
