@@ -5937,8 +5937,12 @@ export default function Page() {
                     disabled={sandboxLoading}
                   >
                     {sandboxLoading
-                      ? `${SANDBOX_BACKTEST_BARS.toLocaleString()}봉 AST 분석 및 퀀트 연산 중…`
-                      : `▶ 퀀트 엔진 백테스트 실행 (실거래소 ${SANDBOX_BACKTEST_BARS.toLocaleString()}봉)`}
+                      ? (language === 'en'
+                        ? `Running AST analysis & quant computation on ${SANDBOX_BACKTEST_BARS.toLocaleString()} bars…`
+                        : `${SANDBOX_BACKTEST_BARS.toLocaleString()}봉 AST 분석 및 퀀트 연산 중…`)
+                      : (language === 'en'
+                        ? `▶ Run Quant Engine Backtest (${SANDBOX_BACKTEST_BARS.toLocaleString()} live-exchange bars)`
+                        : `▶ 퀀트 엔진 백테스트 실행 (실거래소 ${SANDBOX_BACKTEST_BARS.toLocaleString()}봉)`)}
                   </button>
                   <button
                     type="button"
