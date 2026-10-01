@@ -238,7 +238,7 @@ const BOT_CONTROL_NETWORK_ERROR = '서버에 연결하지 못했습니다. 네�
 /** 봇 제어 요청을 보내고 성공/실패 응답 본문을 항상 BotControlResult로 정규화한다. */
 async function requestBotControl(url: string, method: 'POST' | 'DELETE'): Promise<BotControlResult> {
   try {
-    const res = await fetch(url, { method });
+    const res = await fetch(url, { method, headers: { ...authHeader() } });
     const body = await res.json().catch(() => null);
 
     if (res.ok) {
@@ -256,7 +256,7 @@ async function requestBotControl(url: string, method: 'POST' | 'DELETE'): Promis
 
 export async function fetchUserBots(userId: number) {
   try {
-    const res = await fetch(`${API_BASE}/bot/instance/user/${userId}`);
+    const res = await fetch(`${API_BASE}/bot/instance/user/${userId}`, { headers: { ...authHeader() } });
     if (res.ok) {
       return await res.json();
     }
@@ -274,7 +274,7 @@ export async function fetchUserBots(userId: number) {
  */
 export async function inspectUserBots(userId: number) {
   try {
-    const res = await fetch(`${API_BASE}/bot/instance/user/${userId}/runtime`);
+    const res = await fetch(`${API_BASE}/bot/instance/user/${userId}/runtime`, { headers: { ...authHeader() } });
     if (res.ok) {
       return await res.json();
     }
@@ -288,7 +288,7 @@ export async function createBotInstanceApi(payload: CreateBotPayload): Promise<B
   try {
     const res = await fetch(`${API_BASE}/bot/instance`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload)
     });
     const body = await res.json().catch(() => null);
@@ -327,7 +327,7 @@ export async function updateBotCodeApi(instanceId: number, userId: number, pytho
   try {
     const res = await fetch(`${API_BASE}/bot/instance/${instanceId}/code?userId=${userId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify({ pythonCode })
     });
     const body = await res.json().catch(() => null);
@@ -346,7 +346,7 @@ export async function updateBotCodeApi(instanceId: number, userId: number, pytho
 
 export async function fetchBotLogsApi(instanceId: number, limit = 50) {
   try {
-    const res = await fetch(`${API_BASE}/bot/instance/${instanceId}/logs?limit=${limit}`);
+    const res = await fetch(`${API_BASE}/bot/instance/${instanceId}/logs?limit=${limit}`, { headers: { ...authHeader() } });
     if (res.ok) return await res.json();
   } catch (err) {
     console.warn('[API] fetchBotLogsApi fallback error:', err);
