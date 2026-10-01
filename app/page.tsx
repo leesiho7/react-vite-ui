@@ -3250,12 +3250,19 @@ export default function Page() {
     if (isTraditionalAsset(searched)) {
       setSandboxIsError(true)
       setSandboxLog(
-        `❌ [지원하지 않는 심볼] ${searched}\n\n` +
-        '24시간 봇 엔진은 USDT 마진 크립토 선물만 거래합니다 ' +
-        '(Binance /fapi · Bybit linear · OKX SWAP).\n' +
-        '주식 · 지수 · 원자재는 이 거래소들에 상장돼 있지 않아 백테스트할 수 없습니다.\n\n' +
-        '상단 검색창에서 크립토 심볼을 선택한 뒤 다시 실행하세요 (예: BTC/USD, ETH/USD, SOL/USD).\n' +
-        '※ 전략 코드 자체는 아직 검증되지 않았습니다.'
+        language === 'en'
+          ? `❌ [UNSUPPORTED SYMBOL] ${searched}\n\n` +
+            'The 24/7 bot engine only trades USDT-margined crypto futures ' +
+            '(Binance /fapi · Bybit linear · OKX SWAP).\n' +
+            'Stocks, indices and commodities are not listed on these exchanges and cannot be backtested.\n\n' +
+            'Pick a crypto symbol in the top search bar and run again (e.g. BTC/USD, ETH/USD, SOL/USD).\n' +
+            '* The strategy code itself has not been validated yet.'
+          : `❌ [지원하지 않는 심볼] ${searched}\n\n` +
+            '24시간 봇 엔진은 USDT 마진 크립토 선물만 거래합니다 ' +
+            '(Binance /fapi · Bybit linear · OKX SWAP).\n' +
+            '주식 · 지수 · 원자재는 이 거래소들에 상장돼 있지 않아 백테스트할 수 없습니다.\n\n' +
+            '상단 검색창에서 크립토 심볼을 선택한 뒤 다시 실행하세요 (예: BTC/USD, ETH/USD, SOL/USD).\n' +
+            '※ 전략 코드 자체는 아직 검증되지 않았습니다.'
       )
       return
     }
@@ -3270,7 +3277,8 @@ export default function Page() {
         pythonCode,
         symbol: rawSymbol,
         timeFrame: period,
-        bars: SANDBOX_BACKTEST_BARS
+        bars: SANDBOX_BACKTEST_BARS,
+        lang: language
       })
       if (res) {
         const isErr = res.valid === false || res.status === 'SYNTAX_ERROR' || res.status === 'SECURITY_VIOLATION' || res.status === 'MISSING_FUNCTION' || res.status === 'EMPTY_CODE' || res.status === 'TIMEOUT' || res.status?.includes('ERROR')
@@ -3279,8 +3287,7 @@ export default function Page() {
       }
     } catch (e) {
       setSandboxIsError(true)
-      setSandboxLog('❌ [CONNECTION ERROR] Sandbox execution failed to connect to backend runner.')
-    } finally {
+      setSandboxLog('❌ [CONNECTION ERROR] Sandbox execution failed to connect to backend runner.')    } finally {
       setSandboxLoading(false)
     }
   }

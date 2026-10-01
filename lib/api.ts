@@ -959,8 +959,10 @@ export async function testPythonCode(payload: {
   symbol?: string;
   timeFrame?: string;
   bars?: number;
+  lang?: 'en' | 'cn' | 'ko';
 }): Promise<any> {
   const code = payload.pythonCode || '';
+  const en = payload.lang === 'en';
 
   // 예전엔 여기서 정규식으로 흉내낸 가짜 AST 스캐너가 먼저 돌며 실제 파이썬 인터프리터인 척하는
   // 트레이스백을 지어냈다 — 그 스캐너는 한 줄씩만 보기 때문에 여러 줄에 걸친 문자열/독스트링
@@ -976,7 +978,8 @@ export async function testPythonCode(payload: {
         pythonCode: code,
         symbol: payload.symbol || 'BTCUSDT',
         timeFrame: payload.timeFrame || '5m',
-        bars: payload.bars ?? SANDBOX_BACKTEST_BARS
+        bars: payload.bars ?? SANDBOX_BACKTEST_BARS,
+        lang: en ? 'en' : 'ko'
       })
     });
     if (res.ok) {
@@ -988,7 +991,16 @@ export async function testPythonCode(payload: {
     return {
       valid: false,
       status: 'BACKEND_ERROR',
-      simulatedOutput: `[전략 검증 결과 — 백엔드 오류]
+      simulatedOutput: en
+        ? `[Strategy Validation Result — Backend Error]
+===========================================================
+[ERROR] The backtest server (${API_BASE}/bot/instance/test-code) did not return a valid result (HTTP ${res.status}).
+-----------------------------------------------------------
+Synthetic data is never substituted, so the backtest cannot proceed.
+Try again shortly or check the server logs.
+===========================================================
+❌ [FAILED] No response from the backtest server.`
+        : `[전략 검증 결과 — 백엔드 오류]
 ===========================================================
 [ERROR] 백테스트 서버(${API_BASE}/bot/instance/test-code)가 유효한 결과를 반환하지 않았습니다 (HTTP ${res.status}).
 -----------------------------------------------------------
@@ -1002,7 +1014,16 @@ export async function testPythonCode(payload: {
     return {
       valid: false,
       status: 'CONNECTION_ERROR',
-      simulatedOutput: `[전략 검증 결과 — 연결 오류]
+      simulatedOutput: en
+        ? `[Strategy Validation Result — Connection Error]
+===========================================================
+[ERROR] Cannot connect to ${API_BASE}/bot/instance/test-code.
+-----------------------------------------------------------
+Synthetic data is never substituted, so the backtest cannot proceed.
+Check your network connection or whether the server is running.
+===========================================================
+❌ [FAILED] Backend connection failed.`
+        : `[전략 검증 결과 — 연결 오류]
 ===========================================================
 [ERROR] ${API_BASE}/bot/instance/test-code 에 연결할 수 없습니다.
 -----------------------------------------------------------
