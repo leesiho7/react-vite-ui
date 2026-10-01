@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -3889,47 +3889,10 @@ export default function Page() {
               />
 
               <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-                <AiDebateArenaCard symbol={getSymbolTicker(marketActiveSymbol)} />
+                <AiDebateArenaCard symbol={getSymbolTicker(marketActiveSymbol)} language={language} />
               </div>
 
               <div className="trade-lower">
-                <section className="orderbook-panel">
-                  <div className="panel-title">
-                    <span>
-                      {['NDX', 'GOLD', 'SPX', 'NVDA', 'TSLA', 'AAPL', '005930', '000660'].includes(getSymbolTicker(marketActiveSymbol))
-                        ? (language === 'ko' ? '오더북 · 글로벌 마켓 L2' : 'ORDER BOOK · GLOBAL L2')
-                        : (language === 'ko' ? '오더북 · 바이낸스 L2 (100ms)' : language === 'cn' ? '订单簿 · 币安 L2 (100ms)' : 'ORDER BOOK · BINANCE L2 (100MS)')}
-                    </span>
-                    <i style={{ background: '#ecfdf5', color: '#09a58e', border: '1px solid #a7f3d0' }}>{language === 'ko' ? '실시간' : language === 'cn' ? '实时' : 'LIVE'}</i>
-                  </div>
-                  <div className="book-head">
-                    <span>{language === 'ko' ? '가격 (USD)' : 'PRICE (USD)'}</span>
-                    <span>{language === 'ko' ? '수량' : 'SIZE'} ({getSymbolTicker(marketActiveSymbol)})</span>
-                  </div>
-                  {(orderbook.asks.length > 0 ? orderbook.asks.slice(0, 5).reverse().map(a => [a.price.toFixed(2), a.qty.toFixed(2)]) : (() => {
-                    const bp = price > 0 ? price : getBenchmarkPrice(marketActiveSymbol)
-                    const spreadStep = bp * 0.00025
-                    return [5, 4, 3, 2, 1].map(k => [(bp + k * spreadStep).toFixed(2), (Math.round((0.4 + k * 0.3) * 100) / 100).toFixed(2)])
-                  })()).map(([p, s], idx) => (
-                    <div className="book-row ask" key={`ask-${p}-${idx}`}>
-                      <span>{p}</span>
-                      <span>{s}</span>
-                    </div>
-                  ))}
-                  <div className="mid-price">
-                    {priceFormatted !== '—' ? priceFormatted : `$${getBenchmarkPrice(marketActiveSymbol).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} <span>{priceChange24h !== '0.00%' ? priceChange24h : '+0.04%'}</span>
-                  </div>
-                  {(orderbook.bids.length > 0 ? orderbook.bids.slice(0, 5).map(b => [b.price.toFixed(2), b.qty.toFixed(2)]) : (() => {
-                    const bp = price > 0 ? price : getBenchmarkPrice(marketActiveSymbol)
-                    const spreadStep = bp * 0.00025
-                    return [1, 2, 3, 4, 5].map(k => [(bp - k * spreadStep).toFixed(2), (Math.round((0.5 + k * 0.4) * 100) / 100).toFixed(2)])
-                  })()).map(([p, s], idx) => (
-                    <div className="book-row bid" key={`bid-${p}-${idx}`}>
-                      <span>{p}</span>
-                      <span>{s}</span>
-                    </div>
-                  ))}
-                </section>
 
                 <section className="execution-card">
                   <div className="panel-title">
@@ -5605,7 +5568,7 @@ export default function Page() {
       {/* ── Real-time Cross-Exchange Arbitrage & L2 Orderbook Terminal ── */}
       {(activeTopView === 'arbitrage') && (
         <section className="arbitrage-section" id="arbitrage-terminal" style={{ margin: '24px 0' }}>
-          <FullOrderbookTerminal defaultSymbol="BTCUSDT" />
+          <FullOrderbookTerminal defaultSymbol="BTCUSDT" language={language} />
         </section>
       )}
 

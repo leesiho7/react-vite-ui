@@ -1324,9 +1324,9 @@ export async function fetchFractalGhost(symbol = 'BTCUSDT', timeFrame = 'H1', li
 /**
  * 24. 월가 3대 거장의 명언 API — 실시간 매수/매도 신호가 아닌 공개적으로 알려진 명언 인용.
  */
-export async function fetchAiDebate(symbol = 'BTCUSDT'): Promise<AiDebateResponse | null> {
+export async function fetchAiDebate(symbol = 'BTCUSDT', lang = 'ko'): Promise<AiDebateResponse | null> {
   try {
-    const res = await fetch(`${API_BASE}/ai/debate?symbol=${symbol}`);
+    const res = await fetch(`${API_BASE}/ai/debate?symbol=${symbol}&lang=${lang}`);
     if (res.ok) {
       return await res.json();
     }

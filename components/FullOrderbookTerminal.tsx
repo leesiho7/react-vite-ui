@@ -155,7 +155,12 @@ const defaultSnapshotAsks: L2Item[] = [
   { price: 67848.0, qty: 1.15, total: 14.95 },
 ];
 
-export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSymbol?: string }) {
+export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT', language = 'ko' }: { defaultSymbol?: string; language?: 'en' | 'cn' | 'ko' }) {
+  // 영문 모드만 영문으로, 그 외(ko/cn)는 기존 한국어 유지
+  const isEn = language === 'en';
+  const tr = (ko: string, en: string) => (isEn ? en : ko);
+  const localizeExchangeText = (s: string) =>
+    isEn ? s.replace('김프 연동', 'Kimchi Premium').replace('USD 환산', 'USD converted') : s;
   const [activeTab, setActiveTab] = useState<'HEATMAP_ARBITRAGE' | 'DUAL_L2' | 'SINGLE_L2' | 'FUNDING_RATES'>('HEATMAP_ARBITRAGE');
   const [symbol, setSymbol] = useState<string>(defaultSymbol);
   const [precision, setPrecision] = useState<number>(2);
@@ -567,7 +572,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               }}
             >
               <Activity size={12} />
-              5대 거래소 크로스 히트맵 매트릭스
+              {tr('5대 거래소 크로스 히트맵 매트릭스', '5-Exchange Cross Heatmap Matrix')}
             </button>
             <button
               onClick={() => setActiveTab('SINGLE_L2')}
@@ -586,7 +591,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               }}
             >
               <Layers size={12} />
-              단일 호가 뎁스 (100ms)
+              {tr('단일 호가 뎁스 (100ms)', 'Single Orderbook Depth (100ms)')}
             </button>
             <button
               onClick={() => setActiveTab('FUNDING_RATES')}
@@ -605,7 +610,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               }}
             >
               <TrendingUp size={12} />
-              무위험 펀딩비 APY 매트릭스
+              {tr('무위험 펀딩비 APY 매트릭스', 'Risk-Free Funding APY Matrix')}
             </button>
           </div>
 
@@ -682,13 +687,13 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                 GLOBAL BEST ARBITRAGE ROUTE
               </div>
               <div style={{ color: '#f8fafc', fontSize: '12.5px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                <span style={{ color: '#cbd5e1' }}>최적 매수: </span>
+                <span style={{ color: '#cbd5e1' }}>{tr('최적 매수: ', 'Best Buy: ')}</span>
                 <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.buyEx].color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <ExchangeLogo exchange={heatmapMatrix.bestRoute.buyEx} size={14} />
                   {EXCHANGES[heatmapMatrix.bestRoute.buyEx].name} (${heatmapMatrix.bestRoute.buyPrice.toFixed(precision)})
                 </strong>
                 <ArrowRight size={13} style={{ display: 'inline', margin: '0 6px', color: '#94a3b8' }} />
-                <span style={{ color: '#cbd5e1' }}>최적 매도: </span>
+                <span style={{ color: '#cbd5e1' }}>{tr('최적 매도: ', 'Best Sell: ')}</span>
                 <strong style={{ color: EXCHANGES[heatmapMatrix.bestRoute.sellEx].color, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <ExchangeLogo exchange={heatmapMatrix.bestRoute.sellEx} size={14} />
                   {EXCHANGES[heatmapMatrix.bestRoute.sellEx].name} (${heatmapMatrix.bestRoute.sellPrice.toFixed(precision)})
@@ -726,7 +731,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                 }}
               >
                 <Zap size={12} />
-                최적 경로 즉시 점검 ↗
+                {tr('최적 경로 즉시 점검 ↗', 'Inspect Best Route ↗')}
               </button>
             </div>
           </div>
@@ -735,10 +740,10 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
           <div style={{ padding: '18px 20px', background: '#0b131e', borderBottom: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', letterSpacing: '.06em', fontWeight: 600 }}>
-                5대 거래소 실시간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 상단 오더북 자동 전환)
+                {tr('5대 거래소 실시간 가격 교차 스프레드 매트릭스 (CELL 클릭 시 상단 오더북 자동 전환)', 'Live 5-exchange cross-spread matrix (click a cell to switch the orderbook above)')}
               </span>
               <span style={{ fontSize: '9px', color: '#64748b' }}>
-                🟢 +0.4% 이상 초록색 (수익 기회) · 🇰🇷 업비트 환율(1,440 KRW/USD) 김프 자동 산출
+                {tr('🟢 +0.4% 이상 초록색 (수익 기회) · 🇰🇷 업비트 환율(1,440 KRW/USD) 김프 자동 산출', '🟢 Green at +0.4% or more (opportunity) · 🇰🇷 Kimchi premium auto-computed at Upbit rate (1,440 KRW/USD)')}
               </span>
             </div>
 
@@ -746,7 +751,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', textAlign: 'center' }}>
                 <thead>
                   <tr style={{ background: '#111c2a', color: '#94a3b8', borderBottom: '1px solid #334155' }}>
-                    <th style={{ padding: '8px 10px', textAlign: 'left', color: '#64748b', fontSize: '9px' }}>매수 (ASK) ➔ 매도 (BID)</th>
+                    <th style={{ padding: '8px 10px', textAlign: 'left', color: '#64748b', fontSize: '9px' }}>{tr('매수 (ASK) ➔ 매도 (BID)', 'Buy (ASK) ➔ Sell (BID)')}</th>
                     {exchangeList.map((ex) => (
                       <th key={ex} style={{ padding: '8px 10px', color: EXCHANGES[ex].color }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
@@ -763,7 +768,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                       <td style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: EXCHANGES[buyEx].color, background: '#0d1724' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <ExchangeLogo exchange={buyEx} size={14} />
-                          {EXCHANGES[buyEx].name} 매수
+                          {EXCHANGES[buyEx].name} {tr('매수', 'Buy')}
                         </div>
                       </td>
                       {exchangeList.map((sellEx) => {
@@ -824,14 +829,14 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
           {/* ── Exchange Pairing Selector Bar & Orderbook Controls ── */}
           <div style={{ background: '#f8fafb', borderBottom: '1px solid #d8dee4', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>비교 거래소 A (매수):</span>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>{tr('비교 거래소 A (매수):', 'Compare Exchange A (Buy):')}</span>
               <select
                 value={exchangeA}
                 onChange={(e) => setExchangeA(e.target.value as ExchangeId)}
                 style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '3px', background: '#ffffff', color: '#18334a' }}
               >
                 {exchangeList.map(ex => (
-                  <option key={ex} value={ex}>{EXCHANGES[ex].name} ({EXCHANGES[ex].marketType})</option>
+                  <option key={ex} value={ex}>{EXCHANGES[ex].name} ({localizeExchangeText(EXCHANGES[ex].marketType)})</option>
                 ))}
               </select>
 
@@ -843,21 +848,21 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                 SWAP ⇄
               </button>
 
-              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>비교 거래소 B (매도):</span>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>{tr('비교 거래소 B (매도):', 'Compare Exchange B (Sell):')}</span>
               <select
                 value={exchangeB}
                 onChange={(e) => setExchangeB(e.target.value as ExchangeId)}
                 style={{ padding: '5px 8px', fontSize: '10px', fontWeight: 600, border: '1px solid #cbd5e1', borderRadius: '3px', background: '#ffffff', color: '#18334a' }}
               >
                 {exchangeList.map(ex => (
-                  <option key={ex} value={ex}>{EXCHANGES[ex].name} ({EXCHANGES[ex].marketType})</option>
+                  <option key={ex} value={ex}>{EXCHANGES[ex].name} ({localizeExchangeText(EXCHANGES[ex].marketType)})</option>
                 ))}
               </select>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '10.5px' }}>
               <div>
-                <span style={{ color: '#64748b' }}>선택 페어 스프레드: </span>
+                <span style={{ color: '#64748b' }}>{tr('선택 페어 스프레드: ', 'Selected Pair Spread: ')}</span>
                 <strong style={{ color: isCurrentProfitable ? '#2b866d' : '#ac5d59', fontSize: '13px' }}>
                   {currentPairSpreadPct > 0 ? `+${currentPairSpreadPct.toFixed(4)}%` : `${currentPairSpreadPct.toFixed(4)}%`}
                 </strong>
@@ -873,7 +878,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                 style={{ background: '#0f766e', border: '1px solid #14b8a6', color: '#ffffff', padding: '5px 10px', fontSize: '9.5px', fontWeight: 600, cursor: 'pointer', borderRadius: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
                 <Calculator size={11} />
-                수익 시뮬레이터 ↗
+                {tr('수익 시뮬레이터 ↗', 'Profit Simulator ↗')}
               </button>
             </div>
           </div>
@@ -885,7 +890,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '2px solid #e2e8f0' }}>
                 <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <ExchangeLogo exchange={exchangeA} size={18} />
-                  {EXCHANGES[exchangeA].tag}
+                  {localizeExchangeText(EXCHANGES[exchangeA].tag)}
                   <span style={{ fontSize: '8px', color: bookA.status === 'CONNECTED' ? '#10b981' : '#ef4444', padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
                     ● {bookA.status}
                   </span>
@@ -941,7 +946,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '2px solid #e2e8f0' }}>
                 <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <ExchangeLogo exchange={exchangeB} size={18} />
-                  {EXCHANGES[exchangeB].tag}
+                  {localizeExchangeText(EXCHANGES[exchangeB].tag)}
                   <span style={{ fontSize: '8px', color: bookB.status === 'CONNECTED' ? '#0369a1' : '#ef4444', padding: '1px 5px', background: '#f1f5f9', borderRadius: '2px', border: '1px solid #e2e8f0' }}>
                     ● {bookB.status}
                   </span>
@@ -1098,10 +1103,10 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
             <div>
               <strong style={{ fontSize: '12px', color: '#18334a', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <ShieldCheck size={16} color="#2b866d" />
-                델타 뉴트럴(Delta-Neutral) 무위험 펀딩비 차익거래 매트릭스
+                {tr('델타 뉴트럴(Delta-Neutral) 무위험 펀딩비 차익거래 매트릭스', 'Delta-Neutral Risk-Free Funding Rate Arbitrage Matrix')}
               </strong>
               <p style={{ fontSize: '10px', color: '#64748b', margin: '4px 0 0' }}>
-                가격 변동 위험 0% (현물 1배수 매수 + 무기한 선물 1배수 숏 헤지). 8시간 주기 펀딩비 수취로 연 15%~45% 복리 이자 창출.
+                {tr('가격 변동 위험 0% (현물 1배수 매수 + 무기한 선물 1배수 숏 헤지). 8시간 주기 펀딩비 수취로 연 15%~45% 복리 이자 창출.', '0% price-movement risk (1x spot long + 1x perpetual futures short hedge). Collecting funding every 8 hours yields 15%–45% annualized compounded interest.')}
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -1161,7 +1166,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
                         borderRadius: '3px'
                       }}
                     >
-                      시뮬레이션 ↗
+                      {tr('시뮬레이션 ↗', 'Simulate ↗')}
                     </button>
                   </td>
                 </tr>
@@ -1177,14 +1182,14 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
           <div style={{ width: '480px', background: '#ffffff', border: '1px solid #d8dee4', borderRadius: '4px', padding: '24px', boxShadow: '0 12px 40px rgba(0,0,0,0.3)', fontFamily: "var(--font-mono)" }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #edf0f2', paddingBottom: '12px', marginBottom: '16px' }}>
               <strong style={{ fontSize: '14px', color: '#18334a' }}>
-                🧮 {selectedFundingAsset.symbol} 델타 뉴트럴 차익거래 시뮬레이터
+                🧮 {selectedFundingAsset.symbol} {tr('델타 뉴트럴 차익거래 시뮬레이터', 'Delta-Neutral Arbitrage Simulator')}
               </strong>
               <button onClick={() => setCalcModalOpen(false)} style={{ border: 0, background: 'none', color: '#74808c', fontSize: '14px', cursor: 'pointer' }}>×</button>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '10px', color: '#64748b', display: 'block', marginBottom: '6px' }}>
-                투입 원금 (USDT)
+                {tr('투입 원금 (USDT)', 'Capital (USDT)')}
               </label>
               <input
                 type="number"
@@ -1196,30 +1201,30 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
 
             <div style={{ background: '#f8fafb', border: '1px solid #e2e8f0', padding: '14px', borderRadius: '4px', marginBottom: '16px', fontSize: '10.5px', display: 'grid', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>현물 매수 포지션 (50%):</span>
+                <span style={{ color: '#64748b' }}>{tr('현물 매수 포지션 (50%):', 'Spot Long Position (50%):')}</span>
                 <strong style={{ color: '#2b866d' }}>${(calcCapital / 2).toLocaleString()} USD (Spot Long)</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>선물 숏 헤지 포지션 (50%):</span>
+                <span style={{ color: '#64748b' }}>{tr('선물 숏 헤지 포지션 (50%):', 'Futures Short Hedge Position (50%):')}</span>
                 <strong style={{ color: '#ac5d59' }}>${(calcCapital / 2).toLocaleString()} USD (1x Short)</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '6px' }}>
-                <span style={{ color: '#18334a', fontWeight: 600 }}>순 시장 노출도 (Net Delta):</span>
-                <strong style={{ color: '#0369a1' }}>0.00% (완전 무위험)</strong>
+                <span style={{ color: '#18334a', fontWeight: 600 }}>{tr('순 시장 노출도 (Net Delta):', 'Net Market Exposure (Net Delta):')}</span>
+                <strong style={{ color: '#0369a1' }}>{tr('0.00% (완전 무위험)', '0.00% (fully hedged)')}</strong>
               </div>
             </div>
 
             <div style={{ background: '#022c22', border: '1px solid #059669', padding: '14px', borderRadius: '4px', color: '#f8fafc', marginBottom: '18px', fontSize: '11px', display: 'grid', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>8시간 주기 예상 이자 수취:</span>
+                <span>{tr('8시간 주기 예상 이자 수취:', 'Expected funding per 8 hours:')}</span>
                 <strong style={{ color: '#34d399' }}>+${((calcCapital / 2) * (selectedFundingAsset.rate8h / 100)).toFixed(2)} USD</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>30일 복리 누적 수익 (90회 수취):</span>
+                <span>{tr('30일 복리 누적 수익 (90회 수취):', '30-day cumulative return (90 payouts):')}</span>
                 <strong style={{ color: '#34d399' }}>+${((calcCapital / 2) * (selectedFundingAsset.rate8h / 100) * 90).toFixed(2)} USD</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #065f46', paddingTop: '6px', fontSize: '12px' }}>
-                <span style={{ fontWeight: 600 }}>연간 환산 예상 수익률 (APY):</span>
+                <span style={{ fontWeight: 600 }}>{tr('연간 환산 예상 수익률 (APY):', 'Annualized Expected Yield (APY):')}</span>
                 <strong style={{ color: '#10b981', fontSize: '15px' }}>+{selectedFundingAsset.apy.toFixed(2)}% APY</strong>
               </div>
             </div>
@@ -1228,7 +1233,7 @@ export function FullOrderbookTerminal({ defaultSymbol = 'BTCUSDT' }: { defaultSy
               onClick={() => setCalcModalOpen(false)}
               style={{ width: '100%', background: '#18334a', color: '#ffffff', padding: '12px', fontSize: '11px', fontWeight: 600, border: 0, cursor: 'pointer', borderRadius: '3px' }}
             >
-              확인 완료 (닫기)
+              {tr('확인 완료 (닫기)', 'Done (Close)')}
             </button>
           </div>
         </div>

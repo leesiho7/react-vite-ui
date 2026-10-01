@@ -7,16 +7,18 @@ import { RefreshCw, Shield, Landmark, Zap } from 'lucide-react';
 
 interface AiDebateArenaCardProps {
   symbol?: string;
+  language?: 'en' | 'cn' | 'ko';
 }
 
-export function AiDebateArenaCard({ symbol = 'BTCUSDT' }: AiDebateArenaCardProps) {
+export function AiDebateArenaCard({ symbol = 'BTCUSDT', language = 'ko' }: AiDebateArenaCardProps) {
   const [debate, setDebate] = useState<AiDebateResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const isEn = language === 'en';
 
   const loadDebate = async () => {
     setLoading(true);
     try {
-      const res = await fetchAiDebate(symbol);
+      const res = await fetchAiDebate(symbol, language);
       if (res) setDebate(res);
     } catch (e) {
       console.warn('Quote fetch error:', e);
@@ -27,7 +29,7 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT' }: AiDebateArenaCardProps
 
   useEffect(() => {
     loadDebate();
-  }, [symbol]);
+  }, [symbol, language]);
 
   const personaMeta: Record<string, { icon: any; avatarImg?: string; color: string }> = {
     buffett: { icon: Shield, avatarImg: '/buffett-avatar.png', color: '#b45309' },
@@ -51,11 +53,13 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT' }: AiDebateArenaCardProps
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>💬</span>
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-              월가 3대 거장의 명언
+              {isEn ? "Wall Street's Three Legends: Quotes" : '월가 3대 거장의 명언'}
             </h3>
           </div>
           <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}>
-            워런 버핏 · 짐 시몬스 · 레이 달리오 — 특정 종목에 대한 매매 신호가 아닌, 세 거장이 공개적으로 남긴 투자 철학 명언입니다.
+            {isEn
+              ? 'Warren Buffett · Jim Simons · Ray Dalio — not a trading signal for any specific asset, but investment-philosophy quotes the three legends have shared publicly.'
+              : '워런 버핏 · 짐 시몬스 · 레이 달리오 — 특정 종목에 대한 매매 신호가 아닌, 세 거장이 공개적으로 남긴 투자 철학 명언입니다.'}
           </p>
         </div>
 
@@ -80,7 +84,7 @@ export function AiDebateArenaCard({ symbol = 'BTCUSDT' }: AiDebateArenaCardProps
             }}
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            {loading ? '불러오는 중…' : '다른 명언 보기'}
+            {loading ? (isEn ? 'Loading…' : '불러오는 중…') : (isEn ? 'Show another quote' : '다른 명언 보기')}
           </button>
         </div>
       </div>
