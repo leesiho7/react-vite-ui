@@ -1960,7 +1960,9 @@ export default function Page() {
           onError: async (err: any) => {
             console.error('[SSE Error]:', err);
             setAgentThinking(false);
-            const errText = `❌ **[스프링부트 백엔드 AI 서버 연결 오류]**\n\n백엔드 서버에 연결할 수 없습니다. (스프링부트 서버 가동 상태를 확인해주세요.)\n\n\`\`\`text\n${err?.message || 'Connection refused or server offline'}\n\`\`\``;
+            const errText = err?.name === 'AiQuotaError'
+              ? `🔒 ${err.message}`
+              : `❌ **[스프링부트 백엔드 AI 서버 연결 오류]**\n\n백엔드 서버에 연결할 수 없습니다. (스프링부트 서버 가동 상태를 확인해주세요.)\n\n\`\`\`text\n${err?.message || 'Connection refused or server offline'}\n\`\`\``;
             setAgentSessions(prev => prev.map(s => s.id === curSess.id ? {
               ...s,
               messages: s.messages.map(m => m.id === agentMsgId ? { ...m, content: errText } : m),

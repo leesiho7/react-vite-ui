@@ -50,6 +50,26 @@ function resolveApiBase(): string {
 
 const API_BASE = resolveApiBase();
 
+/** 비회원 일일 AI 질문 한도 초과(HTTP 429, code=ANON_QUOTA_EXCEEDED). message 는 서버가 내려준 안내 문구. */
+export class AiQuotaError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AiQuotaError';
+  }
+}
+
+async function throwIfQuotaExceeded(res: Response): Promise<void> {
+  if (res.status !== 429) return;
+  let message = '오늘 무료 AI 질문 횟수를 모두 사용했습니다. 회원가입하면 바로 제한 없이 이용할 수 있어요.';
+  try {
+    const body = await res.json();
+    if (body?.message) message = body.message;
+  } catch {
+    // 본문이 JSON 이 아니면 기본 안내 문구를 쓴다
+  }
+  throw new AiQuotaError(message);
+}
+
 /**
  * 로그인/가입 응답 전체가 `auth_session` 으로 localStorage 에 저장되어 있다 (login/signup 페이지 참고).
  * 그 안의 accessToken 을 꺼내 Authorization 헤더로 돌려준다. 로그인 전이면 빈 객체.
@@ -540,10 +560,11 @@ export async function sendResearchChat(payload: {
   try {
     const res = await fetch(API_BASE + '/ai/research-chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(45000)
     });
+    await throwIfQuotaExceeded(res);
     if (res.ok) {
       const data = await res.json();
       if (data && (data.reply || data.answer || data.content || data.message)) {
@@ -552,6 +573,7 @@ export async function sendResearchChat(payload: {
     }
     throw new Error(`[HTTP ${res.status}] 백엔드 AI 응답 실패`);
   } catch (err: any) {
+    if (err instanceof AiQuotaError) throw err;
     console.error('[API Error] sendResearchChat failed:', err);
     throw new Error(`스프링부트 백엔드 AI 서버 연결 실패: ${err.message || '백엔드 서버가 가동 중인지 확인해주세요.'}`);
   }
@@ -583,11 +605,12 @@ export async function streamResearchChatSSE(
 
     const res = await fetch(API_BASE + '/ai/research-chat/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload),
       signal: controller.signal
     });
     clearTimeout(timeoutId);
+    await throwIfQuotaExceeded(res);
 
     if (!res.ok || !res.body) {
       throw new Error(`SSE streaming failed with status ${res.status}`);
@@ -679,11 +702,12 @@ export async function streamCopilotChatSSE(
 
     const res = await fetch(API_BASE + '/copilot/chat/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
       body: JSON.stringify(payload),
       signal: controller.signal
     });
     clearTimeout(timeoutId);
+    await throwIfQuotaExceeded(res);
 
     if (!res.ok || !res.body) {
       throw new Error(`코파일럿 채팅 스트리밍 실패 (HTTP ${res.status})`);
