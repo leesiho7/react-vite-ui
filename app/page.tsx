@@ -65,7 +65,7 @@ import {
 } from '../lib/types'
 import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
-import PairsTerminal from '../components/terminal/PairsTerminal'
+import TerminalShell from '../components/terminal/TerminalShell'
 import { AiDebateArenaCard } from '../components/AiDebateArenaCard'
 import { PolymarketSpeedGameCard } from '../components/PolymarketSpeedGameCard'
 import { Polymarket1HSpeedGameCard } from '../components/Polymarket1HSpeedGameCard'
@@ -1991,7 +1991,7 @@ export default function Page() {
       else if (h === '#research-terminal' || h === '#research') setActiveTopView('research')
       else if (h === '#ten-win-league' || h === '#league') setActiveTopView('league')
       else if (h === '#arbitrage-terminal' || h === '#arbitrage') setActiveTopView('arbitrage')
-      else if (h === '#pairs-terminal' || h === '#pairs') setActiveTopView('pairs')
+      else if (h === '#pairs' || h.startsWith('#pairs-terminal')) setActiveTopView('pairs')
       else if (h === '#live-newswire' || h === '#news') setActiveTopView('news')
       else if (h === '#media-wire' || h === '#media') setActiveTopView('media')
       else if (h === '#trade' || h === '#market-intelligence-terminal' || h === '' || h === '#') setActiveTopView('trade')
@@ -5587,7 +5587,7 @@ export default function Page() {
       {/* ── 터미널: 통계적 페어 트레이딩(평균회귀) 연구 터미널 — Grafana 스타일 ── */}
       {(activeTopView === 'pairs') && (
         <section id="pairs-terminal" style={{ margin: '24px 0' }}>
-          <PairsTerminal />
+          <TerminalShell />
         </section>
       )}
 

@@ -24,6 +24,7 @@ import {
   RecentVetoEntry
 } from './types';
 import type { Bar } from './pairMath';
+import type { FundingHistoryResponse } from './arbMath';
 
 /**
  * 백엔드 API 베이스 URL (항상 `/api` 로 끝난다).
@@ -170,6 +171,21 @@ export async function fetchPairBars(symbol: string, count = 8000, timeFrame = 'H
   }
   const raw = (await fetchHistoricalCandles(symbol, timeFrame, 1000)) as RawCandle[]
   return { ...toPairBars(raw), source: 'limited' }
+}
+
+/**
+ * 거래소 간 펀딩 차익 통계용 과거 펀딩률 (Binance · Bybit · OKX · Hyperliquid).
+ * 거래소별 보유 구간이 다르고(OKX 약 3개월) 실패한 거래소는 error 와 빈 배열로 온다.
+ * 호출 자체가 실패하면 null — 호출부는 빈 상태를 보여 줘야 하며 값을 지어내지 않는다.
+ */
+export async function fetchFundingHistory(symbol: string, days = 180): Promise<FundingHistoryResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/market/funding-history?symbol=${symbol}&days=${days}`)
+    if (res.ok) return (await res.json()) as FundingHistoryResponse
+  } catch (err) {
+    console.warn('[API] fetchFundingHistory failed:', err)
+  }
+  return null
 }
 
 /**
