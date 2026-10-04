@@ -21,7 +21,8 @@ import {
   ArrowUpRight,
   Tv,
   LogIn,
-  UserPlus
+  UserPlus,
+  Activity
 } from 'lucide-react'
 
 interface NavbarProps {
@@ -159,6 +160,7 @@ export default function Navbar({
     research: language === 'ko' ? 'AI 퀀트 리서치' : language === 'cn' ? 'AI量化研报' : 'AI Quant Research',
     media: language === 'ko' ? '미디어 데스크' : language === 'cn' ? '媒体工作台' : 'Media Desk',
     arbitrage: language === 'ko' ? '김프 / 아비트라지' : language === 'cn' ? '泡菜溢价/套利' : 'Arbitrage',
+    pairs: language === 'ko' ? '터미널' : language === 'cn' ? '终端' : 'Terminal',
     login: language === 'ko' ? '로그인' : language === 'cn' ? '登录' : 'Login',
     signup: language === 'ko' ? '회원가입' : language === 'cn' ? '注册' : 'Sign Up',
     logout: language === 'ko' ? '로그아웃' : language === 'cn' ? '退出' : 'Logout',
@@ -285,6 +287,17 @@ export default function Navbar({
                   onClick={() => onSelectView ? onSelectView('arbitrage') : (onToggleArbitrage && onToggleArbitrage())}
                 >
                   {menuText.arbitrage}
+                </button>
+              </li>
+
+              <li>
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'pairs' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView && onSelectView('pairs')}
+                >
+                  {menuText.pairs}
                 </button>
               </li>
             </ul>
@@ -628,6 +641,22 @@ export default function Navbar({
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.arbitrage}</div>
                   <div className="text-[9px] text-[#94a3b8]">실시간 김프 스캐너</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('pairs');
+                }}
+              >
+                <Activity size={16} className="text-[#94a3b8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">{menuText.pairs}</div>
+                  <div className="text-[9px] text-[#94a3b8]">페어 트레이딩 연구</div>
                 </div>
               </button>
 

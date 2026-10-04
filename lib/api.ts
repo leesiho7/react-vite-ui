@@ -23,6 +23,7 @@ import {
   DecisionCalibrationEntry,
   RecentVetoEntry
 } from './types';
+import type { Bar } from './pairMath';
 
 /**
  * 백엔드 API 베이스 URL (항상 `/api` 로 끝난다).
@@ -128,6 +129,47 @@ export async function fetchHistoricalCandles(
     console.warn('[API] fetchHistoricalCandles failed:', err);
   }
   return [];
+}
+
+export interface PairBarsResult {
+  bars: Bar[]
+  /** backfill = 실측 백필(최대 8,000봉), limited = 구형 서버 폴백(최대 1,000봉) */
+  source: 'backfill' | 'limited'
+  /** 하나라도 합성(시뮬레이션) 봉이 섞여 있으면 true — 이 경우 호출부는 분석을 거부해야 한다 */
+  synthetic: boolean
+}
+
+type RawCandle = CandleData & { synthetic?: boolean }
+
+function toPairBars(raw: RawCandle[]): { bars: Bar[]; synthetic: boolean } {
+  let synthetic = false
+  const bars: Bar[] = []
+  for (const c of raw) {
+    if (c.synthetic) synthetic = true
+    const ts = c.timestamp
+    const t = typeof ts === 'number' ? (ts < 1e12 ? ts * 1000 : ts) : Date.parse(ts)
+    if (!Number.isFinite(t)) continue
+    bars.push({ t, o: Number(c.open), h: Number(c.high), l: Number(c.low), c: Number(c.close) })
+  }
+  return { bars, synthetic }
+}
+
+/**
+ * 페어 분석용 H1 봉. 먼저 실측 백필 엔드포인트를 쓰고, 없거나 실패하면 1,000봉 단발 조회로 폴백한다.
+ * 어느 쪽이든 실패하면 빈 배열을 돌려준다(지어낸 값 없음).
+ */
+export async function fetchPairBars(symbol: string, count = 8000, timeFrame = 'H1'): Promise<PairBarsResult> {
+  try {
+    const res = await fetch(`${API_BASE}/market/historical/backfill?symbol=${symbol}&timeFrame=${timeFrame}&count=${count}`)
+    if (res.ok) {
+      const parsed = toPairBars(await res.json())
+      if (parsed.bars.length >= 500) return { ...parsed, source: 'backfill' }
+    }
+  } catch (err) {
+    console.warn('[API] fetchPairBars backfill failed:', err)
+  }
+  const raw = (await fetchHistoricalCandles(symbol, timeFrame, 1000)) as RawCandle[]
+  return { ...toPairBars(raw), source: 'limited' }
 }
 
 /**

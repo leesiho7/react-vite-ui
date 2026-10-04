@@ -65,6 +65,7 @@ import {
 } from '../lib/types'
 import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
+import PairsTerminal from '../components/terminal/PairsTerminal'
 import { AiDebateArenaCard } from '../components/AiDebateArenaCard'
 import { PolymarketSpeedGameCard } from '../components/PolymarketSpeedGameCard'
 import { Polymarket1HSpeedGameCard } from '../components/Polymarket1HSpeedGameCard'
@@ -1981,7 +1982,7 @@ export default function Page() {
     }
   }
   // Top Navbar View State (상단 Navbar 메뉴별 해당하는 데이터만 전용 렌더링)
-  const [activeTopView, setActiveTopView] = useState<'trade' | 'league' | 'news' | 'bots' | 'research' | 'media' | 'arbitrage'>('trade')
+  const [activeTopView, setActiveTopView] = useState<'trade' | 'league' | 'news' | 'bots' | 'research' | 'media' | 'arbitrage' | 'pairs'>('trade')
 
   useEffect(() => {
     const handleHash = () => {
@@ -1990,6 +1991,7 @@ export default function Page() {
       else if (h === '#research-terminal' || h === '#research') setActiveTopView('research')
       else if (h === '#ten-win-league' || h === '#league') setActiveTopView('league')
       else if (h === '#arbitrage-terminal' || h === '#arbitrage') setActiveTopView('arbitrage')
+      else if (h === '#pairs-terminal' || h === '#pairs') setActiveTopView('pairs')
       else if (h === '#live-newswire' || h === '#news') setActiveTopView('news')
       else if (h === '#media-wire' || h === '#media') setActiveTopView('media')
       else if (h === '#trade' || h === '#market-intelligence-terminal' || h === '' || h === '#') setActiveTopView('trade')
@@ -2006,6 +2008,7 @@ export default function Page() {
       else if (view === 'research') window.location.hash = 'research-terminal'
       else if (view === 'league') window.location.hash = 'ten-win-league'
       else if (view === 'arbitrage') window.location.hash = 'arbitrage-terminal'
+      else if (view === 'pairs') window.location.hash = 'pairs-terminal'
       else if (view === 'news') window.location.hash = 'live-newswire'
       else if (view === 'media') window.location.hash = 'media-wire'
       else window.location.hash = 'trade'
@@ -5578,6 +5581,13 @@ export default function Page() {
       {(activeTopView === 'arbitrage') && (
         <section className="arbitrage-section" id="arbitrage-terminal" style={{ margin: '24px 0' }}>
           <FullOrderbookTerminal defaultSymbol="BTCUSDT" language={language} />
+        </section>
+      )}
+
+      {/* ── 터미널: 통계적 페어 트레이딩(평균회귀) 연구 터미널 — Grafana 스타일 ── */}
+      {(activeTopView === 'pairs') && (
+        <section id="pairs-terminal" style={{ margin: '24px 0' }}>
+          <PairsTerminal />
         </section>
       )}
 
