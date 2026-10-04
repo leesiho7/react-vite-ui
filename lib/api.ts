@@ -25,6 +25,7 @@ import {
 } from './types';
 import type { Bar } from './pairMath';
 import type { FundingHistoryResponse } from './arbMath';
+import type { KimchiHistoryResponse } from './kimchiMath';
 
 /**
  * 백엔드 API 베이스 URL (항상 `/api` 로 끝난다).
@@ -184,6 +185,17 @@ export async function fetchFundingHistory(symbol: string, days = 180): Promise<F
     if (res.ok) return (await res.json()) as FundingHistoryResponse
   } catch (err) {
     console.warn('[API] fetchFundingHistory failed:', err)
+  }
+  return null
+}
+
+/** 김치 프리미엄 통계용 1시간 봉 (Upbit KRW-자산 · KRW-USDT · Binance 현물). 실패 시 null — 값을 만들어 채우지 않는다. */
+export async function fetchKimchiHistory(symbol: string, days = 90): Promise<KimchiHistoryResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/market/kimchi-history?symbol=${symbol}&days=${days}`)
+    if (res.ok) return (await res.json()) as KimchiHistoryResponse
+  } catch (err) {
+    console.warn('[API] fetchKimchiHistory failed:', err)
   }
   return null
 }

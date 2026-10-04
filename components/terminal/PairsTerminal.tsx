@@ -278,10 +278,10 @@ export default function PairsTerminal() {
             <SectionHeader label="Spread">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
                 <PanelFrame title={`PRICE RATIO ${pair.label}`} subtitle="시작 대비 %">
-                  <LineChartPanel series={[{ name: 'Ratio', color: '#ff9830', points: view.ratioPts }]} yFormat={(v) => `${v.toFixed(0)}%`} />
+                  <LineChartPanel autoWidth series={[{ name: 'Ratio', color: '#ff9830', points: view.ratioPts }]} yFormat={(v) => `${v.toFixed(0)}%`} />
                 </PanelFrame>
                 <PanelFrame title="Z-SCORE" subtitle={`롤링 ${params.window}봉 · 최근 ${view.zPts.length ? Math.min(1500, analysis.N) : 0}봉`}>
-                  <LineChartPanel
+                  <LineChartPanel autoWidth
                     series={[{ name: 'z', color: '#5794f2', points: view.zPts }, ...view.zLines]}
                     yFormat={(v) => v.toFixed(1)}
                   />
@@ -292,14 +292,14 @@ export default function PairsTerminal() {
             <SectionHeader label={`Backtest — ${sample === 'OOS' ? 'Out-of-Sample (뒤쪽 40%)' : 'All Sample'} @${lev}x`}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
                 <PanelFrame title="EQUITY CURVE" subtitle={`거래 종료 시점 · ${lev}x`}>
-                  <LineChartPanel series={[{ name: 'Equity', color: '#73bf69', points: view.curves.equity }]} yFormat={(v) => `${v.toFixed(0)}%`} />
+                  <LineChartPanel autoWidth series={[{ name: 'Equity', color: '#73bf69', points: view.curves.equity }]} yFormat={(v) => `${v.toFixed(0)}%`} />
                 </PanelFrame>
                 <PanelFrame title="DRAWDOWN" subtitle="거래 종료 시점 기준">
-                  <LineChartPanel series={[{ name: 'Drawdown', color: '#f2495c', points: view.curves.drawdown }]} yFormat={(v) => `${v.toFixed(0)}%`} />
+                  <LineChartPanel autoWidth series={[{ name: 'Drawdown', color: '#f2495c', points: view.curves.drawdown }]} yFormat={(v) => `${v.toFixed(0)}%`} />
                 </PanelFrame>
 
                 <PanelFrame title="WORST ADVERSE EXCURSION" subtitle="보유 중 최대 평가손실 분포 (총 명목 대비)">
-                  <BarChartPanel data={view.hist} valueFormat={(v) => String(Math.round(v))} />
+                  <BarChartPanel autoWidth data={view.hist} valueFormat={(v) => String(Math.round(v))} />
                 </PanelFrame>
 
                 <PanelFrame title="LEVERAGE TABLE" subtitle={`표본 ${sample} · ${view.stats.n}건`}>
@@ -307,7 +307,7 @@ export default function PairsTerminal() {
                 </PanelFrame>
 
                 <PanelFrame title="COST SENSITIVITY" subtitle="체결당 비용(수수료+슬리피지)을 바꿨을 때 거래당 평균 순수익 · 전체 표본">
-                  <table className="w-full text-[10px] mt-1">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
                     <thead>
                       <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
                         <th className="py-1 font-normal">체결당 비용</th>
@@ -324,14 +324,14 @@ export default function PairsTerminal() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                   <p className="text-[8px] text-[#555555] mt-1">
                     왕복 4회 체결 기준입니다. 현재 설정은 체결당 {(params.feeBps + params.slipBps).toFixed(1)}bp(수수료 {params.feeBps} + 슬리피지 {params.slipBps}).
                   </p>
                 </PanelFrame>
 
                 <PanelFrame title="IN-SAMPLE vs OUT-OF-SAMPLE" subtitle="같은 규칙, 시간순 앞쪽 60% / 뒤쪽 40%">
-                  <table className="w-full text-[10px] mt-1">
+                  <><div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
                     <thead>
                       <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
                         <th className="py-1 font-normal">구간</th>
@@ -355,7 +355,7 @@ export default function PairsTerminal() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div><p className="sm:hidden text-[8px] text-[#555555] mt-0.5">← 좌우로 밀어서 전체 열 보기</p></>
                   <p className="text-[8px] text-[#555555] mt-1">두 구간 성과가 크게 다르면 우연이거나 시장 국면이 바뀐 것입니다.</p>
                 </PanelFrame>
               </div>
@@ -381,7 +381,7 @@ export default function PairsTerminal() {
 function LeverageTable({ trades }: { trades: Trade[] }) {
   if (trades.length === 0) return <p className="text-[10px] text-[#555555] pt-1">거래가 없어 계산할 수 없습니다.</p>
   return (
-    <table className="w-full text-[10px] mt-1">
+    <><div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
       <thead>
         <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
           <th className="py-1 font-normal">Lev</th>
@@ -405,7 +405,7 @@ function LeverageTable({ trades }: { trades: Trade[] }) {
           )
         })}
       </tbody>
-    </table>
+    </table></div><p className="sm:hidden text-[8px] text-[#555555] mt-0.5">← 좌우로 밀어서 전체 열 보기</p></>
   )
 }
 
@@ -414,8 +414,8 @@ function TradeLog({ trades, tOf }: { trades: Trade[]; tOf: (idx: number) => numb
   const rows = trades.slice(-25).reverse()
   const reasonLabel: Record<string, string> = { REVERT: '회귀 청산', STOP: '손절', TIME: '시간 청산' }
   return (
-    <div className="max-h-[220px] overflow-y-auto">
-      <table className="w-full text-[9px]">
+    <div className="max-h-[220px] overflow-auto">
+      <table className="w-full min-w-[460px] text-[9px]">
         <thead className="sticky top-0 bg-[#0d0d0d]">
           <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
             <th className="py-1 font-normal">진입</th>
@@ -505,7 +505,7 @@ function FilterBar({
           type="button"
           onClick={onRun}
           disabled={loading}
-          className="text-[10px] font-bold px-3 py-1 rounded-[2px] bg-[#f47a20] text-black disabled:opacity-50"
+          className="text-[11px] sm:text-[10px] font-bold px-3 py-2 sm:py-1 rounded-[2px] bg-[#f47a20] text-black disabled:opacity-50"
         >
           {loading ? 'LOADING…' : 'REFRESH DATA'}
         </button>
@@ -517,12 +517,12 @@ function FilterBar({
 
 function Select({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: React.ReactNode }) {
   return (
-    <label className="flex items-center gap-1.5 text-[9px] text-[#888888]">
+    <label className="flex items-center gap-1.5 text-[10px] sm:text-[9px] text-[#888888]">
       {label}:
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[9px] text-[#dddddd] px-1 py-1"
+        className="bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[11px] sm:text-[9px] text-[#dddddd] px-1.5 sm:px-1 py-1.5 sm:py-1"
       >
         {children}
       </select>
@@ -532,7 +532,7 @@ function Select({ label, value, onChange, children }: { label: string; value: st
 
 function Num({ label, value, step, min, max, onChange }: { label: string; value: number; step: number; min: number; max: number; onChange: (v: number) => void }) {
   return (
-    <label className="flex items-center gap-1.5 text-[9px] text-[#888888]">
+    <label className="flex items-center gap-1.5 text-[10px] sm:text-[9px] text-[#888888]">
       {label}:
       <input
         type="number"
@@ -544,7 +544,7 @@ function Num({ label, value, step, min, max, onChange }: { label: string; value:
           const v = Number(e.target.value)
           if (Number.isFinite(v)) onChange(Math.min(max, Math.max(min, v)))
         }}
-        className="w-14 bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[9px] text-[#dddddd] px-1 py-1"
+        className="w-16 sm:w-14 bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[11px] sm:text-[9px] text-[#dddddd] px-1.5 sm:px-1 py-1.5 sm:py-1"
       />
     </label>
   )

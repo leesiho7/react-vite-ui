@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useContainerWidth } from './useContainerWidth'
 
 export interface BarDatum {
   label: string
@@ -10,32 +11,41 @@ export interface BarDatum {
 
 const H = 130
 const PAD = { top: 6, right: 4, bottom: 16, left: 28 }
+const MIN_AUTO_WIDTH = 220
 
 /** 촘촘한 세로 막대, 기본은 단색(muted), 막대 테두리 없음. 항목이 많으면 라벨을 45도로
- *  기울이지 않고 그냥 생략(호버로만 확인) — 라벨 겹침보다는 깨끗한 편이 낫다. */
+ *  기울이지 않고 그냥 생략(호버로만 확인) — 라벨 겹침보다는 깨끗한 편이 낫다.
+ *
+ *  autoWidth: 컨테이너 폭에 맞춰 그린다(기본은 예전처럼 고정 width). 막대는 마우스를 올리거나
+ *  (모바일에서는) 눌러서 값을 볼 수 있다. */
 export default function BarChartPanel({
   data,
   defaultColor = '#b877d9',
   width = 340,
-  valueFormat = (v: number) => String(v)
+  valueFormat = (v: number) => String(v),
+  autoWidth = false
 }: {
   data: BarDatum[]
   defaultColor?: string
   width?: number
   valueFormat?: (v: number) => string
+  autoWidth?: boolean
 }) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
+  const { ref: wrapRef, width: measured } = useContainerWidth(autoWidth)
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center text-[10px] text-[#555555]" style={{ height: H }}>
+      <div ref={wrapRef} className="flex items-center justify-center text-[10px] text-[#555555]" style={{ height: H }}>
         데이터 없음
       </div>
     )
   }
 
+  const W = autoWidth && measured ? Math.max(MIN_AUTO_WIDTH, measured) : width
+  const fontSize = autoWidth ? 9 : 8
   const maxV = Math.max(1, ...data.map((d) => d.value))
-  const innerW = width - PAD.left - PAD.right
+  const innerW = W - PAD.left - PAD.right
   const innerH = H - PAD.top - PAD.bottom
   const barGap = 2
   const barW = Math.max(2, innerW / data.length - barGap)
@@ -43,16 +53,16 @@ export default function BarChartPanel({
   const gridLines = [0, 0.5, 1].map((f) => maxV * f)
 
   return (
-    <div>
-      <svg viewBox={`0 0 ${width} ${H}`} width="100%" height={H} className="overflow-visible">
+    <div ref={wrapRef}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} className="overflow-visible">
         {gridLines.map((v, i) => {
           const yy = PAD.top + innerH - (v / maxV) * innerH
-          return <line key={i} x1={PAD.left} x2={width - PAD.right} y1={yy} y2={yy} stroke="#1a1a1a" strokeWidth={1} />
+          return <line key={i} x1={PAD.left} x2={W - PAD.right} y1={yy} y2={yy} stroke="#1a1a1a" strokeWidth={1} />
         })}
         {gridLines.map((v, i) => {
           const yy = PAD.top + innerH - (v / maxV) * innerH
           return (
-            <text key={i} x={PAD.left - 4} y={yy + 3} textAnchor="end" fontSize={8} fill="#666666" fontFamily="ui-monospace, monospace">
+            <text key={i} x={PAD.left - 4} y={yy + 3} textAnchor="end" fontSize={fontSize} fill="#666666" fontFamily="ui-monospace, monospace">
               {valueFormat(v)}
             </text>
           )
@@ -72,6 +82,7 @@ export default function BarChartPanel({
               opacity={hoverIdx === null || hoverIdx === i ? 1 : 0.45}
               onMouseEnter={() => setHoverIdx(i)}
               onMouseLeave={() => setHoverIdx(null)}
+              onClick={() => setHoverIdx(hoverIdx === i ? null : i)}
             />
           )
         })}
@@ -82,7 +93,7 @@ export default function BarChartPanel({
             {data[hoverIdx].label}: <span className="text-white">{valueFormat(data[hoverIdx].value)}</span>
           </span>
         ) : (
-          <span className="text-[#555555]">막대에 마우스를 올리면 값이 보입니다</span>
+          <span className="text-[#555555]">막대를 누르거나 마우스를 올리면 값이 보입니다</span>
         )}
       </div>
     </div>

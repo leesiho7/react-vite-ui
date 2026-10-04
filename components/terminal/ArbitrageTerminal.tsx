@@ -200,7 +200,7 @@ export default function ArbitrageTerminal() {
             <SectionHeader label="Funding Differential">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
                 <PanelFrame title={`FUNDING RATE · ${base}`} subtitle="연환산 %, 7일 이동평균">
-                  <LineChartPanel
+                  <LineChartPanel autoWidth
                     series={[
                       { name: `${venueLabel[shortV] ?? shortV} (숏)`, color: '#ff9830', points: calc.aPts },
                       { name: `${venueLabel[longV] ?? longV} (롱)`, color: '#5794f2', points: calc.bPts }
@@ -209,7 +209,7 @@ export default function ArbitrageTerminal() {
                   />
                 </PanelFrame>
                 <PanelFrame title="DIFFERENTIAL (숏 - 롱)" subtitle="연환산 %, 양수면 선택한 방향이 유리">
-                  <LineChartPanel
+                  <LineChartPanel autoWidth
                     series={[
                       { name: '8h 창', color: '#555555', points: calc.diffPts },
                       { name: '7일 평균', color: '#73bf69', points: calc.diffRoll }
@@ -223,7 +223,7 @@ export default function ArbitrageTerminal() {
             <SectionHeader label="Probability — Holding Period">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
                 <PanelFrame title="CUMULATIVE CARRY BY HOLDING PERIOD" subtitle="방향 고정 · 겹치는 창의 경험적 분포">
-                  <table className="w-full text-[10px] mt-1">
+                  <><div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
                     <thead>
                       <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
                         <th className="py-1 font-normal">보유</th>
@@ -246,14 +246,14 @@ export default function ArbitrageTerminal() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div><p className="sm:hidden text-[8px] text-[#555555] mt-0.5">← 좌우로 밀어서 전체 열 보기</p></>
                   <p className="text-[8px] text-[#555555] mt-1">
                     왕복 비용 {(cost * 100).toFixed(3)}%를 넘는 누적 캐리가 나온 창의 비율입니다. 창이 길수록 서로 겹쳐서 실제 독립 표본은 훨씬 적습니다.
                   </p>
                 </PanelFrame>
 
                 <PanelFrame title="CUMULATIVE NET CARRY" subtitle="표본 전체 · 진입 비용 반영 · % (한 다리 명목)">
-                  <LineChartPanel
+                  <LineChartPanel autoWidth
                     series={[
                       { name: '방향 고정', color: '#73bf69', points: calc.fixedCurve },
                       { name: `${signalDays}일 신호 추종`, color: '#b877d9', points: calc.followCurve }
@@ -270,7 +270,7 @@ export default function ArbitrageTerminal() {
             <SectionHeader label="Cost & Venues">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
                 <PanelFrame title="COST SENSITIVITY" subtitle="체결당 비용(bp)을 바꿨을 때 손익분기와 순캐리">
-                  <table className="w-full text-[10px] mt-1">
+                  <><div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
                     <thead>
                       <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
                         <th className="py-1 font-normal">체결당 비용</th>
@@ -289,14 +289,14 @@ export default function ArbitrageTerminal() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div><p className="sm:hidden text-[8px] text-[#555555] mt-0.5">← 좌우로 밀어서 전체 열 보기</p></>
                 </PanelFrame>
 
                 <PanelFrame title="ALL VENUE PAIRS" subtitle={`${base} · 유리한 방향 기준 · 겹치는 이력`}>
                   {pairs.length === 0 ? (
                     <p className="text-[10px] text-[#555555] pt-1">비교 가능한 거래소 쌍이 없습니다.</p>
                   ) : (
-                    <table className="w-full text-[10px] mt-1">
+                    <><div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
                       <thead>
                         <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
                           <th className="py-1 font-normal">숏 → 롱</th>
@@ -317,12 +317,12 @@ export default function ArbitrageTerminal() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </table></div><p className="sm:hidden text-[8px] text-[#555555] mt-0.5">← 좌우로 밀어서 전체 열 보기</p></>
                   )}
                 </PanelFrame>
 
                 <PanelFrame title="DATA COVERAGE" subtitle="거래소별 보유 이력 (OKX는 약 3개월만 제공)" className="lg:col-span-2">
-                  <table className="w-full text-[10px] mt-1">
+                  <><div className="overflow-x-auto"><table className="w-full min-w-[420px] text-[10px] mt-1">
                     <thead>
                       <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
                         <th className="py-1 font-normal">거래소</th>
@@ -343,7 +343,7 @@ export default function ArbitrageTerminal() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div><p className="sm:hidden text-[8px] text-[#555555] mt-0.5">← 좌우로 밀어서 전체 열 보기</p></>
                 </PanelFrame>
               </div>
             </SectionHeader>
@@ -401,7 +401,7 @@ function FilterBar(props: {
           ))}
         </Sel>
         <Sel label="Short" value={props.shortV} onChange={props.onShort}>{venueOptions.map(opt)}</Sel>
-        <button type="button" onClick={props.onSwap} title="숏/롱 거래소 맞바꾸기" className="text-[10px] px-2 py-1 rounded-[2px] border border-[#222222] text-[#aaaaaa] hover:text-white">⇄</button>
+        <button type="button" onClick={props.onSwap} title="숏/롱 거래소 맞바꾸기" className="text-[12px] sm:text-[10px] px-2.5 sm:px-2 py-1.5 sm:py-1 rounded-[2px] border border-[#222222] text-[#aaaaaa] hover:text-white">⇄</button>
         <Sel label="Long" value={props.longV} onChange={props.onLong}>{venueOptions.map(opt)}</Sel>
         <Num label="Fee bp" value={props.feeBps} step={0.5} min={0} max={20} onChange={props.onFee} />
         <Num label="Slip bp" value={props.slipBps} step={0.5} min={0} max={20} onChange={props.onSlip} />
@@ -411,7 +411,7 @@ function FilterBar(props: {
           ))}
         </Sel>
         <div className="flex-1" />
-        <button type="button" onClick={props.onRun} disabled={props.loading} className="text-[10px] font-bold px-3 py-1 rounded-[2px] bg-[#f47a20] text-black disabled:opacity-50">
+        <button type="button" onClick={props.onRun} disabled={props.loading} className="text-[11px] sm:text-[10px] font-bold px-3 py-2 sm:py-1 rounded-[2px] bg-[#f47a20] text-black disabled:opacity-50">
           {props.loading ? 'LOADING…' : 'REFRESH DATA'}
         </button>
       </div>
@@ -422,9 +422,9 @@ function FilterBar(props: {
 
 function Sel({ label, value, onChange, children }: { label: string; value: string; onChange: (v: string) => void; children: React.ReactNode }) {
   return (
-    <label className="flex items-center gap-1.5 text-[9px] text-[#888888]">
+    <label className="flex items-center gap-1.5 text-[10px] sm:text-[9px] text-[#888888]">
       {label}:
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[9px] text-[#dddddd] px-1 py-1">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[11px] sm:text-[9px] text-[#dddddd] px-1.5 sm:px-1 py-1.5 sm:py-1">
         {children}
       </select>
     </label>
@@ -433,7 +433,7 @@ function Sel({ label, value, onChange, children }: { label: string; value: strin
 
 function Num({ label, value, step, min, max, onChange }: { label: string; value: number; step: number; min: number; max: number; onChange: (v: number) => void }) {
   return (
-    <label className="flex items-center gap-1.5 text-[9px] text-[#888888]">
+    <label className="flex items-center gap-1.5 text-[10px] sm:text-[9px] text-[#888888]">
       {label}:
       <input
         type="number"
@@ -445,7 +445,7 @@ function Num({ label, value, step, min, max, onChange }: { label: string; value:
           const v = Number(e.target.value)
           if (Number.isFinite(v)) onChange(Math.min(max, Math.max(min, v)))
         }}
-        className="w-14 bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[9px] text-[#dddddd] px-1 py-1"
+        className="w-16 sm:w-14 bg-[#0d0d0d] border border-[#222222] rounded-[2px] text-[11px] sm:text-[9px] text-[#dddddd] px-1.5 sm:px-1 py-1.5 sm:py-1"
       />
     </label>
   )
