@@ -135,6 +135,7 @@ export interface SocialLoginRequest {
   walletAddress?: string | null;
   avatarUrl?: string;
   idToken?: string;
+  accessToken?: string;
 }
 
 export interface AuthResponse {

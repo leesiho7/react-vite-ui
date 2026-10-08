@@ -103,7 +103,8 @@ export default function SignupPage() {
                   providerId: userInfo.sub,
                   email: userInfo.email,
                   nickname: userInfo.name || userInfo.email.split('@')[0],
-                  avatarUrl: userInfo.picture
+                  avatarUrl: userInfo.picture,
+                  accessToken: tokenResponse.access_token
                 })
 
                 if (res.success) {
@@ -526,7 +527,7 @@ export default function SignupPage() {
 
 
 
-            {/* METAMASK */}
+            {/* METAMASK — 서버 서명 검증이 없어 비활성화 (주석처리로 숨김)
             <button
               className="social-button"
               type="button"
@@ -538,6 +539,7 @@ export default function SignupPage() {
               <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left', color: '#c2410c' }}>MetaMask 지갑 연결</strong>
               <span style={{ color: '#c2410c' }}>↗</span>
             </button>
+            */}
           </div>
 
           {feedback && (

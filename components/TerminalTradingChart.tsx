@@ -1142,7 +1142,7 @@ export function TerminalTradingChart({
                 cursor: 'pointer'
               }}
             >
-              🕯️ Candles
+              Candles
             </button>
             <button
               type="button"
@@ -1158,7 +1158,7 @@ export function TerminalTradingChart({
                 cursor: 'pointer'
               }}
             >
-              📈 Line
+              Line
             </button>
             <button
               type="button"
@@ -1174,7 +1174,7 @@ export function TerminalTradingChart({
                 cursor: 'pointer'
               }}
             >
-              🌊 Area
+              Area
             </button>
           </div>
         </div>

@@ -134,7 +134,8 @@ export default function LoginPage() {
                   providerId: userInfo.sub,
                   email: userInfo.email,
                   nickname: userInfo.name || userInfo.email.split('@')[0],
-                  avatarUrl: userInfo.picture
+                  avatarUrl: userInfo.picture,
+                  accessToken: tokenResponse.access_token
                 })
 
                 if (res.success) {
@@ -557,7 +558,7 @@ export default function LoginPage() {
 
 
 
-            {/* METAMASK */}
+            {/* METAMASK — 서버 서명 검증이 없어 비활성화 (주석처리로 숨김)
             <button
               className="social-button"
               type="button"
@@ -569,6 +570,7 @@ export default function LoginPage() {
               <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left', color: '#c2410c' }}>{m.metamask}</strong>
               <span style={{ color: '#c2410c' }}>↗</span>
             </button>
+            */}
           </div>
 
           {feedback && (

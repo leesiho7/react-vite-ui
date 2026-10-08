@@ -1645,22 +1645,22 @@ export default function Page() {
   const researchStartChips = useMemo(() => {
     if (language === 'en') {
       return [
-        { label: '⚡ BTC 4h', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: 'Find a strategy for BTC on the 4 hour timeframe.' },
-        { label: '🔍 ETH 1h', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: 'Find a strategy for ETH on the 1 hour timeframe.' },
-        { label: '📈 SOL daily', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Find a strategy for SOL on the daily timeframe.' }
+        { label: 'BTC 4h', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: 'Find a strategy for BTC on the 4 hour timeframe.' },
+        { label: 'ETH 1h', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: 'Find a strategy for ETH on the 1 hour timeframe.' },
+        { label: 'SOL daily', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: 'Find a strategy for SOL on the daily timeframe.' }
       ]
     }
     if (language === 'cn') {
       return [
-        { label: '⚡ BTC 4小时', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: '用 BTC 4小时 周期做策略研究。' },
-        { label: '🔍 ETH 1小时', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '用 ETH 1小时 周期做策略研究。' },
-        { label: '📈 SOL 日线', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '用 SOL 日线 周期做策略研究。' }
+        { label: 'BTC 4小时', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: '用 BTC 4小时 周期做策略研究。' },
+        { label: 'ETH 1小时', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '用 ETH 1小时 周期做策略研究。' },
+        { label: 'SOL 日线', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '用 SOL 日线 周期做策略研究。' }
       ]
     }
     return [
-      { label: '⚡ BTC 4시간봉', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: 'BTC 4시간봉으로 전략 찾아줘.' },
-      { label: '🔍 이더리움 1시간봉', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '이더리움 1시간봉으로 전략 찾아줘.' },
-      { label: '📈 솔라나 일봉', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '솔라나 일봉으로 전략 찾아줘.' }
+      { label: 'BTC 4시간봉', icon: <Zap size={11} className="text-[#f47a20]" />, prompt: 'BTC 4시간봉으로 전략 찾아줘.' },
+      { label: '이더리움 1시간봉', icon: <Sparkles size={11} className="text-[#a855f7]" />, prompt: '이더리움 1시간봉으로 전략 찾아줘.' },
+      { label: '솔라나 일봉', icon: <Layers size={11} className="text-[#38bdf8]" />, prompt: '솔라나 일봉으로 전략 찾아줘.' }
     ]
   }, [language])
 
