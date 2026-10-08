@@ -300,6 +300,28 @@ export default function Navbar({
                   {menuText.pairs}
                 </button>
               </li>
+
+              <li>
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'trenchguard' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView && onSelectView('trenchguard')}
+                >
+                  TrenchGuard
+                </button>
+              </li>
+
+              <li>
+                <button
+                  type="button"
+                  style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
+                  className={`transition-colors cursor-pointer p-0 text-[12px] font-medium ${activeView === 'cryptoterminal' ? 'text-[#f47a20] font-bold' : 'text-[#a1a1aa] hover:text-[#f47a20]'}`}
+                  onClick={() => onSelectView && onSelectView('cryptoterminal')}
+                >
+                  Crypto Terminal
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -353,16 +375,7 @@ export default function Navbar({
 
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l border-[#27272a]">
-                {currentUser.role === 'ROLE_ADMIN' && (
-                  <Link
-                    href="/admin/onnx-veto"
-                    className="flex items-center gap-1 text-[10px] font-bold text-[#f47a20] no-underline hover:underline whitespace-nowrap border border-[#f47a20]/40 rounded px-1.5 py-0.5"
-                    title="ONNX 거부권 검증 대시보드 (관리자 전용)"
-                  >
-                    <ShieldCheck size={12} />
-                    <span className="hidden sm:inline">관리자</span>
-                  </Link>
-                )}
+                {/* 관리자 전용 ONNX 거부권 링크는 공개 "Crypto Terminal" 탭과 중복이라 제거했다 (/admin/onnx-veto 주소는 그대로 유지) */}
                 <Link href="/profile" className="flex items-center gap-1.5 text-[11px] font-semibold text-[#34d399] no-underline hover:underline whitespace-nowrap">
                   <UserRound size={13} />
                   <span className="hidden sm:inline">{currentUser.nickname || currentUser.username}</span>
@@ -657,6 +670,38 @@ export default function Navbar({
                 <div>
                   <div className="text-[11px] font-bold text-white leading-tight">{menuText.pairs}</div>
                   <div className="text-[9px] text-[#94a3b8]">페어 트레이딩 연구</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('trenchguard');
+                }}
+              >
+                <ShieldCheck size={16} className="text-[#94a3b8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">TrenchGuard</div>
+                  <div className="text-[9px] text-[#94a3b8]">{language === 'ko' ? '신규 토큰 위험 연구' : 'New-token risk research'}</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid #2a3342' }}
+                className="flex items-center gap-2.5 p-3 rounded-[8px] text-left hover:border-[#f47a20] transition-colors cursor-pointer"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  if (onSelectView) onSelectView('cryptoterminal');
+                }}
+              >
+                <Activity size={16} className="text-[#94a3b8]" />
+                <div>
+                  <div className="text-[11px] font-bold text-white leading-tight">Crypto Terminal</div>
+                  <div className="text-[9px] text-[#94a3b8]">{language === 'ko' ? '딥러닝 모델 학습·검증 모니터링' : 'Deep-learning model monitoring'}</div>
                 </div>
               </button>
 

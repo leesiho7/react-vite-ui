@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useContainerWidth } from './useContainerWidth'
+import { useT } from '@/lib/terminalI18n'
 
 export interface BarDatum {
   label: string
@@ -31,13 +32,14 @@ export default function BarChartPanel({
   valueFormat?: (v: number) => string
   autoWidth?: boolean
 }) {
+  const t = useT()
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const { ref: wrapRef, width: measured } = useContainerWidth(autoWidth)
 
   if (data.length === 0) {
     return (
       <div ref={wrapRef} className="flex items-center justify-center text-[10px] text-[#555555]" style={{ height: H }}>
-        데이터 없음
+        {t('데이터 없음', 'No data')}
       </div>
     )
   }
@@ -93,7 +95,7 @@ export default function BarChartPanel({
             {data[hoverIdx].label}: <span className="text-white">{valueFormat(data[hoverIdx].value)}</span>
           </span>
         ) : (
-          <span className="text-[#555555]">막대를 누르거나 마우스를 올리면 값이 보입니다</span>
+          <span className="text-[#555555]">{t('막대를 누르거나 마우스를 올리면 값이 보입니다', 'Tap or hover a bar to see its value')}</span>
         )}
       </div>
     </div>

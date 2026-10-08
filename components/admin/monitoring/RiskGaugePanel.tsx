@@ -1,5 +1,7 @@
 'use client'
 
+import { useT } from '@/lib/terminalI18n'
+
 /**
  * ONNX DOWN_RISK/UP_RISK의 실시간 확률 게이지. `/api/trading/decision`이 이미 메인 TRADE
  * 화면에서 쓰고 있는 실제 판정 엔드포인트에서 그대로 가져온 값이다 — "오를 확률"이 아니라
@@ -19,15 +21,16 @@ export default function RiskGaugePanel({
   vetoed: boolean | null
   finalAction: string | null
 }) {
+  const tr = useT()
   return (
     <div className="flex flex-col gap-3 pt-1">
-      <Gauge label="DOWN_RISK (BUY 거부권)" value={downRiskProb} gate={gate} />
-      <Gauge label="UP_RISK (SELL 거부권)" value={upRiskProb} gate={gate} />
+      <Gauge label={tr('DOWN_RISK (BUY 거부권)', 'DOWN_RISK (BUY veto)')} value={downRiskProb} gate={gate} />
+      <Gauge label={tr('UP_RISK (SELL 거부권)', 'UP_RISK (SELL veto)')} value={upRiskProb} gate={gate} />
       <div className="text-[9px] text-[#666666] flex items-center gap-2 mt-0.5">
-        <span>최종 판정: <span className="text-white font-bold">{finalAction ?? '—'}</span></span>
+        <span>{tr('최종 판정: ', 'Final verdict: ')}<span className="text-white font-bold">{finalAction ?? '—'}</span></span>
         {vetoed !== null && (
           <span className={vetoed ? 'text-[#f2495c] font-bold' : 'text-[#555555]'}>
-            {vetoed ? '● 거부권 발동됨' : '○ 거부권 미발동'}
+            {vetoed ? tr('● 거부권 발동됨', '● Veto triggered') : tr('○ 거부권 미발동', '○ No veto')}
           </span>
         )}
       </div>
@@ -36,6 +39,7 @@ export default function RiskGaugePanel({
 }
 
 function Gauge({ label, value, gate }: { label: string; value: number | null; gate: number }) {
+  const tr = useT()
   const pct = value === null ? 0 : Math.max(0, Math.min(1, value)) * 100
   const gatePct = Math.max(0, Math.min(1, gate)) * 100
   const overGate = value !== null && value >= gate
@@ -57,7 +61,7 @@ function Gauge({ label, value, gate }: { label: string; value: number | null; ga
         {/* 게이트 임계선 — 이 선을 넘으면 실제로 거부권이 발동한다 */}
         <div className="absolute inset-y-0 w-px bg-white/70" style={{ left: `${gatePct}%` }} />
       </div>
-      <div className="text-[8px] text-[#555555] mt-0.5">게이트 {(gate * 100).toFixed(0)}% (흰 선) 넘으면 거부권 발동</div>
+      <div className="text-[8px] text-[#555555] mt-0.5">{tr(`게이트 ${(gate * 100).toFixed(0)}% (흰 선) 넘으면 거부권 발동`, `Veto triggers above the ${(gate * 100).toFixed(0)}% gate (white line)`)}</div>
     </div>
   )
 }

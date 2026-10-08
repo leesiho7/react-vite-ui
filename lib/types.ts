@@ -17,6 +17,8 @@ export interface QuantitativeSignal {
   vwap?: number;
   atr?: number;
   atrTrailingStop?: number;
+  garmanKlassVol?: number;
+  gkTrailingStop?: number;
   orderbookImbalance?: number;
   fundingRate?: number;
   signalsSummary: string[];

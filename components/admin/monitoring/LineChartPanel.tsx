@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { useContainerWidth } from './useContainerWidth'
-
+import { useT } from '@/lib/terminalI18n'
 export interface LineSeries {
   name: string
   color: string
@@ -188,9 +188,10 @@ function formatTooltipTime(ms: number): string {
 }
 
 function EmptyState({ height }: { height: number }) {
+  const t = useT()
   return (
     <div className="flex items-center justify-center text-[10px] text-[#555555]" style={{ height }}>
-      데이터 없음
+      {t('데이터 없음', 'No data')}
     </div>
   )
 }

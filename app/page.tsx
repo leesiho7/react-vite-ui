@@ -25,11 +25,14 @@ import {
   settlePredictionApi,
   fetchUserPredictionStats,
   fetchLiveFinancialNewsFeed,
+  fetchNewsSummary,
   fetchEscrowPoolStatus,
   EscrowPoolStatus,
   adminGrantLicense,
   fetchVisionChartAnalysis,
   fetchUserBots,
+  isSessionExpired,
+  AUTH_EXPIRED_EVENT,
   createBotInstanceApi,
   startBotApi,
   pauseBotApi,
@@ -66,6 +69,10 @@ import {
 import { TerminalTradingChart } from '../components/TerminalTradingChart'
 import { FullOrderbookTerminal } from '../components/FullOrderbookTerminal'
 import TerminalShell from '../components/terminal/TerminalShell'
+import TrenchGuardTerminal from '../components/terminal/TrenchGuardTerminal'
+import CryptoTerminal from '../components/terminal/CryptoTerminal'
+import SupportCenter from '../components/support/SupportCenter'
+import { readSiteLang, writeSiteLang } from '../lib/siteLang'
 import { AiDebateArenaCard } from '../components/AiDebateArenaCard'
 import { PolymarketSpeedGameCard } from '../components/PolymarketSpeedGameCard'
 import { Polymarket1HSpeedGameCard } from '../components/Polymarket1HSpeedGameCard'
@@ -1094,7 +1101,16 @@ export default function Page() {
   const [stance, setStance] = useState('BUY')
   const [watching, setWatching] = useState(false)
   const [searched, setSearched] = useState('BTC/USD')
-  const [language, setLanguage] = useState<Language>('ko')
+  const [language, setLanguageState] = useState<Language>('en')
+  // 사이트 언어를 브라우저에 저장해 로그인·프로필 같은 별도 주소의 화면도 같은 언어를 따르게 한다 (저장값이 없으면 영어)
+  const setLanguage = useCallback((l: Language) => {
+    setLanguageState(l)
+    writeSiteLang(l)
+  }, [])
+  useEffect(() => {
+    const saved = readSiteLang()
+    setLanguageState((cur) => (cur === saved ? cur : saved))
+  }, [])
   const [eventOpen, setEventOpen] = useState(false)
   const [communityOpen, setCommunityOpen] = useState(false)
   const [newsOpen, setNewsOpen] = useState(false)
@@ -1138,6 +1154,26 @@ export default function Page() {
   const [articleModalOpen, setArticleModalOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [articleLangView, setArticleLangView] = useState<'KO' | 'EN'>('KO')
+  // 기사 상세 창의 AI 요약: 창이 열리거나 보기 언어가 바뀔 때 서버에 요청한다 (같은 기사·언어는 서버가 캐시)
+  const [articleSummary, setArticleSummary] = useState<{ state: 'idle' | 'loading' | 'ok' | 'limited' | 'none'; text?: string; basis?: 'excerpt' | 'headline' }>({ state: 'idle' })
+  useEffect(() => {
+    const link = selectedArticle?.link
+    if (!articleModalOpen || !link) {
+      setArticleSummary({ state: 'idle' })
+      return
+    }
+    let alive = true
+    setArticleSummary({ state: 'loading' })
+    fetchNewsSummary(link, articleLangView === 'KO' ? 'ko' : 'en').then((r) => {
+      if (!alive) return
+      if (r.status === 'OK') setArticleSummary({ state: 'ok', text: r.summary, basis: r.basis })
+      else if (r.status === 'LIMITED') setArticleSummary({ state: 'limited' })
+      else setArticleSummary({ state: 'none' })
+    })
+    return () => {
+      alive = false
+    }
+  }, [articleModalOpen, selectedArticle?.link, articleLangView])
   const [mediaFilter, setMediaFilter] = useState('ALL')
   const [mediaTrack, setMediaTrack] = useState<'DAILY_LIVE' | 'MASTERCLASS'>('DAILY_LIVE')
   const [selectedMediaStory, setSelectedMediaStory] = useState(mediaStories[0])
@@ -1643,6 +1679,8 @@ export default function Page() {
 
   // Real Backend User State
   const [currentUser, setCurrentUser] = useState<AuthResponse | null>(null)
+  // 로그인 토큰 만료(24시간) 안내용. true 면 상단에 "다시 로그인" 배너를 보여준다.
+  const [sessionExpired, setSessionExpired] = useState(false)
   const [decisionReport, setDecisionReport] = useState<IntegratedDecisionReport | null>(null)
 
   // 1-Hour Prediction League Interactive State & Real Strike Price
@@ -1982,7 +2020,7 @@ export default function Page() {
     }
   }
   // Top Navbar View State (상단 Navbar 메뉴별 해당하는 데이터만 전용 렌더링)
-  const [activeTopView, setActiveTopView] = useState<'trade' | 'league' | 'news' | 'bots' | 'research' | 'media' | 'arbitrage' | 'pairs'>('trade')
+  const [activeTopView, setActiveTopView] = useState<'trade' | 'league' | 'news' | 'bots' | 'research' | 'media' | 'arbitrage' | 'pairs' | 'trenchguard' | 'cryptoterminal'>('trade')
 
   useEffect(() => {
     const handleHash = () => {
@@ -1992,6 +2030,8 @@ export default function Page() {
       else if (h === '#ten-win-league' || h === '#league') setActiveTopView('league')
       else if (h === '#arbitrage-terminal' || h === '#arbitrage') setActiveTopView('arbitrage')
       else if (h === '#pairs' || h.startsWith('#pairs-terminal')) setActiveTopView('pairs')
+      else if (h === '#trenchguard') setActiveTopView('trenchguard')
+      else if (h === '#crypto-terminal') setActiveTopView('cryptoterminal')
       else if (h === '#live-newswire' || h === '#news') setActiveTopView('news')
       else if (h === '#media-wire' || h === '#media') setActiveTopView('media')
       else if (h === '#trade' || h === '#market-intelligence-terminal' || h === '' || h === '#') setActiveTopView('trade')
@@ -2009,6 +2049,8 @@ export default function Page() {
       else if (view === 'league') window.location.hash = 'ten-win-league'
       else if (view === 'arbitrage') window.location.hash = 'arbitrage-terminal'
       else if (view === 'pairs') window.location.hash = 'pairs-terminal'
+      else if (view === 'trenchguard') window.location.hash = 'trenchguard'
+      else if (view === 'cryptoterminal') window.location.hash = 'crypto-terminal'
       else if (view === 'news') window.location.hash = 'live-newswire'
       else if (view === 'media') window.location.hash = 'media-wire'
       else window.location.hash = 'trade'
@@ -2090,7 +2132,6 @@ export default function Page() {
   }
 
   // Bot Hosting & Developer Sandbox State
-  const [botMode, setBotMode] = useState<'GENERAL' | 'DEVELOPER'>('GENERAL')
   const [botRunning, setBotRunning] = useState(true)
   const [riskSlider, setRiskSlider] = useState(35)
   const [telegramLinked, setTelegramLinked] = useState(false)
@@ -2162,7 +2203,14 @@ export default function Page() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('auth_session')
-      const user: AuthResponse | null = stored ? JSON.parse(stored) : null
+      let user: AuthResponse | null = stored ? JSON.parse(stored) : null
+      // 로그인 토큰은 24시간 뒤 만료된다. 만료된 세션을 로그인 상태로 두면 봇 목록 같은 개인 데이터가 조용히 비어 보이므로
+      // 접속 시점에 걸러 내고 안내를 띄운다.
+      if (user && isSessionExpired(user)) {
+        localStorage.removeItem('auth_session')
+        user = null
+        setSessionExpired(true)
+      }
       setCurrentUser(user)
 
       const sessionKey = getUserSessionKey(user)
@@ -2264,6 +2312,19 @@ export default function Page() {
       } catch (e) {}
     }
   }, [humanWins, round, submitted, prediction, currentUser])
+
+  // 서버가 로그인 토큰을 거부(401)하면 가짜 로그인 상태를 풀고 안내한다 (fetchUserBots 가 이벤트를 보낸다)
+  useEffect(() => {
+    const onExpired = () => {
+      try {
+        localStorage.removeItem('auth_session')
+      } catch {}
+      setCurrentUser(null)
+      setSessionExpired(true)
+    }
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired)
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('auth_session')
@@ -3032,13 +3093,17 @@ export default function Page() {
         return {
           category: cat,
           // 출처를 'BLOOMBERG TERMINAL'로 기본값 처리하지 않는다 (언론사 이름 도용)
-          source: item.source || '출처 미확인',
+          // 한국어 기사는 서버가 영어로 번역해 내려준다(translatedFrom='ko'). 한국어 모드에서는 원문 출처명을 쓴다.
+          source: (language === 'ko' && item.originalSource ? item.originalSource : item.source) || (language === 'ko' ? '출처 미확인' : 'Source unknown'),
+          translatedFrom: item.translatedFrom,
+          originalTitle: item.originalTitle,
+          originalSnippet: item.originalSnippet,
           tag: item.symbol?.replace('.KS', '').replace('USDT', '') || 'MARKET',
           title: displayTitle,
           titleOriginal: item.title,
           titleKo: item.titleKo,
           titleCn: item.titleCn,
-          snippet: item.snippet,
+          snippet: language === 'ko' && item.translatedFrom === 'ko' && item.snippetKo ? item.snippetKo : item.snippet,
           snippetKo: item.snippetKo,
           snippetCn: item.snippetCn,
           rootCauseKo: item.rootCauseKo,
@@ -3569,6 +3634,32 @@ export default function Page() {
         onOpenUpgrade={() => setUpgradeOpen(true)}
       />
 
+      {/* ── 24/7 Support Center: 오른쪽 하단 🎧 버튼 (기능 안내 · 봇 안내 · FAQ · 문의 접수) ── */}
+      <SupportCenter
+        language={language}
+        onNavigate={handleSelectTopView}
+        userEmail={
+          typeof currentUser?.email === 'string' && currentUser.email.includes('@')
+            ? currentUser.email
+            : typeof currentUser?.username === 'string' && currentUser.username.includes('@')
+              ? currentUser.username
+              : undefined
+        }
+      />
+
+      {/* ── 로그인 세션 만료 안내: 토큰은 24시간 뒤 만료되며 갱신이 없다. 만료된 채 두면 봇 목록 등이 조용히 비어 보인다. ── */}
+      {sessionExpired && !currentUser && (
+        <div role="alert" className="w-full bg-[#2a1d0a] border-b border-[#6b4a12] text-[#fcd34d] text-[12px] px-4 py-2 flex items-center justify-center gap-3 flex-wrap font-sans">
+          <span>
+            {language === 'ko'
+              ? '로그인 세션이 만료되었습니다. 다시 로그인하면 내 봇과 계정 정보가 표시됩니다.'
+              : 'Your login session has expired. Log in again to see your bots and account data.'}
+          </span>
+          <a href="/login" className="font-bold underline text-[#fde68a]">{language === 'ko' ? '다시 로그인' : 'Log in'}</a>
+          <button type="button" onClick={() => setSessionExpired(false)} aria-label={language === 'ko' ? '닫기' : 'Dismiss'} className="text-[#fcd34d] hover:text-white bg-transparent border-0 cursor-pointer text-[16px] leading-none">×</button>
+        </div>
+      )}
+
       <main className="terminal-shell">
 
       {/* ── Real-Time Market Intelligence & AI Copilot Workspace ── */}
@@ -3898,6 +3989,7 @@ export default function Page() {
                 currentPrice={price > 0 ? price : getBenchmarkPrice(marketActiveSymbol)}
                 latestKline={latestKline}
                 interval={marketChartInterval}
+                language={language}
               />
 
               <div style={{ marginTop: '16px', marginBottom: '16px' }}>
@@ -5426,16 +5518,13 @@ export default function Page() {
                 <span className={`sentiment ${selectedArticle.tone}`} style={{ marginLeft: '4px' }}>
                   {selectedArticle.sentiment}
                 </span>
-                <span style={{ fontSize: '9px', color: 'var(--muted)', background: '#eef5f7', padding: '2px 6px', border: '1px solid #d0e2e8' }}>
-                  AI IMPACT {selectedArticle.impact}/10
-                </span>
               </div>
               <button
                 className="text-button"
                 style={{ fontSize: '12px', color: 'var(--muted)', padding: '4px 8px' }}
                 onClick={() => setArticleModalOpen(false)}
               >
-                닫기 ×
+                {language === 'ko' ? '닫기 ×' : 'Close ×'}
               </button>
             </div>
 
@@ -5451,7 +5540,7 @@ export default function Page() {
               }}
             >
               <span style={{ fontSize: '10px', color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Diamond /> <b>언어 보기 모드:</b>
+                <Diamond /> <b>{language === 'ko' ? '언어 보기 모드:' : 'Article language:'}</b>
               </span>
               <div style={{ display: 'flex', gap: '4px' }}>
                 <button
@@ -5459,7 +5548,7 @@ export default function Page() {
                   style={{ fontSize: '9px', padding: '4px 10px' }}
                   onClick={() => setArticleLangView('KO')}
                 >
-                  🇰🇷 AI 한국어 번역
+                  {language === 'ko' ? '🇰🇷 AI 한국어 번역' : '🇰🇷 AI Korean translation'}
                 </button>
                 <button
                   className={`news-category-button ${articleLangView === 'EN' ? 'selected' : ''}`}
@@ -5490,52 +5579,74 @@ export default function Page() {
                   ? (selectedArticle.titleKo || selectedArticle.title)
                   : (selectedArticle.titleOriginal || selectedArticle.title)}
               </h2>
+              {selectedArticle.translatedFrom === 'ko' && articleLangView !== 'KO' && (
+                <p style={{ margin: '-6px 0 12px', fontSize: '10px', color: 'var(--muted)' }}>
+                  {language === 'ko' ? '원문(한국어) 제목: ' : 'Original (Korean) title: '}{selectedArticle.originalTitle}
+                  {' · '}{language === 'ko' ? '제목과 소개문은 AI 가 영어로 번역했습니다.' : 'Title and excerpt were machine-translated into English.'}
+                </p>
+              )}
 
               {/* Metadata strip */}
               <div style={{ display: 'flex', gap: '14px', fontSize: '10px', color: 'var(--muted)', paddingBottom: '16px', borderBottom: '1px solid var(--line)', marginBottom: '18px' }}>
-                <span>출처: <b>{selectedArticle.source}</b></span>
-                <span>종목: <b>{selectedArticle.tag}</b></span>
-                <span>수집: <b>방금 전 (실시간 글로벌 피드)</b></span>
+                <span>{language === 'ko' ? '출처' : 'Source'}: <b>{selectedArticle.source}</b></span>
+                <span>{language === 'ko' ? '종목' : 'Symbol'}: <b>{selectedArticle.tag}</b></span>
+                <span>{language === 'ko' ? '수집' : 'Collected'}: <b>{language === 'ko' ? '방금 전 (실시간 글로벌 피드)' : 'just now (live global feed)'}</b></span>
               </div>
 
-              {/* AI 3-Point Deep Fact-Check Card */}
+              {/* 기사 요약 — 서버가 제목+출처 소개문만 근거로 만든 AI 요약(캐시/한도 적용), 그 아래에 출처의 원문 소개문을 그대로 함께 보여준다.
+                  AI 가 만든 것임을 밝히고, 근거가 제목뿐이면 그 사실도 표시한다. 요약을 못 만들면 원문 소개문만 남는다. */}
               <div style={{ background: '#f8fafb', border: '1px solid var(--line)', padding: '16px', borderRadius: '4px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Sparkles size={13} color="#2b866d" /> AI 팩트체크 & 월가 퀀트 브리핑
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--navy)' }}>
+                    {language === 'ko' ? '기사 요약' : 'Article summary'}
                   </span>
-                  <span style={{ fontSize: '9px', color: '#2b866d', border: '1px solid #b8d8cc', padding: '2px 6px', background: '#ffffff' }}>
-                    🛡️ FACT-CHECK VERIFIED
-                  </span>
+                  {articleSummary.state === 'ok' && (
+                    <span style={{ fontSize: '9px', color: 'var(--muted)', border: '1px solid #d0e2e8', padding: '1px 6px', background: '#ffffff' }}>
+                      {language === 'ko' ? 'AI 요약' : 'AI-generated'}
+                    </span>
+                  )}
                 </div>
+                {articleSummary.state === 'loading' && (
+                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
+                    {language === 'ko' ? '요약을 만드는 중…' : 'Generating summary…'}
+                  </p>
+                )}
+                {articleSummary.state === 'ok' && (
+                  <>
+                    <p style={{ margin: 0, fontSize: '12px', lineHeight: '1.6', color: 'var(--ink)', whiteSpace: 'pre-line' }}>{articleSummary.text}</p>
+                    <p style={{ margin: '8px 0 0', fontSize: '9px', lineHeight: '1.5', color: 'var(--muted)' }}>
+                      {articleSummary.basis === 'headline'
+                        ? (language === 'ko' ? '출처가 소개문을 제공하지 않아 제목만 근거로 풀어 쓴 한 문장입니다. ' : 'The source gave no excerpt, so this is one sentence restating the headline. ')
+                        : ''}
+                      {language === 'ko' ? 'AI가 제목과 출처 소개문만 근거로 만든 요약이며 부정확할 수 있습니다. 아래 원문과 대조하세요.' : 'AI-generated from the headline and the source excerpt only; it may be inaccurate. Compare it with the original excerpt below.'}
+                    </p>
+                  </>
+                )}
+                {articleSummary.state === 'limited' && (
+                  <p style={{ margin: 0, fontSize: '10px', color: '#b45309' }}>
+                    {language === 'ko' ? '오늘 AI 요약 한도를 모두 사용했습니다. 회원가입하면 더 이용할 수 있어요.' : 'You have used today\'s AI summary allowance. Sign up to get more.'}
+                  </p>
+                )}
+                {(articleSummary.state === 'none' || articleSummary.state === 'idle') && (
+                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
+                    {language === 'ko' ? 'AI 요약을 불러오지 못했습니다.' : 'The AI summary could not be loaded.'}
+                  </p>
+                )}
 
-                <div style={{ display: 'grid', gap: '10px', fontSize: '11px', lineHeight: '1.6', color: 'var(--ink)' }}>
-                  <div>
-                    <strong style={{ color: 'var(--blue)' }}>01. 핵심 내용 요약: </strong>
-                    <span>
-                      {articleLangView === 'KO'
-                        ? (selectedArticle.snippetKo || selectedArticle.snippet || '기관 투자자 자금 유입 및 시장 변동성 지표 확인.')
-                        : (selectedArticle.snippet || 'Institutional capital flows and market volatility indicators verified.')}
-                    </span>
+                {/* 출처가 제공한 원문 소개문 (번역된 기사는 원문 언어 그대로) */}
+                <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--line)' }}>
+                  <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '.06em', color: 'var(--muted)', marginBottom: '4px', textTransform: 'uppercase' }}>
+                    {language === 'ko' ? '출처 소개문 (원문)' : (selectedArticle.translatedFrom === 'ko' ? 'Source excerpt (original Korean)' : 'Source excerpt (original)')}
                   </div>
-                  <div>
-                    <strong style={{ color: 'var(--green)' }}>02. AI 수급 및 감성 진단: </strong>
-                    <span>
-                      {selectedArticle.sentiment === 'BULLISH'
-                        ? '온체인 매수세와 ETF 순유입이 지속되며 상방 모멘텀이 우세합니다.'
-                        : (selectedArticle.sentiment === 'BEARISH'
-                          ? '단기 차익 실현 및 레버리지 청산 압력이 존재하므로 분할 매수 대응이 권장됩니다.'
-                          : '방향성 탐색 구간으로 지지선 테스트 후 추세 확인이 유리합니다.')}
-                    </span>
-                  </div>
-                  <div>
-                    <strong style={{ color: 'var(--navy)' }}>03. 트레이딩 액션 가이드: </strong>
-                    <span>
-                      {articleLangView === 'KO'
-                        ? (selectedArticle.actionGuideKo || `$${selectedArticle.tag} 기관 수급 및 1차 지지선 방어 여부 모니터링, 정밀 기술적 지표 합성 매매 권장.`)
-                        : (selectedArticle.actionGuideEn || `$${selectedArticle.tag} Monitor institutional flows and 1st support defense with multi-technical indicators.`)}
-                    </span>
-                  </div>
+                  {(selectedArticle.originalSnippet || selectedArticle.snippet) ? (
+                    <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.6', color: '#4b5563' }}>
+                      {selectedArticle.originalSnippet || selectedArticle.snippet}
+                    </p>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.6', color: 'var(--muted)' }}>
+                      {language === 'ko' ? '출처가 소개문을 제공하지 않았습니다. 아래 원문 기사에서 확인해 주세요.' : 'The source did not provide an excerpt. Please read the original article below.'}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -5550,7 +5661,7 @@ export default function Page() {
                     style={{ flex: 1, minWidth: '220px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none' }}
                   >
                     <ExternalLink size={13} />
-                    언론사 원문 기사 전체보기 ↗
+                    {language === 'ko' ? '언론사 원문 기사 전체보기 ↗' : 'Read the full original article ↗'}
                   </a>
                 )}
                 <button
@@ -5562,13 +5673,13 @@ export default function Page() {
                   }}
                 >
                   <BarChart2 size={13} />
-                  ${selectedArticle.tag} 차트 동기화
+                  {language === 'ko' ? <>${selectedArticle.tag} 차트 동기화</> : <>Sync ${selectedArticle.tag} chart</>}
                 </button>
                 <button
                   className="secondary-button"
                   onClick={() => setArticleModalOpen(false)}
                 >
-                  닫기
+                  {language === 'ko' ? '닫기' : 'Close'}
                 </button>
               </div>
             </div>
@@ -5587,7 +5698,21 @@ export default function Page() {
       {/* ── 터미널: 통계적 페어 트레이딩(평균회귀) 연구 터미널 — Grafana 스타일 ── */}
       {(activeTopView === 'pairs') && (
         <section id="pairs-terminal" style={{ margin: '24px 0' }}>
-          <TerminalShell />
+          <TerminalShell language={language} />
+        </section>
+      )}
+
+      {/* ── TrenchGuard: pump.fun 신규 토큰 위험 연구 (공개, 읽기 전용) ── */}
+      {(activeTopView === 'trenchguard') && (
+        <section id="trenchguard" style={{ margin: '24px 0' }}>
+          <TrenchGuardTerminal language={language} />
+        </section>
+      )}
+
+      {/* ── Crypto Terminal: ONNX 거부권 검증 모니터링 (공개, 예전 관리자 전용 화면) ── */}
+      {(activeTopView === 'cryptoterminal') && (
+        <section id="crypto-terminal" style={{ margin: '24px 0' }}>
+          <CryptoTerminal language={language} />
         </section>
       )}
 
@@ -5656,12 +5781,14 @@ export default function Page() {
               >
                 <SquareTerminal size={16} /> Terminal
               </a>
+              {/* [임시 숨김] Strategies 탭: 코드에 박힌 가짜 승률 수치와 서버에 연결되지 않은 POSITION RISK 슬라이더가 있어 비활성화했다. 되살리려면 이 주석 블록을 풀기 전에 실제 데이터로 교체할 것.
               <a
                 className={botConsoleActiveTab === 'strategies' ? 'active' : ''}
                 onClick={() => setBotConsoleActiveTab('strategies')}
               >
                 <Code2 size={16} /> Strategies
               </a>
+              */}
               {/* Billing 임시 비활성화 — 다시 보이려면 이 주석 해제
               <a
                 className={botConsoleActiveTab === 'billing' ? 'active' : ''}
@@ -6043,6 +6170,7 @@ export default function Page() {
               </div>
             )}
 
+            {/* [임시 숨김] Strategies 탭: 코드에 박힌 가짜 승률 수치와 서버에 연결되지 않은 POSITION RISK 슬라이더가 있어 비활성화했다. 되살리려면 이 주석 블록을 풀기 전에 실제 데이터로 교체할 것.
             {botConsoleActiveTab === 'strategies' && (
               <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>
                 <span className="bot-console-kicker">STRATEGY REPERTOIRE</span>
@@ -6074,6 +6202,7 @@ export default function Page() {
                 </div>
               </div>
             )}
+            */}
 
             {botConsoleActiveTab === 'settings' && (
               <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #dedfe4', padding: '24px' }}>

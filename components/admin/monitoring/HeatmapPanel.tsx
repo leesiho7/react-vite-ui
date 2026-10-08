@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { HeatmapCell } from '@/lib/monitoringMath'
+import { useT, useTerminalLang } from '@/lib/terminalI18n'
 
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
+const DAY_LABELS_KO = ['일', '월', '화', '수', '목', '금', '토']
+const DAY_LABELS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const SCALE_STOPS: [number, string][] = [
   [0, '#3b82f6'], // blue
   [0.33, '#73bf69'], // green
@@ -41,6 +43,10 @@ function hexToRgb(hex: string) {
 /** 요일×시간대 승률 히트맵. 표본이 없는 칸(winRate=null)은 회색으로 비워두고, 색상 스케일
  *  범례(파랑→초록→노랑→빨강)를 아래 붙인다. 셀 사이 간격 없이 촘촘하게. */
 export default function HeatmapPanel({ grid }: { grid: HeatmapCell[][] }) {
+  const t = useT()
+  const ko = useTerminalLang() === 'ko'
+  const DAY_LABELS = ko ? DAY_LABELS_KO : DAY_LABELS_EN
+  const dayName = (dow: number) => (ko ? `${DAY_LABELS_KO[dow]}요일` : DAY_LABELS_EN[dow])
   const [hover, setHover] = useState<HeatmapCell | null>(null)
   const cellW = 11
   const cellH = 12
@@ -77,14 +83,14 @@ export default function HeatmapPanel({ grid }: { grid: HeatmapCell[][] }) {
         <div className="text-[9px] font-mono text-[#aaaaaa] h-3.5">
           {hover ? (
             hover.winRate === null ? (
-              <span className="text-[#555555]">{DAY_LABELS[hover.dayOfWeek]}요일 {hover.hour}시 (UTC) — 표본 없음</span>
+              <span className="text-[#555555]">{dayName(hover.dayOfWeek)} {hover.hour}{t('시 (UTC) — 표본 없음', ':00 UTC — no sample')}</span>
             ) : (
               <span>
-                {DAY_LABELS[hover.dayOfWeek]}요일 {hover.hour}시(UTC) — 승률 <span className="text-white">{(hover.winRate * 100).toFixed(0)}%</span> ({hover.count}건)
+                {dayName(hover.dayOfWeek)} {hover.hour}{t('시(UTC) — 승률 ', ':00 UTC — win rate ')}<span className="text-white">{(hover.winRate * 100).toFixed(0)}%</span> ({hover.count}{t('건', ' trades')})
               </span>
             )
           ) : (
-            <span className="text-[#555555]">셀에 마우스를 올리면 값이 보입니다</span>
+            <span className="text-[#555555]">{t('셀에 마우스를 올리면 값이 보입니다', 'Hover a cell to see its value')}</span>
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">

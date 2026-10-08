@@ -1,6 +1,7 @@
 'use client'
 
 import { OnnxBacktestArchetypeKey } from '@/lib/types'
+import { useT } from '@/lib/terminalI18n'
 
 const ARCHETYPES: OnnxBacktestArchetypeKey[] = [
   'TREND_FOLLOWING',
@@ -18,11 +19,13 @@ const ARCHETYPES: OnnxBacktestArchetypeKey[] = [
  *  TimeFrame.H1 8,000봉으로 고정 조회). 나머지는 드롭다운에 "미구현"으로 남겨두고
  *  네이티브 disabled로 회색 처리한다 — 옵션을 아예 숨기면 "이것도 되나?" 싶은 궁금증에
  *  답을 안 주는 것이고, 몰래 켜둔 채로 두면 안 되는 걸 되는 척하는 것이라 둘 다 피한다. */
-const TIMEFRAMES: { value: string; label: string; implemented: boolean }[] = [
+// note: 옵션 뒤에 붙는 사유 (문구는 렌더링 때 번역)
+type Note = 'unimplemented' | 'nocandles' | 'smallsample'
+const TIMEFRAMES: { value: string; label: string; implemented: boolean; note?: Note }[] = [
   { value: 'H1', label: 'H1', implemented: true },
-  { value: 'H4', label: 'H4 (미구현)', implemented: false },
-  { value: 'D1', label: 'D1 (미구현)', implemented: false },
-  { value: 'W1', label: 'W1 (미구현)', implemented: false }
+  { value: 'H4', label: 'H4', implemented: false, note: 'unimplemented' },
+  { value: 'D1', label: 'D1', implemented: false, note: 'unimplemented' },
+  { value: 'W1', label: 'W1', implemented: false, note: 'unimplemented' }
 ]
 
 /** /api/ml/veto-backtest?symbol=...&archetype=TREND_FOLLOWING 를 실제로 돌려서 확인한 결과다
@@ -30,15 +33,15 @@ const TIMEFRAMES: { value: string; label: string; implemented: boolean }[] = [
  *  백필 미수집), ADA/SUI/DOGE는 캔들은 있지만 veto-filtered 거래 표본이 20건 미만이라
  *  BacktestEngine이 신뢰 불가로 표시한다 — 지어낸 값을 보여주는 대신, 실제로 안정적인
  *  자산만 활성화하고 나머지는 회색으로 남겨서 "아직 표본이 부족하다"를 그대로 노출한다. */
-const ASSETS: { value: string; label: string; implemented: boolean }[] = [
+const ASSETS: { value: string; label: string; implemented: boolean; note?: Note }[] = [
   { value: 'BTC', label: 'BTC', implemented: true },
   { value: 'ETH', label: 'ETH', implemented: true },
   { value: 'SOL', label: 'SOL', implemented: true },
   { value: 'XRP', label: 'XRP', implemented: true },
-  { value: 'BNB', label: 'BNB (캔들 미수집)', implemented: false },
-  { value: 'ADA', label: 'ADA (표본 부족)', implemented: false },
-  { value: 'SUI', label: 'SUI (표본 부족)', implemented: false },
-  { value: 'DOGE', label: 'DOGE (표본 부족)', implemented: false }
+  { value: 'BNB', label: 'BNB', implemented: false, note: 'nocandles' },
+  { value: 'ADA', label: 'ADA', implemented: false, note: 'smallsample' },
+  { value: 'SUI', label: 'SUI', implemented: false, note: 'smallsample' },
+  { value: 'DOGE', label: 'DOGE', implemented: false, note: 'smallsample' }
 ]
 
 /**
@@ -65,11 +68,17 @@ export default function TopFilterBar({
   onRun: () => void
   running: boolean
 }) {
+  const tr = useT()
+  const noteText = (n?: Note) =>
+    n === 'unimplemented' ? tr(' (미구현)', ' (not implemented)')
+      : n === 'nocandles' ? tr(' (캔들 미수집)', ' (no candles collected)')
+        : n === 'smallsample' ? tr(' (표본 부족)', ' (small sample)')
+          : ''
   return (
     <div className="mb-3">
       <div className="flex items-center flex-wrap gap-2 bg-[#111111] border border-[#222222] rounded-[2px] px-2.5 py-1.5">
         <FilterSelect label="Strategy" value={archetype} onChange={(v) => onArchetypeChange(v as OnnxBacktestArchetypeKey)}>
-          <option disabled value="__ALL__" className="text-[#555555]">전체 전략 (미구현)</option>
+          <option disabled value="__ALL__" className="text-[#555555]">{tr('전체 전략 (미구현)', 'All strategies (not implemented)')}</option>
           {ARCHETYPES.map((a) => (
             <option key={a} value={a}>{a}</option>
           ))}
@@ -78,7 +87,7 @@ export default function TopFilterBar({
         <FilterSelect label="Asset" value={symbol} onChange={onSymbolChange}>
           {ASSETS.map((a) => (
             <option key={a.value} value={a.value} disabled={!a.implemented} className={!a.implemented ? 'text-[#555555]' : ''}>
-              {a.label}
+              {a.label}{noteText(a.note)}
             </option>
           ))}
         </FilterSelect>
@@ -86,7 +95,7 @@ export default function TopFilterBar({
         <FilterSelect label="Timeframe" value="H1" onChange={() => {}} disabled={false}>
           {TIMEFRAMES.map((tf) => (
             <option key={tf.value} value={tf.value} disabled={!tf.implemented} className={!tf.implemented ? 'text-[#555555]' : ''}>
-              {tf.label}
+              {tf.label}{noteText(tf.note)}
             </option>
           ))}
         </FilterSelect>
@@ -94,7 +103,7 @@ export default function TopFilterBar({
         <button
           type="button"
           onClick={() => onLiveRefreshChange(!liveRefresh)}
-          title="모델 상태와 실전 거부권 정확도만 자동 갱신됩니다 — 백테스트/차트는 RUN BACKTEST로 수동 갱신"
+          title={tr('모델 상태와 실전 거부권 정확도만 자동 갱신됩니다 — 백테스트/차트는 RUN BACKTEST로 수동 갱신', 'Only model health and live veto accuracy refresh automatically — backtest/charts refresh manually with RUN BACKTEST')}
           className={`flex items-center gap-1.5 text-[9px] font-semibold px-2 py-1 rounded-[2px] border ${
             liveRefresh ? 'border-[#73bf69] text-[#73bf69] bg-[#73bf691a]' : 'border-[#222222] text-[#888888]'
           }`}
@@ -114,7 +123,7 @@ export default function TopFilterBar({
           {running ? 'RUNNING…' : 'RUN BACKTEST'}
         </button>
       </div>
-      <p className="text-[8px] text-[#555555] mt-1">회색으로 흐리게 표시된 항목은 아직 구현되지 않아 선택할 수 없습니다.</p>
+      <p className="text-[8px] text-[#555555] mt-1">{tr('회색으로 흐리게 표시된 항목은 아직 구현되지 않아 선택할 수 없습니다.', 'Greyed-out items are not implemented yet and cannot be selected.')}</p>
     </div>
   )
 }

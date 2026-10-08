@@ -201,6 +201,112 @@ export async function fetchKimchiHistory(symbol: string, days = 90): Promise<Kim
 }
 
 /**
+ * 24/7 Support Center 문의 티켓. 접수는 공개(비회원 가능), 목록·수정은 관리자 전용(JWT 필요).
+ * 문의 내용은 개인 정보라 서버가 관리자에게만 돌려준다.
+ */
+export interface SupportTicketPayload {
+  email: string
+  category: 'ACCOUNT' | 'PAYMENT' | 'BOT' | 'DATA' | 'OTHER'
+  subject: string
+  message: string
+  language: 'ko' | 'en'
+  website: string // 허니팟 — 사람이 보는 입력란이 아니다. 항상 빈 문자열로 보낸다.
+}
+export interface SupportTicketResult {
+  ok: boolean
+  ticketNo?: number
+  error?: string // invalid_email | invalid_category | invalid_subject | message_too_short | message_too_long | rate_limited | network
+}
+export async function submitSupportTicket(p: SupportTicketPayload): Promise<SupportTicketResult> {
+  try {
+    const res = await fetch(`${API_BASE}/support/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify(p)
+    })
+    const body = await res.json().catch(() => ({}))
+    if (res.ok) return { ok: true, ticketNo: body.ticketNo }
+    return { ok: false, error: body?.error || 'network' }
+  } catch (err) {
+    console.warn('[API] submitSupportTicket failed:', err)
+    return { ok: false, error: 'network' }
+  }
+}
+
+export interface SupportTicket {
+  id: number
+  userId: number | null
+  email: string
+  category: string
+  subject: string
+  message: string
+  language: string
+  status: 'OPEN' | 'IN_PROGRESS' | 'ANSWERED' | 'CLOSED'
+  adminNote: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+export async function fetchSupportTickets(status?: string): Promise<SupportTicket[] | null> {
+  try {
+    const q = status ? `?status=${encodeURIComponent(status)}&limit=200` : '?limit=200'
+    const res = await fetch(`${API_BASE}/support/tickets${q}`, { headers: { ...authHeader() }, cache: 'no-store' })
+    if (res.ok) return (await res.json()) as SupportTicket[]
+  } catch (err) {
+    console.warn('[API] fetchSupportTickets failed:', err)
+  }
+  return null
+}
+export async function updateSupportTicket(id: number, patch: { status?: string; adminNote?: string }): Promise<SupportTicket | null> {
+  try {
+    const res = await fetch(`${API_BASE}/support/tickets/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify(patch)
+    })
+    if (res.ok) return (await res.json()) as SupportTicket
+  } catch (err) {
+    console.warn('[API] updateSupportTicket failed:', err)
+  }
+  return null
+}
+
+/**
+ * 뉴스 기사 한 건의 AI 요약(제목+출처 소개문 근거). 서버가 링크로 기사를 찾아 요약한다.
+ * status: OK | LIMITED(일일 한도) | NOT_FOUND | DISABLED | FAILED | NETWORK(요청 실패)
+ */
+export interface NewsSummaryResult {
+  status: 'OK' | 'LIMITED' | 'NOT_FOUND' | 'DISABLED' | 'FAILED' | 'NETWORK'
+  summary?: string
+  basis?: 'excerpt' | 'headline'
+}
+export async function fetchNewsSummary(link: string, lang: 'ko' | 'en'): Promise<NewsSummaryResult> {
+  try {
+    const res = await fetch(`${API_BASE}/market/news/summary?link=${encodeURIComponent(link)}&lang=${lang}`)
+    const body = await res.json().catch(() => ({}))
+    if (res.ok && body.summary) return { status: 'OK', summary: body.summary, basis: body.basis }
+    const s = body?.status
+    return { status: s === 'LIMITED' || s === 'NOT_FOUND' || s === 'DISABLED' || s === 'FAILED' ? s : 'FAILED' }
+  } catch (err) {
+    console.warn('[API] fetchNewsSummary failed:', err)
+    return { status: 'NETWORK' }
+  }
+}
+
+/**
+ * TrenchGuard(pump.fun 신규 토큰 위험 연구) 읽기 전용 API. Python 서비스가 nginx 의 /api/trenchguard/ 로 노출된다.
+ * 실패하면 null — 호출한 화면이 "불러오지 못함"을 그대로 보여주고 값을 지어내지 않는다.
+ */
+export async function fetchTrenchGuard<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${API_BASE}/trenchguard/${path}`, { cache: 'no-store' })
+    if (res.ok) return (await res.json()) as T
+  } catch (err) {
+    console.warn('[API] fetchTrenchGuard failed:', path, err)
+  }
+  return null
+}
+
+/**
  * 3. 24H 예측 리그 리더보드 조회
  */
 export async function fetchPredictionLeaderboard(limit = 10): Promise<PredictionLeaderboardItem[]> {
@@ -344,11 +450,36 @@ async function requestBotControl(url: string, method: 'POST' | 'DELETE'): Promis
   }
 }
 
+/** 로그인 세션이 서버에서 거부됐을 때(401) 화면이 반응하도록 보내는 브라우저 이벤트 이름 */
+export const AUTH_EXPIRED_EVENT = 'aether:auth-expired';
+
+/**
+ * JWT 의 exp(초 단위 Unix 시각)로 만료 여부를 판단한다. accessToken 이 없거나 해독할 수 없으면 false
+ * (알 수 없는 것을 만료로 단정해 멀쩡한 세션을 끊지 않는다 — 서버가 401 을 주면 그때 처리한다).
+ * 서버 토큰 수명은 24시간이고 갱신 기능이 없어서, 하루가 지나면 localStorage 에는 로그인 정보가 남아 있어도 서버는 거부한다.
+ */
+export function isSessionExpired(session: { accessToken?: string } | null | undefined): boolean {
+  const token = session?.accessToken;
+  if (!token) return false;
+  try {
+    const part = token.split('.')[1];
+    if (!part) return false;
+    const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof json.exp === 'number' && json.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchUserBots(userId: number) {
   try {
     const res = await fetch(`${API_BASE}/bot/instance/user/${userId}`, { headers: { ...authHeader() } });
     if (res.ok) {
       return await res.json();
+    }
+    // 401 = 토큰 만료/무효. 예전에는 이 경우도 빈 목록 [] 을 돌려줘서 화면이 "봇 없음"으로 보였다.
+    if (res.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
     }
   } catch (err) {
     console.warn('[API] fetchUserBots fallback error:', err);

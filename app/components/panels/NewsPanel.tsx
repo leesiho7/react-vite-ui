@@ -90,7 +90,7 @@ export function NewsPanel(props: any) {
                       type="button"
                       className={`wire-stock ${isCurrent ? 'active' : ''}`}
                       onClick={() => setSearched(item.target)}
-                      title={`클릭하여 ${item.name}(${item.symbol}) 차트, 퀀트 리포트 및 속보 동기화`}
+                      title={language === 'ko' ? `클릭하여 ${item.name}(${item.symbol}) 차트, 퀀트 리포트 및 속보 동기화` : `Click to sync the ${item.name} (${item.symbol}) chart, quant report and news`}
                     >
                       <div
                         style={{
@@ -242,11 +242,11 @@ export function NewsPanel(props: any) {
                       {activeNews.sentiment && (
                         <span className={`sentiment ${activeNews.tone}`} style={{ fontSize: '9px', fontWeight: 700 }}
                               title={activeNews.analysisMethod === 'KEYWORD_RULE'
-                                ? '키워드 규칙 기반 분류입니다 (AI 모델 점수가 아닙니다)'
+                                ? (language === 'ko' ? '키워드 규칙 기반 분류입니다 (AI 모델 점수가 아닙니다)' : 'Keyword-rule classification (not an AI model score)')
                                 : undefined}>
                           {activeNews.sentiment}
                           {activeNews.analysisMethod === 'KEYWORD_RULE' && (
-                            <span style={{ fontWeight: 500, opacity: 0.7 }}> · 규칙기반</span>
+                            <span style={{ fontWeight: 500, opacity: 0.7 }}> · {language === 'ko' ? '규칙기반' : 'rule-based'}</span>
                           )}
                         </span>
                       )}
@@ -264,7 +264,7 @@ export function NewsPanel(props: any) {
                     </p>
 
                     {/* ⚡ AETHER AI 심층 인과관계 체인 (Deep Causal Chain & Root Cause) */}
-                    {((activeNews as any).causalChainKo || (activeNews as any).rootCauseKo) && (
+                    {(((language === 'ko' ? (activeNews as any).causalChainKo : (activeNews as any).causalChainEn)) || ((language === 'ko' ? (activeNews as any).rootCauseKo : (activeNews as any).rootCauseEn))) && (
                       <div
                         style={{
                           margin: '0 0 16px',
@@ -277,21 +277,21 @@ export function NewsPanel(props: any) {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#c2410c', fontWeight: 700, fontSize: '10px' }}>
-                          <span>⚡ AI 심층 인과관계 분석 (CAUSAL CHAIN REACTION)</span>
+                          <span>{language === 'ko' ? '⚡ AI 심층 인과관계 분석 (CAUSAL CHAIN REACTION)' : '⚡ AI CAUSAL CHAIN ANALYSIS'}</span>
                         </div>
-                        {(activeNews as any).rootCauseKo && (
+                        {(language === 'ko' ? (activeNews as any).rootCauseKo : (activeNews as any).rootCauseEn) && (
                           <div style={{ marginBottom: '6px', color: '#17191f' }}>
-                            <strong style={{ color: '#ea580c' }}>[발생 원인]</strong> {(activeNews as any).rootCauseKo}
+                            <strong style={{ color: '#ea580c' }}>{language === 'ko' ? '[발생 원인]' : '[Root cause]'}</strong> {language === 'ko' ? (activeNews as any).rootCauseKo : (activeNews as any).rootCauseEn}
                           </div>
                         )}
-                        {(activeNews as any).causalChainKo && (
+                        {(language === 'ko' ? (activeNews as any).causalChainKo : (activeNews as any).causalChainEn) && (
                           <div style={{ color: '#431407', background: 'rgba(255,255,255,0.7)', padding: '6px 8px', borderRadius: '4px', border: '1px solid #fed7aa', marginBottom: '6px' }}>
-                            <strong style={{ color: '#ea580c' }}>[파급 경로]</strong> {(activeNews as any).causalChainKo}
+                            <strong style={{ color: '#ea580c' }}>{language === 'ko' ? '[파급 경로]' : '[Transmission path]'}</strong> {language === 'ko' ? (activeNews as any).causalChainKo : (activeNews as any).causalChainEn}
                           </div>
                         )}
                         {(activeNews as any).marketImpactDetail && (
                           <div style={{ fontSize: '10px', color: '#7c2d12', fontWeight: 600 }}>
-                            📌 <strong>시장 파급:</strong> {(activeNews as any).marketImpactDetail}
+                            📌 <strong>{language === 'ko' ? '시장 파급:' : 'Market impact:'}</strong> {(activeNews as any).marketImpactDetail}
                           </div>
                         )}
                       </div>
@@ -380,9 +380,9 @@ export function NewsPanel(props: any) {
                         <p style={{ fontSize: '10px', color: '#687184', margin: 0, lineHeight: '1.45', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {(item as any).snippet || item.title}
                         </p>
-                        {((item as any).rootCauseKo || (item as any).causalChainKo) && (
+                        {((language === 'ko' ? ((item as any).rootCauseKo || (item as any).causalChainKo) : ((item as any).rootCauseEn || (item as any).causalChainEn))) && (
                           <div style={{ marginTop: '6px', padding: '4px 6px', background: '#fff8f3', borderRadius: '3px', border: '1px solid #fed7aa', fontSize: '9px', color: '#c2410c', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            <strong>⚡ 인과분석:</strong> {(item as any).rootCauseKo || (item as any).causalChainKo}
+                            <strong>{language === 'ko' ? '⚡ 인과분석:' : '⚡ Causal analysis:'}</strong> {language === 'ko' ? ((item as any).rootCauseKo || (item as any).causalChainKo) : ((item as any).rootCauseEn || (item as any).causalChainEn)}
                           </div>
                         )}
                       </div>
@@ -524,7 +524,7 @@ export function NewsPanel(props: any) {
                   key={item.symbol}
                   style={{ cursor: 'pointer' }}
                   onClick={() => setSearched(item.target)}
-                  title={`클릭하여 ${item.name} 차트 및 퀀트 동기화`}
+                  title={language === 'ko' ? `클릭하여 ${item.name} 차트 및 퀀트 동기화` : `Click to sync the ${item.name} chart and quant view`}
                 >
                   <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <img

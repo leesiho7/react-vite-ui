@@ -1,6 +1,7 @@
 'use client'
 
 import { WalkForwardSummary } from '@/lib/types'
+import { useT } from '@/lib/terminalI18n'
 
 /**
  * 전체 이력을 시간순 4구간으로 나눠 같은 규칙을 각 구간에 재적용한 워크포워드 검증
@@ -15,8 +16,9 @@ export default function WalkForwardPanel({
   baseline?: WalkForwardSummary
   vetoFiltered?: WalkForwardSummary
 }) {
+  const tr = useT()
   if (!baseline || !vetoFiltered) {
-    return <p className="text-[10px] text-[#555555] pt-1">백테스트를 실행하면 채워집니다.</p>
+    return <p className="text-[10px] text-[#555555] pt-1">{tr('백테스트를 실행하면 채워집니다.', 'Fills in once you run the backtest.')}</p>
   }
 
   return (
@@ -28,12 +30,13 @@ export default function WalkForwardPanel({
 }
 
 function Row({ label, summary }: { label: string; summary: WalkForwardSummary }) {
+  const tr = useT()
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
         <span className="text-[9px] text-[#888888]">{label}</span>
         <span className={`text-[9px] font-bold ${summary.consistent ? 'text-[#73bf69]' : 'text-[#f2495c]'}`}>
-          {summary.consistent ? '레짐 일관됨' : '레짐 비일관'} ({summary.profitableSegments}/{summary.reliableSegments})
+          {summary.consistent ? tr('레짐 일관됨', 'Regime-consistent') : tr('레짐 비일관', 'Regime-inconsistent')} ({summary.profitableSegments}/{summary.reliableSegments})
         </span>
       </div>
       <div className="flex gap-1">
@@ -46,7 +49,7 @@ function Row({ label, summary }: { label: string; summary: WalkForwardSummary })
               className={`flex-1 h-8 rounded-[2px] flex items-center justify-center text-[8px] font-mono font-bold ${
                 !reliable ? 'bg-[#1a1a1a] text-[#555555]' : positive ? 'bg-[#73bf6926] text-[#73bf69]' : 'bg-[#f2495c26] text-[#f2495c]'
               }`}
-              title={!reliable ? `구간 ${i + 1}: 표본 부족 (${seg.reliabilityNote})` : `구간 ${i + 1}: ${seg.totalReturnPct.toFixed(1)}% (${seg.totalTrades}건)`}
+              title={!reliable ? tr(`구간 ${i + 1}: 표본 부족 (${seg.reliabilityNote})`, `Segment ${i + 1}: small sample (${seg.reliabilityNote.replace(/표본 부족/g, 'insufficient sample').replace(/표본 (\d+)건/g, '$1 samples')})`) : tr(`구간 ${i + 1}: ${seg.totalReturnPct.toFixed(1)}% (${seg.totalTrades}건)`, `Segment ${i + 1}: ${seg.totalReturnPct.toFixed(1)}% (${seg.totalTrades} trades)`)}
             >
               {reliable ? `${seg.totalReturnPct.toFixed(0)}%` : '—'}
             </div>

@@ -4,9 +4,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 import { loginApi, socialLogin } from '../../lib/api'
+import { readSiteLang, useSiteLang } from '../../lib/siteLang'
+import LangSwitch from '../../components/LangSwitch'
+import { LOGIN_MSGS } from './messages'
+
+/** 핸들러(비동기 콜백 포함)가 호출되는 시점의 사이트 언어로 문구를 고른다 */
+const msg = () => LOGIN_MSGS[readSiteLang()]
 
 export default function LoginPage() {
   const router = useRouter()
+  const [lang, setLang] = useSiteLang()
+  const m = LOGIN_MSGS[lang]
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [isError, setIsError] = useState(false)
@@ -54,7 +62,7 @@ export default function LoginPage() {
       if (token) {
         (async () => {
           setLoading(true)
-          setFeedback('네이버 공식 프로필 확인 중...')
+          setFeedback(msg().naverChecking)
           try {
             // 네이버 OpenAPI 프로필 조회 요청 (CORS 백엔드 미들웨어 또는 프록시 처리)
             const res = await socialLogin({
@@ -64,15 +72,15 @@ export default function LoginPage() {
               nickname: `Naver_Investor_${token.slice(-4)}`
             })
             if (res.success) {
-              setFeedback(`🎉 [${res.nickname}] 님, 네이버 공식 계정 로그인 성공!`)
+              setFeedback(msg().naverOk(String(res.nickname ?? '')))
               localStorage.setItem('auth_session', JSON.stringify(res))
               setTimeout(() => router.push('/'), 800)
             } else {
-              setFeedback(res.message || '네이버 로그인 실패')
+              setFeedback(res.message || msg().naverFail)
               setIsError(true)
             }
           } catch (e: any) {
-            setFeedback('네이버 연동 처리 오류')
+            setFeedback(msg().naverError)
             setIsError(true)
           } finally {
             setLoading(false)
@@ -91,20 +99,20 @@ export default function LoginPage() {
     if (clientId) {
       triggerGooglePopup(clientId)
     } else {
-      setFeedback('구글 Client ID 환경 변수가 설정되지 않았습니다. .env.local을 확인해 주세요.')
+      setFeedback(msg().googleNoClientId)
       setIsError(true)
     }
   }
 
   const triggerGooglePopup = (clientId: string) => {
     if (typeof window === 'undefined' || !(window as any).google?.accounts?.oauth2) {
-      setFeedback('구글 인증 모듈을 로딩 중입니다. 1~2초 후 다시 시도해 주세요.')
+      setFeedback(msg().googleLoading)
       setIsError(true)
       return
     }
 
     setLoading(true)
-    setFeedback('구글 공식 계정 로그인 창을 여는 중...')
+    setFeedback(msg().googleOpening)
     setIsError(false)
 
     try {
@@ -114,7 +122,7 @@ export default function LoginPage() {
         callback: async (tokenResponse: any) => {
           if (tokenResponse && tokenResponse.access_token) {
             try {
-              setFeedback('구글 공식 프로필 확인 중...')
+              setFeedback(msg().googleProfile)
               const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
               })
@@ -130,18 +138,18 @@ export default function LoginPage() {
                 })
 
                 if (res.success) {
-                  setFeedback(`🎉 [${userInfo.name || userInfo.email}] 님, 구글 공식 계정 로그인 성공!`)
+                  setFeedback(msg().googleOk(String(userInfo.name || userInfo.email)))
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('auth_session', JSON.stringify(res))
                   }
                   setTimeout(() => router.push('/'), 800)
                 } else {
-                  setFeedback(res.message || '구글 로그인 처리에 실패했습니다.')
+                  setFeedback(res.message || msg().googleFail)
                   setIsError(true)
                 }
               }
             } catch (err: any) {
-              setFeedback('구글 프로필 조회 오류: ' + (err?.message || ''))
+              setFeedback(msg().googleProfileErr(err?.message || ''))
               setIsError(true)
             } finally {
               setLoading(false)
@@ -149,7 +157,7 @@ export default function LoginPage() {
           }
         },
         error_callback: () => {
-          setFeedback('구글 로그인이 취소되었거나 팝업이 닫혔습니다.')
+          setFeedback(msg().googleCancel)
           setIsError(true)
           setLoading(false)
         }
@@ -157,7 +165,7 @@ export default function LoginPage() {
 
       client.requestAccessToken()
     } catch (e: any) {
-      setFeedback('구글 로그인 팝업 호출 실패: ' + (e?.message || ''))
+      setFeedback(msg().googlePopupFail(e?.message || ''))
       setIsError(true)
       setLoading(false)
     }
@@ -185,7 +193,7 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    setFeedback('카카오 공식 계정 로그인 창을 여는 중...')
+    setFeedback(msg().kakaoOpening)
     setIsError(false)
 
     Kakao.Auth.login({
@@ -208,24 +216,24 @@ export default function LoginPage() {
             })
 
             if (loginRes.success) {
-              setFeedback(`🎉 [${nickname}] 님, 카카오 공식 계정 로그인 성공!`)
+              setFeedback(msg().kakaoOk(nickname))
               localStorage.setItem('auth_session', JSON.stringify(loginRes))
               setTimeout(() => router.push('/'), 800)
             } else {
-              setFeedback(loginRes.message || '카카오 로그인 처리에 실패했습니다.')
+              setFeedback(loginRes.message || msg().kakaoFail)
               setIsError(true)
             }
             setLoading(false)
           },
           fail: function(error: any) {
-            setFeedback('카카오 프로필 조회 실패: ' + (error?.msg || ''))
+            setFeedback(msg().kakaoProfileFail(error?.msg || ''))
             setIsError(true)
             setLoading(false)
           }
         })
       },
       fail: function() {
-        setFeedback('카카오 로그인이 취소되었거나 팝업이 닫혔습니다.')
+        setFeedback(msg().kakaoCancel)
         setIsError(true)
         setLoading(false)
       }
@@ -250,7 +258,7 @@ export default function LoginPage() {
     const state = Math.random().toString(36).substring(2, 15)
     const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`
 
-    setFeedback('네이버 공식 로그인 창을 여는 중...')
+    setFeedback(msg().naverOpening)
     const popup = window.open(naverAuthUrl, 'naverLoginPopup', 'width=500,height=600')
     if (!popup) {
       window.location.href = naverAuthUrl
@@ -270,12 +278,12 @@ export default function LoginPage() {
 
   const triggerApplePopup = async (clientId: string) => {
     if (typeof window === 'undefined' || !(window as any).AppleID) {
-      setFeedback('애플 인증 SDK 로딩 중입니다. 1초 후 다시 시도해 주세요.')
+      setFeedback(msg().appleLoading)
       return
     }
 
     setLoading(true)
-    setFeedback('Apple ID 공식 로그인 창을 여는 중...')
+    setFeedback(msg().appleOpening)
     setIsError(false)
 
     try {
@@ -301,16 +309,16 @@ export default function LoginPage() {
         })
 
         if (loginRes.success) {
-          setFeedback(`🎉 [${nickname}] 님, Apple ID 공식 계정 로그인 성공!`)
+          setFeedback(msg().appleOk(nickname))
           localStorage.setItem('auth_session', JSON.stringify(loginRes))
           setTimeout(() => router.push('/'), 800)
         } else {
-          setFeedback(loginRes.message || '애플 로그인 처리에 실패했습니다.')
+          setFeedback(loginRes.message || msg().appleFail)
           setIsError(true)
         }
       }
     } catch (e: any) {
-      setFeedback('애플 로그인 취소 또는 오류: ' + (e?.error || e?.message || ''))
+      setFeedback(msg().appleCancel(String(e?.error || e?.message || '')))
       setIsError(true)
     } finally {
       setLoading(false)
@@ -320,12 +328,12 @@ export default function LoginPage() {
   // 5. 메타마스크 Web3 지갑 로그인
   const handleMetaMaskLogin = async () => {
     if (typeof window === 'undefined' || !(window as any).ethereum) {
-      alert('MetaMask 확장 프로그램이 설치되어 있지 않습니다. 브라우저에 MetaMask를 설치해 주세요.')
+      alert(msg().metamaskMissing)
       return
     }
 
     setLoading(true)
-    setFeedback('메타마스크 지갑 연결 승인 대기 중...')
+    setFeedback(msg().metamaskWaiting)
     setIsError(false)
 
     try {
@@ -342,16 +350,16 @@ export default function LoginPage() {
         })
 
         if (loginRes.success) {
-          setFeedback(`🎉 [${shortAddr}] 메타마스크 지갑 연결 로그인 성공!`)
+          setFeedback(msg().metamaskOk(shortAddr))
           localStorage.setItem('auth_session', JSON.stringify(loginRes))
           setTimeout(() => router.push('/'), 800)
         } else {
-          setFeedback(loginRes.message || '지갑 인증에 실패했습니다.')
+          setFeedback(loginRes.message || msg().metamaskFail)
           setIsError(true)
         }
       }
     } catch (e: any) {
-      setFeedback('메타마스크 연결이 취소되었거나 거부되었습니다.')
+      setFeedback(msg().metamaskCancel)
       setIsError(true)
     } finally {
       setLoading(false)
@@ -360,7 +368,7 @@ export default function LoginPage() {
 
   const handleInstantSocial = async (provider: 'NAVER' | 'KAKAO' | 'GOOGLE' | 'APPLE' | 'METAMASK') => {
     setLoading(true)
-    setFeedback(`[${provider}] 간편 소셜 계정 승인 및 로그인 진행 중...`)
+    setFeedback(msg().instantRunning(provider))
     setIsError(false)
 
     let localKey = `social_user_${provider.toLowerCase()}`
@@ -387,17 +395,17 @@ export default function LoginPage() {
       })
 
       if (res.success) {
-        setFeedback(`🎉 [${res.nickname}] 님, ${provider} 로그인 완료!`)
+        setFeedback(msg().instantOk(String(res.nickname ?? ''), provider))
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth_session', JSON.stringify(res))
         }
         setTimeout(() => router.push('/'), 800)
       } else {
-        setFeedback(res.message || '소셜 인증에 실패했습니다.')
+        setFeedback(res.message || msg().instantFail)
         setIsError(true)
       }
     } catch (e: any) {
-      setFeedback(`🎉 ${provider} 인증 완료! 메인으로 이동합니다.`)
+      setFeedback(msg().instantDone(provider))
       setTimeout(() => router.push('/'), 800)
     } finally {
       setLoading(false)
@@ -422,13 +430,13 @@ export default function LoginPage() {
   const handleEmailLogin = async (e: FormEvent) => {
     e.preventDefault()
     if (!email.trim() || !password) {
-      setFeedback('이메일(아이디)과 비밀번호를 모두 입력해 주세요.')
+      setFeedback(msg().emailRequired)
       setIsError(true)
       return
     }
 
     setLoading(true)
-    setFeedback('로그인 승인 및 보안 세션 검증 중...')
+    setFeedback(msg().emailVerifying)
     setIsError(false)
 
     try {
@@ -438,17 +446,17 @@ export default function LoginPage() {
       })
 
       if (res.success) {
-        setFeedback(`🎉 [${res.nickname || res.username || email}] 님, 환영합니다!`)
+        setFeedback(msg().emailOk(String(res.nickname || res.username || email)))
         if (typeof window !== 'undefined') {
           localStorage.setItem('auth_session', JSON.stringify(res))
         }
         setTimeout(() => router.push('/'), 600)
       } else {
-        setFeedback(res.message || '이메일(아이디) 또는 비밀번호가 일치하지 않습니다.')
+        setFeedback(res.message || msg().emailFail)
         setIsError(true)
       }
     } catch (err: any) {
-      setFeedback('서버 통신 오류: ' + (err?.message || '네트워크 연결을 확인해 주세요.'))
+      setFeedback(msg().serverError(err?.message || msg().networkHint))
       setIsError(true)
     } finally {
       setLoading(false)
@@ -470,7 +478,7 @@ export default function LoginPage() {
               The edge<br />
               <em>starts here.</em>
             </h1>
-            <p>실시간 시장 데이터와 분석 도구를 더 빠르게 확인하세요.</p>
+            <p>{m.tagline}</p>
           </div>
 
           <div className="signup-orbit">
@@ -488,12 +496,16 @@ export default function LoginPage() {
 
         {/* Form Panel Right Section */}
         <section className="signup-form-panel">
-          <Link href="/" className="signup-close" aria-label="홈으로 돌아가기">
+          <Link href="/" className="signup-close" aria-label={m.backHome}>
             ×
           </Link>
 
+          <div style={{ marginBottom: '14px' }}>
+            <LangSwitch lang={lang} onChange={setLang} />
+          </div>
+
           <span className="overline">WELCOME BACK</span>
-          <h2>로그인</h2>
+          <h2>{m.heading}</h2>
 
           {/* Google 1-Click Button */}
           <button
@@ -506,7 +518,7 @@ export default function LoginPage() {
               src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/google/default.svg"
               alt="Google"
             />{' '}
-            Google로 계속하기
+            {m.google}
           </button>
 
           {/* Social / Web3 Login Grid (Full Display) */}
@@ -554,7 +566,7 @@ export default function LoginPage() {
               style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#fff7ed', borderColor: '#fdba74', borderRadius: '6px' }}
             >
               <span style={{ fontSize: '15px' }}>🦊</span>
-              <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left', color: '#c2410c' }}>MetaMask 지갑 연결</strong>
+              <strong style={{ flex: 1, fontSize: '13px', textAlign: 'left', color: '#c2410c' }}>{m.metamask}</strong>
               <span style={{ color: '#c2410c' }}>↗</span>
             </button>
           </div>
@@ -578,11 +590,11 @@ export default function LoginPage() {
           )}
 
           <p className="signup-login" style={{ marginBottom: '32px' }}>
-            아직 계정이 없으신가요? <Link href="/signup">무료 회원가입</Link>
+            {m.noAccount} <Link href="/signup">{m.signup}</Link>
           </p>
 
           <p className="signup-terms">
-            로그인함으로써 귀하는 저희 <a href="/kr/policy/privacy" target="_blank" rel="noreferrer">개인정보 처리방침</a> 및 서비스 이용약관에 동의합니다.
+            {m.termsBefore}<a href="/kr/policy/privacy" target="_blank" rel="noreferrer">{m.termsLink}</a>{m.termsAfter}
           </p>
         </section>
       </div>

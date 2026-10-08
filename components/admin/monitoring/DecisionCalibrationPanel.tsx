@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { fetchDecisionCalibration } from '@/lib/api'
 import { DecisionCalibrationEntry } from '@/lib/types'
+import { useT } from '@/lib/terminalI18n'
 
 /**
  * ONNX 거부권과는 별개로, AI 리서치 판정(BUY/SELL/HOLD 등) 자체가 실제로 얼마나 맞았는지
@@ -11,6 +12,7 @@ import { DecisionCalibrationEntry } from '@/lib/types'
  * 척도 안 하는 것).
  */
 export default function DecisionCalibrationPanel() {
+  const tr = useT()
   const [entries, setEntries] = useState<DecisionCalibrationEntry[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -21,25 +23,25 @@ export default function DecisionCalibrationPanel() {
     })
   }, [])
 
-  if (loading) return <p className="text-[10px] text-[#555555] pt-1">불러오는 중…</p>
-  if (entries.length === 0) return <p className="text-[10px] text-[#555555] pt-1">아직 채점된 판정 기록이 없습니다.</p>
+  if (loading) return <p className="text-[10px] text-[#555555] pt-1">{tr('불러오는 중…', 'Loading…')}</p>
+  if (entries.length === 0) return <p className="text-[10px] text-[#555555] pt-1">{tr('아직 채점된 판정 기록이 없습니다.', 'No scored verdicts yet.')}</p>
 
   return (
     <table className="w-full text-[10px] mt-1">
       <thead>
         <tr className="text-left text-[#666666] border-b border-[#1a1a1a]">
-          <th className="py-1 font-normal">판정</th>
-          <th className="py-1 font-normal">표본</th>
-          <th className="py-1 font-normal">승수</th>
-          <th className="py-1 font-normal">승률</th>
-          <th className="py-1 font-normal">평균수익</th>
+          <th className="py-1 font-normal">{tr('판정', 'Verdict')}</th>
+          <th className="py-1 font-normal">{tr('표본', 'Samples')}</th>
+          <th className="py-1 font-normal">{tr('승수', 'Wins')}</th>
+          <th className="py-1 font-normal">{tr('승률', 'Win rate')}</th>
+          <th className="py-1 font-normal">{tr('평균수익', 'Avg return')}</th>
         </tr>
       </thead>
       <tbody>
         {entries.map((e) => (
           <tr key={e.verdict} className={`border-b border-[#141414] ${!e.reliable ? 'opacity-40' : ''}`}>
             <td className="py-1 text-white font-bold">{e.verdict}</td>
-            <td className="py-1 text-[#aaaaaa]">{e.samples}{!e.reliable && <span className="text-[#666666]"> (표본부족)</span>}</td>
+            <td className="py-1 text-[#aaaaaa]">{e.samples}{!e.reliable && <span className="text-[#666666]"> {tr('(표본부족)', '(small sample)')}</span>}</td>
             <td className="py-1 text-[#aaaaaa]">{e.wins}</td>
             <td className={`py-1 font-bold ${e.winRate >= 0.5 ? 'text-[#73bf69]' : 'text-[#f2495c]'}`}>
               {(e.winRate * 100).toFixed(1)}%

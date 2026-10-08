@@ -44,6 +44,8 @@ interface TerminalTradingChartProps {
   interval?: string;
   supportPrice?: string;
   resistancePrice?: string;
+  /** 차트 위 배지·버튼 문구의 언어. 기본은 영어 (사이트 기본값) */
+  language?: 'ko' | 'en' | 'cn';
 }
 
 export function TerminalTradingChart({
@@ -54,8 +56,11 @@ export function TerminalTradingChart({
   latestKline,
   interval = '1W',
   supportPrice = '$76,800',
-  resistancePrice = '$79,500'
+  resistancePrice = '$79,500',
+  language = 'en'
 }: TerminalTradingChartProps) {
+  // 언어별 문구 선택: 차트 캔버스에 직접 그리는 배지와 버튼이 같은 함수를 쓴다
+  const pick = (ko: string, en: string, cn: string) => (language === 'ko' ? ko : language === 'cn' ? cn : en)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -835,7 +840,12 @@ export function TerminalTradingChart({
 
       // ── D. AETHER 미래 프랙탈 인텔리전스 HUD 배지 ──
       const lastGhost = ghostCandles[ghostCandles.length - 1]
-      const badgeText = `AETHER 프랙탈 파동 궤적 · 과거 일치율 ${simScore}% · 5봉 승률 ${winPct}% (기대수익률 ${expRet >= 0 ? '+' : ''}${expRet}%)`
+      const expRetText = `${expRet >= 0 ? '+' : ''}${expRet}%`
+      const badgeText = pick(
+        `AETHER 프랙탈 파동 궤적 · 과거 일치율 ${simScore}% · 5봉 승률 ${winPct}% (기대수익률 ${expRetText})`,
+        `AETHER Fractal Wave Path · Historical match ${simScore}% · 5-bar win rate ${winPct}% (expected return ${expRetText})`,
+        `AETHER 分形波动轨迹 · 历史匹配度 ${simScore}% · 5根K线胜率 ${winPct}%（预期收益率 ${expRetText}）`
+      )
       ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       const badgeW = ctx.measureText(badgeText).width + 20
       const badgeX = Math.max(10, Math.min(chartWidth - badgeW - 10, lastGhost.x - badgeW + 20))
@@ -864,11 +874,21 @@ export function TerminalTradingChart({
       // ── E. AETHER 리스크 가디언 교차검증 배지 (판별 불가면 아무것도 그리지 않는다 — mock 금지) ──
       if (ghostData?.riskCrossCheckLabel && ghostData.riskCrossCheckLabel !== 'UNAVAILABLE' && ghostData.riskCrossCheckProbability !== null) {
         const riskPct = Math.round(ghostData.riskCrossCheckProbability * 1000) / 10
-        const riskDirLabel = ghostData.riskCrossCheckLabel === 'DOWN_RISK_CHECK' ? '급락 위험' : '급등 위험'
+        const riskDirLabel = ghostData.riskCrossCheckLabel === 'DOWN_RISK_CHECK'
+          ? pick('급락 위험', 'Drop risk', '暴跌风险')
+          : pick('급등 위험', 'Surge risk', '暴涨风险')
         const riskColor = ghostData.riskCrossCheckAlert ? '#f59e0b' : '#10b981'
         const riskText = ghostData.riskCrossCheckAlert
-          ? `⚠ AETHER 리스크 가디언: ${riskDirLabel} ${riskPct}% (이 방향 신뢰도 낮음)`
-          : `✓ AETHER 리스크 가디언: ${riskDirLabel} ${riskPct}% (게이트 이하, 방향 유지)`
+          ? pick(
+              `⚠ AETHER 리스크 가디언: ${riskDirLabel} ${riskPct}% (이 방향 신뢰도 낮음)`,
+              `⚠ AETHER Risk Guardian: ${riskDirLabel} ${riskPct}% (low confidence in this direction)`,
+              `⚠ AETHER 风险守护：${riskDirLabel} ${riskPct}%（该方向可信度较低）`
+            )
+          : pick(
+              `✓ AETHER 리스크 가디언: ${riskDirLabel} ${riskPct}% (게이트 이하, 방향 유지)`,
+              `✓ AETHER Risk Guardian: ${riskDirLabel} ${riskPct}% (below the gate, direction kept)`,
+              `✓ AETHER 风险守护：${riskDirLabel} ${riskPct}%（低于阈值，维持方向）`
+            )
 
         ctx.font = 'bold 9.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         const riskBadgeW = ctx.measureText(riskText).width + 18
@@ -993,7 +1013,7 @@ export function TerminalTradingChart({
       }
     }
 
-  }, [candles, indicatorData, showSMA, showEMA, showBBands, showVolume, showGhostOverlay, ghostData, hoverData, chartTheme, chartType, activeInterval, ticker, symbol])
+  }, [candles, indicatorData, showSMA, showEMA, showBBands, showVolume, showGhostOverlay, ghostData, hoverData, chartTheme, chartType, activeInterval, ticker, symbol, language])
 
   // Mouse Move Event
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -1241,9 +1261,9 @@ export function TerminalTradingChart({
               gap: '3px'
             }}
           >
-            프랙탈 고스트 {showGhostOverlay ? 'ON' : 'OFF'}
+            {pick('프랙탈 고스트', 'Fractal Ghost', '分形幽灵')} {showGhostOverlay ? 'ON' : 'OFF'}
             {showGhostOverlay && !(ghostData?.futurePrices && ghostData.futurePrices.length >= 5) && (
-              <span style={{ color: isDark ? '#787b86' : '#94a3b8', fontWeight: 400 }}>(데이터 없음)</span>
+              <span style={{ color: isDark ? '#787b86' : '#94a3b8', fontWeight: 400 }}>{pick('(데이터 없음)', '(no data)', '(无数据)')}</span>
             )}
           </button>
 
